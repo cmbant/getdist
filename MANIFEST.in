@@ -1,4 +1,4 @@
 include README.rst
-include GetDist.py
-include GetDistGUI.py
+include *.py
 include getdist/analysis_defaults.ini
+include tests/*.py
