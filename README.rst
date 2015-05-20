@@ -5,7 +5,6 @@ GetDist
 :Version: 0.2.0
 :Author: Antony Lewis
 :Homepage: http://cosmologist.info/
-:License: LGPL
 .. image:: https://secure.travis-ci.org/cmbant/getdist.png?branch=master
   :target: https://secure.travis-ci.org/cmbant/getdist
 
