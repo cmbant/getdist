@@ -1,4 +1,3 @@
 include README.rst
 include *.py
 include getdist/analysis_defaults.ini
-include tests/*.py

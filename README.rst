@@ -15,9 +15,10 @@ GetDist is a package for analysing Monte Carlo samples, including correlated sam
 from Markov Chain Monte Carlo (MCMC). 
 
 * **Point and click GUI** - select chain files, view plots, marginalized constraints, latex tables and more
-* **Plotting scripts** - make custom publication-ready 1D, 2D, 3D-scatter, triangle and other plots
+* **Plotting library** - make custom publication-ready 1D, 2D, 3D-scatter, triangle and other plots
 * **Named parameters** - simple handling of many parameters using parameter names 
-* **Optimized Kernel Density Estimation** - automated optimal bandwidth choice for 1D and 2D densities
+* **Optimized Kernel Density Estimation** - automated optimal bandwidth choice for 1D and 2D densities (Botev et al. Improved Sheather-Jones method)
+* **Convergence diagonistics** - including correlation length and diagonalized Gelman-Rubin statistics
 
 Getting Started:
 ================
