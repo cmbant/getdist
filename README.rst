@@ -12,17 +12,17 @@ GetDist
 Description
 ============
 
-GetDist is a package for analysing Monte Carlo samples, including correlated samples 
-from Markov Chain Monte Carlo (MCMC). 
+GetDist is a package for analysing Monte Carlo samples, including correlated samples
+from Markov Chain Monte Carlo (MCMC).
 
 * **Point and click GUI** - select chain files, view plots, marginalized constraints, latex tables and more
 * **Plotting library** - make custom publication-ready 1D, 2D, 3D-scatter, triangle and other plots
-* **Named parameters** - simple handling of many parameters using parameter names, including LaTex labels and prior bounds 
+* **Named parameters** - simple handling of many parameters using parameter names, including LaTex labels and prior bounds
 * **Optimized Kernel Density Estimation** - automated optimal bandwidth choice for 1D and 2D densities (Botev et al. Improved Sheather-Jones method), with boundary and bias correction
-* **Convergence diagonistics** - including correlation length and diagonalized Gelman-Rubin statistics
+* **Convergence diagnostics** - including correlation length and diagonalized Gelman-Rubin statistics
 * **Latex tables** for marginalized 1D constraints
 
-See the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.html>`_. 
+See the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.html>`_.
 
 
 Getting Started
@@ -45,17 +45,17 @@ Dependencies
 * Working latex installation (for some plotting/table functions)
 
 
-Alogithm details
+Algorithm details
 ================
 
-Details of kernel densitity estimation (KDE) alogithms and references are give in the
-`GetDist Notes <http://cosmologist.info/notes/GetDist.pdf>`_. 
+Details of kernel density estimation (KDE) algorithms and references are give in the
+`GetDist Notes <http://cosmologist.info/notes/GetDist.pdf>`_.
 
 
 Using with CosmoMC
 ===================
 
-This GetDist package is general, but is mainly developed for analysing chains from the CosmoMC sampling program. 
-No need to install this package separately if you have a full CosmoMC installation. 
+This GetDist package is general, but is mainly developed for analysing chains from the CosmoMC sampling program.
+No need to install this package separately if you have a full CosmoMC installation.
 Detailed help is available for plotting Planck chains
-and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmomc/readme_python.html>`_. 
+and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmomc/readme_python.html>`_.
