@@ -22,7 +22,7 @@ from Markov Chain Monte Carlo (MCMC).
 * **Convergence diagonistics** - including correlation length and diagonalized Gelman-Rubin statistics
 * **Latex tables** for marginalized 1D constraints
 
-See the `Plot Gallery <./docs/plot_gallery.html>`_. 
+See the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.html>`_. 
 
 
 Getting Started
@@ -55,11 +55,7 @@ Details of kernel densitity estimation (KDE) alogithms and references are give i
 Using with CosmoMC
 ===================
 
-This GetDist package is general, but is mainly developed for analysing cosmology data
-using chains from the CosmoMC program. No need to install this package separately if you
-have a full CosmoMC installation. Detailed help is available for plotting Planck chains
-and using CosmoMC parameter grids
-
- http://cosmologist.info/cosmomc/readme_python.html
-
-
+This GetDist package is general, but is mainly developed for analysing chains from the CosmoMC sampling program. 
+No need to install this package separately if you have a full CosmoMC installation. 
+Detailed help is available for plotting Planck chains
+and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmomc/readme_python.html>`_. 
