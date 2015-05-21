@@ -22,6 +22,9 @@ from Markov Chain Monte Carlo (MCMC).
 * **Convergence diagonistics** - including correlation length and diagonalized Gelman-Rubin statistics
 * **Latex tables** for marginalized 1D constraints
 
+See the `Plot Gallery <./docs/plot_gallery.html>`_. 
+
+
 Getting Started
 ================
 Install getdist from download using::
@@ -45,9 +48,8 @@ Dependencies
 Alogithm details
 ================
 
-Details of kernel densitity estimation (KDE) alogithms and references are give in the notes:
-
-http://cosmologist.info/notes/GetDist.pdf
+Details of kernel densitity estimation (KDE) alogithms and references are give in the
+`GetDist Notes <http://cosmologist.info/notes/GetDist.pdf>`_. 
 
 
 Using with CosmoMC

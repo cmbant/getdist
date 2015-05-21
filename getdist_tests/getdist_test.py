@@ -84,7 +84,6 @@ class GetDistTest(unittest.TestCase):
         g.triangle_plot(samples, ['x', 'y', 'z'])
         g.newPlot()
         g.triangle_plot(samples, ['x', 'y'], plot_3d_with_param='z')
-        g.export('z://test_tri.pdf')
         g.newPlot()
         g.rectangle_plot(['x', 'y'], ['z'], roots=samples, filled=True)
         prob2 = self.testdists.bimodal[1]

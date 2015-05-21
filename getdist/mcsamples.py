@@ -1519,7 +1519,7 @@ class MCSamples(chains):
         if not texs[0][0] in ['<', '>']:
             return labels[0] + ' = ' + texs[0]
         else:
-            return labels[0] + texs[0]
+            return labels[0] + ' ' + texs[0]
 
     def setDensitiesandMarge1D(self, max_frac_twotail=None, writeDataToFile=False, meanlikes=False):
         if self.done_1Dbins: return
