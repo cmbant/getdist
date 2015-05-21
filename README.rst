@@ -4,7 +4,7 @@ GetDist
 :GetDist: MCMC sample analysis, plotting and GUI
 :Version: 0.2.0
 :Author: Antony Lewis
-:Homepage: http://cosmologist.info/
+:Homepage: https://github.com/cmbant/getdist
 
 .. image:: https://secure.travis-ci.org/cmbant/getdist.png?branch=master
   :target: https://secure.travis-ci.org/cmbant/getdist
@@ -46,11 +46,46 @@ Dependencies
 
 
 Algorithm details
-================
+==================
 
 Details of kernel density estimation (KDE) algorithms and references are give in the
 `GetDist Notes <http://cosmologist.info/notes/GetDist.pdf>`_.
 
+Samples file format
+===================
+
+The GetDist GUI (and getdist.loadMCSamples function) read parameter sample/chain files in plain text format.
+In general there are a set of plain text files of the form::
+  
+  xxx_1.txt
+  xxx_2.txt
+  ...
+  xxx.paramnames
+  xxx.ranges
+
+where "xxx" is some root file name.
+
+The .txt files are separate chain files (there can also be just one xxx.txt file). Each row of each sample .txt files is in the format
+
+    *weight like param1 param2 param3* ...
+
+The *weight* gives the number of samples (or importance weight) with these parameters. *like* gives -log(likelihood), and *param1, param2...* are the values of the parameters at the sample point. The first two columns can be 1 and 0 if they are not known or used.
+
+The .paramnames file lists the names of the parameters, one per line, optionally followed by a latex label. Names cannot include spaces, and if they end in "*" they are interpreted as derived (rather than MCMC) parameters, e.g.::
+
+ x1   x_1
+ y1   y_1
+ x2   x_2
+ xy*  x_1+y_1
+
+The .ranges file gives hard bounds for the parameters, e.g.::
+
+ x1  -5 5
+ x2   0 N
+
+Note that not all parameters need to be specified, and "N" can be used to denote that a particular upper or lower limit is unbounded. The ranges are used to determine densities and plot bounds if there are samples near the boundary; if there are no samples anywhere near the boundary the ranges have no affect on plot bounds, which are chosen appropriately for the range of the samples.
+
+MCSamples objects can also be constructed directly from numpy arrays in memory, see the example in the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.html>`_.
 
 Using with CosmoMC
 ===================
