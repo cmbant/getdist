@@ -1182,7 +1182,8 @@ class GetDistPlotter(object):
                 if y != len(yparams) - 1: plt.setp(ax.get_xticklabels(), visible=False)
                 if x != 0: plt.setp(ax.get_yticklabels(), visible=False)
                 if x == 0: yshares.append(ax)
-                if plot_texts: self.add_text_left(plot_texts[x][y], y=0.9, ax=ax)
+                if plot_texts and plot_texts[x][y]:
+                    self.add_text_left(plot_texts[x][y], y=0.9, ax=ax)
                 axarray.append(ax)
             ax_arr.append(axarray)
         for xparam, ax in zip(xparams, xshares):

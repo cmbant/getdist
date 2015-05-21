@@ -74,6 +74,10 @@ class ParamList(object):
         self.names = [ParamInfo(name) for name in names]
         return self
 
+    def setLabels(self, labels):
+        for name, label in zip(self.names, labels):
+            name.label = label
+
     def numDerived(self):
         return len([1 for info in self.names if info.isDerived])
 
@@ -197,6 +201,10 @@ class ParamNames(ParamList):
         for i, name in enumerate(self.names):
             keywordProvider.setKeyWord('param_' + str(i + 1), name.string(False).replace('\\', '!'),
                 name.comment)
+
+
+
+
 
 
 

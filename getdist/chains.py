@@ -441,7 +441,7 @@ class WeightedSamples(object):
 
 
 class chains(WeightedSamples):
-    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, **kwargs):
+    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, **kwargs):
         WeightedSamples.__init__(self, **kwargs)
         self.jobItem = jobItem
         self.precision = '%.8e'
@@ -452,6 +452,8 @@ class chains(WeightedSamples):
         self.needs_update = True
         self.chains = None
         self.setParamNames(paramNamesFile or names)
+        if labels is not None:
+            self.paramNames.setLabels(labels)
 
     def setParamNames(self, names=None):
         self.paramNames = None

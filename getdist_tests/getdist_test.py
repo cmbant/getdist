@@ -5,14 +5,14 @@ import os
 import re
 import numpy as np
 import unittest
+import warnings
 from getdist import loadMCSamples, plots
-from getdist.test_distributions import Test2DDistributions
+from getdist_tests.test_distributions import Test2DDistributions
 
 
 class GetDistFileTest(unittest.TestCase):
     """test reading files and convergence routines"""
 
-    # preparing to test
     def setUp(self):
         np.random.seed(10)
 
@@ -48,11 +48,11 @@ class GetDistFileTest(unittest.TestCase):
 class GetDistTest(unittest.TestCase):
     """test some getdist routines and plotting"""
 
-    # preparing to test
     def setUp(self):
         np.random.seed(10)
         self.testdists = Test2DDistributions()
         self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
+        warnings.filterwarnings('ignore', '.*tight_layout.*',)
 
     def testTables(self):
         self.assertEqual(str(self.samples.getLatex(limit=2)),

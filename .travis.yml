@@ -3,7 +3,7 @@ python:
   - 2.7
   - 3.4
  
-# Setup anaconda
+# Setup anaconda following https://gist.github.com/dan-blanchard/7045057
 before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh

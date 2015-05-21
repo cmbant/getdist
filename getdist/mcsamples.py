@@ -1516,7 +1516,10 @@ class MCSamples(chains):
     def getInlineLatex(self, param, limit=1):
         """Get snippet like: A=x\pm y"""
         labels, texs = self.getLatex([param], limit)
-        return labels[0] + ' = ' + texs[0]
+        if not texs[0][0] in ['<', '>']:
+            return labels[0] + ' = ' + texs[0]
+        else:
+            return labels[0] + texs[0]
 
     def setDensitiesandMarge1D(self, max_frac_twotail=None, writeDataToFile=False, meanlikes=False):
         if self.done_1Dbins: return
