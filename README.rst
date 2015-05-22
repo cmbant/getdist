@@ -8,6 +8,8 @@ GetDist
 
 .. image:: https://secure.travis-ci.org/cmbant/getdist.png?branch=master
   :target: https://secure.travis-ci.org/cmbant/getdist
+.. image:: http://img.shields.io/pypi/v/GetDist.svg?style=flat
+        :target: https://pypi.python.org/pypi/GetDist/
 
 Description
 ============
