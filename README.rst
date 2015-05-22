@@ -35,15 +35,30 @@ You can test if things are working using the unit test by running::
 
     $ python setup.py test
 
+Check the dependencies listed in the next section are installed. You can then use the getdist module from your scripts, or
+use the GUI program GetDistGUI.py.
+
 
 Dependencies
 =============
 * Python 2.7+ or 3.4+
-* PySide (optional, only needed for GUI)
 * matplotlib
 * scipy
+* PySide (optional, only needed for GUI)
 * Working latex installation (for some plotting/table functions)
 
+Python distributions like Anaconda have most of what you need (except for latex). To install binary backages on Linux-like systems
+install pacakages *py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*. 
+For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/install.php>`_::
+
+   sudo port install python27
+   sudo port select --set python python27
+   sudo port install py-matplotlib
+   sudo port install py-scipy
+   sudo port install py-pyside
+   sudo port install texlive-latex-extra
+   sudo port install texlive-fonts-recommended
+   sudo port install dvipng
 
 Algorithm details
 ==================
@@ -84,6 +99,34 @@ The .ranges file gives hard bounds for the parameters, e.g.::
  x2   0 N
 
 Note that not all parameters need to be specified, and "N" can be used to denote that a particular upper or lower limit is unbounded. The ranges are used to determine densities and plot bounds if there are samples near the boundary; if there are no samples anywhere near the boundary the ranges have no affect on plot bounds, which are chosen appropriately for the range of the samples.
+
+Loading samples
+===================
+
+To load an MCSamples object from text files do::
+
+	 from getdist import loadMCSamples
+	 samples = loadMCSamples('/path/to/xxx', dist_settings={'ignore_rows':0.3})
+
+Here *dist_settings* gives optional parameter settings for the analysis. *ignore_rows* is useful for MCMC chains where you want to
+discard some fraction from the start of each chain as burn in (use a number >0 to discard a fixed number of sample lines rather than a fraction).
+The MCSamples object can be passed to plot functions, or used to get many results. For example to plot marginalized parameter densities 
+for parameter names *x1* and *x2*::
+
+    from getdist import plots
+    g = plots.getSinglePlotter()
+ 	g.plot_2d(samples, ['x1', 'y1'])
+
+For plotting, when you have many different chain files in the same directory, 
+you can work directly with the root names. For example to compare *x* and *y* constraints
+from two chains with root names *xxx* and *yyy*::
+
+	from getdist import plots
+	
+	g = plots.getSinglePlotter(chain_dir='/path/to/', analysis_settings={'ignore_rows':0.3})
+
+	g.plot_2d(['xxx','yyy], ['x', 'y'])
+
 
 MCSamples objects can also be constructed directly from numpy arrays in memory, see the example in the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.html>`_.
 
