@@ -1,6 +1,6 @@
 *.rst           text
 *.txt           text
-*.py            text
+*.py            text eol=lf
 *.ini           text
 *.html          text
 *.yml           text
