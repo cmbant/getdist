@@ -30,11 +30,11 @@ See the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/g
 Getting Started
 ================
 
-Install getdist using pipg::
+Install getdist using pip::
 
     $ sudo pip install getdist
 
-orr from source files using::
+or from source files using::
 
     $ sudo python setup.py install
 
