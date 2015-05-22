@@ -27,7 +27,12 @@ See the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/g
 
 Getting Started
 ================
-Install getdist from download using::
+
+Install getdist using pipg::
+
+    $ sudo pip install getdist
+
+orr from source files using::
 
     $ sudo python setup.py install
 
