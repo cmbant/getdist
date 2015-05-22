@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import sys
 import logging
+import getdist
 
 try:
     import argparse
@@ -22,6 +23,7 @@ from PySide.QtGui import QApplication
 parser = argparse.ArgumentParser(description='GetDist GUI')
 parser.add_argument('-v', '--verbose', help='verbose', action="store_true")
 parser.add_argument('--ini', help='Path to .ini file', default=None)
+parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
 args = parser.parse_args()
 
 # Configure the logging

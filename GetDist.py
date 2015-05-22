@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
+import getdist
 from getdist import MCSamples, chains, IniFile
 
 def runScript(fname):
@@ -266,4 +267,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='GetDist sample analyser')
     parser.add_argument('ini_file', help='.ini file with analysis settings')
     parser.add_argument('chain_root', nargs='?', help='Root name of chain to analyse (e.g. chains/test)')
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
     main(parser.parse_args())
