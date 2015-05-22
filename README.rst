@@ -122,7 +122,7 @@ for parameter names *x1* and *x2*::
 
     from getdist import plots
     g = plots.getSinglePlotter()
-    g.plot_2d(samples, ['x1', 'y1'])
+    g.plot_2d(samples, ['x1', 'x2'])
 
 For plotting, when you have many different chain files in the same directory, 
 you can work directly with the root names. For example to compare *x* and *y* constraints
