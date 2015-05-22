@@ -1,11 +1,11 @@
 __author__ = 'Antony Lewis'
-__version__ = "0.2.0"
+__version__ = "0.2.3"
 
 from getdist.inifile import IniFile
 from getdist.paramnames import ParamInfo, ParamNames
 from getdist.chains import WeightedSamples
 from getdist.mcsamples import MCSamples, loadMCSamples
-
+import numpy as np
 
 def get_defaults():
     import os
