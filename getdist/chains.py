@@ -599,8 +599,12 @@ class chains(WeightedSamples):
         self.getParamIndices()
 
     def saveAsText(self, root, chain_index=None):
+        if self.loglikes is not None:
+            loglikes = self.loglikes
+        else:
+            loglikes = np.zeros(self.numrows)
         np.savetxt(root + ('' if chain_index is None else '_' + str(chain_index + 1)) + '.txt',
-                   np.hstack((self.weights.reshape(-1, 1), self.loglikes.reshape(-1, 1), self.samples)),
+                   np.hstack((self.weights.reshape(-1, 1), loglikes.reshape(-1, 1), self.samples)),
                    fmt=self.precision)
         if not chain_index: self.paramNames.saveAsText(root + '.paramnames')
 
