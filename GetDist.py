@@ -13,11 +13,13 @@ def runScript(fname):
 
 def main(args):
     no_plots = False
-    if args.ini_file is None and args.chain_root is None:
+    chain_root = args.chain_root
+    if chain_root.endswith('.txt'): chain_root = chain_root[:-4]
+    if args.ini_file is None and chain_root is None:
         raise ValueError('Must give either a .ini file of parameters or a chain file root name')
-    if not '.ini' in args.ini_file and args.chain_root is None:
+    if not '.ini' in args.ini_file and chain_root is None:
             # use default settings acting on chain_root, no plots
-            args.chain_root = args.ini_file
+            chain_root = args.ini_file
             args.ini_file = getdist.default_getdist_settings
             no_plots = True
     if not os.path.isfile(args.ini_file):
@@ -28,11 +30,11 @@ def main(args):
     ini = IniFile(args.ini_file)
 
     # File root
-    if args.chain_root is not None:
-        in_root = args.chain_root
+    if chain_root is not None:
+        in_root = chain_root
     else:
         in_root = ini.params['file_root']
-    if in_root == '':
+    if not in_root:
         print('Chain Root file name not given ', in_root)
         sys.exit()
     rootname = os.path.basename(in_root)
