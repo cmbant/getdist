@@ -26,7 +26,7 @@ setup(name='GetDist',
       packages=['getdist', 'getdist.gui', 'paramgrid', 'getdist_tests'],
       scripts=['GetDist.py', 'GetDistGUI.py'],
       test_suite='getdist_tests',
-      package_data={'getdist': ['analysis_defaults.ini']},
+      package_data={'getdist': ['analysis_defaults.ini', 'distparam_template.ini']},
       requires=[
           'numpy',
           'matplotlib',

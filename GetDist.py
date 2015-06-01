@@ -4,27 +4,33 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import subprocess
-import sys
 import getdist
+import io
 from getdist import MCSamples, chains, IniFile
 
 def runScript(fname):
     subprocess.Popen(['python', fname])
 
+def doError(msg):
+    if __name__ == '__main__':
+        import sys
+        print(msg)
+        sys.exit()
+    raise ValueError(msg)
+
 def main(args):
     no_plots = False
     chain_root = args.chain_root
-    if chain_root.endswith('.txt'): chain_root = chain_root[:-4]
     if args.ini_file is None and chain_root is None:
-        raise ValueError('Must give either a .ini file of parameters or a chain file root name')
+        doError('Must give either a .ini file of parameters or a chain file root name')
+    if chain_root.endswith('.txt'): chain_root = chain_root[:-4]
     if not '.ini' in args.ini_file and chain_root is None:
             # use default settings acting on chain_root, no plots
             chain_root = args.ini_file
             args.ini_file = getdist.default_getdist_settings
             no_plots = True
     if not os.path.isfile(args.ini_file):
-        print('Parameter file does not exist ', args.ini_file)
-        sys.exit()
+        doError('Parameter file does not exist: ' + args.ini_file)
 
     # Input parameters
     ini = IniFile(args.ini_file)
@@ -35,8 +41,7 @@ def main(args):
     else:
         in_root = ini.params['file_root']
     if not in_root:
-        print('Chain Root file name not given ', in_root)
-        sys.exit()
+        doError('Chain Root file name not given ')
     rootname = os.path.basename(in_root)
 
     if args.ignore_rows is not None:
@@ -52,8 +57,7 @@ def main(args):
     mc.initParameters(ini)
 
     if ini.bool('adjust_priors', False) or ini.bool('map_params', False):
-        print('To adjust priors or define new parameters, use a separate python script; see the python getdist docs for examples')
-        sys.exit()
+        doError('To adjust priors or define new parameters, use a separate python script; see the python getdist docs for examples')
 
     plot_ext = ini.string('plot_ext', 'py')
     finish_run_command = ini.string('finish_run_command', '')
@@ -90,8 +94,7 @@ def main(args):
     rootdirname = os.path.join(out_dir, rootname); mc.rootdirname = rootdirname
 
     if 'do_minimal_1d_intervals' in ini.params:
-        print('do_minimal_1d_intervals no longer used; set credible_interval_threshold instead')
-        sys.exit()
+        doError('do_minimal_1d_intervals no longer used; set credible_interval_threshold instead')
 
     line = ini.string('PCA_params', '')
     if line.lower() == 'all':
@@ -101,8 +104,7 @@ def main(args):
     PCA_num = ini.int('PCA_num', len(PCA_params))
     if PCA_num != 0:
         if PCA_num < 2:
-            print('Can only do PCA for 2 or more parameters')
-            sys.exit()
+            doError('Can only do PCA for 2 or more parameters')
         PCA_func = ini.string('PCA_func', '')
         # Characters representing functional mapping
         if PCA_func == '':
@@ -286,9 +288,20 @@ if __name__ == '__main__':
         raise
 
     parser = argparse.ArgumentParser(description='GetDist sample analyser')
-    parser.add_argument('ini_file', nargs='?', help='.ini file with analysis settings (optional, if omitted uses defaults')
+    parser.add_argument('ini_file', nargs='?', help='.ini file with analysis settings (optional, if omitted uses defaults)')
     parser.add_argument('chain_root', nargs='?', help='Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file')
-    parser.add_argument('--ignore_rows', default=None,
+    parser.add_argument('--ignore_rows',
             help='set initial fraction of chains to cut as burn in (fraction of total rows, or >1 number of rows); overrides any value in ini_file if set')
+    parser.add_argument('--make_param_file',
+            help='Produce a sample distparams.ini file that you can edit and use when running GetDist')
     parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
-    main(parser.parse_args())
+    args = parser.parse_args()
+    if args.make_param_file:
+        content = io.open(getdist.distparam_template).read()
+        analysis = io.open(getdist.default_getdist_settings).read()
+        content = content.replace('%%%ANALYSIS_DEFAULTS%%%', analysis)
+        with io.open(args.make_param_file, 'w') as f:
+            f.write(content)
+        print('Template .ini file written to ' + args.make_param_file)
+    else:
+        main(args)

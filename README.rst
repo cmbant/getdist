@@ -137,6 +137,49 @@ from two chains with root names *xxx* and *yyy*::
 
 MCSamples objects can also be constructed directly from numpy arrays in memory, see the example in the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.html>`_.
 
+GetDist script
+===================
+
+If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the GetDist.py script:
+
+	usage: GetDist.py [-h] [--ignore_rows *IGNORE_ROWS*] [-V]
+	                  [ini_file] [chain_root]
+	
+	GetDist sample analyser
+	
+	positional arguments:
+	  ini_file              .ini file with analysis settings (optional, if omitted
+	                        uses defaults
+	  chain_root            Root name of chain to analyse (e.g. chains/test),
+	                        required unless file_root specified in ini_file
+	
+	optional arguments:
+	  -h, --help            show this help message and exit
+	  --ignore_rows IGNORE_ROWS
+	                        set initial fraction of chains to cut as burn in
+	                        (fraction of total rows, or >1 number of rows);
+	                        overrides any value in ini_file if set
+	  --make_param_file MAKE_PARAM_FILE
+                        Produce a sample distparams.ini file that you can edit
+                        and use when running GetDist
+	  -V, --version         show program's version number and exit
+
+where *ini_file* is optionally a .ini file listing *key=value* parameter option values, and chain_root is the root file name of the chains.
+For example
+
+	GetDist.py distparams.ini chains/test_chain
+
+This produces a set of files containing parameter means and limits (.margestats), N-D likelihood contour boundaries and best-fit sample (.likestats),
+convergence diagnostics (.converge), parameter covariance and correlation (.covmat and .corr), and optionally various simple plotting scripts.
+If no *ini_file* is given, default settings are used. The *ignore_rows* option allows some of the start of each chain file to be removed as burn in.
+
+To customize settings you can run
+
+	GetDist.py --make_param_file distparams.ini
+	
+to produce the setting file distparams.ini, edit it, then run with your custom settings.
+
+
 Using with CosmoMC
 ===================
 
