@@ -142,13 +142,14 @@ GetDist script
 
 If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the GetDist.py script:
 
-	usage: GetDist.py [-h] [--ignore_rows *IGNORE_ROWS*] [-V] [ini_file] [chain_root]
+	usage: GetDist.py [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
 	
 	GetDist sample analyser
 	
 	positional arguments:
-	  ini_file              .ini file with analysis settings (optional, if omitted uses defaults
-	  chain_root            Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file
+	  *ini_file*              .ini file with analysis settings (optional, if omitted uses defaults
+	                       
+	  *chain_root*            Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file
 	
 	optional arguments:
 	  -h, --help            show this help message and exit
@@ -162,7 +163,7 @@ If you have chain files on on disk, you can also quickly calculate convergence a
 	  -V, --version         show program's version number and exit
 
 where *ini_file* is optionally a .ini file listing *key=value* parameter option values, and chain_root is the root file name of the chains.
-For example
+For example::
 
    GetDist.py distparams.ini chains/test_chain
 
@@ -170,7 +171,7 @@ This produces a set of files containing parameter means and limits (.margestats)
 convergence diagnostics (.converge), parameter covariance and correlation (.covmat and .corr), and optionally various simple plotting scripts.
 If no *ini_file* is given, default settings are used. The *ignore_rows* option allows some of the start of each chain file to be removed as burn in.
 
-To customize settings you can run
+To customize settings you can run::
 
    GetDist.py --make_param_file distparams.ini
 	
