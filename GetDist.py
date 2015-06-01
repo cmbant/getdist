@@ -74,6 +74,8 @@ def main(args):
 
     out_dir = ini.string('out_dir', './')
     if out_dir:
+        if not os.path.isdir(out_dir):
+            os.mkdir(out_dir)
         print('producing files in directory ', out_dir)
     mc.out_dir = out_dir
 
@@ -150,6 +152,16 @@ def main(args):
     if PCA_num > 0 and not plots_only:
         mc.PCA(PCA_params, PCA_func, PCA_NormParam, writeDataToFile=True)
 
+    if not no_plots:
+        # set plot_data_dir before we generate the 1D densities below
+        plot_data_dir = ini.string('plot_data_dir', default='plot_data/', allowEmpty=False)
+
+        abs_plot_data_dir = plot_data_dir
+        if not os.path.isdir(abs_plot_data_dir):
+            os.mkdir(abs_plot_data_dir)
+        mc.plot_data_dir = plot_data_dir
+
+
     # Do 1D bins
     mc.setDensitiesandMarge1D(writeDataToFile=not no_plots, meanlikes=plot_meanlikes)
 
@@ -193,13 +205,6 @@ def main(args):
             if len(pars) != 3: raise Exception('3D_plot parameter not found, not varied, or not wrong number of parameters')
             plot_3D.append(pars)
 
-
-        plot_data_dir = ini.string('plot_data_dir', default='plot_data/', allowEmpty=False)
-
-        abs_plot_data_dir = plot_data_dir
-        if not os.path.isdir(abs_plot_data_dir):
-            os.mkdir(abs_plot_data_dir)
-        mc.plot_data_dir = plot_data_dir
 
         # Produce file of weight-1 samples if requested
         if (num_3D_plots and not make_single_samples or make_scatter_samples) and not no_plots:
