@@ -45,7 +45,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, dist_settin
                 if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows:
                     changed = len(samples.contours) != len(cache.contours) or \
                                 np.any(np.array(samples.contours) != np.array(cache.contours))
-                    cache.updateSettings(ini, dist_settings, doUpdate=changed)
+                    cache.updateSettings(ini=ini, settings=dist_settings, doUpdate=changed)
                     return cache
             except:
                 pass
@@ -127,7 +127,7 @@ class MCSamples(chains):
         self.done_1Dbins = False
         self.density1D = dict()
 
-        self.updateSettings(ini, settings)
+        self.updateSettings(ini=ini, settings=settings)
 
     def setRanges(self, ranges):
         if isinstance(ranges, (list, tuple)):
@@ -227,7 +227,8 @@ class MCSamples(chains):
                 if line:
                     self.markers[par.name] = float(line)
 
-    def updateSettings(self, ini=None, ini_settings=None, doUpdate=True):
+    def updateSettings(self, settings=None, ini=None, doUpdate=True):
+        assert(settings is None or isinstance(settings, dict))
         if not ini:
             ini = self.ini
         elif isinstance(ini, six.string_types):
@@ -235,8 +236,8 @@ class MCSamples(chains):
         else:
             ini = copy.deepcopy(ini)
         if not ini: ini = IniFile(getdist.default_getdist_settings)
-        if ini_settings:
-            ini.params.update(ini_settings)
+        if settings:
+            ini.params.update(settings)
         self.ini = ini
         if ini: self.initParameters(ini)
         if doUpdate and self.samples is not None: self.updateBaseStatistics()
@@ -731,7 +732,7 @@ class MCSamples(chains):
                         pass
                     except:
                         thin_fac[ix] = 0
-                    if thin_rows < 2: thin_fac[ix] = 0
+                    if thin_fac[ix] and thin_rows < 2: thin_fac[ix] = 0
 
                 lines += "Raftery&Lewis statistics\n"
                 lines += "\n"

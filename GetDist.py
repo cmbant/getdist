@@ -12,6 +12,14 @@ def runScript(fname):
     subprocess.Popen(['python', fname])
 
 def main(args):
+    no_plots = False
+    if args.ini_file is None and args.chain_root is None:
+        raise ValueError('Must give either a .ini file of parameters or a chain file root name')
+    if not '.ini' in args.ini_file and args.chain_root is None:
+            # use default settings acting on chain_root, no plots
+            args.chain_root = args.ini_file
+            args.ini_file = getdist.default_getdist_settings
+            no_plots = True
     if not os.path.isfile(args.ini_file):
         print('Parameter file does not exist ', args.ini_file)
         sys.exit()
@@ -29,7 +37,10 @@ def main(args):
         sys.exit()
     rootname = os.path.basename(in_root)
 
-    ignorerows = ini.float('ignore_rows', 0.0)
+    if args.ignore_rows is not None:
+        ignorerows = args.ignore_rows
+    else:
+        ignorerows = ini.float('ignore_rows', 0.0)
 
     samples_are_chains = ini.bool('samples_are_chains', True)
 
@@ -45,10 +56,9 @@ def main(args):
     plot_ext = ini.string('plot_ext', 'py')
     finish_run_command = ini.string('finish_run_command', '')
 
-    no_plots = ini.bool('no_plots', False)
+    no_plots = ini.bool('no_plots', no_plots)
     plots_only = ini.bool('plots_only', False)
     no_tests = plots_only or ini.bool('no_tests', False)
-    make_plots = ini.bool('make_plots', False)
 
     thin_factor = ini.int('thin_factor', 0)
     thin_cool = ini.float('thin_cool', 1.0)
@@ -62,23 +72,16 @@ def main(args):
     shade_meanlikes = ini.bool('shade_meanlikes', False)
     plot_meanlikes = ini.bool('plot_meanlikes', False)
 
-    out_dir = ini.string('out_dir')
+    out_dir = ini.string('out_dir', './')
     if out_dir:
         print('producing files in directory ', out_dir)
     mc.out_dir = out_dir
 
-    out_root = ini.string('out_root')
+    out_root = ini.string('out_root', '')
     if out_root:
         rootname = out_root
         print('producing files with with root ', out_root)
     mc.rootname = rootname
-
-    plot_data_dir = ini.string('plot_data_dir') or 'plot_data/'
-
-    abs_plot_data_dir = plot_data_dir
-    if not os.path.isdir(abs_plot_data_dir):
-        os.mkdir(abs_plot_data_dir)
-    mc.plot_data_dir = plot_data_dir
 
     rootdirname = os.path.join(out_dir, rootname); mc.rootdirname = rootdirname
 
@@ -126,42 +129,6 @@ def main(args):
         print('Cooling chains by ', cool)
         mc.cool(cool)
 
-    plotparams = []
-    line = ini.string('plot_params', '')
-    if line not in ['', '0']:
-        plotparams = filterPars(line.split())
-
-    line = ini.string('plot_2D_param', '')
-    plot_2D_param = None
-    if line.strip() and line != '0':
-        plot_2D_param = line.strip()
-
-    cust2DPlots = []
-    if not plot_2D_param:
-        # Use custom array of specific plots
-        num_cust2D_plots = ini.int('plot_2D_num', 0)
-        for i in range(1, num_cust2D_plots + 1):
-            line = ini.string('plot' + str(i))
-            pars = filterPars(line.split())
-            if len(pars) != 2: raise Exception('plot_2D_num parameter not found, not varied, or not wrong number of parameters')
-            cust2DPlots.append(pars)
-
-    triangle_params = []
-    triangle_plot = ini.bool('triangle_plot', False)
-    if triangle_plot:
-        line = ini.string('triangle_params')
-        if line: triangle_params = filterPars(line.split())
-        triangle_num = len(triangle_params)
-        triangle_plot = triangle_num > 1
-
-    num_3D_plots = ini.int('num_3D_plots', 0)
-    plot_3D = []
-    for ix in range(1, num_3D_plots + 1):
-        line = ini.string('3D_plot' + str(ix))
-        pars = filterPars(line.split())
-        if len(pars) != 3: raise Exception('3D_plot parameter not found, not varied, or not wrong number of parameters')
-        plot_3D.append(pars)
-
     mc.updateBaseStatistics()
 
     if not no_tests:
@@ -177,15 +144,6 @@ def main(args):
         filename = rootdirname + '_thin.txt'
         mc.WriteThinData(filename, thin_ix, thin_cool)
 
-    # Produce file of weight-1 samples if requested
-    if (num_3D_plots and not make_single_samples or make_scatter_samples) and not no_plots:
-        make_single_samples = True
-        single_thin = max(1, int(round(mc.norm / mc.max_mult)) // mc.max_scatter_points)
-
-    if make_single_samples:
-        filename = os.path.join(plot_data_dir, rootname.strip() + '_single.txt')
-        mc.makeSingleSamples(filename, single_thin)
-
     print(mc.getNumSampleSummaryText().strip())
     if mc.likeStats: print(mc.likeStats.likeSummary().strip())
 
@@ -199,9 +157,65 @@ def main(args):
         # Output files for 1D plots
         print('Calculating plot data...')
 
+        plotparams = []
+        line = ini.string('plot_params', '')
+        if line not in ['', '0']:
+            plotparams = filterPars(line.split())
+
+        line = ini.string('plot_2D_param', '')
+        plot_2D_param = None
+        if line.strip() and line != '0':
+            plot_2D_param = line.strip()
+
+        cust2DPlots = []
+        if not plot_2D_param:
+            # Use custom array of specific plots
+            num_cust2D_plots = ini.int('plot_2D_num', 0)
+            for i in range(1, num_cust2D_plots + 1):
+                line = ini.string('plot' + str(i))
+                pars = filterPars(line.split())
+                if len(pars) != 2: raise Exception('plot_2D_num parameter not found, not varied, or not wrong number of parameters')
+                cust2DPlots.append(pars)
+
+        triangle_params = []
+        triangle_plot = ini.bool('triangle_plot', False)
+        if triangle_plot:
+            line = ini.string('triangle_params')
+            if line: triangle_params = filterPars(line.split())
+            triangle_num = len(triangle_params)
+            triangle_plot = triangle_num > 1
+
+        num_3D_plots = ini.int('num_3D_plots', 0)
+        plot_3D = []
+        for ix in range(1, num_3D_plots + 1):
+            line = ini.string('3D_plot' + str(ix))
+            pars = filterPars(line.split())
+            if len(pars) != 3: raise Exception('3D_plot parameter not found, not varied, or not wrong number of parameters')
+            plot_3D.append(pars)
+
+
+        plot_data_dir = ini.string('plot_data_dir', default='plot_data/', allowEmpty=False)
+
+        abs_plot_data_dir = plot_data_dir
+        if not os.path.isdir(abs_plot_data_dir):
+            os.mkdir(abs_plot_data_dir)
+        mc.plot_data_dir = plot_data_dir
+
+        # Produce file of weight-1 samples if requested
+        if (num_3D_plots and not make_single_samples or make_scatter_samples) and not no_plots:
+            make_single_samples = True
+            single_thin = max(1, int(round(mc.norm / mc.max_mult)) // mc.max_scatter_points)
+
+        if make_single_samples:
+            filename = os.path.join(plot_data_dir, rootname.strip() + '_single.txt')
+            mc.makeSingleSamples(filename, single_thin)
+
+
         # Write paramNames file
         mc.getParamNames().saveAsText(os.path.join(plot_data_dir, rootname + '.paramnames'))
         mc.getBounds().saveToFile(os.path.join(plot_data_dir, rootname + '.bounds'))
+
+        make_plots = ini.bool('make_plots', False)
 
         done2D = {}
 
@@ -265,7 +279,9 @@ if __name__ == '__main__':
         raise
 
     parser = argparse.ArgumentParser(description='GetDist sample analyser')
-    parser.add_argument('ini_file', help='.ini file with analysis settings')
-    parser.add_argument('chain_root', nargs='?', help='Root name of chain to analyse (e.g. chains/test)')
+    parser.add_argument('ini_file', nargs='?', help='.ini file with analysis settings (optional, if omitted uses defaults')
+    parser.add_argument('chain_root', nargs='?', help='Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file')
+    parser.add_argument('--ignore_rows', default=None,
+            help='set initial fraction of chains to cut as burn in (fraction of total rows, or >1 number of rows); overrides any value in ini_file if set')
     parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
     main(parser.parse_args())

@@ -7,6 +7,8 @@ import re
 import pickle
 import time
 import shutil
+import multiprocessing
+
 from distutils import spawn
 import six
 
@@ -76,10 +78,25 @@ class jobSettings(object):
         self.job_template = getDefaulted('job_template', 'job_script', **kwargs)
         with open(self.job_template, 'r') as f:
             template = f.read()
+        try:
+            cores = multiprocessing.cpu_count()
+            if cores > 64:
+                # probably shared memory machine, e.g. Cosmos
+                cores = 8
+        except:
+            cores = 8
 
-        self.coresPerNode = getDefaulted('coresPerNode', 16, tp=int, template=template, **kwargs)
-        self.chainsPerNode = getDefaulted('chainsPerNode', 4, tp=int, template=template, **kwargs)
-        self.nodes = getDefaulted('nodes', 1, tp=int, template=template, **kwargs)
+        self.coresPerNode = getDefaulted('coresPerNode', cores, tp=int, template=template, **kwargs)
+        if cores == 4:
+            perNode = 2
+        elif cores % 4 == 0:
+            perNode = cores // 4
+        elif cores > 3 and cores % 3 == 0:
+            perNode = cores // 3
+        else:
+            perNode = 1
+        self.chainsPerNode = getDefaulted('chainsPerNode', perNode, tp=int, template=template, **kwargs)
+        self.nodes = getDefaulted('nodes', max(1, 4 // perNode), tp=int, template=template, **kwargs)
         self.nchains = self.nodes * self.chainsPerNode
 
         self.runsPerJob = getDefaulted('runsPerJob', 1, tp=int, template=template, **kwargs)
@@ -241,7 +258,6 @@ def submitJob(jobName, paramFiles, sequential=False, msg=False, **kwargs):
 
     j.path = os.getcwd()
     j.onerun = (0, 1)[len(paramFiles) == 1 or sequential]
-    # mem = mem_per_node * numnodes
     vals = dict()
     vals['JOBNAME'] = jobName
     vals['OMP'] = j.omp

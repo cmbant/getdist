@@ -492,6 +492,16 @@ class ParamLimit(object):
         else:
             return 'none'
 
+    def limitType(self):
+        if self.twotail:
+            return 'two tail'
+        elif self.onetail_upper:
+            return 'one tail upper limit'
+        elif self.onetail_lower:
+            return 'one tail lower limit'
+        else:
+            return 'none'
+
     def __str__(self):
         return "%g %g %s" % (self.lower, self.upper, self.limitTag())
 

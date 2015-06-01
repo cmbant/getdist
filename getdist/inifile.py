@@ -223,6 +223,12 @@ class IniFile(object):
         return self.split(name, default, tp=int)
 
     def split(self, name, default=None, tp=None):
+        if name in self.params and isinstance(self.params[name], (list, tuple)):
+            if tp is None:
+                return self.params[name]
+            else:
+                return  [tp(x) for x in self.params[name]]
+
         s = self.string(name, default)
         if isinstance(s, six.string_types):
             if tp is not None:

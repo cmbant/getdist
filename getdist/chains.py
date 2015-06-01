@@ -28,7 +28,8 @@ def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-
     files = []
     while True:
         index += 1
-        fname = root + ('', '_' + str(index))[index > 0] + ext
+        fname = root + ('', '_' + str(index))[index > 0]
+        if not ext in fname: fname += ext
         if index > 0 and not os.path.exists(fname) or 0 < last_chain <= index: break
         if (chain_indices is None or index in chain_indices) and \
            (chain_exclude is None or not index in chain_exclude) and index >= first_chain and os.path.exists(fname):
@@ -524,6 +525,8 @@ class chains(WeightedSamples):
             self.chains.append(WeightedSamples(fname, ignore_lines or self.ignore_lines))
         if len(self.chains) == 0:
             raise WeightedSampleError('loadChains - no chains found for ' + root)
+        if self.paramNames is None:
+            self.paramNames = ParamNames(default=self.chains[0].n)
         self._weightsChanged()
         return len(self.chains) > 0
 
