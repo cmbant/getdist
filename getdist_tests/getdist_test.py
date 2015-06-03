@@ -57,9 +57,9 @@ class GetDistFileTest(unittest.TestCase):
 
         def callGetDist(args):
             if os.getenv('TRAVIS', None):
-                return subprocess.check_output(['GetDist.py'] + args)
+                return str(subprocess.check_output(['GetDist.py'] + args))
             else:
-                return subprocess.check_output(['python', os.path.join(os.path.dirname(__file__), '../', 'GetDist.py')] + args)
+                return str(subprocess.check_output(['python', os.path.join(os.path.dirname(__file__), '../', 'GetDist.py')] + args))
 
         os.chdir(self.tempdir)
         res = callGetDist([self.root])
@@ -128,7 +128,7 @@ class GetDistTest(unittest.TestCase):
         samples = self.samples
         p = samples.getParams()
         samples.addDerived(p.x + (5 + p.y) ** 2, name='z')
-        samples.updateChainBaseStatistics()
+        samples.updateBaseStatistics()
 
         g.plot_2d(samples, 'x', 'y')
         g.newPlot()

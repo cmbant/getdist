@@ -70,7 +70,7 @@ class jobSettings(object):
             grid_engine = 'MOAB'
         else:
             try:
-                help_info = subprocess.check_output('qstat -help', shell=True).strip()
+                help_info = str(subprocess.check_output('qstat -help', shell=True)).strip()
                 if 'OGS/GE' in help_info: grid_engine = 'OGS'  # Open Grid Scheduler, as on StarCluster
             except:
                 pass
@@ -236,7 +236,7 @@ def deleteJobs(batchPath, jobIds=None, rootNames=None, jobNames=None, jobId_minm
                         qdel = j.qdel
                     else:
                         qdel = 'qdel'
-                    subprocess.check_output(qdel + ' ' + str(jobId), shell=True).strip()
+                    subprocess.check_output(qdel + ' ' + str(jobId), shell=True)
                 index.delId(jobId)
             elif jobId in validIds:
                 print('...', j.jobName, jobId)
@@ -300,7 +300,7 @@ def submitJob(jobName, paramFiles, sequential=False, msg=False, **kwargs):
         if len(paramFiles) > 1:
             open(scriptRoot + '.batch', 'w').write("\n".join(paramFiles))
         if not kwargs.get('no_sub', False):
-            res = subprocess.check_output(replacePlaceholders(j.qsub, vals) + ' ' + scriptName, shell=True).strip()
+            res = str(subprocess.check_output(replacePlaceholders(j.qsub, vals) + ' ' + scriptName, shell=True)).strip()
             if not res:
                 print('No qsub output')
             else:
@@ -323,11 +323,11 @@ def queue_job_details(batchPath=None, running=True, queued=True, warnNotBatch=Tr
         print('No existing job index found')
         return []
     if spawn.find_executable("showq") is not None:
-        res = subprocess.check_output('showq -U $USER', shell=True).strip()
+        res = str(subprocess.check_output('showq -U $USER', shell=True)).strip()
         runningTxt = ' Running '
     else:
         # e.g. Sun Grid Engine/OGS
-        res = subprocess.check_output('qstat -u $USER', shell=True).strip()
+        res = str(subprocess.check_output('qstat -u $USER', shell=True)).strip()
         runningTxt = ' r '
     res = res.split("\n")
     names = []
