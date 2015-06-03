@@ -5,8 +5,9 @@ import os
 import re
 import numpy as np
 import unittest
-import warnings
-from getdist import loadMCSamples, plots
+import subprocess
+import shutil
+from getdist import loadMCSamples, plots, IniFile
 from getdist_tests.test_distributions import Test2DDistributions
 
 
@@ -51,7 +52,49 @@ class GetDistFileTest(unittest.TestCase):
 
         g.settings.num_plot_contours = 3
         g.plot_2d('testchain', ['x', 'y'])
-        g.export('z://test.pdf')
+
+    def testGetDist(self):
+
+        def callGetDist(args):
+            if os.getenv('TRAVIS', None):
+                return subprocess.check_output(['GetDist.py'] + args)
+            else:
+                return subprocess.check_output(['python', os.path.join(os.path.dirname(__file__), '../', 'GetDist.py')] + args)
+
+        os.chdir(self.tempdir)
+        res = callGetDist([self.root])
+        self.assertTrue('-Ln(mean like)  = 2.30' in res)
+        fname = 'testchain_pars.ini'
+        callGetDist(['--make_param_file', fname])
+        ini = IniFile(fname)
+        ini.params['no_plots'] = False
+        ini.params['plot_2D_num'] = 1
+        ini.params['plot1'] = 'x y'
+        ini.params['num_3D_plots'] = 1
+        ini.params['3D_plot1'] = 'x y x'
+        ini.params['plot_data_dir'] = ''
+        ini.saveFile(fname)
+        res = callGetDist([fname, self.root])
+        self.assertTrue('-Ln(mean like)  = 2.30' in res)
+        self.assertFalse(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
+        def checkRun():
+            for f in ['.py', '_2D.py', '_3D.py', '_tri.py']:
+                pyname = self.root + f
+                self.assertTrue(os.path.isfile(pyname))
+                subprocess.check_output(['python', pyname])
+                pdf = self.root + f.replace('py', 'pdf')
+                self.assertTrue(os.path.isfile(pdf))
+                os.remove(pdf)
+                os.remove(pyname)
+
+        checkRun()
+
+        ini.params['plot_data_dir'] = 'plot_data/'
+        ini.saveFile(fname)
+        res = callGetDist([fname, self.root])
+        self.assertTrue(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
+        checkRun()
+        shutil.rmtree(os.path.join(self.tempdir, 'plot_data'))
 
 
 class GetDistTest(unittest.TestCase):
@@ -61,7 +104,6 @@ class GetDistTest(unittest.TestCase):
         np.random.seed(10)
         self.testdists = Test2DDistributions()
         self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
-        warnings.filterwarnings('ignore', '.*tight_layout.*',)
 
     def testTables(self):
         self.assertEqual(str(self.samples.getLatex(limit=2)),

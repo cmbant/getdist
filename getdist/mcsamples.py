@@ -1622,100 +1622,64 @@ class MCSamples(chains):
     # Write functions for GetDist.py
 
     def WriteScriptPlots1D(self, filename, plotparams=None, ext=None):
-        ext = ext or self.plot_output
-        with  open(filename, 'w') as f:
-            textInit = self.WritePlotFileInit()
-            f.write(textInit % (
-                    self.plot_data_dir, self.subplot_size_inch,
-                    self.out_dir, self.rootname))
-            text = 'markers=' + str(self.markers) + '\n'
-            if plotparams:
-                text += 'g.plots_1d(roots,[' + ",".join(['\'' + par + '\'' for par in plotparams]) + '], markers=markers)'
-            else:
-                text += 'g.plots_1d(roots, markers=markers)\n'
-            f.write(text)
-            textExport = self.WritePlotFileExport()
-            fname = self.rootname + '.' + ext
-            f.write(textExport % fname)
+        text = 'markers=' + str(self.markers) + '\n'
+        if plotparams:
+            text += 'g.plots_1d(roots,[' + ",".join(['\'' + par + '\'' for par in plotparams]) + '], markers=markers)'
+        else:
+            text += 'g.plots_1d(roots, markers=markers)'
+        self.WritePlotFile(filename, self.subplot_size_inch, text, '', ext)
 
-
-    def WriteScriptPlots2D(self, filename, plot_2D_param, cust2DPlots, plots_only, ext=None, shade_meanlikes=False):
-        ext = ext or self.plot_output
+    def WriteScriptPlots2D(self, filename, plot_2D_param, cust2DPlots, writeDataToFile=False, ext=None, shade_meanlikes=False):
         done2D = {}
+        text = 'pairs=[]\n'
+        plot_num = 0
+        if cust2DPlots:
+            cuts = [par1 + '__' + par2 for par1, par2 in cust2DPlots]
+        for j, par1 in enumerate(self.paramNames.list()):
+            if plot_2D_param or cust2DPlots:
+                if par1 == plot_2D_param: continue
+                j2min = 0
+            else:
+                j2min = j + 1
 
-        with open(filename, 'w') as f:
-            textInit = self.WritePlotFileInit()
-            f.write(textInit % (
-                    self.plot_data_dir, self.subplot_size_inch2,
-                    self.out_dir, self.rootname))
-            f.write('pairs=[]\n')
-            plot_num = 0
-            if cust2DPlots:
-                cuts = [par1 + '__' + par2 for par1, par2 in cust2DPlots]
-            for j, par1 in enumerate(self.paramNames.list()):
-                if plot_2D_param or cust2DPlots:
-                    if par1 == plot_2D_param: continue
-                    j2min = 0
-                else:
-                    j2min = j + 1
-
-                for j2 in range(j2min, self.n):
-                    par2 = self.parName(j2)
-                    if plot_2D_param and par2 != plot_2D_param: continue
-                    if cust2DPlots and (par1 + '__' + par2) not in cuts: continue
-                    plot_num += 1
-                    done2D[(par1, par2)] = True
-                    if not plots_only:
-                        self.get2DDensityGridData(j, j2, writeDataToFile=True, meanlikes=shade_meanlikes)
-                    f.write("pairs.append(['%s','%s'])\n" % (par1, par2))
-            f.write('g.plots_2d(roots,param_pairs=pairs)\n')
-            textExport = self.WritePlotFileExport()
-            fname = self.rootname + '_2D.' + ext
-            f.write(textExport % fname)
+            for j2 in range(j2min, self.n):
+                par2 = self.parName(j2)
+                if plot_2D_param and par2 != plot_2D_param: continue
+                if cust2DPlots and (par1 + '__' + par2) not in cuts: continue
+                plot_num += 1
+                done2D[(par1, par2)] = True
+                if writeDataToFile:
+                    self.get2DDensityGridData(j, j2, writeDataToFile=True, meanlikes=shade_meanlikes)
+                text += "pairs.append(['%s','%s'])\n" % (par1, par2)
+        text += 'g.plots_2d(roots,param_pairs=pairs)'
+        self.WritePlotFile(filename, self.subplot_size_inch2, text, '_2D', ext)
         return done2D
 
     def WriteScriptPlotsTri(self, filename, triangle_params, ext=None):
-        ext = ext or self.plot_output
-        with open(filename, 'w') as f:
-            textInit = self.WritePlotFileInit()
-            f.write(textInit % (
-                    self.plot_data_dir, self.subplot_size_inch,
-                    self.out_dir, self.rootname))
-            text = 'g.triangle_plot(roots, %s)\n' % triangle_params
-            f.write(text)
-            textExport = self.WritePlotFileExport()
-            fname = self.rootname + '_tri.' + ext
-            f.write(textExport % fname)
-
+            text = 'g.triangle_plot(roots, %s)' % triangle_params
+            self.WritePlotFile(filename, self.subplot_size_inch, text, '_tri', ext)
 
     def WriteScriptPlots3D(self, filename, plot_3D, ext=None):
-        ext = ext or self.plot_output
+        text = 'sets=[]\n'
+        for pars in plot_3D:
+            text += "sets.append(['%s','%s','%s'])\n" % tuple(pars)
+        text += 'g.plots_3d(roots,sets)'
+        self.WritePlotFile(filename, self.subplot_size_inch3, text, '_3D', ext)
+
+    def WritePlotFile(self, filename, subplot_size, text, tag, ext=None):
         with open(filename, 'w') as f:
-            textInit = self.WritePlotFileInit()
-            f.write(textInit % (
-                    self.plot_data_dir, self.subplot_size_inch3,
-                    self.out_dir, self.rootname))
-            f.write('sets=[]\n')
-            text = ""
-            for pars in plot_3D:
-                text += "sets.append(['%s','%s','%s'])\n" % tuple(pars)
-            text += 'g.plots_3d(roots,sets)\n'
-            f.write(text)
-            fname = self.rootname + '_3D.' + ext
-            textExport = self.WritePlotFileExport()
-            f.write(textExport % fname)
+            f.write("import getdist.plots as plots, os\n")
+            if self.plot_data_dir:
+                f.write("g=plots.GetDistPlotter(plot_data=r'%s')\n" % self.plot_data_dir)
+            else:
+                f.write("g=plots.GetDistPlotter(chain_dir=r'%s')\n" % os.path.dirname(self.root))
 
-
-    def WritePlotFileInit(self):
-        return """import getdist.plots as plots, os
-g=plots.GetDistPlotter(plot_data='%s')
-g.settings.setWithSubplotSize(%f)
-outdir='%s'
-roots=['%s']
-"""
-
-    def WritePlotFileExport(self):
-        return "g.export(os.path.join(outdir,'%s'))\n"
+            f.write("g.settings.setWithSubplotSize(%s)\n" % subplot_size)
+            f.write("roots = ['%s']\n" % self.rootname)
+            f.write(text + '\n')
+            ext = ext or self.plot_output
+            fname = self.rootname + tag + '.' + ext
+            f.write("g.export(os.path.join(r'%s',r'%s'))\n" % (self.out_dir, fname))
 
 
 # ==============================================================================

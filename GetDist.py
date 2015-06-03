@@ -23,7 +23,6 @@ def main(args):
     chain_root = args.chain_root
     if args.ini_file is None and chain_root is None:
         doError('Must give either a .ini file of parameters or a chain file root name')
-    if chain_root.endswith('.txt'): chain_root = chain_root[:-4]
     if not '.ini' in args.ini_file and chain_root is None:
             # use default settings acting on chain_root, no plots
             chain_root = args.ini_file
@@ -31,6 +30,8 @@ def main(args):
             no_plots = True
     if not os.path.isfile(args.ini_file):
         doError('Parameter file does not exist: ' + args.ini_file)
+    if chain_root and chain_root.endswith('.txt'):
+        chain_root = chain_root[:-4]
 
     # Input parameters
     ini = IniFile(args.ini_file)
@@ -158,16 +159,15 @@ def main(args):
 
     if not no_plots:
         # set plot_data_dir before we generate the 1D densities below
-        plot_data_dir = ini.string('plot_data_dir', default='plot_data/', allowEmpty=False)
-
-        abs_plot_data_dir = plot_data_dir
-        if not os.path.isdir(abs_plot_data_dir):
-            os.mkdir(abs_plot_data_dir)
-        mc.plot_data_dir = plot_data_dir
-
+        plot_data_dir = ini.string('plot_data_dir', default='', allowEmpty=True)
+        if plot_data_dir and not os.path.isdir(plot_data_dir):
+            os.mkdir(plot_data_dir)
+    else:
+        plot_data_dir = None
+    mc.plot_data_dir = plot_data_dir
 
     # Do 1D bins
-    mc.setDensitiesandMarge1D(writeDataToFile=not no_plots, meanlikes=plot_meanlikes)
+    mc.setDensitiesandMarge1D(writeDataToFile=not no_plots and plot_data_dir, meanlikes=plot_meanlikes)
 
     if not no_plots:
         # Output files for 1D plots
@@ -197,7 +197,10 @@ def main(args):
         triangle_plot = ini.bool('triangle_plot', False)
         if triangle_plot:
             line = ini.string('triangle_params')
-            if line: triangle_params = filterPars(line.split())
+            if line:
+                triangle_params = filterPars(line.split())
+            else:
+                triangle_params = mc.paramNames.list()
             triangle_num = len(triangle_params)
             triangle_plot = triangle_num > 1
 
@@ -215,14 +218,14 @@ def main(args):
             make_single_samples = True
             single_thin = max(1, int(round(mc.norm / mc.max_mult)) // mc.max_scatter_points)
 
-        if make_single_samples:
-            filename = os.path.join(plot_data_dir, rootname.strip() + '_single.txt')
-            mc.makeSingleSamples(filename, single_thin)
+        if plot_data_dir:
+            if make_single_samples:
+                filename = os.path.join(plot_data_dir, rootname.strip() + '_single.txt')
+                mc.makeSingleSamples(filename, single_thin)
 
-
-        # Write paramNames file
-        mc.getParamNames().saveAsText(os.path.join(plot_data_dir, rootname + '.paramnames'))
-        mc.getBounds().saveToFile(os.path.join(plot_data_dir, rootname + '.bounds'))
+            # Write paramNames file
+            mc.getParamNames().saveAsText(os.path.join(plot_data_dir, rootname + '.paramnames'))
+            mc.getBounds().saveToFile(os.path.join(plot_data_dir, rootname + '.bounds'))
 
         make_plots = ini.bool('make_plots', False)
 
@@ -244,7 +247,8 @@ def main(args):
         if cust2DPlots or plot_2D_param:
             print('...producing 2D plots')
             filename = rootdirname + '_2D.' + plot_ext
-            done2D = mc.WriteScriptPlots2D(filename, plot_2D_param, cust2DPlots, plots_only, shade_meanlikes=shade_meanlikes)
+            done2D = mc.WriteScriptPlots2D(filename, plot_2D_param, cust2DPlots,
+                                           writeDataToFile=plot_data_dir, shade_meanlikes=shade_meanlikes)
             if make_plots: runScript(filename)
 
         if triangle_plot:
@@ -254,7 +258,7 @@ def main(args):
             mc.WriteScriptPlotsTri(filename, triangle_params)
             for i, p2 in enumerate(triangle_params):
                 for p1 in triangle_params[i + 1:]:
-                    if not done2D.get((p1, p2)) and not plots_only:
+                    if not done2D.get((p1, p2)) and plot_data_dir:
                         mc.get2DDensityGridData(p1, p2, writeDataToFile=True, meanlikes=shade_meanlikes)
             if make_plots: runScript(filename)
 
