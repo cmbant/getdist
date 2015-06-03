@@ -26,8 +26,8 @@ class CovMat(object):
             self.matrix = np.loadtxt(f)
 
     def saveToFile(self, filename):
-        with open(filename, 'w') as fout:
-            fout.write('# ' + self.paramNameString() + '\n')
+        with open(filename, 'wb') as fout:
+            fout.write(b'# ' + self.paramNameString() + '\n')
             np.savetxt(fout, self.matrix, '%15.7E')
 
     def rescaleParameter(self, name, scale):
