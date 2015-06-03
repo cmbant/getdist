@@ -1,5 +1,6 @@
 from __future__ import print_function
 import numpy as np
+import io
 
 class CovMat(object):
     def __init__(self, filename='', matrix=None, paramNames=None):
@@ -26,8 +27,8 @@ class CovMat(object):
             self.matrix = np.loadtxt(f)
 
     def saveToFile(self, filename):
-        with open(filename, 'wb') as fout:
-            fout.write(b'# ' + self.paramNameString() + '\n')
+        with io.open(filename, 'wb') as fout:
+            fout.write('# ' + self.paramNameString() + '\n')
             np.savetxt(fout, self.matrix, '%15.7E')
 
     def rescaleParameter(self, name, scale):
