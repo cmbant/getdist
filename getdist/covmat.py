@@ -28,7 +28,7 @@ class CovMat(object):
 
     def saveToFile(self, filename):
         with io.open(filename, 'wb') as fout:
-            fout.write('# ' + self.paramNameString() + '\n')
+            fout.write(('# ' + self.paramNameString() + '\n').encode('UTF-8'))
             np.savetxt(fout, self.matrix, '%15.7E')
 
     def rescaleParameter(self, name, scale):

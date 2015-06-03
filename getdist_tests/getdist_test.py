@@ -12,7 +12,7 @@ from getdist_tests.test_distributions import Test2DDistributions
 
 
 class GetDistFileTest(unittest.TestCase):
-    """test reading files and convergence routines"""
+    """test reading files, convergence routines and GetDist.py script"""
 
     def setUp(self):
         np.random.seed(10)
