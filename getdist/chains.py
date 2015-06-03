@@ -482,8 +482,17 @@ class chains(WeightedSamples):
         return self.index
 
     def setParams(self, obj):
+        # makes obj.xx, obj.yy etc as given by the parameter names, where
+        # obj.xx is the vector of samples with name 'xx'
+        # if xx is of the form aa.bb.cc, it makes subobjects so you can reference obj.aa.bb.cc
         for i, name in enumerate(self.paramNames.names):
-            setattr(obj, name.name, self.samples[:, i])
+            path = name.name.split('.')
+            ob = obj
+            for p in path[:-1]:
+                if not hasattr(ob, p):
+                    setattr(ob, p, ParSamples())
+                ob = getattr(ob, p)
+            setattr(ob, path[-1], self.samples[:, i])
         return obj
 
     def getParams(self):
@@ -510,9 +519,11 @@ class chains(WeightedSamples):
         self.needs_update = False
         return self
 
-    def addDerived(self, paramVec, **kwargs):
+    def addDerived(self, paramVec, name, **kwargs):
+        if self.paramNames.parWithName(name):
+            raise ValueError('Parameter with name %s already exists' % name)
         self.changeSamples(np.c_[self.samples, paramVec])
-        return self.paramNames.addDerived(**kwargs)
+        return self.paramNames.addDerived(name, **kwargs)
 
     def loadChains(self, root, files, ignore_lines=None):
         self.chains = []
@@ -598,11 +609,12 @@ class chains(WeightedSamples):
         self.paramNames.deleteIndices(fixed)
         self.getParamIndices()
 
-    def saveAsText(self, root, chain_index=None):
+    def saveAsText(self, root, chain_index=None, make_dirs=False):
         if self.loglikes is not None:
             loglikes = self.loglikes
         else:
             loglikes = np.zeros(self.numrows)
+        if make_dirs: os.makedirs(os.path.dirname(root))
         np.savetxt(root + ('' if chain_index is None else '_' + str(chain_index + 1)) + '.txt',
                    np.hstack((self.weights.reshape(-1, 1), loglikes.reshape(-1, 1), self.samples)),
                    fmt=self.precision)

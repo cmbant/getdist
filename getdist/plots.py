@@ -5,6 +5,7 @@ import copy
 import matplotlib
 import sys
 import six
+import warnings
 
 matplotlib.use('Agg', warn=False)
 from matplotlib import cm, rcParams
@@ -882,10 +883,12 @@ class GetDistPlotter(object):
                     no_gap=False, no_extra_legend_space=False, no_tight=False):
         has_legend = self.settings.line_labels and legend_labels and len(legend_labels) > 1
         if self.settings.tight_layout and not no_tight:
-            if no_gap:
-                plt.tight_layout(h_pad=0, w_pad=0)
-            else:
-                plt.tight_layout()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                if no_gap:
+                    plt.tight_layout(h_pad=0, w_pad=0)
+                else:
+                    plt.tight_layout()
 
         if has_legend:
             if legend_ncol is None: legend_ncol = self.settings.figure_legend_ncol

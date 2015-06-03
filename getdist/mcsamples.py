@@ -1614,8 +1614,8 @@ class MCSamples(chains):
 
         return cust2DPlots
 
-    def saveAsText(self, root, chain_index=None):
-        super(MCSamples, self).saveAsText(root, chain_index)
+    def saveAsText(self, root, chain_index=None, make_dirs=False):
+        super(MCSamples, self).saveAsText(root, chain_index, make_dirs)
         if not chain_index:
             self.ranges.saveToFile(root + '.ranges')
 
