@@ -22,7 +22,7 @@ def main(args):
     no_plots = False
     chain_root = args.chain_root
     if args.ini_file is None and chain_root is None:
-        doError('Must give either a .ini file of parameters or a chain file root name')
+        doError('Must give either a .ini file of parameters or a chain file root name. Run "GetDist.py -h" for help.')
     if not '.ini' in args.ini_file and chain_root is None:
             # use default settings acting on chain_root, no plots
             chain_root = args.ini_file
