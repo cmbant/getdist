@@ -614,7 +614,8 @@ class chains(WeightedSamples):
             loglikes = self.loglikes
         else:
             loglikes = np.zeros(self.numrows)
-        if make_dirs: os.makedirs(os.path.dirname(root))
+        if make_dirs and not os.path.exists(os.path.dirname(root)):
+            os.makedirs(os.path.dirname(root))
         np.savetxt(root + ('' if chain_index is None else '_' + str(chain_index + 1)) + '.txt',
                    np.hstack((self.weights.reshape(-1, 1), loglikes.reshape(-1, 1), self.samples)),
                    fmt=self.precision)
