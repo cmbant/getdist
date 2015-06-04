@@ -18,7 +18,7 @@ import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
 import six
 
-pickle_version = 20
+pickle_version = 21
 
 class MCSamplesError(Exception):
     pass
