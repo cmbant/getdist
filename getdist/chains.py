@@ -6,6 +6,9 @@ from getdist.paramnames import ParamNames, ParamInfo
 from getdist.convolve import autoConvolve
 import six
 
+# whether to write to terminal chain names and burn in details when loaded from file
+print_load_details = True
+
 try:
     import pandas
     from distutils.version import LooseVersion
@@ -441,7 +444,7 @@ class WeightedSamples(object):
         self.changeSamples(self.samples[ix:, :])
 
 
-class chains(WeightedSamples):
+class Chains(WeightedSamples):
     def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, **kwargs):
         WeightedSamples.__init__(self, **kwargs)
         self.jobItem = jobItem
@@ -532,7 +535,7 @@ class chains(WeightedSamples):
         self.loglikes = None
         self.name_tag = self.name_tag or os.path.basename(root)
         for fname in files:
-            print(fname)
+            if print_load_details: print(fname)
             self.chains.append(WeightedSamples(fname, ignore_lines or self.ignore_lines))
         if len(self.chains) == 0:
             raise WeightedSampleError('loadChains - no chains found for ' + root)
@@ -540,7 +543,6 @@ class chains(WeightedSamples):
             self.paramNames = ParamNames(default=self.chains[0].n)
         self._weightsChanged()
         return len(self.chains) > 0
-
 
     def getGelmanRubinEigenvalues(self, nparam=None, chainlist=None):
         # Assess convergence in the var(mean)/mean(var) in the worst eigenvalue

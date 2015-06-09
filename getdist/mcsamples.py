@@ -10,9 +10,9 @@ import time
 import numpy as np
 from scipy.stats import norm
 import getdist
-from getdist import types, covmat, ParamInfo, IniFile
+from getdist import chains, types, covmat, ParamInfo, IniFile
 from getdist.densities import Density1D, Density2D
-from getdist.chains import chains, chainFiles, lastModified
+from getdist.chains import Chains, chainFiles, lastModified
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
@@ -67,9 +67,9 @@ class Kernel1D(object):
 
 # =============================================================================
 
-class MCSamples(chains):
+class MCSamples(Chains):
     def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, **kwargs):
-        chains.__init__(self, root, jobItem=jobItem, **kwargs)
+        Chains.__init__(self, root, jobItem=jobItem, **kwargs)
 
         self.version = pickle_version
 
@@ -250,9 +250,9 @@ class MCSamples(chains):
         if self.ignore_frac and  (not self.jobItem or
                     (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
-            print('Removed %s as burn in' % self.ignore_frac)
+            if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
         else:
-            print('Removed no burn in')
+            if chains.print_load_details: print('Removed no burn in')
 
         self.deleteFixedParams()
 
