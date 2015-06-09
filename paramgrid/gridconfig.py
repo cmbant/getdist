@@ -66,7 +66,7 @@ def updateIniParams(ini, params, path):
 
 def pathIsGrid(batchPath):
     return os.path.exists(os.path.join(batchPath, 'batch.pyobj')) or os.path.exists(
-        os.path.join(batchPath, 'config', 'config.ini'))
+                                    os.path.join(batchPath, 'config', 'config.ini'))
 
 
 def makeGrid(batchPath, settingName=None, settings=None, readOnly=False, interactive=False):

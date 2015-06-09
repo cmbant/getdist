@@ -712,7 +712,7 @@ class MainWindow(QMainWindow):
                 if self.plotter:
                     hasPlot = self.plotter.fig
                     self.closePlots()
-                    self.getPlotter(loadNew=True, chain_dir=self.plotter.chain_dir)
+                    self.getPlotter(loadNew=True)
                     self.custom_plot_settings = {}
                     if hasPlot: self.plotData()
             except Exception as e:
