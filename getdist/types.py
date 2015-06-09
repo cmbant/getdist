@@ -8,6 +8,7 @@ from getdist import paramnames
 import six
 import tempfile
 
+
 class TextFile(object):
     def __init__(self, lines=None):
         if isinstance(lines, six.string_types):
@@ -274,13 +275,11 @@ class ResultTable(object):
             txt += self.format.colSeparator * ((1 + self.colsPerParam) * (self.ncol - len(row)))
         self.lines.append(txt + self.format.endofrow)
 
-
     def addLine(self, position):
         if self.format.getLine(position) is None:  # no line is appended if the attribute is None
             return self.lines
         else:
             return self.lines.append(self.format.getLine(position))
-
 
     def addTitlesRow(self, titles):
         self.addLine("aboveTitles")
@@ -293,7 +292,6 @@ class ResultTable(object):
         belowTitleLine = self.format.belowTitleLine(self.colsPerResult, self.colsPerParam // self.colsPerResult)
         if belowTitleLine:
             self.lines.append(belowTitleLine)
-
 
     def addHeaderRow(self):
         self.addLine("aboveHeader")
@@ -308,10 +306,8 @@ class ResultTable(object):
         #        self.lines.append((res * self.ncol).replace(self.format.colSeparator,'',1) + self.format.endofrow)
         self.addLine("belowHeader")
 
-
     def paramResultsTex(self, param):
         return self.format.colSeparator.join(self.paramResultTex(result, param) for result in self.results)
-
 
     def paramResultTex(self, result, p):
         values = result.texValues(self.format, p, self.limit, self.refResults,
@@ -326,14 +322,11 @@ class ResultTable(object):
         else:
             return self.format.textAsColumn('') * len(result.getColumnLabels(self.limit))
 
-
     def paramLabelColumn(self, param):
         return self.format.textAsColumn(param.getLabel(), True, separator=True, bold=not param.isDerived)
 
-
     def endTable(self):
         self.lines.append(self.format.endTable())
-
 
     def tableTex(self, document=False, latex_preamble=None, packages=['amsmath', 'amssymb', 'bm']):
         if document:
@@ -352,7 +345,6 @@ class ResultTable(object):
             lines = self.lines
         return "\n".join(lines)
 
-
     def write(self, fname, **kwargs):
         TextFile(self.tableTex(**kwargs)).write(fname)
 
@@ -360,7 +352,7 @@ class ResultTable(object):
         texfile = tempfile.mktemp(suffix='.tex')
         self.write(texfile, document=True, latex_preamble=latex_preamble)
         basefile = os.path.splitext(texfile)[0]
-        outfile = filename or  basefile + '.png'
+        outfile = filename or basefile + '.png'
         old_pwd = os.getcwd()
 
         def runCommand(command):
@@ -377,7 +369,7 @@ class ResultTable(object):
                    % (outfile, basefile + '.dvi')
             runCommand(cmd)
         finally:
-            for f in  [basefile + ext for ext in ('.tex', '.dvi', '.aux', '.log')]:
+            for f in [basefile + ext for ext in ('.tex', '.dvi', '.aux', '.log')]:
                 if os.path.isfile(f):
                     os.remove(f)
             os.chdir(old_pwd)
@@ -389,6 +381,7 @@ class ResultTable(object):
             return result
         else:
             return outfile
+
 
 class ParamResults(paramnames.ParamList): pass
 
@@ -464,7 +457,6 @@ class BestFit(ParamResults):
         for (akind, val) in self.chiSquareds:
             if akind == kind and val.name == name: return val.chisq
         return None
-
 
     def texValues(self, formatter, p, **kwargs):
         param = self.parWithName(p.name)
@@ -561,7 +553,6 @@ class MargeStats(ParamResults):
                 text += "%15.7E%15.7E  %-5s" % (lim.lower, lim.upper, lim.limitTag())
             text += "   %s\n" % par.label
         return text
-
 
     def addBestFit(self, bf):
         self.hasBestFit = True
@@ -711,5 +702,3 @@ class ConvergeStats(ParamResults):
 
     def worstR(self):
         return self.R_eigs[len(self.R_eigs) - 1]
-
-

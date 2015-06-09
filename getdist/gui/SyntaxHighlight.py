@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from PySide.QtCore import QRegExp
 from PySide.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
+
 def txformat(color, style=''):
     """Return a QTextCharFormat with the given attributes.
     """
@@ -24,7 +25,7 @@ STYLES = {
     'operator': txformat('black'),
     'brace': txformat('black'),
     'defclass': txformat('black', 'bold'),
-    'string': txformat('green','bold'),
+    'string': txformat('green', 'bold'),
     'string2': txformat('green'),
     'comment': txformat('darkGray', 'italic'),
     'self': txformat('black', 'italic'),
@@ -32,7 +33,7 @@ STYLES = {
 }
 
 
-class PythonHighlighter (QSyntaxHighlighter):
+class PythonHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for the Python language.
     """
     # Python keywords
@@ -42,7 +43,7 @@ class PythonHighlighter (QSyntaxHighlighter):
         'for', 'from', 'global', 'if', 'import', 'in',
         'is', 'lambda', 'not', 'or', 'pass', 'print',
         'raise', 'return', 'try', 'while', 'yield',
-        'None', 'True', 'False','as',
+        'None', 'True', 'False', 'as',
     ]
 
     # Python operators
@@ -62,6 +63,7 @@ class PythonHighlighter (QSyntaxHighlighter):
     braces = [
         '\{', '\}', '\(', '\)', '\[', '\]',
     ]
+
     def __init__(self, document):
         QSyntaxHighlighter.__init__(self, document)
 
@@ -75,11 +77,11 @@ class PythonHighlighter (QSyntaxHighlighter):
 
         # Keyword, operator, and brace rules
         rules += [(r'\b%s\b' % w, 0, STYLES['keyword'])
-            for w in PythonHighlighter.keywords]
+                  for w in PythonHighlighter.keywords]
         rules += [(r'%s' % o, 0, STYLES['operator'])
-            for o in PythonHighlighter.operators]
+                  for o in PythonHighlighter.operators]
         rules += [(r'%s' % b, 0, STYLES['brace'])
-            for b in PythonHighlighter.braces]
+                  for b in PythonHighlighter.braces]
 
         # All other rules
         rules += [
@@ -107,8 +109,7 @@ class PythonHighlighter (QSyntaxHighlighter):
 
         # Build a QRegExp for each pattern
         self.rules = [(QRegExp(pat), index, fmt)
-            for (pat, index, fmt) in rules]
-
+                      for (pat, index, fmt) in rules]
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to the given block of text.
@@ -130,7 +131,6 @@ class PythonHighlighter (QSyntaxHighlighter):
         in_multiline = self.match_multiline(text, *self.tri_single)
         if not in_multiline:
             in_multiline = self.match_multiline(text, *self.tri_double)
-
 
     def match_multiline(self, text, delimiter, in_state, style):
         """Do highlighting of multi-line strings. ``delimiter`` should be a

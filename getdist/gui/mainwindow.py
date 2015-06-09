@@ -27,6 +27,7 @@ try:
     import PySide
     from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
     from PySide.QtGui import *
+
     os.environ['QT_API'] = 'pyside'
     try:
         import getdist.gui.Resources_pyside
@@ -117,7 +118,6 @@ class MainWindow(QMainWindow):
             else:
                 self.listDirectories.setCurrentIndex(-1)
 
-
     def createActions(self):
         """
         Create Qt actions used in GUI.
@@ -167,10 +167,10 @@ class MainWindow(QMainWindow):
                               triggered=self.showPCA)
 
         self.paramTableAct = QAction(QIcon(""),
-                              "Parameter table (latex)", self,
-                              shortcut="",
-                              statusTip="View parameter table",
-                              triggered=self.showParamTable)
+                                     "Parameter table (latex)", self,
+                                     shortcut="",
+                                     statusTip="View parameter table",
+                                     triggered=self.showParamTable)
 
         self.optionsAct = QAction(QIcon(""),
                                   "Analysis settings", self,
@@ -595,14 +595,14 @@ class MainWindow(QMainWindow):
                 raise GuiSelectionError('Select one or more parameters first')
             self.showMessage("Generating table....")
             cols = len(pars) // 20 + 1
-            tables = [samples.getTable(columns=cols, limit=lim + 1, paramList=pars) for lim in range(len(samples.contours))]
+            tables = [samples.getTable(columns=cols, limit=lim + 1, paramList=pars) for lim in
+                      range(len(samples.contours))]
             dlg = DialogParamTables(self, tables, rootname)
             dlg.show()
         except Exception as e:
             self.errorReport(e, caption="Parameter tables")
         finally:
             self.showMessage()
-
 
     def showLikeStats(self):
         rootname = self.getRootname()
@@ -626,7 +626,6 @@ class MainWindow(QMainWindow):
         self.settingDlg = self.settingDlg or DialogSettings(self, self.iniFile)
         self.settingDlg.show()
         self.settingDlg.activateWindow()
-
 
     def settingsChanged(self):
         if self.plotter:
@@ -694,7 +693,6 @@ class MainWindow(QMainWindow):
         self.ConfigDlg = self.ConfigDlg or DialogConfigSettings(self, ini, list(ini.params.keys()), title='Plot Config')
         self.ConfigDlg.show()
         self.ConfigDlg.activateWindow()
-
 
     def configSettingsChanged(self, vals):
         scriptmod = vals.get('script_plot_module', self.script_plot_module)
@@ -886,7 +884,6 @@ class MainWindow(QMainWindow):
         self.comboBoxParamTag.show()
         self.comboBoxDataTag.show()
 
-
     def _updateComboBoxRootname(self, listOfRoots):
         self.comboBoxParamTag.hide()
         self.comboBoxDataTag.hide()
@@ -901,7 +898,6 @@ class MainWindow(QMainWindow):
         elif len(baseRoots):
             self.comboBoxRootname.setCurrentIndex(0)
             self.setRootname(self.comboBoxRootname.itemText(0))
-
 
     def newRootItem(self, root):
 
@@ -1132,12 +1128,11 @@ class MainWindow(QMainWindow):
                 chain_dirs = "r'%s'" % chain_dirs[0].rstrip('\\').rstrip('/')
 
             if isinstance(self.iniFile, six.string_types) and self.iniFile <> getdist.default_getdist_settings:
-                    script += "g=gplot.%s(chain_dir=%s, analysis_settings=r'%s')\n" % (plot_func, chain_dirs, self.iniFile)
+                script += "g=gplot.%s(chain_dir=%s, analysis_settings=r'%s')\n" % (plot_func, chain_dirs, self.iniFile)
             elif isinstance(self.iniFile, IniFile):
                 script += "g=gplot.%s(chain_dir=%s,analysis_settings=analysis_settings)\n" % (plot_func, chain_dirs)
             else:
                 script += "g=gplot.%s(chain_dir=%s)\n" % (plot_func, chain_dirs)
-
 
             if self.custom_plot_settings:
                 for key, value in six.iteritems(self.custom_plot_settings):
@@ -1283,7 +1278,6 @@ class MainWindow(QMainWindow):
         finally:
             self.showMessage()
 
-
     def updatePlot(self):
         if self.plotter.fig is None:
             self.canvas = None
@@ -1304,7 +1298,6 @@ class MainWindow(QMainWindow):
             self.plotWidget.layout()
             self.canvas.draw()
             self.plotWidget.show()
-
 
     # Edit script
 
@@ -1363,7 +1356,7 @@ class MainWindow(QMainWindow):
 
             globaldic = {}
             localdic = {}
-            exec(script_exec, globaldic, localdic)
+            exec (script_exec, globaldic, localdic)
 
             for v in six.itervalues(localdic):
                 if isinstance(v, plots.GetDistPlotter):
@@ -1376,7 +1369,6 @@ class MainWindow(QMainWindow):
             matplotlib.rcParams.clear()
             matplotlib.rcParams.update(oldrc)
             self.showMessage()
-
 
     def updateScriptPreview(self, plotter):
         if plotter.fig is None:
@@ -1571,6 +1563,7 @@ class DialogPCA(DialogTextOutput):
         h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800)
         self.resize(500, h)
 
+
 # ==============================================================================
 
 class DialogParamTables(DialogTextOutput):
@@ -1624,6 +1617,7 @@ class DialogParamTables(DialogTextOutput):
             self, "Choose a file name", '.', "Latex (*.tex)")
         if not filename: return
         self.tables[self.tabWidget.currentIndex()].write(str(filename))
+
 
 # ==============================================================================
 

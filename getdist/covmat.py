@@ -2,6 +2,7 @@ from __future__ import print_function
 import numpy as np
 import io
 
+
 class CovMat(object):
     def __init__(self, filename='', matrix=None, paramNames=None):
         if not paramNames:
@@ -86,4 +87,3 @@ class CovMat(object):
         plt.xticks(np.arange(0.5, sz + .5), list(range(1, sz + 1)))
         plt.xlim([0, sz])
         plt.ylim([0, sz])
-

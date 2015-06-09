@@ -20,50 +20,53 @@ import six
 
 pickle_version = 21
 
+
 class MCSamplesError(Exception):
     pass
 
+
 class SettingError(MCSamplesError):
     pass
+
 
 class ParamError(MCSamplesError):
     pass
 
 
 def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, dist_settings={}):
-        files = chainFiles(file_root)
-        path, name = os.path.split(file_root)
-        path = getdist.cache_dir or path
-        if not os.path.exists(path): os.mkdir(path)
-        cachefile = os.path.join(path, name) + '.py_mcsamples'
-        samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=dist_settings)
-        allfiles = files + [file_root + '.ranges', file_root + '.paramnames']
-        if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
-            try:
-                with open(cachefile, 'rb') as inp:
-                    cache = pickle.load(inp)
-                if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows:
-                    changed = len(samples.contours) != len(cache.contours) or \
-                                np.any(np.array(samples.contours) != np.array(cache.contours))
-                    cache.updateSettings(ini=ini, settings=dist_settings, doUpdate=changed)
-                    return cache
-            except:
-                pass
-        if not len(files):
-            raise IOError('No chains found: ' + file_root)
-        samples.readChains(files)
-        samples.savePickle(cachefile)
-        return samples
+    files = chainFiles(file_root)
+    path, name = os.path.split(file_root)
+    path = getdist.cache_dir or path
+    if not os.path.exists(path): os.mkdir(path)
+    cachefile = os.path.join(path, name) + '.py_mcsamples'
+    samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=dist_settings)
+    allfiles = files + [file_root + '.ranges', file_root + '.paramnames']
+    if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
+        try:
+            with open(cachefile, 'rb') as inp:
+                cache = pickle.load(inp)
+            if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows:
+                changed = len(samples.contours) != len(cache.contours) or \
+                          np.any(np.array(samples.contours) != np.array(cache.contours))
+                cache.updateSettings(ini=ini, settings=dist_settings, doUpdate=changed)
+                return cache
+        except:
+            pass
+    if not len(files):
+        raise IOError('No chains found: ' + file_root)
+    samples.readChains(files)
+    samples.savePickle(cachefile)
+    return samples
 
 
 class Kernel1D(object):
-
     def __init__(self, winw, h):
         self.winw = winw
         self.h = h
         self.x = np.arange(-winw, winw + 1)
         Win = np.exp(-(self.x / h) ** 2 / 2.)
         self.Win = Win / np.sum(Win)
+
 
 # =============================================================================
 
@@ -228,7 +231,7 @@ class MCSamples(Chains):
                     self.markers[par.name] = float(line)
 
     def updateSettings(self, settings=None, ini=None, doUpdate=True):
-        assert(settings is None or isinstance(settings, dict))
+        assert (settings is None or isinstance(settings, dict))
         if not ini:
             ini = self.ini
         elif isinstance(ini, six.string_types):
@@ -247,8 +250,8 @@ class MCSamples(Chains):
 
         self.loadChains(self.root, chain_files)
 
-        if self.ignore_frac and  (not self.jobItem or
-                    (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
+        if self.ignore_frac and (not self.jobItem or
+                                     (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
             if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
         else:
@@ -313,7 +316,7 @@ class MCSamples(Chains):
                 if cool != 1:
                     newL = self.loglikes[thin] * cool
                     f.write("%16.7E" % (
-                            np.exp(-(newL - self.loglikes[thin]) - MaxL * (1 - cool))))
+                        np.exp(-(newL - self.loglikes[thin]) - MaxL * (1 - cool))))
                     f.write("%16.7E" % newL)
                     for j in nparams:
                         f.write("%16.7E" % (self.samples[i][j]))
@@ -328,7 +331,7 @@ class MCSamples(Chains):
     def getCovMat(self):
         nparamNonDerived = self.paramNames.numNonDerived()
         return covmat.CovMat(matrix=self.fullcov[:nparamNonDerived, :nparamNonDerived],
-                                    paramNames=self.paramNames.list()[:nparamNonDerived])
+                             paramNames=self.paramNames.list()[:nparamNonDerived])
 
     def writeCovMatrix(self, filename=None):
         filename = filename or self.rootdirname + ".covmat"
@@ -340,9 +343,9 @@ class MCSamples(Chains):
 
     def getFractionIndices(self, weights, n):
         cumsum = np.cumsum(weights)
-        fraction_indices = np.append(np.searchsorted(cumsum, np.linspace(0, 1, n, endpoint=False) * self.norm), self.weights.shape[0])
+        fraction_indices = np.append(np.searchsorted(cumsum, np.linspace(0, 1, n, endpoint=False) * self.norm),
+                                     self.weights.shape[0])
         return fraction_indices
-
 
     def PCA(self, params, param_map=None, normparam=None, writeDataToFile=False, filename=None, conditional_params=[]):
         """
@@ -352,7 +355,7 @@ class MCSamples(Chains):
         """
 
         logging.info('Doing PCA for %s parameters', len(params))
-        if len(conditional_params): logging.info('conditional %u fixed parameters' , len(conditional_params))
+        if len(conditional_params): logging.info('conditional %u fixed parameters', len(conditional_params))
 
         PCAtext = 'PCA for parameters:\n'
 
@@ -365,8 +368,10 @@ class MCSamples(Chains):
         if normparam:
             if normparam in params:
                 normparam = params.index(normparam)
-            else: normparam = -1
-        else: normparam = -1
+            else:
+                normparam = -1
+        else:
+            normparam = -1
 
         n = len(indices)
         PCdata = self.samples[:, indices].copy()
@@ -380,8 +385,10 @@ class MCSamples(Chains):
             param_map = ''
             for par in self.paramNames.parsWithNames(params):
                 self._initParamRanges(par.name)
-                if par.param_max < 0 or par.param_min < par.param_max - par.param_min: param_map += 'N'
-                else: param_map += 'L'
+                if par.param_max < 0 or par.param_min < par.param_max - par.param_min:
+                    param_map += 'N'
+                else:
+                    param_map += 'L'
 
         doexp = False
         for i, parix in enumerate(indices):
@@ -399,9 +406,9 @@ class MCSamples(Chains):
                     PClabs.append(label)
                 PCAtext += "%10s :%s\n" % (str(parix + 1), str(PClabs[i]))
 
-            PCmean[i] = np.dot(self.weights , PCdata[:, i]) / self.norm
+            PCmean[i] = np.dot(self.weights, PCdata[:, i]) / self.norm
             PCdata[:, i] -= PCmean[i]
-            sd[i] = np.sqrt(np.dot(self.weights , PCdata[:, i] ** 2) / self.norm)
+            sd[i] = np.sqrt(np.dot(self.weights, PCdata[:, i] ** 2) / self.norm)
             if sd[i] != 0: PCdata[:, i] /= sd[i]
 
         PCAtext += "\n"
@@ -409,7 +416,7 @@ class MCSamples(Chains):
         correlationMatrix = np.ones((n, n))
         for i in range(n):
             for j in range(i):
-                correlationMatrix[j][i] = np.dot(self.weights , PCdata[:, i] * PCdata[:, j]) / self.norm
+                correlationMatrix[j][i] = np.dot(self.weights, PCdata[:, i] * PCdata[:, j]) / self.norm
                 correlationMatrix[i][j] = correlationMatrix[j][i]
         for i in range(nparams):
             PCAtext += '%12s :' % params[i]
@@ -488,7 +495,7 @@ class MCSamples(Chains):
 
         # Find out how correlated these components are with other parameters
         PCAtext += 'Correlations of principle components\n'
-        l = [ "%8i" % i for i in range(1, n + 1) ]
+        l = ["%8i" % i for i in range(1, n + 1)]
         PCAtext += '%s\n' % ("".join(l))
 
         for i in range(n):
@@ -504,8 +511,8 @@ class MCSamples(Chains):
             PCAtext += '%4i' % (j + 1)
             for i in range(n):
                 PCAtext += '%8.3f' % (
-                        np.sum(self.weights * PCdata[:, i]
-                               * (self.samples[:, j] - self.means[j]) / self.sddev[j]) / self.norm)
+                    np.sum(self.weights * PCdata[:, i]
+                           * (self.samples[:, j] - self.means[j]) / self.sddev[j]) / self.norm)
 
             PCAtext += '   (%s)\n' % (self.parLabel(j))
 
@@ -514,18 +521,19 @@ class MCSamples(Chains):
                 f.write(PCAtext)
         return PCAtext
 
-
     def getNumSampleSummaryText(self):
-        lines = 'using %s rows, %s parameters; mean weight %s, tot weight %s\n' % (self.numrows, self.paramNames.numParams(), self.mean_mult, self.norm)
+        lines = 'using %s rows, %s parameters; mean weight %s, tot weight %s\n' % (
+            self.numrows, self.paramNames.numParams(), self.mean_mult, self.norm)
         if self.indep_thin != 0:
             lines += 'Approx indep samples (N/corr length): %s\n' % (round(self.norm / self.indep_thin))
         lines += 'Equiv number of single samples (sum w)/max(w): %s\n' % (round(self.norm / self.max_mult))
-        lines += 'Effective number of weighted samples (sum w)^2/sum(w^2): %s\n' % (int(self.norm ** 2 / np.dot(self.weights, self.weights)))
+        lines += 'Effective number of weighted samples (sum w)^2/sum(w^2): %s\n' % (
+            int(self.norm ** 2 / np.dot(self.weights, self.weights)))
         return lines
 
     def getConvergeTests(self, limfrac, writeDataToFile=False,
-                        what=['MeanVar', 'GelmanRubin', 'SplitTest', 'RafteryLewis', 'CorrLengths'],
-                        filename=None, feedback=False):
+                         what=['MeanVar', 'GelmanRubin', 'SplitTest', 'RafteryLewis', 'CorrLengths'],
+                         filename=None, feedback=False):
         """
         Do convergence tests. 
         """
@@ -539,13 +547,13 @@ class MCSamples(Chains):
         for chain in chainlist: chain.setDiffs()
         parForm = self.paramNames.parFormat()
         parNames = [parForm % self.parName(j) for j in range(nparam)]
-        limits = np.array([ 1 - (1 - limfrac) / 2, (1 - limfrac) / 2])
+        limits = np.array([1 - (1 - limfrac) / 2, (1 - limfrac) / 2])
 
         if 'CorrLengths' in what:
             lines += "Parameter autocorrelation lengths (effective number of samples N_eff = tot weight/weight length)\n"
             lines += "\n"
             lines += parForm % "" + '%15s %15s %15s\n' % ('Weight Length', 'Sample length', 'N_eff')
-            maxoff = np.min([chain.weights.size // 10  for chain in chainlist])
+            maxoff = np.min([chain.weights.size // 10 for chain in chainlist])
             maxN = 0
             for j in range(nparam):
                 corr = np.zeros(maxoff + 1)
@@ -576,11 +584,11 @@ class MCSamples(Chains):
             for j in range(nparam):
                 # Get stats for individual chains - the variance of the means over the mean of the variances
                 for chain in chainlist:
-                    in_chain_var[j] += np.dot(chain.weights , chain.diffs[j] ** 2)
+                    in_chain_var[j] += np.dot(chain.weights, chain.diffs[j] ** 2)
 
                 in_chain_var[j] /= self.norm
                 lines += parNames[j] + "%10.4f  %s\n" % (
-                math.sqrt(between_chain_var[j] / in_chain_var[j]), self.parLabel(j))
+                    math.sqrt(between_chain_var[j] / in_chain_var[j]), self.parLabel(j))
             lines += "\n"
 
         nparamMC = self.paramNames.numNonDerived()
@@ -603,7 +611,8 @@ class MCSamples(Chains):
             # Do tests for robustness under using splits of the samples
             # Return the rms ([change in upper/lower quantile]/[standard deviation])
             # when data split into 2, 3,.. sets
-            lines += "Split tests: rms_n([delta(upper/lower quantile)]/sd) n={2,3,4}, limit=%.0f%%:\n" % (100 * self.converge_test_limit)
+            lines += "Split tests: rms_n([delta(upper/lower quantile)]/sd) n={2,3,4}, limit=%.0f%%:\n" % (
+                100 * self.converge_test_limit)
             lines += "i.e. mean sample splitting change in the quantiles in units of the st. dev.\n"
             lines += "\n"
 
@@ -616,7 +625,8 @@ class MCSamples(Chains):
                 for ix, frac in enumerate(frac_indices):
                     split_n = 2 + ix
                     for f1, f2 in zip(frac[:-1], frac[1:]):
-                        split_tests[ix, :] += (self.confidence(self.samples[:, j], limits, start=f1, end=f2) - confids) ** 2
+                        split_tests[ix, :] += (self.confidence(self.samples[:, j], limits, start=f1,
+                                                               end=f2) - confids) ** 2
 
                     split_tests[ix, :] = np.sqrt(split_tests[ix, :] / split_n) / self.sddev[j]
                 for endb, typestr in enumerate(['upper', 'lower']):
@@ -658,9 +668,9 @@ class MCSamples(Chains):
                                     indexes = binchain[:-2] * 4 + binchain[1:-1] * 2 + binchain[2:]
                                     # Estimate transitions probabilities for 2nd order process
                                     tran = np.bincount(indexes, minlength=8).reshape((2, 2, 2))
-#                                    tran[:, :, :] = 0
-#                                    for i in range(2, thin_rows):
-#                                        tran[binchain[i - 2]][binchain[i - 1]][binchain[i]] += 1
+                                    #                                    tran[:, :, :] = 0
+                                    #                                    for i in range(2, thin_rows):
+                                    #                                        tran[binchain[i - 2]][binchain[i - 1]][binchain[i]] += 1
 
                                     # Test whether 2nd order is better than Markov using BIC statistic
                                     g2 = 0
@@ -671,8 +681,8 @@ class MCSamples(Chains):
                                                     fitted = float(
                                                         (tran[i1][i2][0] + tran[i1][i2][1]) *
                                                         (tran[0][i2][i3] + tran[1][i2][i3])) \
-                                                    / float(tran[0][i2][0] + tran[0][i2][1] +
-                                                            tran[1][i2][0] + tran[1][i2][1])
+                                                             / float(tran[0][i2][0] + tran[0][i2][1] +
+                                                                     tran[1][i2][0] + tran[1][i2][1])
                                                     focus = float(tran[i1][i2][i3])
                                                     g2 += math.log(focus / fitted) * focus
                                     g2 *= 2
@@ -709,9 +719,9 @@ class MCSamples(Chains):
                             indexes = binchain[:-1] * 2 + binchain[1:]
                             # Estimate transitions probabilities for 2nd order process
                             tran2 = np.bincount(indexes, minlength=4).reshape(2, 2)
-    #                        tran2[:, :] = 0
-    #                        for i in range(1, thin_rows):
-    #                            tran2[binchain[i - 1]][binchain[i]] += 1
+                            # tran2[:, :] = 0
+                            # for i in range(1, thin_rows):
+                            # tran2[binchain[i - 1]][binchain[i]] += 1
 
                             # Test whether independence is better than Markov using BIC statistic
                             g2 = 0
@@ -746,7 +756,7 @@ class MCSamples(Chains):
                         lines += "%4i      Failed/not enough samples\n" % ix
                     else:
                         lines += "%4i%12i%12i%12i\n" % (
-                                ix, markov_thin[ix], thin_fac[ix], nburn[ix])
+                            ix, markov_thin[ix], thin_fac[ix], nburn[ix])
 
                 self.RL_indep_thin = np.max(thin_fac)
 
@@ -756,7 +766,8 @@ class MCSamples(Chains):
                     else:
                         print('RL: Thin for Markov: ', np.max(markov_thin))
                         print('RL: Thin for indep samples:  ', str(self.RL_indep_thin))
-                        print('RL: Estimated burn in steps: ', np.max(nburn), ' (', int(round(np.max(nburn) / self.mean_mult)), ' rows)')
+                        print('RL: Estimated burn in steps: ', np.max(nburn), ' (',
+                              int(round(np.max(nburn) / self.mean_mult)), ' rows)')
                 lines += "\n"
 
             if 'CorrSteps' in what:
@@ -790,11 +801,11 @@ class MCSamples(Chains):
                             lines += "%8i" % ((i + 1) * autocorr_thin)
                         lines += "\n"
                         for j in range(nparam):
-                                label = self.parLabel(j)
-                                lines += parNames[j]
-                                for i in range(maxoff):
-                                    lines += "%8.3f" % corrs[i][j]
-                                lines += " %s\n" % label
+                            label = self.parLabel(j)
+                            lines += parNames[j]
+                            for i in range(maxoff):
+                                lines += "%8.3f" % corrs[i][j]
+                            lines += " %s\n" % label
                     else:
                         corrs = np.zeros([maxoff, nparam])
                         for chain in chainlist:
@@ -804,7 +815,8 @@ class MCSamples(Chains):
                             for j in range(nparam):
                                 diff = chain.diffs[j][thin_ix]
                                 for off in range(1, maxoff + 1):
-                                    corrs[off - 1][j] += np.dot(diff[off:], diff[:-off]) / (thin_rows - off) / self.vars[j]
+                                    corrs[off - 1][j] += np.dot(diff[off:], diff[:-off]) / (thin_rows - off) / \
+                                                         self.vars[j]
                         corrs /= len(chainlist)
 
                         lines += parForm % ""
@@ -812,11 +824,11 @@ class MCSamples(Chains):
                             lines += "%8i" % ((i + 1) * autocorr_thin)
                         lines += "\n"
                         for j in range(nparam):
-                                label = self.parLabel(j)
-                                lines += parNames[j]
-                                for i in range(maxoff):
-                                    lines += "%8.3f" % corrs[i][j]
-                                lines += " %s\n" % label
+                            label = self.parLabel(j)
+                            lines += parNames[j]
+                            for i in range(maxoff):
+                                lines += "%8.3f" % corrs[i][j]
+                            lines += " %s\n" % label
 
         if writeDataToFile:
             with open(filename or (self.rootdirname + '.converge'), 'w') as f:
@@ -852,7 +864,6 @@ class MCSamples(Chains):
         else:
             return h
 
-
     def getAutoBandwidth2D(self, bins, parx, pary, paramx, paramy, corr, rangex, rangey, base_fine_bins_2D,
                            mult_bias_correction_order=None, min_corr=0.2):
         """
@@ -873,11 +884,11 @@ class MCSamples(Chains):
             if parx.has_limits_top:
                 imax = parx.range_max
             if pary.has_limits:
-                    i, j = j, i
-                    if pary.has_limits_bot:
-                        imin = pary.range_min
-                    if pary.has_limits_top:
-                        imax = pary.range_max
+                i, j = j, i
+                if pary.has_limits_bot:
+                    imin = pary.range_min
+                if pary.has_limits_top:
+                    imax = pary.range_max
 
             cov = self.getCov(pars=[i, j])
             S = np.linalg.cholesky(cov)
@@ -894,11 +905,12 @@ class MCSamples(Chains):
             hx, hy, c = opt.get_h()
             hx *= R1
             hy *= R2
-            kernelC = S.dot(np.array([[ hx ** 2, hx * hy * c], [hx * hy * c, hy ** 2]])).dot(S.T)
-            hx, hy, c = np.sqrt(kernelC[0, 0]), np.sqrt(kernelC[1, 1]), kernelC[0, 1] / np.sqrt(kernelC[0, 0] * kernelC[1, 1])
+            kernelC = S.dot(np.array([[hx ** 2, hx * hy * c], [hx * hy * c, hy ** 2]])).dot(S.T)
+            hx, hy, c = np.sqrt(kernelC[0, 0]), np.sqrt(kernelC[1, 1]), kernelC[0, 1] / np.sqrt(
+                kernelC[0, 0] * kernelC[1, 1])
             if pary.has_limits:
                 hx, hy = hy, hx
-#            print 'derotated pars', hx, hy, c
+                #            print 'derotated pars', hx, hy, c
         elif abs(corr) > self.max_corr_2D or not do_correlated and corr > 0.8:
             c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
             hx = parx.sigma_range / N_eff ** (1. / 6)
@@ -918,7 +930,6 @@ class MCSamples(Chains):
             logging.debug('hx/sig, hy/sig, corr, scale =%s, %s, %s, %s', hx / parx.err, hy / pary.err, c, scale)
         return hx, hy, c
 
-
     def _initParamRanges(self, j, paramConfid=None):
         if isinstance(j, six.string_types): j = self.index[j]
         paramVec = self.samples[:, j]
@@ -935,7 +946,8 @@ class MCSamples(Chains):
         # sigma_range is estimate related to shape of structure in the distribution = std dev for Gaussian
         # search for peaks using quantiles, e.g. like simplified version of Janssen 95 (http://dx.doi.org/10.1080/10485259508832654)
         confid_points = np.linspace(0.1, 0.9, 9)
-        confids = self.confidence(paramConfid, np.array([self.range_confidence, 1 - self.range_confidence] + list(confid_points)))
+        confids = self.confidence(paramConfid,
+                                  np.array([self.range_confidence, 1 - self.range_confidence] + list(confid_points)))
         par.range_min, par.range_max = confids[0:2]
         confids[1:-1] = confids[2:]
         confids[0] = par.param_min
@@ -1003,8 +1015,8 @@ class MCSamples(Chains):
             if density is not None: return density
         return self.get1DDensityGridData(name, get_density=True, **kwargs)
 
-
-    def get1DDensityGridData(self, j, writeDataToFile=False, get_density=False, paramConfid=None, meanlikes=False, **kwargs):
+    def get1DDensityGridData(self, j, writeDataToFile=False, get_density=False, paramConfid=None, meanlikes=False,
+                             **kwargs):
 
         j = self._parAndNumber(j)[0]
         if j is None: return None
@@ -1033,8 +1045,7 @@ class MCSamples(Chains):
         if smooth_scale_1D <= 0:
             # Set automatically.
             smooth_1D = self.getAutoBandwidth1D(bins, par, j, mult_bias_correction_order, boundary_correction_order) \
-                           * (binmax - binmin) * abs(smooth_scale_1D) / fine_width
-#            print smooth_1D * width / par.err / abs(smooth_scale_1D)
+                        * (binmax - binmin) * abs(smooth_scale_1D) / fine_width
         elif smooth_scale_1D < 1.0:
             smooth_1D = smooth_scale_1D * par.err / fine_width
         else:
@@ -1045,7 +1056,8 @@ class MCSamples(Chains):
 
         smooth_1D = min(max(1., smooth_1D), fine_bins // 2)
 
-        logging.debug("%s 1D sigma_range, std: %s, %s; smooth_1D_bins: %s ", par.name, par.sigma_range, par.err, smooth_1D)
+        logging.debug("%s 1D sigma_range, std: %s, %s; smooth_1D_bins: %s ", par.name, par.sigma_range, par.err,
+                      smooth_1D)
 
         winw = min(int(round(2.5 * smooth_1D)), fine_bins // 2 - 2)
         Kernel = Kernel1D(winw, smooth_1D)
@@ -1061,11 +1073,11 @@ class MCSamples(Chains):
             # correct for cuts allowing for normalization over window
             prior_mask = np.ones(fine_bins + 2 * winw)
             if par.has_limits_bot:
-                prior_mask[ winw ] = 0.5
-                prior_mask[ : winw ] = 0
+                prior_mask[winw] = 0.5
+                prior_mask[: winw] = 0
             if par.has_limits_top:
-                prior_mask[-winw ] = 0.5
-                prior_mask[-winw : ] = 0
+                prior_mask[-winw] = 0.5
+                prior_mask[-winw:] = 0
             a0 = convolve1D(prior_mask, Kernel.Win, 'valid', cache=cache)
             ix = np.nonzero(a0 * density1D.P)
             a0 = a0[ix]
@@ -1101,7 +1113,7 @@ class MCSamples(Chains):
             xWin2 = Kernel.Win * Kernel.x ** 2
             x2P = convolve1D(bins, xWin2, 'same', cache=cache)
             a2 = np.sum(xWin2)
-            a4 = np.dot(xWin2 , Kernel.x ** 2)
+            a4 = np.dot(xWin2, Kernel.x ** 2)
             corrected = (density1D.P * a4 - a2 * x2P) / (a4 - a2 ** 2)
             ix = density1D.P > 0
             density1D.P[ix] = density1D.P[ix] * np.exp(np.minimum(corrected[ix] / density1D.P[ix], 2) - 1)
@@ -1109,7 +1121,7 @@ class MCSamples(Chains):
         if mult_bias_correction_order:
             prior_mask = np.ones(fine_bins)
             if par.has_limits_bot:
-                prior_mask[ 0] *= 0.5
+                prior_mask[0] *= 0.5
             if par.has_limits_top:
                 prior_mask[-1] *= 0.5
             a0 = convolve1D(prior_mask, Kernel.Win, 'same', cache=cache)
@@ -1171,7 +1183,6 @@ class MCSamples(Chains):
         else:
             return density1D
 
-
     def _setEdgeMask2D(self, parx, pary, prior_mask, winw, alledge=False):
         if parx.has_limits_bot:
             prior_mask[:, winw] /= 2
@@ -1181,14 +1192,14 @@ class MCSamples(Chains):
             prior_mask[:, -winw:] = 0
         if pary.has_limits_bot:
             prior_mask[winw, :] /= 2
-            prior_mask[:winw :] = 0
+            prior_mask[:winw:] = 0
         if pary.has_limits_top:
             prior_mask[-winw, :] /= 2
             prior_mask[-winw:, :] = 0
         if alledge:
             prior_mask[:, :winw] = 0
             prior_mask[:, -winw:] = 0
-            prior_mask[:winw :] = 0
+            prior_mask[:winw:] = 0
             prior_mask[-winw:, :] = 0
 
     def _getScaleForParam(self, par):
@@ -1214,7 +1225,7 @@ class MCSamples(Chains):
         flatix = ixs + iys * xsize
         # note arrays are indexed y,x
         return np.bincount(flatix, weights=self.weights,
-                    minlength=xsize * ysize).reshape((ysize , xsize)), flatix
+                           minlength=xsize * ysize).reshape((ysize, xsize)), flatix
 
     def get2DDensity(self, x, y, **kwargs):
         """
@@ -1224,7 +1235,7 @@ class MCSamples(Chains):
         return self.get2DDensityGridData(x, y, get_density=True, **kwargs)
 
     def get2DDensityGridData(self, j, j2, writeDataToFile=False,
-                      num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
+                             num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
         """
         Get 2D plot data.
         """
@@ -1241,7 +1252,6 @@ class MCSamples(Chains):
         boundary_correction_order = kwargs.get('boundary_correction_order', self.boundary_correction_order)
         mult_bias_correction_order = kwargs.get('mult_bias_correction_order', self.mult_bias_correction_order)
         smooth_scale_2D = float(kwargs.get('smooth_scale_2D', self.smooth_scale_2D))
-
 
         has_prior = parx.has_limits or pary.has_limits
 
@@ -1262,7 +1272,7 @@ class MCSamples(Chains):
         fine_bins_2D = base_fine_bins_2D
         if corr:
             scaled = 192 * int(3 / angle_scale) // 3
-            if  base_fine_bins_2D < scaled and int(1 / angle_scale) > 1:
+            if base_fine_bins_2D < scaled and int(1 / angle_scale) > 1:
                 fine_bins_2D = scaled
 
         ixs, finewidthx, xbinmin, xbinmax = self._binSamples(self.samples[:, j], parx, fine_bins_2D)
@@ -1276,12 +1286,14 @@ class MCSamples(Chains):
         if meanlikes:
             likeweights = self.weights * np.exp(self.mean_loglike - self.loglikes)
             finebinlikes = np.bincount(flatix, weights=likeweights,
-                    minlength=xsize * ysize).reshape((ysize , xsize))
+                                       minlength=xsize * ysize).reshape((ysize, xsize))
 
         # smooth_x and smooth_y should be in rotated bin units
         if smooth_scale_2D < 0:
-            rx, ry, corr = self.getAutoBandwidth2D(histbins, parx, pary, j, j2, corr, xbinmax - xbinmin, ybinmax - ybinmin,
-                        base_fine_bins_2D, mult_bias_correction_order=mult_bias_correction_order)
+            rx, ry, corr = self.getAutoBandwidth2D(histbins, parx, pary, j, j2, corr, xbinmax - xbinmin,
+                                                   ybinmax - ybinmin,
+                                                   base_fine_bins_2D,
+                                                   mult_bias_correction_order=mult_bias_correction_order)
 
             rx = rx * abs(smooth_scale_2D) / finewidthx
             ry = ry * abs(smooth_scale_2D) / finewidthy
@@ -1292,7 +1304,7 @@ class MCSamples(Chains):
             rx = smooth_scale_2D * fine_bins_2D / nbin2D
             ry = smooth_scale_2D * fine_bins_2D / nbin2D
 
-        smooth_scale = float(max(rx  , ry))
+        smooth_scale = float(max(rx, ry))
         logging.debug('corr, rx, ry: %s, %s, %s', corr, rx, ry)
 
         if smooth_scale < 2:
@@ -1300,7 +1312,7 @@ class MCSamples(Chains):
 
         winw = int(round(2.5 * smooth_scale))
 
-        Cinv = np.linalg.inv(np.array([[ ry ** 2, rx * ry * corr], [rx * ry * corr, rx ** 2]]))
+        Cinv = np.linalg.inv(np.array([[ry ** 2, rx * ry * corr], [rx * ry * corr, rx ** 2]]))
         ix1, ix2 = np.mgrid[-winw:winw + 1, -winw:winw + 1]
         Win = np.exp(-(ix1 ** 2 * Cinv[0, 0] + ix2 ** 2 * Cinv[1, 1] + 2 * Cinv[1, 0] * ix1 * ix2) / 2)
         Win /= np.sum(Win)
@@ -1358,7 +1370,8 @@ class MCSamples(Chains):
             elif boundary_correction_order == 0:
                 # simple boundary correction by normalization
                 bins2D[ix] = normed
-            else: raise SettingError('unknown boundary_correction_order (expected 0 or 1)')
+            else:
+                raise SettingError('unknown boundary_correction_order (expected 0 or 1)')
 
         if mult_bias_correction_order:
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
@@ -1374,7 +1387,8 @@ class MCSamples(Chains):
         x = np.linspace(xbinmin, xbinmax, xsize)
         y = np.linspace(ybinmin, ybinmax, ysize)
 
-        density = Density2D(x, y, bins2D, view_ranges=[(parx.range_min, parx.range_max), (pary.range_min, pary.range_max) ])
+        density = Density2D(x, y, bins2D,
+                            view_ranges=[(parx.range_min, parx.range_max), (pary.range_min, pary.range_max)])
         density.normalize('max', in_place=True)
         if get_density: return density
 
@@ -1388,10 +1402,10 @@ class MCSamples(Chains):
         density.contours = density.getContourLevels(contours)
 
         # now make smaller num_bins grid between ranges for plotting
-#        x = parx.range_min + np.arange(nbin2D + 1) * widthx
-#        y = pary.range_min + np.arange(nbin2D + 1) * widthy
-#        bins2D = density.Prob(x, y)
-#        bins2D[bins2D < 1e-30] = 0
+        # x = parx.range_min + np.arange(nbin2D + 1) * widthx
+        # y = pary.range_min + np.arange(nbin2D + 1) * widthy
+        # bins2D = density.Prob(x, y)
+        # bins2D[bins2D < 1e-30] = 0
 
         if meanlikes:
             bin2Dlikes /= np.max(bin2Dlikes)
@@ -1401,9 +1415,9 @@ class MCSamples(Chains):
 
         if writeDataToFile:
             # note store things in confusing transpose form
-#            if meanlikes:
-#                filedensity = Density2D(x, y, bin2Dlikes)
-#                bin2Dlikes = filedensity.Prob(x, y)
+            #            if meanlikes:
+            #                filedensity = Density2D(x, y, bin2Dlikes)
+            #                bin2Dlikes = filedensity.Prob(x, y)
 
             plotfile = self.rootname + "_2D_%s_%s" % (parx.name, pary.name)
             filename = os.path.join(self.plot_data_dir, plotfile)
@@ -1412,10 +1426,10 @@ class MCSamples(Chains):
             np.savetxt(filename + "_x", y, "%16.7E")
             np.savetxt(filename + "_cont", np.atleast_2d(density.contours), "%16.7E")
             if meanlikes:
-                np.savetxt(filename + "_likes", bin2Dlikes.T , "%16.7E")
-#       res = Density2D(x, y, bins2D)
-#       res.contours = density.contours
-#       res.likes = bin2Dlikes
+                np.savetxt(filename + "_likes", bin2Dlikes.T, "%16.7E")
+                #       res = Density2D(x, y, bins2D)
+                #       res.contours = density.contours
+                #       res.likes = bin2Dlikes
         return density
 
     def setLikeStats(self):
@@ -1530,11 +1544,11 @@ class MCSamples(Chains):
 
         for j in range(self.n):
             paramConfid = self.initParamConfidenceData(self.samples[:, j])
-            self.get1DDensityGridData(j, writeDataToFile, get_density=not writeDataToFile, paramConfid=paramConfid, meanlikes=meanlikes)
+            self.get1DDensityGridData(j, writeDataToFile, get_density=not writeDataToFile, paramConfid=paramConfid,
+                                      meanlikes=meanlikes)
             self.setMargeLimits(self.paramNames.names[j], paramConfid, max_frac_twotail)
 
         self.done_1Dbins = True
-
 
     def setMargeLimits(self, par, paramConfid, max_frac_twotail=None, density1D=None):
         # Get limits, one or two tail depending on whether posterior
@@ -1547,14 +1561,15 @@ class MCSamples(Chains):
         for ix1, contour in enumerate(self.contours):
 
             marge_limits_bot = par.has_limits_bot and \
-                not self.force_twotail and density1D.P[0] > max_frac_twotail[ix1]
+                               not self.force_twotail and density1D.P[0] > max_frac_twotail[ix1]
             marge_limits_top = par.has_limits_top and \
-                not self.force_twotail and density1D.P[-1] > max_frac_twotail[ix1]
+                               not self.force_twotail and density1D.P[-1] > max_frac_twotail[ix1]
 
             if not marge_limits_bot or not marge_limits_top:
                 # give limit
                 if not interpGrid: interpGrid = density1D.initLimitGrids()
-                tail_limit_bot, tail_limit_top, marge_limits_bot, marge_limits_top = density1D.getLimits(contour, interpGrid)
+                tail_limit_bot, tail_limit_top, marge_limits_bot, marge_limits_top = density1D.getLimits(contour,
+                                                                                                         interpGrid)
                 limfrac = 1 - contour
 
                 if marge_limits_bot:
@@ -1574,10 +1589,10 @@ class MCSamples(Chains):
                 else:
                     tail_confid_top = self.confidence(paramConfid, limfrac / 2, upper=True)
 
-                if not marge_limits_bot and  not marge_limits_top:
+                if not marge_limits_bot and not marge_limits_top:
                     # Two tail, check if limits are at very different density
                     if (math.fabs(density1D.Prob(tail_confid_top) -
-                                   density1D.Prob(tail_confid_bot)) < self.credible_interval_threshold):
+                                      density1D.Prob(tail_confid_bot)) < self.credible_interval_threshold):
                         tail_limit_top = tail_confid_top
                         tail_limit_bot = tail_confid_bot
 
@@ -1632,7 +1647,8 @@ class MCSamples(Chains):
             text += 'g.plots_1d(roots, markers=markers)'
         self.WritePlotFile(filename, self.subplot_size_inch, text, '', ext)
 
-    def WriteScriptPlots2D(self, filename, plot_2D_param, cust2DPlots, writeDataToFile=False, ext=None, shade_meanlikes=False):
+    def WriteScriptPlots2D(self, filename, plot_2D_param, cust2DPlots, writeDataToFile=False, ext=None,
+                           shade_meanlikes=False):
         done2D = {}
         text = 'pairs=[]\n'
         plot_num = 0
@@ -1659,8 +1675,8 @@ class MCSamples(Chains):
         return done2D
 
     def WriteScriptPlotsTri(self, filename, triangle_params, ext=None):
-            text = 'g.triangle_plot(roots, %s)' % triangle_params
-            self.WritePlotFile(filename, self.subplot_size_inch, text, '_tri', ext)
+        text = 'g.triangle_plot(roots, %s)' % triangle_params
+        self.WritePlotFile(filename, self.subplot_size_inch, text, '_tri', ext)
 
     def WriteScriptPlots3D(self, filename, plot_3D, ext=None):
         text = 'sets=[]\n'
@@ -1695,6 +1711,7 @@ def GetChainRootFiles(rootdir):
     files.sort()
     return files
 
+
 def GetRootFileName(rootdir):
     rootFileName = ""
     pattern = os.path.join(rootdir, '*_*.txt')
@@ -1705,6 +1722,5 @@ def GetRootFileName(rootdir):
         rindex = chain_file0.rindex('_')
         rootFileName = chain_file0[:rindex]
     return rootFileName
-
 
 # ==============================================================================

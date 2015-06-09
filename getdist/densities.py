@@ -1,10 +1,13 @@
 import numpy as np
 from scipy.interpolate import splrep, splev, RectBivariateSpline
 
+
 class DensitiesError(Exception):
     pass
 
+
 defaultContours = [0.68, 0.95]
+
 
 def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge=True):
     """
@@ -70,8 +73,10 @@ class GridDensity(object):
                 raise DensitiesError('no samples in bin')
         else:
             raise DensitiesError("Density: unknown normalization")
-        if in_place: self.P /= norm
-        else: self.setP(self.P / norm)
+        if in_place:
+            self.P /= norm
+        else:
+            self.setP(self.P / norm)
         self.spl = None
         return self
 
@@ -99,7 +104,6 @@ class GridDensity(object):
 
 
 class Density1D(GridDensity):
-
     def __init__(self, x, P=None, view_ranges=None):
         self.n = x.size
         self.axes = [x]
@@ -124,13 +128,14 @@ class Density1D(GridDensity):
             return splev([x], self.spl, derivative, ext=1)
 
     def integrate(self, P):
-        return  ((P[0] + P[-1]) / 2 + np.sum(P[1:-1])) * self.spacing
+        return ((P[0] + P[-1]) / 2 + np.sum(P[1:-1])) * self.spacing
 
     def norm_integral(self):
         return self.integrate(self.P)
 
     def initLimitGrids(self, factor=None):
-        class InterpGrid(object): pass
+        class InterpGrid(object):
+            pass
 
         if self.spl is None: self._initSpline()
         g = InterpGrid()
@@ -184,7 +189,6 @@ class Density1D(GridDensity):
 
 
 class Density2D(GridDensity, RectBivariateSpline):
-
     def __init__(self, x, y, P=None, view_ranges=None):
         self.x = x
         self.y = y
@@ -195,7 +199,7 @@ class Density2D(GridDensity, RectBivariateSpline):
 
     def integrate(self, P):
         norm = np.sum(P[1:-1, 1:-1]) + (P[0, 0] + P[0, -1] + P[-1, 0] + P[-1, -1]) / 4.0 \
-            + (np.sum(P[1:-1, 0]) + np.sum(P[0, 1:-1]) + np.sum(P[1:-1, -1]) + np.sum(P[-1, 1:-1])) / 2.0
+               + (np.sum(P[1:-1, 0]) + np.sum(P[0, 1:-1]) + np.sum(P[1:-1, -1]) + np.sum(P[-1, 1:-1])) / 2.0
         norm *= self.spacing
         return norm
 

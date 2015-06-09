@@ -1,5 +1,6 @@
 import os
 
+
 class ParamBounds(object):
     def __init__(self, fileName=None):
         self.names = []
@@ -45,4 +46,3 @@ class ParamBounds(object):
 
     def getLower(self, name):
         return self.lower.get(name, None)
-

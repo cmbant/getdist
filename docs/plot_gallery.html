@@ -204,7 +204,7 @@ div#notebook {
 
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Version:  0.2.2
+<pre>Version:  0.2.3
 </pre>
 </div>
 </div>
@@ -1134,7 +1134,7 @@ RxAEQRCEgkMEjiAIgiAIBYcIHEEQBEEQCg4ROIIgCIIgFBz/H+fEJq31LKQbAAAAAElFTkSuQmCC
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span class="c">#Here we are using inline plots, but if you wanted to export to file you&#39;d just to e.g.</span>
+<div class=" highlight hl-ipython2"><pre><span class="c">#Here we are using inline plots, but if you wanted to export to file you&#39;d just do e.g.</span>
 <span class="c">#g.export(&#39;output_file.pdf&#39;)</span>
 </pre></div>
 
@@ -1271,9 +1271,9 @@ MA6tWWH+HxFkCbvCwqpqAAAAAElFTkSuQmCC
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre>    <span class="c">#1D marginalized comparison plot</span>
-    <span class="n">g</span> <span class="o">=</span> <span class="n">plots</span><span class="o">.</span><span class="n">getSinglePlotter</span><span class="p">(</span><span class="n">width_inch</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-    <span class="n">g</span><span class="o">.</span><span class="n">plot_1d</span><span class="p">([</span><span class="n">samples</span><span class="p">,</span> <span class="n">samples2</span><span class="p">],</span> <span class="s">&#39;x1&#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython2"><pre><span class="c">#1D marginalized comparison plot</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">plots</span><span class="o">.</span><span class="n">getSinglePlotter</span><span class="p">(</span><span class="n">width_inch</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">g</span><span class="o">.</span><span class="n">plot_1d</span><span class="p">([</span><span class="n">samples</span><span class="p">,</span> <span class="n">samples2</span><span class="p">],</span> <span class="s">&#39;x1&#39;</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -4315,10 +4315,9 @@ lLGkFwAAAABJRU5ErkJggg==
 <span class="n">g</span> <span class="o">=</span> <span class="n">plots</span><span class="o">.</span><span class="n">getSubplotPlotter</span><span class="p">()</span>
 <span class="n">g</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">figure_legend_frame</span> <span class="o">=</span> <span class="bp">False</span>
 <span class="n">g</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">alpha_filled_add</span><span class="o">=</span><span class="mf">0.4</span>
-<span class="n">legends</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Simulation&#39;</span><span class="p">,</span> <span class="s">&#39;Simulation 2&#39;</span><span class="p">]</span>
 <span class="n">g</span><span class="o">.</span><span class="n">triangle_plot</span><span class="p">([</span><span class="n">samples</span><span class="p">,</span> <span class="n">samples2</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;x0&#39;</span><span class="p">,</span> <span class="s">&#39;x1&#39;</span><span class="p">,</span> <span class="s">&#39;x2&#39;</span><span class="p">],</span> 
     <span class="n">filled_compare</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> 
-    <span class="n">legend_labels</span><span class="o">=</span><span class="n">legends</span><span class="p">,</span> 
+    <span class="n">legend_labels</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Simulation&#39;</span><span class="p">,</span> <span class="s">&#39;Simulation 2&#39;</span><span class="p">],</span> 
     <span class="n">legend_loc</span><span class="o">=</span><span class="s">&#39;upper right&#39;</span><span class="p">,</span> 
     <span class="n">line_args</span><span class="o">=</span><span class="p">[{</span><span class="s">&#39;ls&#39;</span><span class="p">:</span><span class="s">&#39;--&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">:</span><span class="s">&#39;green&#39;</span><span class="p">},</span>
                <span class="p">{</span><span class="s">&#39;lw&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">:</span><span class="s">&#39;darkblue&#39;</span><span class="p">}],</span> 
@@ -4876,7 +4875,8 @@ MBgMOcP/B8lK3EMZkUJDAAAAAElFTkSuQmCC
 <span class="n">g</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">axes_fontsize</span> <span class="o">=</span> <span class="mi">9</span>
 <span class="n">g</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">legend_fontsize</span> <span class="o">=</span> <span class="mi">11</span>
 <span class="n">g</span><span class="o">.</span><span class="n">triangle_plot</span><span class="p">([</span><span class="n">samples</span><span class="p">,</span> <span class="n">samples2</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;x1&#39;</span><span class="p">,</span> <span class="s">&#39;x2&#39;</span><span class="p">,</span> <span class="s">&#39;x3&#39;</span><span class="p">],</span> 
-                <span class="n">plot_3d_with_param</span><span class="o">=</span><span class="s">&#39;x0&#39;</span><span class="p">,</span> <span class="n">legend_labels</span><span class="o">=</span><span class="n">legends</span><span class="p">)</span>
+                <span class="n">plot_3d_with_param</span><span class="o">=</span><span class="s">&#39;x0&#39;</span><span class="p">,</span> 
+                <span class="n">legend_labels</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Simulation&#39;</span><span class="p">,</span> <span class="s">&#39;Simulation 2&#39;</span><span class="p">])</span>
 </pre></div>
 
 </div>
@@ -7665,6 +7665,7 @@ x1 0.99% lower: -1.034 upper: 2.671 (two tail)
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>c:\users\antony\appdata\local\temp\testchaindir\testchain.txt
+Removed no burn in
 </pre>
 </div>
 </div>
@@ -8111,6 +8112,7 @@ uxYAAAAASUVORK5CYII=
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>c:\users\antony\appdata\local\temp\testchaindir\testchain.txt
+Removed 0.2 as burn in
 </pre>
 </div>
 </div>
@@ -8362,8 +8364,22 @@ EBGRXBQ4REQkl/8DN9SAUNeEM5gAAAAASUVORK5CYII=
 <div class="prompt input_prompt">In&nbsp;[32]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span class="c">#Chains can be loaded by searching in multiple directories, give list as chain_dir</span>
-<span class="c">#(not chain names must be unique)</span>
+<div class=" highlight hl-ipython2"><pre><span class="c">#Silence messages about load</span>
+<span class="n">getdist</span><span class="o">.</span><span class="n">chains</span><span class="o">.</span><span class="n">print_load_details</span> <span class="o">=</span> <span class="bp">False</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span class="c">#Chains can be loaded by searching in multiple directories by giving a list as chain_dir</span>
+<span class="c">#(note chain names must be unique)</span>
 
 <span class="c">#make second test chain in new temp dir</span>
 <span class="n">temp2</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tempdir</span><span class="p">,</span><span class="s">&#39;chaindir2&#39;</span><span class="p">)</span>
@@ -8380,14 +8396,6 @@ EBGRXBQ4REQkl/8DN9SAUNeEM5gAAAAASUVORK5CYII=
 <div class="output_wrapper">
 <div class="output">
 
-
-<div class="output_area"><div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>c:\users\antony\appdata\local\temp\testchaindir\testchain.txt
-c:\users\antony\appdata\local\temp\testchaindir\chaindir2\testchain2.txt
-</pre>
-</div>
-</div>
 
 <div class="output_area"><div class="prompt"></div>
 
@@ -8692,7 +8700,7 @@ RU5ErkJggg==
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="prompt input_prompt">In&nbsp;[34]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span class="c">#cleanup test files</span>

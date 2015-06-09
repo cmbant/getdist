@@ -1,4 +1,3 @@
-
 # usage:
 # python covcmb.py out.covmat in1.covmat in2.covmat
 # Nb. in1 values take priority over in2

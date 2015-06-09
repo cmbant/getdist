@@ -35,7 +35,6 @@ class GetDistPlotError(Exception):
 class GetDistPlotSettings(object):
     """Default sizes, font, styles etc settings for use by plots"""
 
-
     def __init__(self, subplot_size_inch=2, fig_width_inch=None):
         # if fig_width_inch set, forces fixed size, subplot_size_inch then just determines font sizes etc
         # otherwise width as wide as necessary to show all subplots at specified size
@@ -121,6 +120,7 @@ class GetDistPlotSettings(object):
 
 
 defaultSettings = GetDistPlotSettings()
+
 
 def getPlotter(**kwargs):
     return GetDistPlotter(**kwargs)
@@ -236,11 +236,13 @@ class SampleAnalysisGetDist(object):
         else:
             return Density2D(x, y, pts)
 
+
 class RootInfo(object):
     def __init__(self, root, path, batch=None):
         self.root = root
         self.batch = batch
         self.path = path
+
 
 class MCSampleAnalysis(object):
     def __init__(self, chain_locations, settings=None):
@@ -334,7 +336,7 @@ class MCSampleAnalysis(object):
             if file_root.batch:
                 return self.samplesForRoot(file_root.root)
             else:
-                return  self.samplesForRoot(file_root.root, os.path.join(file_root.path, file_root.root))
+                return self.samplesForRoot(file_root.root, os.path.join(file_root.path, file_root.root))
         else:
             return self.samplesForRoot(os.path.basename(file_root), file_root)
 
@@ -383,7 +385,6 @@ class MCSampleAnalysis(object):
         if not root in self.single_samples:
             self.single_samples[root] = self.samplesForRoot(root).makeSingleSamples()
         return self.single_samples[root]
-
 
     def paramsForRoot(self, root, labelParams=None):
         samples = self.samplesForRoot(root)
@@ -623,7 +624,6 @@ class GetDistPlotter(object):
         # doing contourf gets rid of annoying white lines in pdfs
         plt.contour(density.x, density.y, points, self.settings.num_shades, colors=cols, levels=levels)
 
-
     def updateLimit(self, bounds, curbounds):
         if not bounds: return curbounds
         if curbounds is None or curbounds[0] is None: return bounds
@@ -636,7 +636,6 @@ class GetDistPlotter(object):
             return xlims, ylims
         else:
             return self.updateLimit(res[0], xlims), self.updateLimit(res[1], ylims)
-
 
     def _make_line_args(self, nroots, **kwargs):
         line_args = kwargs.get('line_args')
@@ -728,7 +727,6 @@ class GetDistPlotter(object):
         else:
             axis.set_major_locator(plt.MaxNLocator(self.settings.subplot_size_inch / 2 + 4, prune=prune))
 
-
     def setAxisProperties(self, axis, x, prune=None):
         formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
         axis.set_major_formatter(formatter)
@@ -760,8 +758,8 @@ class GetDistPlotter(object):
     def set_xlabel(self, param, ax=None):
         ax = ax or plt.gca()
         ax.set_xlabel(param.latexLabel(), fontsize=self.settings.lab_fontsize,
-            verticalalignment='baseline',
-            labelpad=4 + self.settings.font_size)  # test_size because need a number not e.g. 'medium'
+                      verticalalignment='baseline',
+                      labelpad=4 + self.settings.font_size)  # test_size because need a number not e.g. 'medium'
 
     def set_ylabel(self, param, ax=None):
         ax = ax or plt.gca()
@@ -1054,7 +1052,6 @@ class GetDistPlotter(object):
         axis.set_ticks(tick)
         return tick
 
-
     def triangle_plot(self, roots, in_params=None, legend_labels=None, plot_3d_with_param=None, filled=False,
                       filled_compare=False, shaded=False,
                       contour_args=None, contour_colors=None, contour_ls=None, contour_lws=None, line_args=None,
@@ -1211,7 +1208,7 @@ class GetDistPlotter(object):
                     sharex = ax
                     xshares.append(ax)
                 res = self.plot_2d(subplot_roots, param_pair=[xparam, yparam], do_xlabel=y == len(yparams) - 1,
-                             do_ylabel=x == 0, add_legend_proxy=x == 0 and y == 0, **kwargs)
+                                   do_ylabel=x == 0, add_legend_proxy=x == 0 and y == 0, **kwargs)
                 if ymarkers is not None and ymarkers[y] is not None: self.add_y_marker(ymarkers[y], **marker_args)
                 if xmarkers is not None and xmarkers[x] is not None: self.add_x_marker(xmarkers[x], **marker_args)
                 limits[xparam], limits[yparam] = self.updateLimits(res, limits.get(xparam), limits.get(yparam))
@@ -1263,7 +1260,7 @@ class GetDistPlotter(object):
         if label_rotation is None:
             label_rotation = self.settings.colorbar_label_rotation
         cb.set_label(param.latexLabel(), fontsize=self.settings.lab_fontsize,
-            rotation=label_rotation, labelpad=self.settings.colorbar_label_pad)
+                     rotation=label_rotation, labelpad=self.settings.colorbar_label_pad)
         plt.setp(plt.getp(cb.ax, 'ymajorticklabels'), fontsize=self.settings.colorbar_axes_fontsize)
 
     def _makeParamObject(self, names, samples):
@@ -1376,4 +1373,3 @@ class GetDistPlotter(object):
     def paramNameListFromFile(self, fname):
         p = ParamNames(fname)
         return [name.name for name in p.names]
-

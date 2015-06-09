@@ -2,19 +2,22 @@ import numpy as np
 from scipy import fftpack
 
 # numbers of the form 2^n3^m5^r, even only and r<=1
-fastFFT = np.array([2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 144, 160, 192, 256, 288, 320, 384, 432, 480,
-                    512, 576, 640, 720, 768, 864, 960, 1024, 1152, 1280, 1440, 1536, 1728, 1920, 2048, 2304, 2560, 2880, 3072,
-                    3456, 3840, 4096, 4608, 5120, 5760, 6144, 6912, 7680, 8192, 9216, 10240, 11520, 12288, 13824, 15360, 16384,
-                    18432, 20480, 23040, 24576, 27648, 30720, 32768, 36864, 40960, 46080, 49152, 55296, 61440, 65536, 73728, 81920,
-                    92160, 98304, 110592, 122880, 131072, 147456, 163840, 184320, 196608, 221184, 245760, 262144, 294912, 327680,
-                    368640, 393216, 442368, 491520, 524288, 589824, 655360, 737280, 786432, 884736, 983040, 1048576, 1179648,
-                    1310720, 1474560, 1572864, 1769472, 1966080, 2097152, 2359296, 2621440, 2949120, 3145728, 3538944, 3932160,
-                    4194304, 4718592, 5242880, 5898240, 6291456, 7077888, 7864320, 8388608, 9437184, 10485760, 11796480, 12582912,
-                    14155776, 15728640, 16777216, 18874368, 20971520, 23592960, 25165824, 28311552, 31457280, 33554432, 37748736,
-                    41943040, 47185920, 50331648, 56623104, 62914560, 67108864, 75497472, 83886080, 94371840, 100663296, 113246208,
-                    125829120, 134217728, 150994944, 167772160, 188743680, 201326592, 226492416, 234881024, 251658240, 268435456,
-                    301989888, 335544320, 377487360, 402653184, 452984832, 503316480, 536870912, 603979776, 671088640, 754974720,
-                    805306368, 905969664, 1006632960, 1207959552, 1342177280, 1358954496, 1509949440, 1610612736, 1811939328, 2013265920], dtype=np.int)
+fastFFT = np.array(
+    [2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 144, 160, 192, 256, 288, 320, 384, 432, 480,
+     512, 576, 640, 720, 768, 864, 960, 1024, 1152, 1280, 1440, 1536, 1728, 1920, 2048, 2304, 2560, 2880, 3072,
+     3456, 3840, 4096, 4608, 5120, 5760, 6144, 6912, 7680, 8192, 9216, 10240, 11520, 12288, 13824, 15360, 16384,
+     18432, 20480, 23040, 24576, 27648, 30720, 32768, 36864, 40960, 46080, 49152, 55296, 61440, 65536, 73728, 81920,
+     92160, 98304, 110592, 122880, 131072, 147456, 163840, 184320, 196608, 221184, 245760, 262144, 294912, 327680,
+     368640, 393216, 442368, 491520, 524288, 589824, 655360, 737280, 786432, 884736, 983040, 1048576, 1179648,
+     1310720, 1474560, 1572864, 1769472, 1966080, 2097152, 2359296, 2621440, 2949120, 3145728, 3538944, 3932160,
+     4194304, 4718592, 5242880, 5898240, 6291456, 7077888, 7864320, 8388608, 9437184, 10485760, 11796480, 12582912,
+     14155776, 15728640, 16777216, 18874368, 20971520, 23592960, 25165824, 28311552, 31457280, 33554432, 37748736,
+     41943040, 47185920, 50331648, 56623104, 62914560, 67108864, 75497472, 83886080, 94371840, 100663296, 113246208,
+     125829120, 134217728, 150994944, 167772160, 188743680, 201326592, 226492416, 234881024, 251658240, 268435456,
+     301989888, 335544320, 377487360, 402653184, 452984832, 503316480, 536870912, 603979776, 671088640, 754974720,
+     805306368, 905969664, 1006632960, 1207959552, 1342177280, 1358954496, 1509949440, 1610612736, 1811939328,
+     2013265920], dtype=np.int)
+
 
 def nearestFFTnumber(x):
     return np.maximum(x, fastFFT[np.searchsorted(fastFFT, x)])
@@ -26,8 +29,10 @@ def convolve1D(x, y, mode, largest_size=0, cache=None):
     else:
         return np.convolve(x, y, mode)
 
+
 def convolve2D(x, y, mode, largest_size=0, cache=None):
     return convolveFFTn(x, y, mode, largest_size, cache)
+
 
 def convolveFFT(x, y, mode='same', yfft=None, xfft=None, largest_size=0, cache=None):
     """
@@ -58,8 +63,8 @@ def convolveFFT(x, y, mode='same', yfft=None, xfft=None, largest_size=0, cache=N
     elif mode == 'valid':
         return res[y.size - 1:x.size]
 
-def convolveFFTn(in1, in2, mode="same", largest_size=0, cache=None, yfft=None, xfft=None):
 
+def convolveFFTn(in1, in2, mode="same", largest_size=0, cache=None, yfft=None, xfft=None):
     s1 = np.array(in1.shape)
     s2 = np.array(in2.shape)
     size = s1 + s2 - 1
@@ -88,6 +93,7 @@ def convolveFFTn(in1, in2, mode="same", largest_size=0, cache=None, yfft=None, x
     elif mode == "valid":
         return _centered(ret, s1 - s2 + 1)
 
+
 def _centered(arr, newsize):
     # Return the center newsize portion of the array.
     startind = (np.array(arr.shape) - newsize) // 2
@@ -106,6 +112,7 @@ def autoCorrelation(x, n=None, normalized=True, start_index=0):
         result /= result[0]
     return result[start_index:]
 
+
 def autoConvolve(x, n=None, normalize=True):
     """
     Calculates auto-covariance of x, result[k] = sum_i x_i x_{i+k}
@@ -114,9 +121,9 @@ def autoConvolve(x, n=None, normalize=True):
     (can input x-mean(x) and divide result by variance to get auto correlation)
     """
     s = nearestFFTnumber(2 * x.size)
-#    yt = np.fft.rfft(x, s)
-#    yt *= yt.conj()
-#    return np.fft.irfft(yt)[0:x.size]
+    #    yt = np.fft.rfft(x, s)
+    #    yt *= yt.conj()
+    #    return np.fft.irfft(yt)[0:x.size]
     xt = fftpack.rfft(x, s)
     auto = np.empty((xt.size // 2) + 1)
     auto[0] = xt[0] ** 2
@@ -127,6 +134,7 @@ def autoConvolve(x, n=None, normalize=True):
     if normalize:
         res /= np.arange(x.size, x.size - n, -1)
     return res
+
 
 def convolveGaussianDCT(x, sigma, pad_sigma=4, mode='same', cache={}):
     """
@@ -156,7 +164,8 @@ def convolveGaussianDCT(x, sigma, pad_sigma=4, mode='same', cache={}):
         return res[fill:-fill2]
     elif mode == 'valid':
         return res[fill * 2:-fill2 - fill]
-    else: raise ValueError('mode not supported for convolveGaussianDCT')
+    else:
+        raise ValueError('mode not supported for convolveGaussianDCT')
 
 
 def convolveGaussian(x, sigma, sigma_range=4, cache=None):
@@ -212,6 +221,6 @@ def convolveGaussianTrunc(x, sigma, sigma_range=4, mode='same', cache=None):
 def dct2d(a):
     return fftpack.dct(fftpack.dct(a, axis=0), axis=1)
 
+
 def idct2d(a):
     return fftpack.idct(fftpack.idct(a, axis=1), axis=0)
-

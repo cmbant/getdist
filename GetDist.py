@@ -8,15 +8,19 @@ import getdist
 import io
 from getdist import MCSamples, chains, IniFile
 
+
 def runScript(fname):
     subprocess.Popen(['python', fname])
+
 
 def doError(msg):
     if __name__ == '__main__':
         import sys
+
         print(msg)
         sys.exit()
     raise ValueError(msg)
+
 
 def main(args):
     no_plots = False
@@ -24,10 +28,10 @@ def main(args):
     if args.ini_file is None and chain_root is None:
         doError('Must give either a .ini file of parameters or a chain file root name. Run "GetDist.py -h" for help.')
     if not '.ini' in args.ini_file and chain_root is None:
-            # use default settings acting on chain_root, no plots
-            chain_root = args.ini_file
-            args.ini_file = getdist.default_getdist_settings
-            no_plots = True
+        # use default settings acting on chain_root, no plots
+        chain_root = args.ini_file
+        args.ini_file = getdist.default_getdist_settings
+        no_plots = True
     if not os.path.isfile(args.ini_file):
         doError('Parameter file does not exist: ' + args.ini_file)
     if chain_root and chain_root.endswith('.txt'):
@@ -58,7 +62,8 @@ def main(args):
     mc.initParameters(ini)
 
     if ini.bool('adjust_priors', False) or ini.bool('map_params', False):
-        doError('To adjust priors or define new parameters, use a separate python script; see the python getdist docs for examples')
+        doError(
+            'To adjust priors or define new parameters, use a separate python script; see the python getdist docs for examples')
 
     plot_ext = ini.string('plot_ext', 'py')
     finish_run_command = ini.string('finish_run_command', '')
@@ -92,7 +97,8 @@ def main(args):
         print('producing files with with root ', out_root)
     mc.rootname = rootname
 
-    rootdirname = os.path.join(out_dir, rootname); mc.rootdirname = rootdirname
+    rootdirname = os.path.join(out_dir, rootname)
+    mc.rootdirname = rootdirname
 
     if 'do_minimal_1d_intervals' in ini.params:
         doError('do_minimal_1d_intervals no longer used; set credible_interval_threshold instead')
@@ -121,7 +127,8 @@ def main(args):
     # -1 means keep reading until one not found
 
     # Chain files
-    chain_files = chains.chainFiles(in_root, first_chain=first_chain, last_chain=last_chain, chain_exclude=chain_exclude)
+    chain_files = chains.chainFiles(in_root, first_chain=first_chain, last_chain=last_chain,
+                                    chain_exclude=chain_exclude)
 
     mc.loadChains(in_root, chain_files)
 
@@ -130,7 +137,7 @@ def main(args):
     mc.makeSingle()
 
     def filterPars(names):
-        return [ name for name in names if mc.paramNames.parWithName(name) ]
+        return [name for name in names if mc.paramNames.parWithName(name)]
 
     if cool != 1:
         print('Cooling chains by ', cool)
@@ -190,7 +197,8 @@ def main(args):
             for i in range(1, num_cust2D_plots + 1):
                 line = ini.string('plot' + str(i))
                 pars = filterPars(line.split())
-                if len(pars) != 2: raise Exception('plot_2D_num parameter not found, not varied, or not wrong number of parameters')
+                if len(pars) != 2: raise Exception(
+                    'plot_2D_num parameter not found, not varied, or not wrong number of parameters')
                 cust2DPlots.append(pars)
 
         triangle_params = []
@@ -209,7 +217,8 @@ def main(args):
         for ix in range(1, num_3D_plots + 1):
             line = ini.string('3D_plot' + str(ix))
             pars = filterPars(line.split())
-            if len(pars) != 3: raise Exception('3D_plot parameter not found, not varied, or not wrong number of parameters')
+            if len(pars) != 3: raise Exception(
+                '3D_plot parameter not found, not varied, or not wrong number of parameters')
             plot_3D.append(pars)
 
 
@@ -270,10 +279,10 @@ def main(args):
             if make_plots: runScript(filename)
 
     if not plots_only:
-    # Write out stats marginalized
+        # Write out stats marginalized
         mc.getMargeStats().saveAsText(rootdirname + '.margestats')
 
-    # Limits from global likelihood
+        # Limits from global likelihood
         if mc.loglikes is not None: mc.getLikeStats().saveAsText(rootdirname + '.likestats')
 
     # System command
@@ -292,12 +301,14 @@ if __name__ == '__main__':
         raise
 
     parser = argparse.ArgumentParser(description='GetDist sample analyser')
-    parser.add_argument('ini_file', nargs='?', help='.ini file with analysis settings (optional, if omitted uses defaults)')
-    parser.add_argument('chain_root', nargs='?', help='Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file')
+    parser.add_argument('ini_file', nargs='?',
+                        help='.ini file with analysis settings (optional, if omitted uses defaults)')
+    parser.add_argument('chain_root', nargs='?',
+                        help='Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file')
     parser.add_argument('--ignore_rows',
-            help='set initial fraction of chains to cut as burn in (fraction of total rows, or >1 number of rows); overrides any value in ini_file if set')
+                        help='set initial fraction of chains to cut as burn in (fraction of total rows, or >1 number of rows); overrides any value in ini_file if set')
     parser.add_argument('--make_param_file',
-            help='Produce a sample distparams.ini file that you can edit and use when running GetDist')
+                        help='Produce a sample distparams.ini file that you can edit and use when running GetDist')
     parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
     args = parser.parse_args()
     if args.make_param_file:

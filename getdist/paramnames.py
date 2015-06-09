@@ -1,8 +1,8 @@
 # AL Apr 11
 import os
 
-class ParamInfo(object):
 
+class ParamInfo(object):
     def __init__(self, line=None, name='', label='', comment='', derived=False, number=None):
         self.name = name
         self.isDerived = derived
@@ -42,7 +42,7 @@ class ParamInfo(object):
 
     def setFromStringWithComment(self, items):
         self.setFromString(items[0])
-        if items[1] != 'NULL':self.comment = items[1]
+        if items[1] != 'NULL': self.comment = items[1]
 
     def string(self, wantComments=True):
         res = self.name
@@ -57,7 +57,6 @@ class ParamInfo(object):
 
 
 class ParamList(object):
-
     def __init__(self, fileName=None, setParamNameFile=None, default=None, names=None):
 
         self.names = []
@@ -108,7 +107,7 @@ class ParamList(object):
 
     def numberOfName(self, name):
         for i, par in enumerate(self.names):
-            if par.name == name:return i
+            if par.name == name: return i
         return -1
 
     def parsWithNames(self, names, error=False, renames={}):
@@ -116,7 +115,8 @@ class ParamList(object):
         for name in names:
             if isinstance(name, ParamInfo):
                 res.append(name)
-            else: res.append(self.parWithName(name, error, renames))
+            else:
+                res.append(self.parWithName(name, error, renames))
         return res
 
     def setLabelsAndDerivedFromParamNames(self, fname):
@@ -161,7 +161,7 @@ class ParamList(object):
 
     def name(self, ix, tag_derived=False):
         par = self.names[ix]
-        if tag_derived and  par.isDerived:
+        if tag_derived and par.isDerived:
             return par.name + '*'
         else:
             return par.name
@@ -178,7 +178,6 @@ class ParamList(object):
 
 
 class ParamNames(ParamList):
-
     def loadFromFile(self, fileName):
 
         self.filenameLoadedFrom = os.path.split(fileName)[1]
@@ -200,11 +199,4 @@ class ParamNames(ParamList):
         keywordProvider.setKeyWord_int('num_derived_params', self.numDerived())
         for i, name in enumerate(self.names):
             keywordProvider.setKeyWord('param_' + str(i + 1), name.string(False).replace('\\', '!'),
-                name.comment)
-
-
-
-
-
-
-
+                                       name.comment)

@@ -138,7 +138,6 @@ class IniFile(object):
 
         return parameterLines
 
-
     def replaceTags(self, placeholder, text):
         for key in self.params:
             self.params[key] = self.params[key].replace(placeholder, text)
@@ -227,7 +226,7 @@ class IniFile(object):
             if tp is None:
                 return self.params[name]
             else:
-                return  [tp(x) for x in self.params[name]]
+                return [tp(x) for x in self.params[name]]
 
         s = self.string(name, default)
         if isinstance(s, six.string_types):

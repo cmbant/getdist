@@ -34,8 +34,9 @@ def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-
         fname = root + ('', '_' + str(index))[index > 0]
         if not ext in fname: fname += ext
         if index > 0 and not os.path.exists(fname) or 0 < last_chain <= index: break
-        if (chain_indices is None or index in chain_indices) and \
-           (chain_exclude is None or not index in chain_exclude) and index >= first_chain and os.path.exists(fname):
+        if (chain_indices is None or index in chain_indices) \
+                and (chain_exclude is None or not index in chain_exclude) \
+                and index >= first_chain and os.path.exists(fname):
             files.append(fname)
     return files
 
@@ -248,7 +249,6 @@ class WeightedSamples(object):
                 break
         N = corr[0] + 2 * np.sum(corr[1:])
         return self.get_norm() ** 2 / N
-
 
     def weighted_sum(self, paramVec, where=None):
         paramVec = self._makeParamvec(paramVec)
@@ -628,5 +628,3 @@ class Chains(WeightedSamples):
 
         with open(filename, 'wb') as output:
             pickle.dump(self, output, pickle.HIGHEST_PROTOCOL)
-
-

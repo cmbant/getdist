@@ -7,6 +7,7 @@ from getdist.chains import WeightedSamples
 from getdist.mcsamples import MCSamples, loadMCSamples
 import numpy as np
 
+
 def get_defaults_file(name='analysis_defaults.ini'):
     import os
 
