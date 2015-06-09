@@ -2,7 +2,7 @@
 GetDist
 ===================
 :GetDist: MCMC sample analysis, plotting and GUI
-:Version: 0.2.2
+:Version: 0.2.3
 :Author: Antony Lewis
 :Homepage: https://github.com/cmbant/getdist
 
@@ -66,6 +66,8 @@ For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/i
    sudo port install texlive-latex-extra
    sudo port install texlive-fonts-recommended
    sudo port install dvipng
+
+If you don't want to install dependencies locally, you can also use a pre-configured `virtual environment <http://cosmologist.info/CosmoBox/>`_.
 
 Algorithm details
 ==================
@@ -135,7 +137,7 @@ from two chains with root names *xxx* and *yyy*::
 	g.plot_2d(['xxx','yyy], ['x', 'y'])
 
 
-MCSamples objects can also be constructed directly from numpy arrays in memory, see the example in the `Plot Gallery <http://htmlpreview.github.io/?https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.html>`_.
+MCSamples objects can also be constructed directly from numpy arrays in memory, see the example in the `Plot Gallery <https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.ipynb>`_.
 
 GetDist script
 ===================

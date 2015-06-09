@@ -250,6 +250,9 @@ class MCSamples(chains):
         if self.ignore_frac and  (not self.jobItem or
                     (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
+            print('Removed %s as burn in' % self.ignore_frac)
+        else:
+            print('Removed no burn in')
 
         self.deleteFixedParams()
 

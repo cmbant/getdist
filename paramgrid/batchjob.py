@@ -6,8 +6,8 @@ import pickle
 import copy
 import sys
 import time
-from getdist import types, IniFile
 import six
+from getdist import types, IniFile
 
 
 def resetGrid(directory):
@@ -16,6 +16,7 @@ def resetGrid(directory):
 
 
 def readobject(directory=None):
+    # load this here to prevent circular
     from paramgrid import gridconfig
 
     if directory is None:
@@ -29,6 +30,7 @@ def readobject(directory=None):
         with open(fname, 'rb') as inp:
             return pickle.load(inp)
     except:
+        resetGrid(directory)
         if gridconfig.pathIsGrid(directory):
             return gridconfig.makeGrid(directory, readOnly=True, interactive=False)
         raise

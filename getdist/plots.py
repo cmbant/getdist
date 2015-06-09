@@ -11,7 +11,7 @@ matplotlib.use('Agg', warn=False)
 from matplotlib import cm, rcParams
 import matplotlib.pyplot as plt
 import numpy as np
-from paramgrid import batchjob, gridconfig
+from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
 from getdist.parampriors import ParamBounds
@@ -236,21 +236,46 @@ class SampleAnalysisGetDist(object):
         else:
             return Density2D(x, y, pts)
 
+class RootInfo(object):
+    def __init__(self, root, path, batch=None):
+        self.root = root
+        self.batch = batch
+        self.path = path
 
 class MCSampleAnalysis(object):
-    def __init__(self, chain_dir=None, settings=None):
-        self.chain_dir = chain_dir
-        self.batch = None
+    def __init__(self, chain_locations, settings=None):
+        """chain_locations is either a directory or the path of a grid of runs;
+           it can also be a list of such, which is searched in order"""
+        self.chain_dirs = []
+        self.chain_locations = []
         self.ini = None
-        if chain_dir and isinstance(chain_dir, six.string_types):
-            if gridconfig.pathIsGrid(chain_dir):
-                self.batch = batchjob.readobject(chain_dir)
-                # this gets things like specific parameter limits etc.
-                if os.path.exists(self.batch.commonPath + 'getdist_common.ini'):
-                    self.ini = IniFile(self.batch.commonPath + 'getdist_common.ini')
-            else:
-                self.chain_dir = [chain_dir]
+        if chain_locations is not None:
+            if isinstance(chain_locations, six.string_types):
+                chain_locations = [chain_locations]
+            for chain_dir in chain_locations:
+                self.addChainDir(chain_dir)
         self.reset(settings)
+
+    def addChainDir(self, chain_dir):
+        if chain_dir in self.chain_locations: return
+        self.chain_locations.append(chain_dir)
+        isBatch = isinstance(chain_dir, batchjob.batchJob)
+        if isBatch or gridconfig.pathIsGrid(chain_dir):
+            if isBatch:
+                batch = chain_dir
+            else:
+                batch = batchjob.readobject(chain_dir)
+            self.chain_dirs.append(batch)
+            # this gets things like specific parameter limits etc. specific to the grid
+            # yuk, should get rid of this next refactor when grids should store this information
+            if os.path.exists(batch.commonPath + 'getdist_common.ini'):
+                batchini = IniFile(batch.commonPath + 'getdist_common.ini')
+                if self.ini:
+                    self.ini.params.update(batchini.params)
+                else:
+                    self.ini = batchini
+        else:
+            self.chain_dirs.append(chain_dir)
 
     def reset(self, settings=None):
         self.analysis_settings = {}
@@ -279,23 +304,25 @@ class MCSampleAnalysis(object):
         jobItem = None
         dist_settings = {}
         if not file_root:
-            if self.batch:
-                jobItem = self.batch.resolveRoot(root)
-                if not jobItem: raise GetDistPlotError('chain not found: ' + root)
-                file_root = jobItem.chainRoot
-                dist_settings = jobItem.dist_settings
-            else:
-                for directory in self.chain_dir:
-                    name = os.path.join(directory, root)
+            for chain_dir in self.chain_dirs:
+                if hasattr(chain_dir, "resolveRoot"):
+                    jobItem = chain_dir.resolveRoot(root)
+                    if jobItem:
+                        file_root = jobItem.chainRoot
+                        dist_settings = jobItem.dist_settings
+                        break
+                else:
+                    name = os.path.join(chain_dir, root)
                     if os.path.exists(name + '_1.txt') or os.path.exists(name + '.txt'):
                         file_root = name
                         break
-                if not file_root:  raise GetDistPlotError('chain not found: ' + root)
+        if not file_root:
+            raise GetDistPlotError('chain not found: ' + root)
+
         self.mcsamples[root] = loadMCSamples(file_root, self.ini, jobItem, dist_settings=dist_settings)
         return self.mcsamples[root]
 
     def addRootGrid(self, root):
-        if self.batch is None: return None
         return self.samplesForRoot(root)
 
     def addRoots(self, roots):
@@ -303,7 +330,13 @@ class MCSampleAnalysis(object):
             self.addRoot(root)
 
     def addRoot(self, file_root):
-        return self.samplesForRoot(os.path.basename(file_root), file_root)
+        if isinstance(file_root, RootInfo):
+            if file_root.batch:
+                return self.samplesForRoot(file_root.root)
+            else:
+                return  self.samplesForRoot(file_root.root, os.path.join(file_root.path, file_root.root))
+        else:
+            return self.samplesForRoot(os.path.basename(file_root), file_root)
 
     def removeRoot(self, file_root):
         root = os.path.basename(file_root)
