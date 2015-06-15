@@ -837,7 +837,8 @@ class GetDistPlotter(object):
         if in_params is None or len(in_params) == 0:
             return self.paramNamesForRoot(root).names
         else:
-            if not all([isinstance(param, ParamInfo) for param in in_params]):
+            if isinstance(in_params, six.string_types) or not all(
+                    [isinstance(param, ParamInfo) for param in in_params]):
                 return self.paramNamesForRoot(root).parsWithNames(in_params, error=True, renames=renames)
         return in_params
 

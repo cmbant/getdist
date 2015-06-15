@@ -1,10 +1,11 @@
-# AL Apr 11
+# AL 2011-2015
 import os
-
+import fnmatch
+import six
 
 class ParamInfo(object):
     def __init__(self, line=None, name='', label='', comment='', derived=False, number=None):
-        self.name = name
+        self.setName(name)
         self.isDerived = derived
         self.label = label or name
         self.comment = comment
@@ -15,10 +16,11 @@ class ParamInfo(object):
 
     def setFromString(self, line):
         items = line.split(None, 1)
-        self.name = items[0]
-        if self.name.endswith('*'):
-            self.name = self.name.strip('*')
+        name = items[0]
+        if name.endswith('*'):
+            name = name.strip('*')
             self.isDerived = True
+        self.setName(name)
         if len(items) > 1:
             tmp = items[1].split('#', 1)
             self.label = tmp[0].strip().replace('!', '\\')
@@ -27,6 +29,11 @@ class ParamInfo(object):
             else:
                 self.comment = ''
         return self
+
+    def setName(self, name):
+        if '*' in name or '?' in name or ' ' in name or '\t' in name:
+            raise ValueError('Parameter names must not contain spaces, * or ?')
+        self.name = name
 
     def getLabel(self):
         if self.label:
@@ -111,13 +118,30 @@ class ParamList(object):
         return -1
 
     def parsWithNames(self, names, error=False, renames={}):
+        # gets parInfo instances for given list of name strings
+        # also expands any names that are *? globs into match list
         res = []
+        if isinstance(names, six.string_types):
+            names = [names]
         for name in names:
             if isinstance(name, ParamInfo):
                 res.append(name)
             else:
-                res.append(self.parWithName(name, error, renames))
+                if '?' in name or '*' in name:
+                    res += self.getMatches(name)
+                else:
+                    res.append(self.parWithName(name, error, renames))
         return res
+
+    def getMatches(self, pattern, strings=False):
+        pars = []
+        for par in self.names:
+            if fnmatch.fnmatchcase(par.name, pattern):
+                if strings:
+                    pars.append(par.name)
+                else:
+                    pars.append(par)
+        return pars
 
     def setLabelsAndDerivedFromParamNames(self, fname):
         p = ParamNames(fname)

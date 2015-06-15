@@ -40,7 +40,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, dist_settin
     if not os.path.exists(path): os.mkdir(path)
     cachefile = os.path.join(path, name) + '.py_mcsamples'
     samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=dist_settings)
-    allfiles = files + [file_root + '.ranges', file_root + '.paramnames']
+    allfiles = files + [file_root + '.ranges', file_root + '.paramnames', file_root + '.properties.ini']
     if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
         try:
             with open(cachefile, 'rb') as inp:
@@ -132,6 +132,17 @@ class MCSamples(Chains):
 
         self.updateSettings(ini=ini, settings=settings)
 
+        if root and os.path.exists(root + '.properties.ini'):
+            # any settings in properties.ini override settings for this specific chain
+            self.properties = IniFile(root + '.properties.ini')
+            self.setBurnOptions(self.properties)
+            if self.properties.bool('burn_removed', False):
+                self.ignore_frac = 0.
+                self.ignore_lines = 0
+        else:
+            self.properties = None
+
+
     def setRanges(self, ranges):
         if isinstance(ranges, (list, tuple)):
             for i, minmax in enumerate(ranges):
@@ -149,14 +160,17 @@ class MCSamples(Chains):
     def parLabel(self, i):
         return self.paramNames.names[i].label
 
-    def initParameters(self, ini):
-
+    def setBurnOptions(self, ini):
         ini.setAttr('ignore_rows', self)
         self.ignore_lines = int(self.ignore_rows)
         if not self.ignore_lines:
             self.ignore_frac = self.ignore_rows
         else:
             self.ignore_frac = 0
+
+    def initParameters(self, ini):
+
+        self.setBurnOptions(ini)
 
         ini.setAttr('range_ND_contour', self)
         ini.setAttr('range_confidence', self)

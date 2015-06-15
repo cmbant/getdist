@@ -2,7 +2,7 @@
 GetDist
 ===================
 :GetDist: MCMC sample analysis, plotting and GUI
-:Version: 0.2.3
+:Version: 0.2.4
 :Author: Antony Lewis
 :Homepage: https://github.com/cmbant/getdist
 
@@ -24,7 +24,7 @@ from Markov Chain Monte Carlo (MCMC).
 * **Convergence diagnostics** - including correlation length and diagonalized Gelman-Rubin statistics
 * **Latex tables** for marginalized 1D constraints
 
-See the `Plot Gallery <https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.ipynb>`_.
+See the `Plot Gallery and tutorial <https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.ipynb>`_.
 
 
 Getting Started
@@ -108,6 +108,9 @@ The .ranges file gives hard bounds for the parameters, e.g.::
  x2   0 N
 
 Note that not all parameters need to be specified, and "N" can be used to denote that a particular upper or lower limit is unbounded. The ranges are used to determine densities and plot bounds if there are samples near the boundary; if there are no samples anywhere near the boundary the ranges have no affect on plot bounds, which are chosen appropriately for the range of the samples.
+
+There can also optionally be a .properties.ini file, which can specify *burn_removed=T* to ensure no burn in is removed, or *ignore_rows=x" to ignore the first
+fraction *x* of the file rows (or if *x > 1*, the specified number of rows).
 
 Loading samples
 ===================

@@ -136,8 +136,20 @@ def main(args):
     mc.deleteFixedParams()
     mc.makeSingle()
 
-    def filterPars(names):
-        return [name for name in names if mc.paramNames.parWithName(name)]
+    def filterParList(namestring, num=None):
+        if not namestring.strip():
+            pars = mc.paramNames.list()
+        else:
+            pars = []
+            for name in namestring.split():
+                if '?' in name or '*' in name:
+                    pars += mc.paramNames.getMatches(name, strings=True)
+                elif mc.paramNames.parWithName(name):
+                    pars.append(name)
+        if num is not None and len(pars) != num:
+            raise Exception('%iD plot has not wrong number of parameters: %s' % (num, pars))
+        return pars
+
 
     if cool != 1:
         print('Cooling chains by ', cool)
@@ -183,12 +195,12 @@ def main(args):
         plotparams = []
         line = ini.string('plot_params', '')
         if line not in ['', '0']:
-            plotparams = filterPars(line.split())
+            plotparams = filterParList(line)
 
-        line = ini.string('plot_2D_param', '')
+        line = ini.string('plot_2D_param', '').strip()
         plot_2D_param = None
-        if line.strip() and line != '0':
-            plot_2D_param = line.strip()
+        if line and line != '0':
+            plot_2D_param = line
 
         cust2DPlots = []
         if not plot_2D_param:
@@ -196,19 +208,14 @@ def main(args):
             num_cust2D_plots = ini.int('plot_2D_num', 0)
             for i in range(1, num_cust2D_plots + 1):
                 line = ini.string('plot' + str(i))
-                pars = filterPars(line.split())
-                if len(pars) != 2: raise Exception(
-                    'plot_2D_num parameter not found, not varied, or not wrong number of parameters')
+                pars = filterParList(line, 2)
                 cust2DPlots.append(pars)
 
         triangle_params = []
         triangle_plot = ini.bool('triangle_plot', False)
         if triangle_plot:
-            line = ini.string('triangle_params')
-            if line:
-                triangle_params = filterPars(line.split())
-            else:
-                triangle_params = mc.paramNames.list()
+            line = ini.string('triangle_params', '')
+            triangle_params = filterParList(line)
             triangle_num = len(triangle_params)
             triangle_plot = triangle_num > 1
 
@@ -216,10 +223,7 @@ def main(args):
         plot_3D = []
         for ix in range(1, num_3D_plots + 1):
             line = ini.string('3D_plot' + str(ix))
-            pars = filterPars(line.split())
-            if len(pars) != 3: raise Exception(
-                '3D_plot parameter not found, not varied, or not wrong number of parameters')
-            plot_3D.append(pars)
+            plot_3D.append(filterParList(line, 3))
 
 
         # Produce file of weight-1 samples if requested

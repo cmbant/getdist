@@ -122,7 +122,7 @@ class Density1D(GridDensity):
 
     def Prob(self, x, derivative=0):
         if self.spl is None: self._initSpline()
-        if isinstance(x, np.ndarray):
+        if isinstance(x, (np.ndarray, list, tuple)):
             return splev(x, self.spl, derivative, ext=1)
         else:
             return splev([x], self.spl, derivative, ext=1)

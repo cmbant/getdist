@@ -73,6 +73,8 @@ class GetDistFileTest(unittest.TestCase):
         ini.params['num_3D_plots'] = 1
         ini.params['3D_plot1'] = 'x y x'
         ini.params['plot_data_dir'] = ''
+        ini.params['triangle_params'] = '*[xy]*'
+
         ini.saveFile(fname)
         res = callGetDist([fname, self.root])
         self.assertTrue('-Ln(mean like)  = 2.30' in res)
@@ -128,6 +130,8 @@ class GetDistTest(unittest.TestCase):
         samples = self.samples
         p = samples.getParams()
         samples.addDerived(p.x + (5 + p.y) ** 2, name='z')
+        samples.addDerived(p.x, name='x.yx', label='forPattern')
+        samples.addDerived(p.y, name='x.2', label='x_2')
         samples.updateBaseStatistics()
 
         g.plot_2d(samples, 'x', 'y')
@@ -149,6 +153,9 @@ class GetDistTest(unittest.TestCase):
         samples2 = prob2.MCSamples(12000)
         g.newPlot()
         g.triangle_plot([samples, samples2], ['x', 'y'])
+        g.newPlot()
+        self.assertEquals([name.name for name in samples.paramNames.parsWithNames('x.*')], ['x.yx', 'x.2'])
+        g.triangle_plot(samples, 'x.*')
 
         samples.updateSettings({'contours': '0.68 0.95 0.99'})
         g.settings.num_contours = 3
