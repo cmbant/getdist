@@ -59,7 +59,7 @@ class GetDistFileTest(unittest.TestCase):
             if os.getenv('TRAVIS', None):
                 return str(subprocess.check_output(['GetDist.py'] + args))
             else:
-                return str(subprocess.check_output(['python', os.path.join(os.path.dirname(__file__), '../', 'GetDist.py')] + args))
+                return str(subprocess.check_output(['python', os.path.join(os.path.dirname(__file__), '..' + os.sep, 'GetDist.py')] + args))
 
         os.chdir(self.tempdir)
         res = callGetDist([self.root])
