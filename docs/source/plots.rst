@@ -8,11 +8,14 @@ getdist.plots
    :toctree: summaries
    :nosignatures:
 
+   getSinglePlotter
+   getSubplotPlotter
    GetDistPlotter
    GetDistPlotSettings
 
 .. automodule:: getdist.plots
    :members:
+   :exclude-members: makeList
 
 
 

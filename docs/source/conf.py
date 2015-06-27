@@ -58,7 +58,7 @@ source_encoding = 'utf-8-sig'
 master_doc = 'index'
 
 # General information about the project.
-project = u'GetDist API'
+project = u'GetDist'
 copyright = u'2015, Antony Lewis'
 author = u'Antony Lewis'
 

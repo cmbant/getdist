@@ -208,12 +208,14 @@ def getPlotter(**kwargs):
 
 def getSinglePlotter(ratio=3 / 4., width_inch=6, **kwargs):
     """
-    Wrapper functions to get plotter to make single plot of fixed width (default: one page column width)
+    Get a :class:`~.plots.GetDistPlotter` for making a single plot of fixed width 
+    
+    The default size is one page-column width.
 
     :param ratio: The ratio between height and width.
     :param width_inch:  The width of the plot in inches
     :param kwargs: arguments for :class:`GetDistPlotter`
-    :return: The :class:`~getdist.plots.GetDistPlotter` instance
+    :return: The :class:`~.plots.GetDistPlotter` instance
     """
     plotter = getPlotter(**kwargs)
     plotter.settings.setWithSubplotSize(width_inch)
@@ -225,7 +227,8 @@ def getSinglePlotter(ratio=3 / 4., width_inch=6, **kwargs):
 
 def getSubplotPlotter(subplot_size=2, width_inch=None, **kwargs):
     """
-    Wrapper functions to get plotter to make array of subplots.
+    Get a :class:`~.plots.GetDistPlotter` for making an array of subplots. 
+    
     If width_inch is None, just makes plot as big as needed for given subplot_size, otherwise fixes total width 
     and sets defaults from matplotlib's default rcParams.
 
