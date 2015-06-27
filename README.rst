@@ -10,11 +10,13 @@ GetDist
   :target: https://secure.travis-ci.org/cmbant/getdist
 .. image:: http://img.shields.io/pypi/v/GetDist.svg?style=flat
         :target: https://pypi.python.org/pypi/GetDist/
+.. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
+   :target: https://getdist.readthedocs.org/en/latest
 
 Description
 ============
 
-GetDist is a package for analysing Monte Carlo samples, including correlated samples
+GetDist is a Python package for analysing Monte Carlo samples, including correlated samples
 from Markov Chain Monte Carlo (MCMC).
 
 * **Point and click GUI** - select chain files, view plots, marginalized constraints, latex tables and more
@@ -24,7 +26,8 @@ from Markov Chain Monte Carlo (MCMC).
 * **Convergence diagnostics** - including correlation length and diagonalized Gelman-Rubin statistics
 * **Latex tables** for marginalized 1D constraints
 
-See the `Plot Gallery and tutorial <https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.ipynb>`_.
+See the `Plot Gallery and tutorial <https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.ipynb>`_
+and `GetDist API reference <http://getdist.readthedocs.org/en/latest/index.html>`_.
 
 
 Getting Started
@@ -118,9 +121,9 @@ Loading samples
 To load an MCSamples object from text files do::
 
 	 from getdist import loadMCSamples
-	 samples = loadMCSamples('/path/to/xxx', dist_settings={'ignore_rows':0.3})
+	 samples = loadMCSamples('/path/to/xxx', settings={'ignore_rows':0.3})
 
-Here *dist_settings* gives optional parameter settings for the analysis. *ignore_rows* is useful for MCMC chains where you want to
+Here *settings* gives optional parameter settings for the analysis. *ignore_rows* is useful for MCMC chains where you want to
 discard some fraction from the start of each chain as burn in (use a number >0 to discard a fixed number of sample lines rather than a fraction).
 The MCSamples object can be passed to plot functions, or used to get many results. For example to plot marginalized parameter densities 
 for parameter names *x1* and *x2*::

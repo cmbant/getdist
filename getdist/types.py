@@ -428,8 +428,8 @@ class ResultTable(object):
 
 class ParamResults(paramnames.ParamList):
     """
-    Base class for a set of parameter results, inheriting from :class:`.paramnames.ParamList`, 
-    so that self.names is a list of :class:`.paramnames.ParamInfo` instances for each parameter, which
+    Base class for a set of parameter results, inheriting from :class:`.~paramnames.ParamList`, 
+    so that self.names is a list of :class:`.~paramnames.ParamInfo` instances for each parameter, which
     have attribute holding results for the different parameters.
     """
     pass
@@ -527,7 +527,7 @@ class BestFit(ParamResults):
 
 class ParamLimit(object):
     """
-    Class containing information about a parameter limit
+    Class containing information about a marginalized parameter limit.
     
     :ivar lower: lower limit
     :ivar upper: upper limit
@@ -537,6 +537,11 @@ class ParamLimit(object):
     """
 
     def __init__(self, minmax, tag='two'):
+        """
+        :param minmax: a [min,max] tuple with lower and upper limits. Entries be None if no limit.
+        :param tag: a text tag descibing the limit, one of ['two' | '>' | '<' | 'none']
+        """
+
         self.lower = minmax[0]
         self.upper = minmax[1]
         self.twotail = tag == 'two'
@@ -544,6 +549,14 @@ class ParamLimit(object):
         self.onetail_lower = tag == '<'
 
     def limitTag(self):
+        """        
+        :return: Short text tag describing the type of limit (one-tail or two tail):
+                
+                - *two*: two-tail limit
+                - *>*: a one-tail upper limit
+                - *<*: a one-tail lower limit
+                - *none*: no limits (both boundaries have high probability)
+        """
         if self.twotail:
             return 'two'
         elif self.onetail_upper:
@@ -554,6 +567,14 @@ class ParamLimit(object):
             return 'none'
 
     def limitType(self):
+        """        
+        :return: a text description of the type of limit. One of:
+         
+            - *two tail*
+            - *one tail upper limit*
+            - *one tail lower limit*
+            - *none*
+        """
         if self.twotail:
             return 'two tail'
         elif self.onetail_upper:
@@ -564,6 +585,9 @@ class ParamLimit(object):
             return 'none'
 
     def __str__(self):
+        """
+        :return: string representation of lower and upper bounds, with text description of the limit type
+        """
         return "%g %g %s" % (self.lower, self.upper, self.limitTag())
 
 
@@ -573,13 +597,19 @@ class MargeStats(ParamResults):
     inheriting from :class:`ParamResults`. 
     
     Values are stored as attributes of the :class:`~.paramnames.ParamInfo` objects stored in self.names.
-    Use par= margeStats.parWithName('xxx') to get the ParamInfo for parameter xxx; values stored are:
-    - par.mean: parameter mean
-    - par.err: standard deviation
-    - limits: list of :class:`~.types.ParamLimit` objects for the stored number of marginalized limits
+    Use *par= margeStats.parWithName('xxx')* to get the :class:`~.paramnames.ParamInfo` for parameter *xxx*; 
+    Values stored are:
+    
+    - *par.mean*: parameter mean
+    - *par.err*: standard deviation
+    - *limits*: list of :class:`~.types.ParamLimit` objects for the stored number of marginalized limits
      
-    For example use margeStats.names.parWithName('xxx').limits[i] to get a  :class:`~.types.ParamLimit`
-    for the ith limit of parameter named xxx. By default i=0 is 68%, i=1 is 95%.  
+    For example to get the first and second lower limits (default 68% and 95%) for parameter *xxx*::
+    
+         print(margeStats.names.parWithName('xxx').limits[0].lower)
+         print(margeStats.names.parWithName('xxx').limits[1].lower)
+         
+    See  :class:`~.types.ParamLimit` for details of limits.
     """
 
     def loadFromFile(self, filename):

@@ -80,11 +80,11 @@ class ParamList(object):
     :ivar names: list of :class:`ParamInfo` objects
     """
 
-    def __init__(self, fileName=None, setParamNameFile=None, default=None, names=None):
+    def __init__(self, fileName=None, setParamNameFile=None, default=0, names=None):
         """
         :param fileName: name of .paramnames file to load from
         :param setParamNameFile: override specific parameter names' labels using another file
-        :param default: set to True to automatically generate default names and labels (param1, p_{1}, etc.)
+        :param default: set to int>0 to automatically generate that number of default names and labels (param1, p_{1}, etc.)
         :param names: a list of name strings to use
         """
         self.names = []

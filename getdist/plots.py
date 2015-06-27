@@ -208,9 +208,13 @@ def getPlotter(**kwargs):
 
 def getSinglePlotter(ratio=3 / 4., width_inch=6, **kwargs):
     """
-    Get a :class:`~.plots.GetDistPlotter` for making a single plot of fixed width 
+    Get a :class:`~.plots.GetDistPlotter` for making a single plot of fixed width. 
     
-    The default size is one page-column width.
+    For a half-column plot for a paper use width_inch=3.464.
+    
+    Use this or :func:`~getSubplotPlotter` to make a :class:`~.plots.GetDistPlotter` instance for making plots.
+    If you want customized sizes or styles for all plots, you can make a new module
+    defining these functions, and then use it exactly as a replacement for getdist.plots.
 
     :param ratio: The ratio between height and width.
     :param width_inch:  The width of the plot in inches
@@ -220,7 +224,6 @@ def getSinglePlotter(ratio=3 / 4., width_inch=6, **kwargs):
     plotter = getPlotter(**kwargs)
     plotter.settings.setWithSubplotSize(width_inch)
     plotter.settings.fig_width_inch = width_inch
-    # if settings is None: plotter.settings.rcSizes()
     plotter.make_figure(1, xstretch=1. / ratio)
     return plotter
 
@@ -230,7 +233,11 @@ def getSubplotPlotter(subplot_size=2, width_inch=None, **kwargs):
     Get a :class:`~.plots.GetDistPlotter` for making an array of subplots. 
     
     If width_inch is None, just makes plot as big as needed for given subplot_size, otherwise fixes total width 
-    and sets defaults from matplotlib's default rcParams.
+    and sets default font sizes etc. from matplotlib's default rcParams.
+
+    Use this or :func:`~getSinglePlotter` to make a :class:`~.plots.GetDistPlotter` instance for making plots.
+    If you want customized sizes or styles for all plots, you can make a new module
+    defining these functions, and then use it exactly as a replacement for getdist.plots.
 
     :param subplot_size: The size of each subplot in inches
     :param width_inch: Optional total width in inches
@@ -594,8 +601,6 @@ class GetDistPlotter(object):
     def __init__(self, plot_data=None, chain_dir=None, settings=None, analysis_settings=None, mcsamples=True):
         """
         
-        Initialize the plotter class instance.
-
         :param plot_data: (deprecated) directory name if you have pre-computed plot_data/ directory from GetDist; None by default
         :param chain_dir: Set this to a directory or grid root to search for chains (can also be a list of such, searched in order)
         :param analysis_settings: The settings to be used by :class:`MCSampleAnalysis` when analysing samples
@@ -1573,7 +1578,7 @@ class GetDistPlotter(object):
             samples1, samples2 = gaussian_mixtures.randomTestMCSamples(ndim=4, nMCSamples=2)
             g = plots.getSubplotPlotter()
             g.plots_1d([samples1, samples2], ['x0', 'x1', 'x2'], nx=3, share_y=True, legend_ncol =2,
-                legend_labels = ['sim 1', 'sim 2'], markers={'x1':0}, colors=['red', 'green'], ls=['--', '-.'])
+                         markers={'x1':0}, colors=['red', 'green'], ls=['--', '-.'])
 
         """
         roots = makeList(roots)
@@ -1631,6 +1636,7 @@ class GetDistPlotter(object):
             from getdist import plots, gaussian_mixtures
             samples1, samples2 = gaussian_mixtures.randomTestMCSamples(ndim=4, nMCSamples=2)
             g = plots.getSubplotPlotter(subplot_size=4)
+            g.settings.legend_frac_subplot_margin = 0.05
             g.plots_2d([samples1, samples2], param_pairs=[['x0', 'x1'], ['x1', 'x2']], 
                                     nx=2, legend_ncol=2, colors=['blue', 'red'])
         """

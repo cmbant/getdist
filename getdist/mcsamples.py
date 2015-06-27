@@ -108,9 +108,7 @@ class MCSamples(Chains):
     """
 
     def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, **kwargs):
-        """
-        Initialize the MCSamples instance.
-        
+        """        
         For a description of the various analysis settings and default values see
         `analysis_defaults.ini <https://github.com/cmbant/getdist/blob/master/getdist/analysis_defaults.ini>`_.
 
@@ -1034,7 +1032,7 @@ class MCSamples(Chains):
         For details see the `notes <http://cosmologist.info/notes/GetDist.pdf>`_.
 
         :param bins: numpy array of binned weights for the samples
-        :param par: A :class:`~paramnames.ParamInfo` instance for the parameter to analyse
+        :param par: A :class:`~.paramnames.ParamInfo` instance for the parameter to analyse
         :param param: index of the parameter to use
         :param mult_bias_correction_order: order of multiplicative bias correction (0 is basic Parzen kernel); by default taken from instance settings.
         :param kernel_order: order of the kernel (0 is Parzen, 1 does linear boundary correction, 2 is a higher-order kernel) 
@@ -1066,8 +1064,8 @@ class MCSamples(Chains):
         For details see the `notes <http://cosmologist.info/notes/GetDist.pdf>`_.
 
         :param bins: 2D numpy array of binned weights
-        :param parx: A :class:`~paramnames.ParamInfo` instance for the x parameter
-        :param pary: A :class:`~paramnames.ParamInfo` instance for the y parameter
+        :param parx: A :class:`~.paramnames.ParamInfo` instance for the x parameter
+        :param pary: A :class:`~.paramnames.ParamInfo` instance for the y parameter
         :param paramx: index of the x parameter
         :param paramy: index of the y parameter
         :param corr: correlation of the samples
@@ -1076,7 +1074,7 @@ class MCSamples(Chains):
         :param base_fine_bins_2D: number of bins to use for re-binning in rotated parameter space
         :param mult_bias_correction_order: multiplicative bias correction order (0 is Parzen kernel); by default taken from instance settings
         :param min_corr: minimum correlation value at which to bother de-correlating the parameters
-        :param N_eff: effective number of samples. If not specified, currently uses very crudely estimate from effective numbers in x and y separately
+        :param N_eff: effective number of samples. If not specified, currently uses crude estimate from effective numbers in x and y separately
         :return: kernel density bandwidth matrix in parameter units
         """
         if N_eff is None:
@@ -1233,7 +1231,7 @@ class MCSamples(Chains):
     def get1DDensityGridData(self, j, writeDataToFile=False, get_density=False, paramConfid=None, meanlikes=False,
                              **kwargs):
         """
-        Gets a :class:`~.densities.Density1D` instance for the marginalized 1D density of a parameter. Result is not cached.
+        Low-level function to get a :class:`~.densities.Density1D` instance for the marginalized 1D density of a parameter. Result is not cached.
 
         :param j: a name or index of the parameter
         :param writeDataToFile: True if should write to text file.
@@ -1477,10 +1475,10 @@ class MCSamples(Chains):
     def get2DDensityGridData(self, j, j2, writeDataToFile=False,
                              num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
         """
-        Get 2D plot marginalized density and optional additional plot data.
+        Low-level function to get 2D plot marginalized density and optional additional plot data.
 
         :param j: name or index of the x parameter
-        :param j2: name or index of the x parameter.
+        :param j2: name or index of the y parameter.
         :param writeDataToFile: True if should write data to file
         :param num_plot_contours: number of contours to calculate and return in density.contours
         :param get_density: only get the 2D marginalized density, no additional plot data

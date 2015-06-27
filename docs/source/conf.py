@@ -16,7 +16,7 @@ import sys
 import os
 import shlex
 
-# autoclass_content = 'both'
+autoclass_content = 'both'
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -41,7 +41,7 @@ intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
                        'matplotlib': ('http://matplotlib.sourceforge.net/', None)}
 
-plot_formats = [('png', 80)]
+# plot_formats = [('png', 80)]
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
