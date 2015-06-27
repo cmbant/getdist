@@ -594,6 +594,7 @@ class GetDistPlotter(object):
     Main class for making plots from one or more sets of samples.
 
     :ivar settings: a :class:`GetDistPlotSettings` instance with settings
+    :ivar subplots: a 2D array :class:`~matplotlib:matplotlib.axes.Axes` for subplots
     :ivar sampleAnalyser: a :class:`MCSampleAnalysis` instance for getting :class:`~.mcsamples.MCSamples` 
          and derived data from a given root name tag
     """
@@ -1914,7 +1915,7 @@ class GetDistPlotter(object):
         :param roots: list of root names or :class:`~.mcsamples.MCSamples` instances. 
                 Uses the same set of roots for every plot in the rectangle; set either roots or yroots.
         :param plot_roots: Allows you to specify (via list of list of list of roots) the set of roots for each individual subplot
-        :param plot_texts: a 2D array (or list of lists) of a text label to put in each subplot
+        :param plot_texts: a 2D array (or list of lists) of a text label to put in each subplot (use a None entry to skip one)
         :param xmarkers: list of markers for the x axis
         :param ymarkers: list of markers for the y axis
         :param marker_args: arguments for :func:`~GetDistPlotter.add_x_marker` and :func:`~GetDistPlotter.add_y_marker`
