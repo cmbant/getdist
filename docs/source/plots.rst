@@ -1,7 +1,7 @@
 getdist.plots
 ==================================
 
-.. module:: getdist.plots
+.. currentmodule:: getdist.plots
 
 
 .. autosummary::
