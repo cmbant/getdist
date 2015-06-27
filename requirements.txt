@@ -1,0 +1,4 @@
+numpy
+matplotlib
+six
+scipy>=0.11.0
