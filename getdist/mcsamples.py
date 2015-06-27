@@ -52,7 +52,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     and (optionally) **file_root.ranges** gives hard prior parameter ranges.
 
     For a description of the various analysis settings and default values see
-    `analysis_defaults.ini <https://github.com/cmbant/getdist/blob/master/getdist/analysis_defaults.ini>`_.
+    `analysis_defaults.ini <http://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
 
     :param file_root: The root name of the files to read (no extension)
     :param ini: The name of a .ini file with analysis settings to use
@@ -110,7 +110,7 @@ class MCSamples(Chains):
     def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, **kwargs):
         """        
         For a description of the various analysis settings and default values see
-        `analysis_defaults.ini <https://github.com/cmbant/getdist/blob/master/getdist/analysis_defaults.ini>`_.
+        `analysis_defaults.ini <http://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
 
         
         :param root: A root file name when loading from file 

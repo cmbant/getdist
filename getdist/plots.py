@@ -1084,7 +1084,7 @@ class GetDistPlotter(object):
         :param ls: optional line style of the marker
         :param lw: optional line width
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
-        :param kwargs: additional arguments to pass to :func:`matplotlib:matplotlib.pyplot.axvline`
+        :param kwargs: additional arguments to pass to :func:`~matplotlib:matplotlib.pyplot.axvline`
         """
         if color is None: color = self.settings.axis_marker_color
         if ls is None: ls = self.settings.axis_marker_ls
@@ -1100,7 +1100,7 @@ class GetDistPlotter(object):
         :param ls: optional line style of the marker
         :param lw: optional line width.
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
-        :param kwargs: additional arguments to pass to :func:`matplotlib:matplotlib.pyplot.axhline`
+        :param kwargs: additional arguments to pass to :func:`~matplotlib:matplotlib.pyplot.axhline`
         """
         if color is None: color = self.settings.axis_marker_color
         if ls is None: ls = self.settings.axis_marker_ls
@@ -1117,7 +1117,7 @@ class GetDistPlotter(object):
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add the bands to (defaults to current plot)
         :param alpha1: alpha for the 1 sigma band; note this is drawn on top of the 2 sigma band. Set to zero if you only want 2 sigma band
         :param alpha2: alpha for the 2 sigma band. Set to zero if you only want 1 sigma band
-        :param kwargs: optional keyword arguments for :func:`matplotlib:matplotlib.axes.Axes.axvspan`
+        :param kwargs: optional keyword arguments for :func:`~matplotlib:matplotlib.pyplot.axvspan`
 
         .. plot::
            :include-source:
@@ -1143,7 +1143,7 @@ class GetDistPlotter(object):
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add the bands to (defaults to current plot)
         :param alpha1: alpha for the 1 sigma band; note this is drawn on top of the 2 sigma band. Set to zero if you only want 2 sigma band
         :param alpha2: alpha for the 2 sigma band. Set to zero if you only want 1 sigma band
-        :param kwargs: optional keyword arguments for :func:`matplotlib:matplotlib.axes.Axes.axhspan`
+        :param kwargs: optional keyword arguments for :func:`~matplotlib:matplotlib.pyplot.axhspan`
 
         .. plot::
            :include-source:
@@ -2016,7 +2016,7 @@ class GetDistPlotter(object):
 
     def add_line(self, xdata, ydata, zorder=0, color=None, ls=None, ax=None, **kwargs):
         """
-        Adds a line to the given axes, using :func:`~matplotlib:matplotlib.lines.Line2D`
+        Adds a line to the given axes, using :func:`~matplotlib:matplotlib.pyplot.Line2D`
 
         :param xdata: pair of x coordinates
         :param ydata: pair of y coordinates
@@ -2024,7 +2024,7 @@ class GetDistPlotter(object):
         :param color: The color of the line, uses settings.axis_marker_color by default
         :param ls: The line style to be used, uses settings.axis_marker_ls by default
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use, defaults to current axes
-        :param kwargs:  Additional arguments for :func:`~matplotlib:matplotlib.lines.Line2D`
+        :param kwargs:  Additional arguments for :func:`~matplotlib:matplotlib.pyplot.Line2D`
         """
         if color is None: color = self.settings.axis_marker_color
         if ls is None: ls = self.settings.axis_marker_ls
@@ -2205,7 +2205,7 @@ class GetDistPlotter(object):
         :param y: The y coordinate of where to add the label.
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use, 
                    index or [x,y] coordinate of subplot to use, or default to current axes.
-        :param kwargs: keyword arguments for :func:`~matplotlib:matplotlib.axes.Axes.text` 
+        :param kwargs: keyword arguments for :func:`~matplotlib:matplotlib.pyplot.text` 
         """
         args = {'horizontalalignment': 'right', 'verticalalignment': 'center'}
         args.update(kwargs)
@@ -2225,7 +2225,7 @@ class GetDistPlotter(object):
         :param x: The x coordinate of where to add the label
         :param y: The y coordinate of where to add the label.
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use, defaults to current axes.
-        :param kwargs: keyword arguments for :func:`~matplotlib:matplotlib.axes.Axes.text` 
+        :param kwargs: keyword arguments for :func:`~matplotlib:matplotlib.pyplot.text` 
         """
         args = {'horizontalalignment': 'left'}
         args.update(kwargs)

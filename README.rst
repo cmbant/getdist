@@ -26,7 +26,7 @@ from Markov Chain Monte Carlo (MCMC).
 * **Convergence diagnostics** - including correlation length and diagonalized Gelman-Rubin statistics
 * **Latex tables** for marginalized 1D constraints
 
-See the `Plot Gallery and tutorial <https://github.com/cmbant/getdist/blob/master/docs/plot_gallery.ipynb>`_
+See the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_
 and `GetDist API reference <http://getdist.readthedocs.org/en/latest/index.html>`_.
 
 
