@@ -7,7 +7,6 @@ getdist.plots
 .. autosummary::
    :toctree: _summaries
    :nosignatures:
-   :template: mytemplate.rst
 
    getSinglePlotter
    getSubplotPlotter
