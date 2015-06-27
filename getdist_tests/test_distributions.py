@@ -48,7 +48,7 @@ def compare1D(g, probs, nsamp=default_nsamp, settings={}):
 
     g.make_figure(len(probs))
     for i, (samps, prob) in enumerate(zip(samples, probs)):
-        g.subplot_number(i)
+        g._subplot_number(i)
         compareSimPlot(g, samps, prob.density1D())
         g.add_text_left(prob.label, y=0.95)
     plt.subplots_adjust()
@@ -61,7 +61,7 @@ def compare2D(g, probs, nsamp=default_nsamp, settings={}):
 
     g.make_figure(len(probs))
     for i, (samps, prob) in enumerate(zip(samples, probs)):
-        g.subplot_number(i)
+        g._subplot_number(i)
         compareSimPlot2D(g, samps, prob.density2D())
         g.add_text_left(prob.label, y=0.95)
     plt.subplots_adjust()
@@ -208,7 +208,7 @@ def plot_compare_probs_methods(ax, probs, colors=['b', 'r', 'k', 'm', 'c'], **kw
 def compare_method_nsims(g, probs, sizes=[1000, 10000], **kwargs):
     g.make_figure(len(sizes))
     for i, size in enumerate(sizes):
-        ax = g.subplot_number(i)
+        ax = g._subplot_number(i)
         plot_compare_probs_methods(ax, probs, nsmap=size, **kwargs)
 
 def compare_method(probs, nx=2, fname='', **kwargs):

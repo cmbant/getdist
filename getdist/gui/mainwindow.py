@@ -1180,10 +1180,10 @@ class MainWindow(QMainWindow):
                         param_3d = None
                         script += "param_3d = None\n"
                     setSizeForN(len(params))
-                    self.plotter.triangle_plot(roots, params, plot_3d_with_param=param_3d, filled_compare=filled,
+                    self.plotter.triangle_plot(roots, params, plot_3d_with_param=param_3d, filled=filled,
                                                shaded=shaded)
                     self.updatePlot()
-                    script += "g.triangle_plot(roots, params, plot_3d_with_param=param_3d, filled_compare=%s, shaded=%s)\n" % (
+                    script += "g.triangle_plot(roots, params, plot_3d_with_param=param_3d, filled=%s, shaded=%s)\n" % (
                         filled, shaded)
                 else:
                     raise GuiSelectionError("Select more than 1 x parameter for triangle plot")

@@ -3,7 +3,17 @@ import os
 import fnmatch
 import six
 
+
 class ParamInfo(object):
+    """
+    Parameter information object.
+    
+    :ivar name: the parameter name tag (no spacing or punctuation)
+    :ivar label: latex label (without enclosing $)
+    :ivar comment: any descriptive comment describing the parameter
+    :ivar isDerived: True if a derived parameter, False otherwise (e.g. for MCMC parameters)
+    """
+
     def __init__(self, line=None, name='', label='', comment='', derived=False, number=None):
         self.setName(name)
         self.isDerived = derived
@@ -64,8 +74,19 @@ class ParamInfo(object):
 
 
 class ParamList(object):
-    def __init__(self, fileName=None, setParamNameFile=None, default=None, names=None):
+    """
+    Holds an orders list of :class:`ParamInfo` objects describing a set of parameters.
+        
+    :ivar names: list of :class:`ParamInfo` objects
+    """
 
+    def __init__(self, fileName=None, setParamNameFile=None, default=None, names=None):
+        """
+        :param fileName: name of .paramnames file to load from
+        :param setParamNameFile: override specific parameter names' labels using another file
+        :param default: set to True to automatically generate default names and labels (param1, p_{1}, etc.)
+        :param names: a list of name strings to use
+        """
         self.names = []
         if default: self.setDefault(default)
         if names is not None: self.setWithNames(names)
@@ -88,6 +109,9 @@ class ParamList(object):
         return len([1 for info in self.names if info.isDerived])
 
     def list(self):
+        """
+        Gets a list of parameter name strings
+        """
         return [name.name for name in self.names]
 
     def listString(self):
@@ -106,6 +130,13 @@ class ParamList(object):
         return None
 
     def parWithName(self, name, error=False, renames={}):
+        """
+        Gets the :class:`ParamInfo` object for the parameter with the given name
+        
+        :param name: name of the parameter
+        :param error: if True raise an error if parameter not found, otherwise return None
+        :param renames: a dictionary that is used to provide optional name mappings to the stored names
+        """
         for par in self.names:
             if par.name == name or renames.get(par.name, '') == name:
                 return par
@@ -113,13 +144,25 @@ class ParamList(object):
         return None
 
     def numberOfName(self, name):
+        """
+        Gets the parameter number of the given parameter name
+        
+        :param name: parameter name tag
+        :return: index of the parameter, or -1 if not found
+        """
         for i, par in enumerate(self.names):
             if par.name == name: return i
         return -1
 
     def parsWithNames(self, names, error=False, renames={}):
-        # gets parInfo instances for given list of name strings
-        # also expands any names that are *? globs into match list
+        """
+        gets the list of :class:`ParamInfo` instances for given list of name strings.
+        Also expands any names that are globs into list with matching parameter names
+
+        :param names: list of name strings
+        :param error: if True, raise an error if any name not found, otherwise returns None items
+        :param renames: optional dictionary giving mappings of parameter names
+        """
         res = []
         if isinstance(names, six.string_types):
             names = [names]
@@ -171,6 +214,12 @@ class ParamList(object):
         return usedNames
 
     def addDerived(self, name, **kwargs):
+        """
+        adds a new parameter
+        
+        :param name: name tag for the new parameter
+        :param kwargs: other arguments for constructing the new :class:`ParamInfo`
+        """
         if kwargs.get('derived') is None: kwargs['derived'] = True
         kwargs['name'] = name
         self.names.append(ParamInfo(**kwargs))
@@ -196,13 +245,31 @@ class ParamList(object):
             text += par.string() + '\n'
         return text
 
-    def saveAsText(self, fileName):
-        with open(fileName, 'w') as f:
+    def saveAsText(self, filename):
+        """
+        Saves to a plain text .paramnames file
+        
+        :param filename: filename to save to
+        """
+        with open(filename, 'w') as f:
             f.write(str(self))
 
 
 class ParamNames(ParamList):
+    """
+    Holds an orders list of :class:`ParamInfo` objects describing a set of parameters, inheriting from :class:`ParamList`.
+    
+    Can be constructed programmatically, and also loaded and saved to a .paramnames files, which is a plain text file
+    giving the names and optional label and comment for each parameter, in order.
+    
+    :ivar names: list of :class:`ParamInfo` objects describing each parameter
+    :ivar filenameLoadedFrom: if loaded from file, the file name
+    """
+
     def loadFromFile(self, fileName):
+        """
+        loads from fileName, a plain text .paramnames file
+        """
 
         self.filenameLoadedFrom = os.path.split(fileName)[1]
         with open(fileName) as f:

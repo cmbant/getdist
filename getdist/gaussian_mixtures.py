@@ -9,7 +9,7 @@ def make_2D_Cov(sigmax, sigmay, corr):
 
 class MixtureND(object):
     """
-    Gaussian mixture model in with optional boundary ranges
+    Gaussian mixture model with optional boundary ranges
     """
 
     def __init__(self, means, covs, weights=None, lims=None, names=None, label=''):
@@ -226,3 +226,30 @@ class Mixture1D(MixtureND):
 class Gaussian1D(Mixture1D):
     def __init__(self, mean, sigma, **kwargs):
         super(Gaussian1D, self).__init__([mean], [sigma], **kwargs)
+
+
+class RandomTestMixtureND(MixtureND):
+    """
+    class for randomly generating an N-D gaussian for testing
+    """
+
+    def __init__(self, ndim=4, ncomponent=1, names=None, weights=None, seed=0, label='RandomMixture'):
+        if seed: np.random.seed(seed)
+        covs = []
+        for _ in range(ncomponent):
+            A = np.random.rand(ndim, ndim)
+            covs.append(np.dot(A, A.T))
+        super(RandomTestMixtureND, self).__init__(np.random.rand(ncomponent, ndim), covs, weights=weights,
+                                                  lims=None, names=names, label=label)
+
+
+def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10, names=None, labels=None):
+    """
+    get a list of MCSamples instances with random samples from random covariances and means
+    """
+    if seed: np.random.seed(seed)
+    if names is None: names = ["x%s" % i for i in range(ndim)]
+    if labels is None: labels = ["x_{%s}" % i for i in range(ndim)]
+    return [RandomTestMixtureND(ndim, ncomponent, names).MCSamples(nsamp, labels=labels,
+                                                                   name_tag='Sim %s' % (i + 1)) for i in
+            range(nMCSamples)]

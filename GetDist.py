@@ -168,7 +168,7 @@ def main(args):
     if thin_factor != 0:
         thin_ix = mc.thin_indices(thin_factor)
         filename = rootdirname + '_thin.txt'
-        mc.WriteThinData(filename, thin_ix, thin_cool)
+        mc.writeThinData(filename, thin_ix, thin_cool)
 
     print(mc.getNumSampleSummaryText().strip())
     if mc.likeStats: print(mc.likeStats.likeSummary().strip())
@@ -186,7 +186,7 @@ def main(args):
     mc.plot_data_dir = plot_data_dir
 
     # Do 1D bins
-    mc.setDensitiesandMarge1D(writeDataToFile=not no_plots and plot_data_dir, meanlikes=plot_meanlikes)
+    mc._setDensitiesandMarge1D(writeDataToFile=not no_plots and plot_data_dir, meanlikes=plot_meanlikes)
 
     if not no_plots:
         # Output files for 1D plots
@@ -245,7 +245,7 @@ def main(args):
         done2D = {}
 
         filename = rootdirname + '.' + plot_ext
-        mc.WriteScriptPlots1D(filename, plotparams)
+        mc.writeScriptPlots1D(filename, plotparams)
         if make_plots: runScript(filename)
 
         # Do 2D bins
@@ -260,7 +260,7 @@ def main(args):
         if cust2DPlots or plot_2D_param:
             print('...producing 2D plots')
             filename = rootdirname + '_2D.' + plot_ext
-            done2D = mc.WriteScriptPlots2D(filename, plot_2D_param, cust2DPlots,
+            done2D = mc.writeScriptPlots2D(filename, plot_2D_param, cust2DPlots,
                                            writeDataToFile=plot_data_dir, shade_meanlikes=shade_meanlikes)
             if make_plots: runScript(filename)
 
@@ -268,7 +268,7 @@ def main(args):
             # Add the off-diagonal 2D plots
             print('...producing triangle plot')
             filename = rootdirname + '_tri.' + plot_ext
-            mc.WriteScriptPlotsTri(filename, triangle_params)
+            mc.writeScriptPlotsTri(filename, triangle_params)
             for i, p2 in enumerate(triangle_params):
                 for p1 in triangle_params[i + 1:]:
                     if not done2D.get((p1, p2)) and plot_data_dir:
@@ -279,7 +279,7 @@ def main(args):
         if num_3D_plots:
             print('...producing ', num_3D_plots, '2D colored scatter plots')
             filename = rootdirname + '_3D.' + plot_ext
-            mc.WriteScriptPlots3D(filename, plot_3D)
+            mc.writeScriptPlots3D(filename, plot_3D)
             if make_plots: runScript(filename)
 
     if not plots_only:

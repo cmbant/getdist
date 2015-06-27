@@ -11,10 +11,14 @@ defaultContours = [0.68, 0.95]
 
 def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge=True):
     """
-     Get contour levels enclosing "contours" of the probability.
-     inbins is the density. If half_edge, then edge bins are only half integrated over in each direction.
-     missing_norm accounts of any points not included in inbins (e.g. points in far tails that are not in inbins)
-     Works for any dimension bins array
+     Get contour levels enclosing "contours" fraction of the probability, for any dimension bins array
+     
+     :param inbins: binned density. 
+     :param contours: list of confidence contours to calculate, default [0.68, 0.95]
+     :param missing_norm: accounts of any points not included in inbins (e.g. points in far tails that are not in inbins) 
+     :param half_edge: If True, edge bins are only half integrated over in each direction.
+     :return: list of density levels
+     
     """
     contour_levels = np.zeros(len(contours))
     if half_edge:
@@ -30,41 +34,34 @@ def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge
         abins = inbins
     norm = np.sum(abins)
     targets = (1 - np.array(contours)) * norm - missing_norm
-    if True:
-        bins = abins.reshape(-1)
-        indexes = inbins.reshape(-1).argsort()
-        sortgrid = bins[indexes]
-        cumsum = np.cumsum(sortgrid)
-        ixs = np.searchsorted(cumsum, targets)
-        for i, ix in enumerate(ixs):
-            if ix == 0:
-                raise DensitiesError("Contour level outside plotted ranges")
-            h = cumsum[ix] - cumsum[ix - 1]
-            d = (cumsum[ix] - targets[i]) / h
-            contour_levels[i] = sortgrid[ix] * (1 - d) + d * sortgrid[ix - 1]
-    else:
-        # old method, twice or so slower
-        try_t = np.max(inbins)
-        lastcontour = 0
-        for i, (contour, target) in enumerate(zip(contours, targets)):
-            if contour < lastcontour: raise DensitiesError('contour levels must be decreasing')
-            lastcontour = contour
-            try_b = 0
-            lasttry = -1
-            while True:
-                try_sum = np.sum(abins[inbins < (try_b + try_t) / 2])
-                if try_sum > target:
-                    try_t = (try_b + try_t) / 2
-                else:
-                    try_b = (try_b + try_t) / 2
-                if try_sum == lasttry: break
-                lasttry = try_sum
-            contour_levels[i] = (try_b + try_t) / 2
+    bins = abins.reshape(-1)
+    indexes = inbins.reshape(-1).argsort()
+    sortgrid = bins[indexes]
+    cumsum = np.cumsum(sortgrid)
+    ixs = np.searchsorted(cumsum, targets)
+    for i, ix in enumerate(ixs):
+        if ix == 0:
+            raise DensitiesError("Contour level outside plotted ranges")
+        h = cumsum[ix] - cumsum[ix - 1]
+        d = (cumsum[ix] - targets[i]) / h
+        contour_levels[i] = sortgrid[ix] * (1 - d) + d * sortgrid[ix - 1]
     return contour_levels
 
 
 class GridDensity(object):
+    """
+    Base class for probability density grids (normalized or not)
+    
+    :ivar P: array of density values
+    """
     def normalize(self, by='integral', in_place=False):
+        """
+        Normalize the density grid
+
+        :param by: 'integral' for standard normalization, or 'max', to normalize so the maximum value is unity
+        :param in_place: if True, normalize in place, otherwise make copy (in case self.P is used elsewhere)
+        """
+
         if by == 'integral':
             norm = self.norm_integral()
         elif by == 'max':
@@ -81,6 +78,11 @@ class GridDensity(object):
         return self
 
     def setP(self, P=None):
+        """
+        Set the density grid values
+
+        :param P: numpy array of density values
+        """
         if P is not None:
             for size, ax in zip(P.shape, self.axes):
                 if size != ax.size:
@@ -91,7 +93,11 @@ class GridDensity(object):
         self.spl = None
 
     def bounds(self):
-        # give bounds in order x, y, z..
+        """
+         Get bounds in order x, y, z..
+        
+         :return: list of (min,max) values
+        """
         if self.view_ranges is not None:
             return self.view_ranges
         else:
@@ -100,11 +106,26 @@ class GridDensity(object):
         return b
 
     def getContourLevels(self, contours=defaultContours):
+        """
+        Get contour levels
+
+        :param contours: list of confidence limits to get (default [0.68, 0.95])
+        :return: list of contour levels
+        """
         return getContourLevels(self.P, contours)
 
 
 class Density1D(GridDensity):
+    """
+    Class for 1D marginalized densities, inheriting from :class:`GridDensity`.
+
+    """
     def __init__(self, x, P=None, view_ranges=None):
+        """
+        :param x: array of x values
+        :param P: array of densities at x values
+        :param view_ranges: optional range for viewing density
+        """
         self.n = x.size
         self.axes = [x]
         self.x = x
@@ -113,6 +134,9 @@ class Density1D(GridDensity):
         self.setP(P)
 
     def bounds(self):
+        """
+        Get min, max bounds (from view_ranges if set)
+        """
         if self.view_ranges is not None:
             return self.view_ranges
         return self.x[0], self.x[-1]
@@ -121,6 +145,13 @@ class Density1D(GridDensity):
         self.spl = splrep(self.x, self.P, s=0)
 
     def Prob(self, x, derivative=0):
+        """
+        Calculate density at position x by interpolation in the density grid
+        
+        :param x: x value
+        :param derivative: optional order of derivative to calculate (default: no derivative)
+        :return: P(x) density value
+        """
         if self.spl is None: self._initSpline()
         if isinstance(x, (np.ndarray, list, tuple)):
             return splev(x, self.spl, derivative, ext=1)
@@ -155,6 +186,16 @@ class Density1D(GridDensity):
         return g
 
     def getLimits(self, p, interpGrid=None, accuracy_factor=None):
+        """
+        Get parameter equal-density confidence limits (a credible interval). 
+        If the density is bounded, may only have a one-tail limit.
+        
+        :param p: list of limits to calculate, e.g. [0.68, 0.95]
+        :param interpGrid: optional pre-computed cache
+        :param accuracy_factor: parameter to boost default accuracy for fine sampling
+        :return: list of (min, max, has_min, has_top) values 
+                where has_min and has_top are True or False depending on whether lower and upper limit exists
+        """
         g = interpGrid or self.initLimitGrids(accuracy_factor)
         parr = np.atleast_1d(p)
         targets = (1 - parr) * g.norm
@@ -189,7 +230,17 @@ class Density1D(GridDensity):
 
 
 class Density2D(GridDensity, RectBivariateSpline):
+    """
+    Class for 2D marginalized densities, inheriting from :class:`GridDensity` and :class:`~scipy:scipy.interpolate.RectBivariateSpline`.
+    """
+
     def __init__(self, x, y, P=None, view_ranges=None):
+        """
+        :param x: array of x values
+        :param y: array of y values
+        :param P: 2D array of density values at x, y
+        :param view_ranges: optional ranges for viewing density
+        """
         self.x = x
         self.y = y
         self.axes = [y, x]
@@ -211,5 +262,8 @@ class Density2D(GridDensity, RectBivariateSpline):
         self.spl = self
 
     def Prob(self, x, y):
+        """
+        Evaluate density at x,y using interpolation
+        """
         if self.spl is None: self._initSpline()
         return self.spl.ev(x, y)

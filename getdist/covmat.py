@@ -4,7 +4,18 @@ import io
 
 
 class CovMat(object):
+    """
+    Class holding a covariance matrix for some named parameters
+    
+    :ivar matrix: the covariance matrix  (square numpy array)
+    :ivar paramNames: list of parameter name strings
+    """
+
     def __init__(self, filename='', matrix=None, paramNames=None):
+        """
+        :param filename: optionally, a file name to load from
+
+        """
         if not paramNames:
             paramNames = []
         self.matrix = matrix
@@ -28,11 +39,22 @@ class CovMat(object):
             self.matrix = np.loadtxt(f)
 
     def saveToFile(self, filename):
+        """
+        Save the covariance matrix to a text file, with comment header listing the parameter names
+        
+        :param filename: name of file to save to (.covmat)
+        """
         with io.open(filename, 'wb') as fout:
             fout.write(('# ' + self.paramNameString() + '\n').encode('UTF-8'))
             np.savetxt(fout, self.matrix, '%15.7E')
 
     def rescaleParameter(self, name, scale):
+        """
+        Used to rescale a covariance if a parameter is renormalized
+        
+        :param name: parameter name to rescale
+        :scale scale: value to rescale by 
+        """
         if name in self.paramNames:
             i = self.paramNames.index(name)
             self.matrix[:, i] = self.matrix[:, i] * scale
@@ -69,6 +91,11 @@ class CovMat(object):
         return C
 
     def correlation(self):
+        """
+        Get the correlation matrix
+        
+        :return: numpy array giving the correlation matrix
+        """
         m = self.matrix.copy()
         for i in range(self.size):
             s = np.sqrt(self.matrix[i, i])
@@ -77,6 +104,9 @@ class CovMat(object):
         return m
 
     def plot(self):
+        """
+        Plot the correlation matrix as grid of colored squares
+        """
         import matplotlib.pyplot as plt
 
         plt.pcolor(self.correlation())

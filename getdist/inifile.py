@@ -11,7 +11,25 @@ class IniError(Exception):
 
 
 class IniFile(object):
+    """
+    Class for storing option parameter values and reading/saving to file
+    
+    Unlike standard .ini files, IniFile allows inheritance, in that a .ini file can use
+    INCLUDE(..) and DEFAULT(...) to include or override settings in another file (to avoid duplication)
+    
+    :ivar params: dictionary of name, values stored
+    :ivar comments: dictionary of optional comments for parameter names
+    """
+
     def __init__(self, settings=None, keep_includes=False, expand_environment_variables=True):
+        """
+
+        :param settings: a filename of a .ini file to read, or a dictionary of name/values
+        :param keep_includes:
+             - False: load all INCLUDE and DEFAULT files, making one params dictionary
+             - True: only load settings in main file, and store INCLUDE and DEFAULT entries into defaults and includes filename lists.
+        :param expand_environment_variables: whether to expand $(var) placeholders in parameter values using environment variables
+        """
 
         self.params = dict()
         self.comments = dict()
@@ -107,6 +125,12 @@ class IniFile(object):
         return "\n".join(self.fileLines())
 
     def saveFile(self, filename=None):
+        """
+        Save to a .ini file
+
+        :param filename:  name of file to save to
+        """
+
         if not filename: filename = self.original_filename
         if not filename: raise IniError('No filename for iniFile.saveFile()')
         with open(filename, 'w') as f:
@@ -150,9 +174,22 @@ class IniFile(object):
         raise IniError('parameter not defined: ' + name)
 
     def hasKey(self, name):
+        """
+        Test if key name exists
+
+        :param name: parameter name
+        :return: True or False test if key name exists
+        """
         return name in self.params
 
     def isSet(self, name, allowEmpty=False):
+        """
+        Tests whether value for name is set or is empty
+
+        :param name: name of parameter
+        :param allowEmpty: whether to allow empty strings (return True is parameter name exists but is not set, "x = ")
+        """
+
         return name in self.params and (allowEmpty or self.params[name] != "")
 
     def asType(self, name, tp, default=None, allowEmpty=False):
@@ -171,6 +208,14 @@ class IniFile(object):
             self._undefined(name)
 
     def setAttr(self, name, instance, default=None, allowEmpty=False):
+        """
+        Set attribute of an object to value of parameter, using same type as existing value or default
+
+        :param name: parameter name
+        :param instance: instance of an object, so instance.name is the value to set
+        :param default: default value if instance.name does not exist
+        :param allowEmpty: whether to allow empty values
+        """
         default = getattr(instance, name, default)
         setattr(instance, name, self.asType(name, type(default), default, allowEmpty=allowEmpty))
 
@@ -179,6 +224,12 @@ class IniFile(object):
         self.params[name] = val
 
     def bool(self, name, default=False):
+        """
+        Get boolean value
+
+        :param name: parameter name
+        :param default: default value if not set
+        """
         if self.isSet(name):
             s = self.params[name]
             if isinstance(s, bool): return s
@@ -193,35 +244,91 @@ class IniFile(object):
             self._undefined(name)
 
     def bool_list(self, name, default=None):
+        """
+        Get list of boolean values, e.g. from name = T F T
+
+        :param name: parameter name
+        :param default: default value if not set
+        """
+
         if not default:
             default = []
         return self.split(name, default, tp=bool)
 
     def string(self, name, default=None, allowEmpty=True):
+        """
+        Get string value
+
+        :param name: parameter name
+        :param default: default value if not set
+        :param allowEmpty: whether to return empty string if value is empty (otherwise return default)
+        """
         return self.asType(name, str, default, allowEmpty=allowEmpty)
 
     def list(self, name, default=None, tp=None):
+        """
+        Get list (from space-separated values)
+
+        :param name: parameter name
+        :param default: default value
+        :param tp: type for each member of the list
+        """
+
         if not default:
             default = []
         return self.split(name, default, tp)
 
     def float(self, name, default=None):
+        """
+        Get float value
+
+        :param name: parameter name
+        :param default: default value
+        """
         return self.asType(name, float, default)
 
     def float_list(self, name, default=None):
+        """
+        Get list of float values
+
+        :param name: parameter name
+        :param default: default value
+        """
+
         if not default:
             default = []
         return self.split(name, default, tp=float)
 
     def int(self, name, default=None):
+        """
+        Get int value
+
+        :param name: parameter name
+        :param default: default value
+        """
+
         return self.asType(name, int, default)
 
     def int_list(self, name, default=None):
+        """
+        Get list of int values
+
+        :param name: parameter name
+        :param default: default value
+        """
+
         if not default:
             default = []
         return self.split(name, default, tp=int)
 
     def split(self, name, default=None, tp=None):
+        """
+        Gets a list of values, optionally cast to type tp
+
+        :param name: parameter name
+        :param default: default value
+        :param tp: type for each list member
+        """
         if name in self.params and isinstance(self.params[name], (list, tuple)):
             if tp is None:
                 return self.params[name]
@@ -237,18 +344,56 @@ class IniFile(object):
             return s
 
     def ndarray(self, name, default=None, tp=np.float64):
+        """
+        Get numpy array of values
+
+        :param name: parameter name
+        :param default: default value
+        :param tp: type for array
+        """
         return np.array(self.split(name, default, tp=tp))
 
     def array_int(self, name, index=1, default=None):
+        """
+        Get one int value, for entries of the form name(index)
+
+        :param name: base parameter name
+        :param index: index (in brackets)
+        :param default: default value
+        """
         return self.int(name + '(%u)' % index, default)
 
     def array_string(self, name, index=1, default=None):
+        """
+        Get one str value, for entries of the form name(index)
+
+        :param name: base parameter name
+        :param index: index (in brackets)
+        :param default: default value
+        """
+
         return self.string(name + '(%u)' % index, default)
 
     def array_bool(self, name, index=1, default=None):
+        """
+        Get one boolean value, for entries of the form name(index)
+
+        :param name: base parameter name
+        :param index: index (in brackets)
+        :param default: default value
+        """
+
         return self.bool(name + '(%u)' % index, default)
 
     def array_float(self, name, index=1, default=None):
+        """
+        Get one float value, for entries of the form name(index)
+
+        :param name: base parameter name
+        :param index: index (in brackets)
+        :param default: default value
+        """
+
         return self.float(name + '(%u)' % index, default)
 
     def relativeFileName(self, name, default=None):

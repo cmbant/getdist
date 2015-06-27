@@ -22,24 +22,54 @@ pickle_version = 21
 
 
 class MCSamplesError(Exception):
+    """
+    An Exception that is raised when there is an error inside the MCSamples class.
+    """
     pass
 
 
 class SettingError(MCSamplesError):
+    """
+    An Exception that indicates bad settings.
+    """
     pass
 
 
 class ParamError(MCSamplesError):
+    """
+    An Exception that indicates a bad parameter.
+    """
     pass
 
 
-def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, dist_settings={}):
+def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}, dist_settings={}):
+    """
+    Loads a set of samples from a file or files.
+    
+    Sample files are plain text (*file_root.txt*) or a set of files (*file_root_1.txt*, *file_root_2.txt*, etc.).
+    
+    Auxiliary files **file_root.paramnames** gives the parameter names
+    and (optionally) **file_root.ranges** gives hard prior parameter ranges.
+
+    For a description of the various analysis settings and default values see
+    `analysis_defaults.ini <https://github.com/cmbant/getdist/blob/master/getdist/analysis_defaults.ini>`_.
+
+    :param file_root: The root name of the files to read (no extension)
+    :param ini: The name of a .ini file with analysis settings to use
+    :param jobItem: an optional grid jobItem instance for a CosmoMC grid output
+    :param no_cache: Indicates whether or not we should cached loaded samples in a pickle
+    :param settings: dictionary of analysis settings to override defaults
+    :param dist_settings: (old) alias for settings
+    :return: The :class:`MCSamples` instance
+    """
+    if settings and dist_settings: raise ValueError('Use settings or dist_settings')
+    if dist_settings: settings = dist_settings
     files = chainFiles(file_root)
     path, name = os.path.split(file_root)
     path = getdist.cache_dir or path
     if not os.path.exists(path): os.mkdir(path)
     cachefile = os.path.join(path, name) + '.py_mcsamples'
-    samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=dist_settings)
+    samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=settings)
     allfiles = files + [file_root + '.ranges', file_root + '.paramnames', file_root + '.properties.ini']
     if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
         try:
@@ -48,7 +78,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, dist_settin
             if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows:
                 changed = len(samples.contours) != len(cache.contours) or \
                           np.any(np.array(samples.contours) != np.array(cache.contours))
-                cache.updateSettings(ini=ini, settings=dist_settings, doUpdate=changed)
+                cache.updateSettings(ini=ini, settings=settings, doUpdate=changed)
                 return cache
         except:
             pass
@@ -71,7 +101,39 @@ class Kernel1D(object):
 # =============================================================================
 
 class MCSamples(Chains):
+    """
+    The main high-level class for a collection of parameter samples.
+    
+    Derives from :class:`.chains.Chains`, adding high-level functions including Kernel Density estimates, parameter ranges and custom settings.
+    """
+
     def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, **kwargs):
+        """
+        Initialize the MCSamples instance.
+        
+        For a description of the various analysis settings and default values see
+        `analysis_defaults.ini <https://github.com/cmbant/getdist/blob/master/getdist/analysis_defaults.ini>`_.
+
+        
+        :param root: A root file name when loading from file 
+        :param jobItem: Optional paramgrid.batchjob.jobItem instance if a member of a parameter grid
+        :param ini: a .ini file to use for custom analysis settings
+        :param settings: a dictionary of custom analysis settings
+        :param ranges: a dictionary giving any additional hard prior bounds for parameters, eg. {'x':[0, 1], 'y':[None,2]}
+        :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from sample arrays in memory:
+        
+               - **paramNamesFile**: optional name of .paramnames file with parameter names
+               - **samples**: array of parameter values for each sample, passed to :meth:`setSamples`
+               - **weights**: array of weights for samples
+               - **loglikes**: array of -log(Likelihood) for samples
+               - **names**: list of names for the parameters
+               - **labels**:  list of latex labels for the parameters
+               - **ignore_rows**:
+               
+                     - if int >=1: The number of rows to skip at the file in the beginning of the file
+                     - if float <1: The fraction of rows to skip at the beginning of the file
+               - **name_tag**: a name tag for this instance
+        """
         Chains.__init__(self, root, jobItem=jobItem, **kwargs)
 
         self.version = pickle_version
@@ -135,15 +197,20 @@ class MCSamples(Chains):
         if root and os.path.exists(root + '.properties.ini'):
             # any settings in properties.ini override settings for this specific chain
             self.properties = IniFile(root + '.properties.ini')
-            self.setBurnOptions(self.properties)
+            self._setBurnOptions(self.properties)
             if self.properties.bool('burn_removed', False):
                 self.ignore_frac = 0.
                 self.ignore_lines = 0
         else:
             self.properties = None
 
-
     def setRanges(self, ranges):
+        """
+        Sets the ranges parameters, e.g. hard priors on positivity etc. If a min or max value is None, then it is assumed to be unbounded.
+
+        :param ranges: A list or a tuple of [min,max] values for each parameter, 
+                       or a dictionary giving [min,max] values for specific parameter names
+        """
         if isinstance(ranges, (list, tuple)):
             for i, minmax in enumerate(ranges):
                 self.ranges.setRange(self.parName(i), minmax)
@@ -155,12 +222,33 @@ class MCSamples(Chains):
         self.needs_update = True
 
     def parName(self, i, starDerived=False):
+        """
+        Gets the name of i'th parameter
+
+        :param i: The index of the parameter
+        :param starDerived: add a star at the end of the name if the parameter is derived
+        :return: The name of the parameter (string)
+        """
         return self.paramNames.name(i, starDerived)
 
     def parLabel(self, i):
-        return self.paramNames.names[i].label
+        """
+        Gets the latex label of the parameter
 
-    def setBurnOptions(self, ini):
+        :param i: The index or name of a parameter.
+        :return: The parameter's label.
+        """
+        if isinstance(i, six.string_types):
+            return self.paramNames.parWithName(i).label
+        else:
+            return self.paramNames.names[i].label
+
+    def _setBurnOptions(self, ini):
+        """
+        Sets the ignore_rows value from configuration.
+
+        :param ini: The :class:`.inifile.IniFile` to be used
+        """
         ini.setAttr('ignore_rows', self)
         self.ignore_lines = int(self.ignore_rows)
         if not self.ignore_lines:
@@ -169,8 +257,13 @@ class MCSamples(Chains):
             self.ignore_frac = 0
 
     def initParameters(self, ini):
+        """
+        Initializes settings.
+        Gets parameters from :class:`~.inifile.IniFile`.
 
-        self.setBurnOptions(ini)
+        :param ini:  The :class:`~.inifile.IniFile` to be used
+        """
+        self._setBurnOptions(ini)
 
         ini.setAttr('range_ND_contour', self)
         ini.setAttr('range_confidence', self)
@@ -216,7 +309,6 @@ class MCSamples(Chains):
         ini.setAttr('corr_length_steps', self)
 
     def _initLimits(self, ini=None):
-
         bin_limits = ""
         if ini: bin_limits = ini.string('all_limits', '')
 
@@ -245,6 +337,13 @@ class MCSamples(Chains):
                     self.markers[par.name] = float(line)
 
     def updateSettings(self, settings=None, ini=None, doUpdate=True):
+        """
+        Updates settings from a .ini file or dictionary
+
+        :param settings: The a dict containing settings to set, taking preference over any values in ini
+        :param ini: The name of .ini file to get settings from, or an :class:`~.inifile.IniFile` instance; by default uses current settings
+        :param doUpdate: True if should update internal computed values, False otherwise (e.g. if want to make other changes first)
+        """
         assert (settings is None or isinstance(settings, dict))
         if not ini:
             ini = self.ini
@@ -260,8 +359,12 @@ class MCSamples(Chains):
         if doUpdate and self.samples is not None: self.updateBaseStatistics()
 
     def readChains(self, chain_files):
-        # Used for by plotting scripts and gui
+        """
+        Loads samples from a list of files, removing burn in, deleting fixed parameters, and combining into one self.samples array
 
+        :param chain_files: The list of file names to read
+        :return: self.
+        """
         self.loadChains(self.root, chain_files)
 
         if self.ignore_frac and (not self.jobItem or
@@ -281,6 +384,11 @@ class MCSamples(Chains):
         return self
 
     def updateBaseStatistics(self):
+        """
+        Updates basic computed statistics (means, covariance etc), e.g. after a change in samples or weights
+
+        :return: self
+        """
         super(MCSamples, self).updateBaseStatistics()
         mult_max = (self.mean_mult * self.numrows) / min(self.numrows // 2, 500)
         outliers = np.sum(self.weights > mult_max)
@@ -288,20 +396,24 @@ class MCSamples(Chains):
             logging.warning('outlier fraction %s ', float(outliers) / self.numrows)
 
         self.indep_thin = 0
-        self.setCov()
+        self._setCov()
         self.done_1Dbins = False
         self.density1D = dict()
 
         self._initLimits(self.ini)
 
         # Get ND confidence region
-        self.setLikeStats()
+        self._setLikeStats()
         return self
 
     def makeSingleSamples(self, filename="", single_thin=None):
         """
         Make file of weight-1 samples by choosing samples
         with probability given by their weight.
+
+        :param filename: The filename to write to, Leave empty if no output file is needed
+        :param single_thin: factor to thin by; if not set generates as many samples as it can
+        :return: numpy array of selected weight-1 samples
         """
         if single_thin is None:
             single_thin = max(1, self.norm / self.max_mult / self.max_scatter_points)
@@ -320,7 +432,14 @@ class MCSamples(Chains):
             # return data
             return self.samples[rand <= self.weights / (self.max_mult * single_thin)]
 
-    def WriteThinData(self, fname, thin_ix, cool):
+    def writeThinData(self, fname, thin_ix, cool=1):
+        """
+        Writes samples at thin_ix to file
+
+        :param fname: The filename to write to.
+        :param thin_ix: Indices of the samples to write
+        :param cool: if not 1, cools the samples by this factor
+        """
         nparams = self.samples.shape[1]
         if cool != 1: logging.info('Cooled thinned output with temp: %s', cool)
         MaxL = np.max(self.loglikes)
@@ -343,19 +462,42 @@ class MCSamples(Chains):
         print('Wrote ', len(thin_ix), ' thinned samples')
 
     def getCovMat(self):
+        """
+        Gets the CovMat instance containing covariance matrix for all the non-derived parameters
+        (for example useful for subsequent MCMC runs to orthogonalize the parameters)
+
+        :return: A :class:`~.covmat.CovMat` object holding the covariance
+        """
         nparamNonDerived = self.paramNames.numNonDerived()
         return covmat.CovMat(matrix=self.fullcov[:nparamNonDerived, :nparamNonDerived],
                              paramNames=self.paramNames.list()[:nparamNonDerived])
 
     def writeCovMatrix(self, filename=None):
+        """
+        Writes the covrariance matrix of non-derived parameters to a file.
+
+        :param filename: The filename to write to; default is file_root.covmat
+        """
         filename = filename or self.rootdirname + ".covmat"
         self.getCovMat().saveToFile(filename)
 
     def writeCorrelationMatrix(self, filename=None):
+        """
+        Write the correlation matrix to a file
+
+        :param filename: The file to write to, If none writes to file_root.corr
+        """
         filename = filename or self.rootdirname + ".corr"
         np.savetxt(filename, self.getCorrelationMatrix(), fmt="%15.7E")
 
     def getFractionIndices(self, weights, n):
+        """
+        Calculates the indices of weights that split the weights into sets of equal 1/n fraction of the total weight
+
+        :param weights: array of weights
+        :param n: number of groups to split in to
+        :return: array of indices of the boundary rows in the weights array
+        """
         cumsum = np.cumsum(weights)
         fraction_indices = np.append(np.searchsorted(cumsum, np.linspace(0, 1, n, endpoint=False) * self.norm),
                                      self.weights.shape[0])
@@ -363,11 +505,21 @@ class MCSamples(Chains):
 
     def PCA(self, params, param_map=None, normparam=None, writeDataToFile=False, filename=None, conditional_params=[]):
         """
-        Perform principle component analysis. In other words,
+        Perform principle component analysis (PCA). In other words,
         get eigenvectors and eigenvalues for normalized variables
-        with optional (log) mapping.
-        """
+        with optional (log modulus) mapping to find power law fits.
 
+        :param params: List of names of the parameters to use
+        :param param_map: A transformation to apply to parameter values;
+                        A list or string containing either N (no transformation) or L (for log transform) for each parameter.
+                        By default uses log if no parameter values cross zero
+
+        :param normparam: optional name of parameter to normalize result (i.e. this parameter will have unit power)
+        :param writeDataToFile: True if should write the output to file.
+        :param filename: The filename to write, by default root_name.PCA.
+        :param conditional_params: optional list of parameters to treat as fixed, i.e. for PCA conditional on fixed values of these parameters
+        :return: a string description of the output of the PCA
+        """
         logging.info('Doing PCA for %s parameters', len(params))
         if len(conditional_params): logging.info('conditional %u fixed parameters', len(conditional_params))
 
@@ -536,6 +688,12 @@ class MCSamples(Chains):
         return PCAtext
 
     def getNumSampleSummaryText(self):
+        """
+        Returns a summary text describing numbers of parameters and samples, 
+        and various measures of the effective numbers of samples.
+
+        :return: The summary text as a string.
+        """
         lines = 'using %s rows, %s parameters; mean weight %s, tot weight %s\n' % (
             self.numrows, self.paramNames.numParams(), self.mean_mult, self.norm)
         if self.indep_thin != 0:
@@ -545,11 +703,24 @@ class MCSamples(Chains):
             int(self.norm ** 2 / np.dot(self.weights, self.weights)))
         return lines
 
-    def getConvergeTests(self, limfrac, writeDataToFile=False,
+    def getConvergeTests(self, test_confidence=0.95, writeDataToFile=False,
                          what=['MeanVar', 'GelmanRubin', 'SplitTest', 'RafteryLewis', 'CorrLengths'],
                          filename=None, feedback=False):
         """
-        Do convergence tests. 
+        Do convergence tests.
+
+        :param test_confidence: confidence limit to test for convergence (two-tail, only applies to some tests)
+        :param writeDataToFile: True if should write output to a file
+        :param what: The tests to run. Should be a list of any of the following:
+        
+            - 'MeanVar': Gelman-Rubin sqrt(var(chain mean)/mean(chain var)) test in individual parameters (multiple chains only)
+            - 'GelmanRubin':  Gelman-Rubin test for the worst orthogonalized parameter (multiple chains only)
+            - 'SplitTest': Crude test for variation in confidence limits when samples are split up into subsets
+            - 'RafteryLewis': `Raftery-Lewis test <http://www.stat.washington.edu/tech.reports/raftery-lewis2.ps>`_ (integer weight samples only)
+            - 'CorrLengths': Sample correlation lengths
+        :param filename: The filename to write to, default is file_root.converge
+        :param feedback: If set to True, Prints the output as well as returning it.
+        :return: text giving the output of the tests
         """
         lines = ''
         nparam = self.n
@@ -561,7 +732,7 @@ class MCSamples(Chains):
         for chain in chainlist: chain.setDiffs()
         parForm = self.paramNames.parFormat()
         parNames = [parForm % self.parName(j) for j in range(nparam)]
-        limits = np.array([1 - (1 - limfrac) / 2, (1 - limfrac) / 2])
+        limits = np.array([1 - (1 - test_confidence) / 2, (1 - test_confidence) / 2])
 
         if 'CorrLengths' in what:
             lines += "Parameter autocorrelation lengths (effective number of samples N_eff = tot weight/weight length)\n"
@@ -682,8 +853,8 @@ class MCSamples(Chains):
                                     indexes = binchain[:-2] * 4 + binchain[1:-1] * 2 + binchain[2:]
                                     # Estimate transitions probabilities for 2nd order process
                                     tran = np.bincount(indexes, minlength=8).reshape((2, 2, 2))
-                                    #                                    tran[:, :, :] = 0
-                                    #                                    for i in range(2, thin_rows):
+                                    # tran[:, :, :] = 0
+                                    # for i in range(2, thin_rows):
                                     #                                        tran[binchain[i - 2]][binchain[i - 1]][binchain[i]] += 1
 
                                     # Test whether 2nd order is better than Markov using BIC statistic
@@ -722,7 +893,7 @@ class MCSamples(Chains):
 
                         # Get thin factor to have independent samples rather than Markov
                         hardest = max(hardest, 0)
-                        u = self.confidence(self.samples[:, hardest], (1 - limfrac) / 2, hardestend == 0)
+                        u = self.confidence(self.samples[:, hardest], (1 - test_confidence) / 2, hardestend == 0)
 
                         while True:
                             thin_ix = self.thin_indices(thin_fac[ix], chain.weights)
@@ -856,12 +1027,22 @@ class MCSamples(Chains):
             N_eff = par.N_eff_kde
         return N_eff
 
-    def getAutoBandwidth1D(self, bins, par, param, mult_bias_correction_order=None, kernel_order=1):
+    def getAutoBandwidth1D(self, bins, par, param, mult_bias_correction_order=None, kernel_order=1, N_eff=None):
         """
-        Get default kernel density bandwidth (in units the range of the bins)
-        Based on optimal result for basic Parzen kernel, then scaled if higher-order method being used
+        Get optimized kernel density bandwidth (in units the range of the bins)
+        Based on optimal Improved Sheather-Jones bandwidth for basic Parzen kernel, then scaled if higher-order method being used.
+        For details see the `notes <http://cosmologist.info/notes/GetDist.pdf>`_.
+
+        :param bins: numpy array of binned weights for the samples
+        :param par: A :class:`~paramnames.ParamInfo` instance for the parameter to analyse
+        :param param: index of the parameter to use
+        :param mult_bias_correction_order: order of multiplicative bias correction (0 is basic Parzen kernel); by default taken from instance settings.
+        :param kernel_order: order of the kernel (0 is Parzen, 1 does linear boundary correction, 2 is a higher-order kernel) 
+        :param N_eff: effective number of samples. If not specified estimated using weights, autocorrelations, and fiducial bandwidth
+        :return: kernel density bandwidth (in units the range of the bins)
         """
-        N_eff = self._get1DNeff(par, param)
+        if N_eff is None:
+            N_eff = self._get1DNeff(par, param)
         h = kde.gaussian_kde_bandwidth_binned(bins, Neff=N_eff)
         par.kde_h = h
         m = mult_bias_correction_order
@@ -879,11 +1060,27 @@ class MCSamples(Chains):
             return h
 
     def getAutoBandwidth2D(self, bins, parx, pary, paramx, paramy, corr, rangex, rangey, base_fine_bins_2D,
-                           mult_bias_correction_order=None, min_corr=0.2):
+                           mult_bias_correction_order=None, min_corr=0.2, N_eff=None):
         """
-        get kernel density bandwidth matrix in parameter units
+        Get optimized kernel density bandwidth matrix in parameter units, using Improved Sheather Jones method in sheared parameters.
+        For details see the `notes <http://cosmologist.info/notes/GetDist.pdf>`_.
+
+        :param bins: 2D numpy array of binned weights
+        :param parx: A :class:`~paramnames.ParamInfo` instance for the x parameter
+        :param pary: A :class:`~paramnames.ParamInfo` instance for the y parameter
+        :param paramx: index of the x parameter
+        :param paramy: index of the y parameter
+        :param corr: correlation of the samples
+        :param rangex: scale in the x parameter
+        :param rangey: scale in the y parameter
+        :param base_fine_bins_2D: number of bins to use for re-binning in rotated parameter space
+        :param mult_bias_correction_order: multiplicative bias correction order (0 is Parzen kernel); by default taken from instance settings
+        :param min_corr: minimum correlation value at which to bother de-correlating the parameters
+        :param N_eff: effective number of samples. If not specified, currently uses very crudely estimate from effective numbers in x and y separately
+        :return: kernel density bandwidth matrix in parameter units
         """
-        N_eff = max(self._get1DNeff(parx, paramx), self._get1DNeff(pary, paramy))
+        if N_eff is None:
+            N_eff = max(self._get1DNeff(parx, paramx), self._get1DNeff(pary, paramy))  # todo: write _get2DNeff
         logging.debug('%s %s AutoBandwidth2D: N_eff=%s, corr=%s', parx.name, pary.name, N_eff, corr)
         has_limits = parx.has_limits or pary.has_limits
         do_correlated = not parx.has_limits or not pary.has_limits
@@ -924,7 +1121,7 @@ class MCSamples(Chains):
                 kernelC[0, 0] * kernelC[1, 1])
             if pary.has_limits:
                 hx, hy = hy, hx
-                #            print 'derotated pars', hx, hy, c
+                # print 'derotated pars', hx, hy, c
         elif abs(corr) > self.max_corr_2D or not do_correlated and corr > 0.8:
             c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
             hx = parx.sigma_range / N_eff ** (1. / 6)
@@ -1021,7 +1218,11 @@ class MCSamples(Chains):
 
     def get1DDensity(self, name, **kwargs):
         """
-        Returns a Density1D instance for parameter with given name
+        Returns a :class:`~.densities.Density1D` instance for parameter with given name. Result is cached.
+
+        :param name: name of the parameter
+        :param kwargs: arguments for :func:`~MCSamples.get1DDensityGridData`
+        :return: A :class:`~.densities.Density1D` instance for parameter with given name
         """
         if self.needs_update: self.updateBaseStatistics()
         if not kwargs:
@@ -1031,7 +1232,23 @@ class MCSamples(Chains):
 
     def get1DDensityGridData(self, j, writeDataToFile=False, get_density=False, paramConfid=None, meanlikes=False,
                              **kwargs):
+        """
+        Gets a :class:`~.densities.Density1D` instance for the marginalized 1D density of a parameter. Result is not cached.
 
+        :param j: a name or index of the parameter
+        :param writeDataToFile: True if should write to text file.
+        :param get_density: return a :class:`~.densities.Density1D` instance only, does not write out or calculate mean likelihoods for plots
+        :param paramConfid: optional cached :class:`ParamConfidenceData` instance
+        :param meanlikes: include mean likelihoods
+        :param kwargs: optional settings to override instance settings of the same name:
+        
+               - *smooth_scale_1D*
+               - *boundary_correction_order*
+               - *mult_bias_correction_order*
+               - *fine_bins*
+               - *num_bins*
+        :return: A :class:`~.densities.Density1D` instance
+        """
         j = self._parAndNumber(j)[0]
         if j is None: return None
 
@@ -1100,7 +1317,7 @@ class MCSamples(Chains):
                 density1D.P[ix] = normed
             elif boundary_correction_order <= 2:
                 # linear boundary kernel, e.g. Jones 1993, Jones and Foster 1996
-                #  www3.stat.sinica.edu.tw/statistica/oldpdf/A6n414.pdf after Eq 1b, expressed for general prior mask
+                # www3.stat.sinica.edu.tw/statistica/oldpdf/A6n414.pdf after Eq 1b, expressed for general prior mask
                 # cf arXiv:1411.5528
                 xWin = Kernel.Win * Kernel.x
                 a1 = convolve1D(prior_mask, xWin, 'valid', cache=cache)[ix]
@@ -1130,7 +1347,7 @@ class MCSamples(Chains):
             a4 = np.dot(xWin2, Kernel.x ** 2)
             corrected = (density1D.P * a4 - a2 * x2P) / (a4 - a2 ** 2)
             ix = density1D.P > 0
-            density1D.P[ix] = density1D.P[ix] * np.exp(np.minimum(corrected[ix] / density1D.P[ix], 2) - 1)
+            density1D.P[ix] *= np.exp(np.minimum(corrected[ix] / density1D.P[ix], 2) - 1)
 
         if mult_bias_correction_order:
             prior_mask = np.ones(fine_bins)
@@ -1241,17 +1458,40 @@ class MCSamples(Chains):
         return np.bincount(flatix, weights=self.weights,
                            minlength=xsize * ysize).reshape((ysize, xsize)), flatix
 
-    def get2DDensity(self, x, y, **kwargs):
+    def get2DDensity(self, x, y, normalized=False, **kwargs):
         """
-        Returns a Density2D instance for parameters with given names
+        Returns a :class:`~.densties.Density2D` instance with marginalized 2D density.
+
+        :param x: index or name of x parameter
+        :param y: index or name of y parameter
+        :param kwargs: arguments for the :func:`get2DDensityGridData` function
+        :param normalized: if False, is normalized so the maximum is 1, if True, density is normalized
+        :return: :class:`~.densities.Density2D` instance
         """
         if self.needs_update: self.updateBaseStatistics()
-        return self.get2DDensityGridData(x, y, get_density=True, **kwargs)
+        density = self.get2DDensityGridData(x, y, get_density=True, **kwargs)
+        if normalized:
+            density.normalize(in_place=True)
+        return density
 
     def get2DDensityGridData(self, j, j2, writeDataToFile=False,
                              num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
         """
-        Get 2D plot data.
+        Get 2D plot marginalized density and optional additional plot data.
+
+        :param j: name or index of the x parameter
+        :param j2: name or index of the x parameter.
+        :param writeDataToFile: True if should write data to file
+        :param num_plot_contours: number of contours to calculate and return in density.contours
+        :param get_density: only get the 2D marginalized density, no additional plot data
+        :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
+        :param kwargs: Optional arguments to override instance settings of the same name:
+        
+            - fine_bins_2D,
+            - boundary_correction_order
+            - mult_bias_correction_order
+            - smooth_scale_2D
+        :return: a :class:`~.densities.Density2D` instance
         """
         if self.needs_update: self.updateBaseStatistics()
         start = time.time()
@@ -1429,8 +1669,8 @@ class MCSamples(Chains):
 
         if writeDataToFile:
             # note store things in confusing transpose form
-            #            if meanlikes:
-            #                filedensity = Density2D(x, y, bin2Dlikes)
+            # if meanlikes:
+            # filedensity = Density2D(x, y, bin2Dlikes)
             #                bin2Dlikes = filedensity.Prob(x, y)
 
             plotfile = self.rootname + "_2D_%s_%s" % (parx.name, pary.name)
@@ -1446,8 +1686,10 @@ class MCSamples(Chains):
                 #       res.likes = bin2Dlikes
         return density
 
-    def setLikeStats(self):
-        # Find best fit sample and mean likelihood
+    def _setLikeStats(self):
+        """
+        Get and store LikeStats (see getLikeStats())
+        """
         if self.loglikes is None:
             self.likeStats = None
             return None
@@ -1488,7 +1730,13 @@ class MCSamples(Chains):
         self.ranges = ParamBounds()
 
     def getBounds(self):
-        # note not the same as self.ranges, as updated for actual plot ranges depending on posterior
+        """
+        Returns the bounds in the form of a :class:`~.parampriors.ParamBounds` instance, for example for determining plot ranges
+        
+        Bounds are not  the same as self.ranges, as if samples are not near the range boundary, the bound is set to None
+
+        :return: a :class:`~.parampriors.ParamBounds` instance
+        """
         bounds = ParamBounds()
         bounds.names = self.paramNames.list()
         for par in self.paramNames.names:
@@ -1499,35 +1747,78 @@ class MCSamples(Chains):
         return bounds
 
     def getUpper(self, name):
+        """
+        Return the upper limit of the parameter with the given name.
+
+        :param name: parameter name
+        :return: The upper limit if name exists, None otherwise.
+        """
         par = self.paramNames.parWithName(name)
         if par:
             return par.limmax
         return None
 
     def getLower(self, name):
+        """
+        Return the lower limit of the parameter with the given name.
+
+        :param name: parameter name
+        :return: The lower limit if name exists, None otherwise.
+        """
         par = self.paramNames.parWithName(name)
         if par:
             return par.limmin
         return None
 
     def getMargeStats(self, include_bestfit=False):
-        self.setDensitiesandMarge1D()
+        """
+        Returns a :class:`~.types.MargeStats` object with marginalized 1D parameter constraints
+
+        :param include_bestfit: if True, set best fit values by loading from root_name.minimum file (assuming it exists)
+        :return: A :class:`~.types.MargeStats` instance
+        """
+        self._setDensitiesandMarge1D()
         m = types.MargeStats()
         m.hasBestFit = False
         m.limits = self.contours
         m.names = self.paramNames.names
         if include_bestfit:
-            m.addBestFit(self.getLikeStats)
+            bf_file = self.root + '.minimum'
+            if os.path.exists(bf_file):
+                return types.BestFit(bf_file)
+            else:
+                raise MCSamplesError(
+                    'Best fit can only be included if loaded from file and file_root.minimum exists (cannot be calculated from samples)')
         return m
 
     def getLikeStats(self):
-        return self.likeStats or self.setLikeStats()
+        """
+        Get best fit sample and n-D confidence limits, and various likelihood based statistics
+
+        :return: a :class:`~.types.LikeStats` instance storing N-D limits for parameter i in result.names[i].ND_limit_top, 
+                 result.names[i].ND_limit_bot, and best-fit sample value in result.names[i].bestfit_sample
+        """
+        return self.likeStats or self._setLikeStats()
 
     def getTable(self, columns=1, include_bestfit=False, **kwargs):
+        """
+        Creates and returns a :class:`~.types.ResultTable` instance.
+
+        :param columns: number of columns in the table
+        :param include_bestfit: True if should include the bestfit parameter values (assuming set)
+        :param kwargs: arguments for :class:`~.types.ResultTable` constructor.
+        :return: A :class:`~.types.ResultTable` instance
+        """
         return types.ResultTable(columns, [self.getMargeStats(include_bestfit)], **kwargs)
 
     def getLatex(self, params=None, limit=1):
-        """ Get tex snippet for constraint on parameters in params """
+        """
+        Get tex snippet for constraints on a list of parameters
+
+        :param params: list of parameter names
+        :param limit: which limit to get, 1 is the first (default 68%), 2 is the second (limits array specified by self.contours)
+        :return: list of labels, list of tex snippets
+        """
         marge = self.getMargeStats()
         if params is None: params = marge.list()
 
@@ -1546,27 +1837,47 @@ class MCSamples(Chains):
         return labels, texs
 
     def getInlineLatex(self, param, limit=1):
-        """Get snippet like: A=x\pm y"""
+        r"""
+        Get snippet like: A=x\\pm y. Will adjust appropriately for one and two tail limits.
+
+        :param param: The name of the parameter
+        :param limit: which limit to get, 1 is the first (default 68%), 2 is the second (limits array specified by self.contours)
+        :return: The tex snippet.
+        """
         labels, texs = self.getLatex([param], limit)
         if not texs[0][0] in ['<', '>']:
             return labels[0] + ' = ' + texs[0]
         else:
             return labels[0] + ' ' + texs[0]
 
-    def setDensitiesandMarge1D(self, max_frac_twotail=None, writeDataToFile=False, meanlikes=False):
+    def _setDensitiesandMarge1D(self, max_frac_twotail=None, writeDataToFile=False, meanlikes=False):
+        """
+        Get all the 1D densities; result is cached.
+
+        :param max_frac_twotail: optional override for self.max_frac_twotail
+        :param writeDataToFile: True if should write to file
+        :param meanlikes: include mean likelihoods
+        """
         if self.done_1Dbins: return
 
         for j in range(self.n):
             paramConfid = self.initParamConfidenceData(self.samples[:, j])
             self.get1DDensityGridData(j, writeDataToFile, get_density=not writeDataToFile, paramConfid=paramConfid,
                                       meanlikes=meanlikes)
-            self.setMargeLimits(self.paramNames.names[j], paramConfid, max_frac_twotail)
+            self._setMargeLimits(self.paramNames.names[j], paramConfid, max_frac_twotail)
 
         self.done_1Dbins = True
 
-    def setMargeLimits(self, par, paramConfid, max_frac_twotail=None, density1D=None):
-        # Get limits, one or two tail depending on whether posterior
-        # goes to zero at the limits or not
+    def _setMargeLimits(self, par, paramConfid, max_frac_twotail=None, density1D=None):
+        """
+        Get limits, one or two tail depending on whether posterior
+        goes to zero at the limits or not
+
+        :param par:  The :class:`~.paramnames.ParamInfo` to set limits for
+        :param paramConfid: :class:`~.chains.ParamConfidenceData` instance
+        :param max_frac_twotail: optional override for self.max_frac_twotail
+        :param density1D: any existing density 1D instance to use
+        """
         if max_frac_twotail is None:
             max_frac_twotail = self.max_frac_twotail
         par.limits = []
@@ -1626,7 +1937,13 @@ class MCSamples(Chains):
             par.limits.append(types.ParamLimit(lim, tag))
 
     def getCorrelatedVariable2DPlots(self, num_plots=12, nparam=None):
-        # gets most correlated variable pair names
+        """
+        gets list of most correlated variable pair names
+
+        :param num_plots: The number of plots
+        :param nparam: maximum number of pairs to get
+        :return: list of [x,y] pair names
+        """
         nparam = nparam or self.paramNames.numNonDerived()
         try_t = 1e5
         x, y = 0, 0
@@ -1647,26 +1964,51 @@ class MCSamples(Chains):
         return cust2DPlots
 
     def saveAsText(self, root, chain_index=None, make_dirs=False):
+        """
+        Saves samples as text file, including .ranges and .paramnames
+
+        :param root: The root file name to use.
+        :param chain_index: optional index to be used for the filename.
+        :param make_dirs: True if should create the directories
+        """
         super(MCSamples, self).saveAsText(root, chain_index, make_dirs)
         if not chain_index:
             self.ranges.saveToFile(root + '.ranges')
 
     # Write functions for GetDist.py
 
-    def WriteScriptPlots1D(self, filename, plotparams=None, ext=None):
+    def writeScriptPlots1D(self, filename, plotparams=None, ext=None):
+        """
+        Write a script that generates a 1 dimensional plot. Only intended for use by GetDist.py script.
+
+        :param filename: The filename to write to.
+        :param plotparams: The list of parameters to plot (default: all)
+        :param ext: The extension for the filename, Default if None
+        """
         text = 'markers=' + str(self.markers) + '\n'
         if plotparams:
             text += 'g.plots_1d(roots,[' + ",".join(['\'' + par + '\'' for par in plotparams]) + '], markers=markers)'
         else:
             text += 'g.plots_1d(roots, markers=markers)'
-        self.WritePlotFile(filename, self.subplot_size_inch, text, '', ext)
+        self._WritePlotFile(filename, self.subplot_size_inch, text, '', ext)
 
-    def WriteScriptPlots2D(self, filename, plot_2D_param, cust2DPlots, writeDataToFile=False, ext=None,
+    def writeScriptPlots2D(self, filename, plot_2D_param=None, cust2DPlots=[], writeDataToFile=False, ext=None,
                            shade_meanlikes=False):
+        """
+        Write script that generates a 2 dimensional plot. Only intended for use by GetDist.py script.
+
+        :param filename: The filename to write to.
+        :param plot_2D_param: parameter to plot other variables against 
+        :param cust2DPlots: list of parts of parameter names to plot
+        :param writeDataToFile: True if should write to file
+        :param ext: The extension for the filename, Default if None
+        :param shade_meanlikes: shade by mean likelihoods
+        :return: A dictionary indexed by pairs of parameters where 2D densities have been calculated
+        """
         done2D = {}
         text = 'pairs=[]\n'
         plot_num = 0
-        if cust2DPlots:
+        if len(cust2DPlots):
             cuts = [par1 + '__' + par2 for par1, par2 in cust2DPlots]
         for j, par1 in enumerate(self.paramNames.list()):
             if plot_2D_param or cust2DPlots:
@@ -1678,28 +2020,52 @@ class MCSamples(Chains):
             for j2 in range(j2min, self.n):
                 par2 = self.parName(j2)
                 if plot_2D_param and par2 != plot_2D_param: continue
-                if cust2DPlots and (par1 + '__' + par2) not in cuts: continue
+                if len(cust2DPlots) and (par1 + '__' + par2) not in cuts: continue
                 plot_num += 1
                 done2D[(par1, par2)] = True
                 if writeDataToFile:
                     self.get2DDensityGridData(j, j2, writeDataToFile=True, meanlikes=shade_meanlikes)
                 text += "pairs.append(['%s','%s'])\n" % (par1, par2)
         text += 'g.plots_2d(roots,param_pairs=pairs)'
-        self.WritePlotFile(filename, self.subplot_size_inch2, text, '_2D', ext)
+        self._WritePlotFile(filename, self.subplot_size_inch2, text, '_2D', ext)
         return done2D
 
-    def WriteScriptPlotsTri(self, filename, triangle_params, ext=None):
-        text = 'g.triangle_plot(roots, %s)' % triangle_params
-        self.WritePlotFile(filename, self.subplot_size_inch, text, '_tri', ext)
+    def writeScriptPlotsTri(self, filename, triangle_params, ext=None):
+        """
+        Write a script that generates a triangle plot. Only intended for use by GetDist.py script.
 
-    def WriteScriptPlots3D(self, filename, plot_3D, ext=None):
+        :param filename: The filename to write to.
+        :param triangle_params: list of parameter names to plot
+        :param ext: The extension for the filename, Default if None
+        """
+        text = 'g.triangle_plot(roots, %s)' % triangle_params
+        self._WritePlotFile(filename, self.subplot_size_inch, text, '_tri', ext)
+
+    def writeScriptPlots3D(self, filename, plot_3D, ext=None):
+        """
+        Writes a script that generates a 3D (coloured-scatter) plot. Only intended for use by GetDist.py script.
+
+        :param filename: The filename to write to
+        :param plot_3D: list of [x,y,z] parameters for the 3 Dimensional plots
+        :param ext: The extension for the filename, Default if None
+        """
         text = 'sets=[]\n'
         for pars in plot_3D:
             text += "sets.append(['%s','%s','%s'])\n" % tuple(pars)
         text += 'g.plots_3d(roots,sets)'
-        self.WritePlotFile(filename, self.subplot_size_inch3, text, '_3D', ext)
+        self._WritePlotFile(filename, self.subplot_size_inch3, text, '_3D', ext)
 
-    def WritePlotFile(self, filename, subplot_size, text, tag, ext=None):
+    def _WritePlotFile(self, filename, subplot_size, text, tag, ext=None):
+        """
+        Write plot file. 
+        Used by other functions
+
+        :param filename: The filename to write to
+        :param subplot_size: The size of the subplot.
+        :param text: The text to write after the headers.
+        :param tag: Tag used for the filename the created file will export to.
+        :param ext: The extension for the filename, Default if None
+        """
         with open(filename, 'w') as f:
             f.write("import getdist.plots as plots, os\n")
             if self.plot_data_dir:
@@ -1720,6 +2086,12 @@ class MCSamples(Chains):
 # Useful functions
 
 def GetChainRootFiles(rootdir):
+    """
+    Gets the root names of all chain files in the root directory
+
+    :param rootdir: The root directory to check
+    :return:  The root names
+    """
     pattern = os.path.join(rootdir, '*.paramnames')
     files = [os.path.splitext(f)[0] for f in glob.glob(pattern)]
     files.sort()
@@ -1727,6 +2099,12 @@ def GetChainRootFiles(rootdir):
 
 
 def GetRootFileName(rootdir):
+    """
+    Gets the root name of chains in given directory (assuming only one set of chain files)
+
+    :param rootdir: The directory to check
+    :return: The root file name.
+    """
     rootFileName = ""
     pattern = os.path.join(rootdir, '*_*.txt')
     chain_files = glob.glob(pattern)
