@@ -190,7 +190,7 @@ GetDist GUI
 
 Run the GetDistGUI.py script to run the graphical user interface. This requires PySide, but will run on Windows, Linux and Mac.
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
-See the `GUI Readme <http://cosmologist.info/cosmomc/readme_gui.html>`_.
+See the `GUI Readme <http://getdist.readthedocs.org/en/latest/gui.html>`_.
 
 
 Using with CosmoMC

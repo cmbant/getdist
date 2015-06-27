@@ -799,7 +799,7 @@ class GetDistPlotter(object):
         :param plotno: The index of the line being added to the plot
         :param normalized: True if areas under lines should match, False if normalized to unit maximum
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
-        :param kwargs: arguments for :func:`~matplotlib:matplotlib.axes.Axes.plot`
+        :param kwargs: arguments for :func:`~matplotlib:matplotlib.pyplot.plot`
         :return: min, max for the plotted density
         """
         ax = ax or plt.gca()
@@ -2017,7 +2017,7 @@ class GetDistPlotter(object):
 
     def add_line(self, xdata, ydata, zorder=0, color=None, ls=None, ax=None, **kwargs):
         """
-        Adds a line to the given axes, using :func:`~matplotlib:matplotlib.pyplot.Line2D`
+        Adds a line to the given axes, using :class:`~matplotlib:matplotlib.lines.Line2D`
 
         :param xdata: pair of x coordinates
         :param ydata: pair of y coordinates
@@ -2025,7 +2025,7 @@ class GetDistPlotter(object):
         :param color: The color of the line, uses settings.axis_marker_color by default
         :param ls: The line style to be used, uses settings.axis_marker_ls by default
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use, defaults to current axes
-        :param kwargs:  Additional arguments for :func:`~matplotlib:matplotlib.pyplot.Line2D`
+        :param kwargs:  Additional arguments for :class:`~matplotlib:matplotlib.lines.Line2D`
         """
         if color is None: color = self.settings.axis_marker_color
         if ls is None: ls = self.settings.axis_marker_ls
