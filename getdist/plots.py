@@ -45,48 +45,48 @@ class GetDistPlotSettings(object):
     """
     Settings class (colors, sizes, font, styles etc.)
 
-    :ivar plot_meanlikes: include mean likelihood lines
-    :ivar shade_meanlikes: shading uses mean likelihoods rather than marginalized density
-    :ivar prob_label: label for the y axis in unnormalized 1D density plots
-    :ivar norm_prob_label: label for the y axis in normalized 1D density plots
-    :ivar prob_y_ticks: show ticks on y axis for 1D density plots
-    :ivar lineM: list of line styles/colors (['-k','-r'...])
-    :ivar plot_args: dict, or list of dicts, giving settings like color, ls, alpha, etc. to apply for a plot or each line added
-    :ivar solid_colors: List of colors for filled 2D plots. Each element is either a color, or a tuple of values for different contour levels.
-    :ivar default_dash_styles: dict mapping line styles to detailed dash styles, default:  {'--': (3, 2), '-.': (4, 1, 1, 1)}
-    :ivar line_labels: True if you want to add legend when more than one line
-    :ivar x_label_rotation: The rotation for the x label in degrees.
-    :ivar num_shades: number of colors to use for shading shaded 2D plots
-    :ivar shade_level_scale: shading contour colors are put at [0:1:spacing]**shade_level_scale
-    :ivar fig_width_inch: The width of the figure in inches
-    :ivar progress: write out some status
-    :ivar tight_layout: use tight_layout to lay out and remove white space
-    :ivar no_triangle_axis_labels: whether subplots in triangle plots should show axis labels if not at the edge
-    :ivar colormap: a `Matplotlib color map <http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for shading
-    :ivar colormap_scatter: a `Matplotlib color map <http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for 3D plots
-    :ivar colorbar_rotation: angle to rotate colorbar tick labels
+    :ivar alpha_factor_contour_lines: alpha factor for adding contour lines between filled contours
+    :ivar alpha_filled_add: alpha for adding filled contours to a plot
+    :ivar axis_marker_color: The color for a marker
+    :ivar axis_marker_ls: The line style for a marker
+    :ivar axis_marker_lw: The line width for a marker
     :ivar colorbar_label_pad: padding for the colorbar labels
     :ivar colorbar_label_rotation: angle to rotate colorbar label (set to zero if -90 default gives layout problem)
-    :ivar param_names_for_labels: file name of .paramnames file to use for overriding parameter labels for plotting
-    :ivar tick_prune: None, 'upper' or 'lower' to prune ticks 
-    :ivar tight_gap_fraction: fraction of plot width for closest tick to the edge 
-    :ivar legend_loc: The location for the legend
-    :ivar figure_legend_loc: The location for the figure legend.
-    :ivar legend_frame: draw box around legend
+    :ivar colorbar_rotation: angle to rotate colorbar tick labels
+    :ivar colormap: a `Matplotlib color map <http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for shading
+    :ivar colormap_scatter: a `Matplotlib color map <http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for 3D plots
+    :ivar default_dash_styles: dict mapping line styles to detailed dash styles, default:  {'--': (3, 2), '-.': (4, 1, 1, 1)}
+    :ivar fig_width_inch: The width of the figure in inches
     :ivar figure_legend_frame: draw box around figure legend
+    :ivar figure_legend_loc: The location for the figure legend
     :ivar figure_legend_ncol: number of columns for figure legend
-    :ivar legend_rect_border: whether to have black border around solid color boxes in legends 
-    :ivar legend_position_config: recipe for positioning figure border (default 1) 
-    :ivar legend_frac_subplot_margin: fraction of _subplot size to use for spacing figure legend above plots 
-    :ivar legend_frac_subplot_line: fraction of _subplot size to use per line for spacing figure legend
     :ivar legend_fontsize: The font size for the legend
-    :ivar num_plot_contours: number of contours to plot in 2D plots (up to number of contours in "contours" analysis settings)
-    :ivar solid_contour_palefactor: factor by which to make 2D outer filled contours paler when only specifying one contour colour 
-    :ivar alpha_filled_add: alpha for adding filled contours to a plot
-    :ivar alpha_factor_contour_lines: alpha factor for adding lines between filled contours 
-    :ivar axis_marker_color: The color for the marker
-    :ivar axis_marker_ls: The line style for the marker
-    :ivar axis_marker_lw: The line width for the marker
+    :ivar legend_frac_subplot_line: fraction of _subplot size to use per line for spacing figure legend
+    :ivar legend_frac_subplot_margin: fraction of _subplot size to use for spacing figure legend above plots
+    :ivar legend_frame: draw box around legend
+    :ivar legend_loc: The location for the legend
+    :ivar legend_position_config: recipe for positioning figure border (default 1)
+    :ivar legend_rect_border: whether to have black border around solid color boxes in legends
+    :ivar line_labels: True if you want to automatically add legends when adding more than one line to subplots
+    :ivar lineM: list of default line styles/colors (['-k','-r'...])
+    :ivar no_triangle_axis_labels: whether subplots in triangle plots should show axis labels if not at the edge
+    :ivar norm_prob_label: label for the y axis in normalized 1D density plots
+    :ivar num_plot_contours: number of contours to plot in 2D plots (up to number of contours in analysis settings)
+    :ivar num_shades: number of distinct colors to use for shading shaded 2D plots
+    :ivar param_names_for_labels: file name of .paramnames file to use for overriding parameter labels for plotting
+    :ivar plot_args: dict, or list of dicts, giving settings like color, ls, alpha, etc. to apply for a plot or each line added
+    :ivar plot_meanlikes: include mean likelihood lines in 1D plots
+    :ivar prob_label: label for the y axis in unnormalized 1D density plots
+    :ivar prob_y_ticks: show ticks on y axis for 1D density plots
+    :ivar progress: write out some status
+    :ivar shade_level_scale: shading contour colors are put at [0:1:spacing]**shade_level_scale
+    :ivar shade_meanlikes: 2D shading uses mean likelihoods rather than marginalized density
+    :ivar solid_colors: List of default colors for filled 2D plots. Each element is either a color, or a tuple of values for different contour levels.
+    :ivar solid_contour_palefactor: factor by which to make 2D outer filled contours paler when only specifying one contour colour
+    :ivar tick_prune: None, 'upper' or 'lower' to prune ticks
+    :ivar tight_gap_fraction: fraction of plot width for closest tick to the edge
+    :ivar tight_layout: use tight_layout to lay out and remove white space
+    :ivar x_label_rotation: The rotation for the x label in degrees.
     """
 
     def __init__(self, subplot_size_inch=2, fig_width_inch=None):
@@ -594,9 +594,9 @@ class GetDistPlotter(object):
     Main class for making plots from one or more sets of samples.
 
     :ivar settings: a :class:`GetDistPlotSettings` instance with settings
-    :ivar subplots: a 2D array :class:`~matplotlib:matplotlib.axes.Axes` for subplots
+    :ivar subplots: a 2D array of :class:`~matplotlib:matplotlib.axes.Axes` for subplots
     :ivar sampleAnalyser: a :class:`MCSampleAnalysis` instance for getting :class:`~.mcsamples.MCSamples` 
-         and derived data from a given root name tag
+         and derived data from a given root name tag (e.g. sampleAnalyser.samplesForRoot('rootname'))
     """
 
     def __init__(self, plot_data=None, chain_dir=None, settings=None, analysis_settings=None, mcsamples=True):
@@ -605,7 +605,7 @@ class GetDistPlotter(object):
         :param plot_data: (deprecated) directory name if you have pre-computed plot_data/ directory from GetDist; None by default
         :param chain_dir: Set this to a directory or grid root to search for chains (can also be a list of such, searched in order)
         :param analysis_settings: The settings to be used by :class:`MCSampleAnalysis` when analysing samples
-        :param mcsamples: if True default to new method of using :class:`MCSampleAnalysis` instance to analyse chains on demand
+        :param mcsamples: if True defaults to current method of using :class:`MCSampleAnalysis` instance to analyse chains on demand
         """
         self.chain_dir = chain_dir
         if settings is None:
@@ -1741,7 +1741,7 @@ class GetDistPlotter(object):
         The upper triangle can also be used by setting upper_roots.
 
         :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for the samples to plot
-        :param params: list of parameters to plot (default all)
+        :param params: list of parameters to plot (default: all, can also use glob patterns to match groups of parameters)
         :param legend_labels: list of legend labels
         :param plot_3d_with_param: for the 2D plots, make sample scatter plot, with samples colored by this parameter name (to make a '3D' plot)
         :param filled: True for filled contours
@@ -1908,8 +1908,8 @@ class GetDistPlotter(object):
         yroots (list of list of roots) to use different set of roots for each row of the plot; alternatively
         plot_roots allows you to specify explicitly (via list of list of list of roots) the set of roots for each individual subplot
 
-        :param xparams: Parameters for the x axis
-        :param yparams: Param for the y axis.
+        :param xparams: list of parameters for the x axes
+        :param yparams: list of parameters for the y axes
         :param yroots: (list of list of roots) allows use of different set of root names for each row of the plot;
                        set either roots or yroots
         :param roots: list of root names or :class:`~.mcsamples.MCSamples` instances. 
@@ -1994,16 +1994,20 @@ class GetDistPlotter(object):
         for ticklabel in ax.get_yticklabels():
             ticklabel.set_rotation(rotation)
 
-    def add_colorbar(self, param, orientation='vertical', **ax_args):
+    def add_colorbar(self, param, orientation='vertical', mappable=None, ax=None, **ax_args):
         """
         Adds a color bar to the given plot.
 
         :param param: a :class:`~.paramnames.ParamInfo` with label for the parameter the color bar is describing
         :param orientation: The orientation of the color bar (default: 'vertical')
-        :param ax_args: extra arguments; if **color_label_in_axes** is True, label is not added (insert as text label in plot instead)
+        :param mappable: the thing to color, defaults to current scatter
+        :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
+        :param ax_args: extra arguments -
+        
+               **color_label_in_axes** - if True, label is not added (insert as text label in plot instead)
         :return: The new :class:`~matplotlib:matplotlib.colorbar.Colorbar` instance
         """
-        cb = plt.colorbar(orientation=orientation)
+        cb = plt.colorbar(mappable, orientation=orientation, ax=ax)
         cb.set_alpha(1)
         cb.draw_all()
         if not ax_args.get('color_label_in_axes'):
@@ -2053,21 +2057,42 @@ class GetDistPlotter(object):
             setattr(p, par.name, samples[:, i])
         return p
 
-    def add_3d_scatter(self, root, params, color_bar=True, alpha=1, extra_thin=1, **ax_args):
+    def add_2d_scatter(self, root, x, y, color='k', alpha=1, extra_thin=1, scatter_size=None, ax=None):
         """
-        Adds a 3D scatter plot to the current axes
+        Adds a 2D sample scatter plot to the current axes (or ax if specified).
+
+        :param root: The root name of the samples to use
+        :param param1: name of x parameter
+        :param param2: name of y parameter
+        :param color: color to plot the samples
+        :param alpha: The alpha to use.
+        :param extra_thin: thin the weight one samples by this additional factor before plotting
+        :param scatter_size: point size (default: settings.scatter_size)
+        :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
+        :return: (xmin, xmax), (ymin, ymax) bounds for the axes.
+        """
+
+        kwargs = {'fixed_color':color}
+        return self.add_3d_scatter(root, [x, y], False, alpha, extra_thin, scatter_size, ax, **kwargs)
+
+    def add_3d_scatter(self, root, params, color_bar=True, alpha=1, extra_thin=1, scatter_size=None, ax=None, **kwargs):
+        """
+        Adds a 3D scatter plot to the current axes (or ax if specified).
 
         :param root: The root name of the samples to use
         :param params:  list of parameters to plot
-        :param color_bar: Trie to add a colorbar for the plotted scatter color
+        :param color_bar: True to add a colorbar for the plotted scatter color
         :param alpha: The alpha to use.
         :param extra_thin: thin the weight one samples by this additional factor before plotting
-        :param ax_args: arguments for :func:`~GetDistPlotter.add_colorbar`
+        :param scatter_size: point size (default: settings.scatter_size)
+        :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
+        :param kwargs: arguments for :func:`~GetDistPlotter.add_colorbar`
         :return: (xmin, xmax), (ymin, ymax) bounds for the axes.
         """
         params = self.get_param_array(root, params)
         pts = self.sampleAnalyser.load_single_samples(root)
         names = self.paramNamesForRoot(root)
+        fixed_color = kwargs.get('fixed_color')  # if actually just a plain scatter plot
         samples = []
         for param in params:
             if hasattr(param, 'getDerived'):
@@ -2076,10 +2101,11 @@ class GetDistPlotter(object):
                 samples.append(pts[:, names.numberOfName(param.name)])
         if extra_thin > 1:
             samples = [pts[::extra_thin] for pts in samples]
-        self.last_scatter = plt.scatter(samples[0], samples[1], edgecolors='none',
-                                        s=self.settings.scatter_size, c=samples[2], cmap=self.settings.colormap_scatter,
-                                        alpha=alpha)
-        if color_bar: self.last_colorbar = self.add_colorbar(params[2], **ax_args)
+        self.last_scatter = (ax or plt.gca()).scatter(samples[0], samples[1], edgecolors='none',
+                                        s=scatter_size or self.settings.scatter_size, c=fixed_color or samples[2],
+                                        cmap=self.settings.colormap_scatter, alpha=alpha)
+        if not ax: plt.sci(self.last_scatter)
+        if color_bar and not fixed_color: self.last_colorbar = self.add_colorbar(params[2], mappable=self.last_scatter, ax=ax, **kwargs)
         xbounds = [min(samples[0]), max(samples[0])]
         r = xbounds[1] - xbounds[0]
         xbounds[0] -= r / 20
@@ -2090,12 +2116,38 @@ class GetDistPlotter(object):
         ybounds[1] += r / 20
         return [xbounds, ybounds]
 
+    def plot_2d_scatter(self, roots, param1, param2, color='k', line_offset=0, add_legend_proxy=True, **kwargs):
+        """
+        Make a 2D sample scatter plot.
+        
+        If roots is a list of more than one, additional densities are plotted as contour lines. 
+
+        :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for the samples to plot
+        :param param1: name of x parameter
+        :param param2: name of y parameter
+        :param color: color to plot the samples
+        :param line_offset: The line index offset for added contours
+        :param add_legend_proxy: True if should add a legend proxy
+        :param kwargs: additional optional arguments:
+
+                * **filled**: True for filled contours for second and later items in roots
+                * **lims**: limits for the plot [xmin, xmax, ymin, ymax]
+                * **ls** : list of line styles for the different sample contours plotted 
+                * **colors**: list of colors for the different sample contours plotted 
+                * **lws**: list of linewidths for the different sample contours plotted
+                * **alphas**: list of alphas for the different sample contours plotted 
+                * **line_args**: a list of dict with settings for contours from each root
+        """
+        kwargs = kwargs.copy()
+        kwargs['fixed_color'] = color
+        self.plot_3d(roots, [param1, param2], False, line_offset, add_legend_proxy, **kwargs)
+
     def plot_3d(self, roots, params=None, params_for_plots=None, color_bar=True, line_offset=0,
                 add_legend_proxy=True, **kwargs):
         """
-        Make a 2D scatter plot colored by the value of a third parameter.
+        Make a 2D scatter plot colored by the value of a third parameter (a 3D plot).
         
-        If roots is a list of names of samples, additional densities are plotted as contour lines. 
+        If roots is a list of more than one, additional densities are plotted as contour lines. 
 
         :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for the samples to plot
         :param params: list with the three parameter names to plot (x, y, color)
@@ -2131,7 +2183,7 @@ class GetDistPlotter(object):
             params = self.get_param_array(roots[0], params)
             params_for_plots = [params for _ in roots]  # all the same
         if self.fig is None: self.make_figure()
-        if kwargs.get('filled_compare'):
+        if kwargs.get('filled_compare') is not None:
             kwargs = kwargs.copy()
             kwargs['filled'] = kwargs['filled_compare']
         contour_args = self._make_contour_args(len(roots) - 1, **kwargs)

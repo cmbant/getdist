@@ -724,7 +724,7 @@ class MainWindow(QMainWindow):
         """
         QMessageBox.about(
             self, "About GetDist GUI",
-            "GetDist GUI v " + getdist.__version__ + "\ncosmologist.info/cosmomc/\n" +
+            "GetDist GUI v " + getdist.__version__ + "\nhttps://github.com/cmbant/getdist/\n" +
             "\nPython: " + sys.version +
             "\nMatplotlib: " + matplotlib.__version__ +
             "\nSciPy: " + scipy.__version__ +

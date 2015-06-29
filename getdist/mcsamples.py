@@ -1238,13 +1238,13 @@ class MCSamples(Chains):
         :param get_density: return a :class:`~.densities.Density1D` instance only, does not write out or calculate mean likelihoods for plots
         :param paramConfid: optional cached :class:`ParamConfidenceData` instance
         :param meanlikes: include mean likelihoods
-        :param kwargs: optional settings to override instance settings of the same name:
+        :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
         
-               - *smooth_scale_1D*
-               - *boundary_correction_order*
-               - *mult_bias_correction_order*
-               - *fine_bins*
-               - *num_bins*
+               - **smooth_scale_1D**
+               - **boundary_correction_order**
+               - **mult_bias_correction_order**
+               - **fine_bins**
+               - **num_bins**
         :return: A :class:`~.densities.Density1D` instance
         """
         j = self._parAndNumber(j)[0]
@@ -1462,7 +1462,7 @@ class MCSamples(Chains):
 
         :param x: index or name of x parameter
         :param y: index or name of y parameter
-        :param kwargs: arguments for the :func:`get2DDensityGridData` function
+        :param kwargs: keyword arguments for the :func:`get2DDensityGridData` function
         :param normalized: if False, is normalized so the maximum is 1, if True, density is normalized
         :return: :class:`~.densities.Density2D` instance
         """
@@ -1483,12 +1483,12 @@ class MCSamples(Chains):
         :param num_plot_contours: number of contours to calculate and return in density.contours
         :param get_density: only get the 2D marginalized density, no additional plot data
         :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
-        :param kwargs: Optional arguments to override instance settings of the same name:
+        :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
         
-            - fine_bins_2D,
-            - boundary_correction_order
-            - mult_bias_correction_order
-            - smooth_scale_2D
+            - **fine_bins_2D**
+            - **boundary_correction_order**
+            - **mult_bias_correction_order**
+            - **smooth_scale_2D**
         :return: a :class:`~.densities.Density2D` instance
         """
         if self.needs_update: self.updateBaseStatistics()
@@ -1686,7 +1686,7 @@ class MCSamples(Chains):
 
     def _setLikeStats(self):
         """
-        Get and store LikeStats (see getLikeStats())
+        Get and store LikeStats (see :func:`MCSamples.getLikeStats`)
         """
         if self.loglikes is None:
             self.likeStats = None
@@ -1815,7 +1815,7 @@ class MCSamples(Chains):
 
         :param params: list of parameter names
         :param limit: which limit to get, 1 is the first (default 68%), 2 is the second (limits array specified by self.contours)
-        :return: list of labels, list of tex snippets
+        :return: labels, texs: a list of parameter labels, and a list of tex snippets
         """
         marge = self.getMargeStats()
         if params is None: params = marge.list()
@@ -1936,7 +1936,7 @@ class MCSamples(Chains):
 
     def getCorrelatedVariable2DPlots(self, num_plots=12, nparam=None):
         """
-        gets list of most correlated variable pair names
+        Gets a list of most correlated variable pair names.
 
         :param num_plots: The number of plots
         :param nparam: maximum number of pairs to get
@@ -1963,7 +1963,7 @@ class MCSamples(Chains):
 
     def saveAsText(self, root, chain_index=None, make_dirs=False):
         """
-        Saves samples as text file, including .ranges and .paramnames
+        Saves samples as text file, including .ranges and .paramnames.
 
         :param root: The root file name to use.
         :param chain_index: optional index to be used for the filename.
@@ -1977,7 +1977,7 @@ class MCSamples(Chains):
 
     def writeScriptPlots1D(self, filename, plotparams=None, ext=None):
         """
-        Write a script that generates a 1 dimensional plot. Only intended for use by GetDist.py script.
+        Write a script that generates a 1D plot. Only intended for use by GetDist.py script.
 
         :param filename: The filename to write to.
         :param plotparams: The list of parameters to plot (default: all)
@@ -2085,7 +2085,7 @@ class MCSamples(Chains):
 
 def GetChainRootFiles(rootdir):
     """
-    Gets the root names of all chain files in the root directory
+    Gets the root names of all chain files in a directory.
 
     :param rootdir: The root directory to check
     :return:  The root names
@@ -2098,7 +2098,7 @@ def GetChainRootFiles(rootdir):
 
 def GetRootFileName(rootdir):
     """
-    Gets the root name of chains in given directory (assuming only one set of chain files)
+    Gets the root name of chains in given directory (assuming only one set of chain files).
 
     :param rootdir: The directory to check
     :return: The root file name.
