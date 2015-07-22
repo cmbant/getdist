@@ -1,5 +1,5 @@
 __author__ = 'Antony Lewis'
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 from getdist.inifile import IniFile
 from getdist.paramnames import ParamInfo, ParamNames

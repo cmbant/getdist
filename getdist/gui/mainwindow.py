@@ -113,6 +113,8 @@ class MainWindow(QMainWindow):
             Dirs = [Dirs]  # Qsettings doesn't save single item lists reliably
         if Dirs is not None:
             Dirs = [x for x in Dirs if os.path.exists(x)]
+            if not lastDir in Dirs and os.path.exists(lastDir):
+                Dirs.insert(0, lastDir)
             self.listDirectories.addItems(Dirs)
             if os.path.exists(lastDir):
                 self.listDirectories.setCurrentIndex(Dirs.index(lastDir))
