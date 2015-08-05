@@ -149,7 +149,7 @@ class GetDistTest(unittest.TestCase):
         samps.samples[:, 1] *= -1
         samps = MCSamples(samples=samps.samples, names=['x', 'y'], ranges={'x':[-1, 2], 'y':[-3, 0]})
         d2 = samps.get2DDensity('x', 'y')
-        self.assertTrue(np.allclose(d.P, d2.P[::-1, ::]))
+        self.assertTrue(np.allclose(d.P, d2.P[::-1, ::], atol=1e-5))
 
 
     def testPlots(self):
