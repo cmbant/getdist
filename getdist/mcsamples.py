@@ -1305,7 +1305,7 @@ class MCSamples(Chains):
                 prior_mask[winw] = 0.5
                 prior_mask[: winw] = 0
             if par.has_limits_top:
-                prior_mask[-winw] = 0.5
+                prior_mask[-(winw + 1)] = 0.5
                 prior_mask[-winw:] = 0
             a0 = convolve1D(prior_mask, Kernel.Win, 'valid', cache=cache)
             ix = np.nonzero(a0 * density1D.P)
@@ -1417,13 +1417,13 @@ class MCSamples(Chains):
             prior_mask[:, winw] /= 2
             prior_mask[:, :winw] = 0
         if parx.has_limits_top:
-            prior_mask[:, -winw] /= 2
+            prior_mask[:, -(winw + 1)] /= 2
             prior_mask[:, -winw:] = 0
         if pary.has_limits_bot:
             prior_mask[winw, :] /= 2
             prior_mask[:winw:] = 0
         if pary.has_limits_top:
-            prior_mask[-winw, :] /= 2
+            prior_mask[-(winw + 1), :] /= 2
             prior_mask[-winw:, :] = 0
         if alledge:
             prior_mask[:, :winw] = 0
