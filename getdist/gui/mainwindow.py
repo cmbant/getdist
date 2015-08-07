@@ -1131,7 +1131,7 @@ class MainWindow(QMainWindow):
             if len(chain_dirs) == 1:
                 chain_dirs = "r'%s'" % chain_dirs[0].rstrip('\\').rstrip('/')
 
-            if isinstance(self.iniFile, six.string_types) and self.iniFile <> getdist.default_getdist_settings:
+            if isinstance(self.iniFile, six.string_types) and self.iniFile != getdist.default_getdist_settings:
                 script += "g=gplot.%s(chain_dir=%s, analysis_settings=r'%s')\n" % (plot_func, chain_dirs, self.iniFile)
             elif isinstance(self.iniFile, IniFile):
                 script += "g=gplot.%s(chain_dir=%s,analysis_settings=analysis_settings)\n" % (plot_func, chain_dirs)
