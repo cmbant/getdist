@@ -147,7 +147,7 @@ def main(args):
                 elif mc.paramNames.parWithName(name):
                     pars.append(name)
         if num is not None and len(pars) != num:
-            raise Exception('%iD plot has not wrong number of parameters: %s' % (num, pars))
+            raise Exception('%iD plot has missing parameter or wrong number of parameters: %s' % (num, pars))
         return pars
 
 
