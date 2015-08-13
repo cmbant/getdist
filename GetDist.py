@@ -84,9 +84,7 @@ def main(args):
     shade_meanlikes = ini.bool('shade_meanlikes', False)
     plot_meanlikes = ini.bool('plot_meanlikes', False)
 
-    #cr
     dumpNDbins = ini.bool('dump_ND_bins', False)
-    #end cr
 
     out_dir = ini.string('out_dir', './')
     if out_dir:
@@ -151,11 +149,9 @@ def main(args):
                 elif mc.paramNames.parWithName(name):
                     pars.append(name)
         if num is not None and len(pars) != num:
-            #cr
             #raise Exception('%iD plot has not wrong number of parameters: %s' % (num, pars))
             pars = None
             print('Parameter not found, ignoring!')
-            #cr
         return pars
 
 
@@ -217,12 +213,11 @@ def main(args):
             for i in range(1, num_cust2D_plots + 1):
                 line = ini.string('plot' + str(i))
                 pars = filterParList(line, 2)
-                #cr
                 if pars is not None:
                     cust2DPlots.append(pars)
                 else:
                     num_cust2D_plots -= 1
-                #end cr
+
                 
         triangle_params = []
         triangle_plot = ini.bool('triangle_plot', False)
@@ -236,13 +231,11 @@ def main(args):
         plot_3D = []
         for ix in range(1, num_3D_plots + 1):
             line = ini.string('3D_plot' + str(ix))
-            #cr
             pars = filterParList(line, 3)
             if pars is not None:
                 plot_3D.append(pars)
             else:
                 num_3D_plots -= 1
-            #end cr
             
       
         # Produce file of weight-1 samples if requested
@@ -309,8 +302,6 @@ def main(args):
         if mc.loglikes is not None: mc.getLikeStats().saveAsText(rootdirname + '.likestats')
 
 
-     
-    #cr
     if dumpNDbins:
         num_bins_ND = ini.int('num_bins_ND', 10)
         line = ini.string('ND_params','')
@@ -323,10 +314,8 @@ def main(args):
             print(ND_dim)
            
             mc.getRawNDDensityGridData(ND_params, writeDataToFile=True,
-                                       meanlikes=shade_meanlikes,
-                                       maxlikes=shade_meanlikes)
-    #end cr
-
+                                       meanlikes=shade_meanlikes)
+    
 
 
 

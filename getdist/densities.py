@@ -268,7 +268,6 @@ class Density2D(GridDensity, RectBivariateSpline):
         if self.spl is None: self._initSpline()
         return self.spl.ev(x, y)
     
-    #cr
 
 class DensityND(GridDensity, LinearNDInterpolator):
     """
@@ -350,4 +349,3 @@ class DensityND(GridDensity, LinearNDInterpolator):
         if self.spl is None: self._initSpline()
         return self.spl.__call__(xs)
 
-    #end cr

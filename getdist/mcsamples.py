@@ -12,9 +12,7 @@ from scipy.stats import norm
 import getdist
 from getdist import chains, types, covmat, ParamInfo, IniFile
 from getdist.densities import Density1D, Density2D, DensityND
-#cr
 from getdist.densities import getContourLevels as getOtherContourLevels
-#end cr
 from getdist.chains import Chains, chainFiles, lastModified
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
@@ -156,7 +154,6 @@ class MCSamples(Chains):
         self.fine_bins_2D = 256
         self.smooth_scale_1D = -1.
         self.smooth_scale_2D = -1.
-        #cr
         self.num_bins_ND = 12
         self.boundary_correction_order = 1
         self.mult_bias_correction_order = 1
@@ -281,7 +278,7 @@ class MCSamples(Chains):
 
         ini.setAttr('boundary_correction_order', self, 1)
         ini.setAttr('mult_bias_correction_order', self, 1)
-#cr
+
         ini.setAttr('num_bins_ND',self)
         
         ini.setAttr('max_scatter_points', self)
@@ -1694,7 +1691,6 @@ class MCSamples(Chains):
         return density
 
 
-    #cr
     def _setRawEdgeMaskND(self, parv, prior_mask):
         ndim = len(parv)
         vrap = parv[::-1]
@@ -1916,7 +1912,6 @@ class MCSamples(Chains):
                 np.savetxt(filename, np.transpose(allND), "%16.7E")
                
         return density
-#end cr
 
 
 
@@ -1938,9 +1933,9 @@ class MCSamples(Chains):
 
         m.meanLogLike = self.mean_loglike
         m.logMeanLike = -np.log(self.mean(np.exp(-(self.loglikes - maxlike)))) + maxlike
-        #cr
+        #assuming maxlike is well determined
         m.complexity = 2*(self.mean_loglike - maxlike)
-        #end cr
+
         m.names = self.paramNames.names
 
         # get N-dimensional confidence region
@@ -2258,7 +2253,6 @@ class MCSamples(Chains):
                 par2 = self.parName(j2)
                 if plot_2D_param and par2 != plot_2D_param: continue
                 if len(cust2DPlots) and (par1 + '__' + par2) not in cuts: continue
-                #cr
                 if (par1,par2) not in done2D:
                     plot_num += 1
                     done2D[(par1, par2)] = True
