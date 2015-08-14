@@ -2,7 +2,7 @@
 GetDist
 ===================
 :GetDist: MCMC sample analysis, plotting and GUI
-:Version: 0.2.5
+:Version: 0.2.6
 :Author: Antony Lewis
 :Homepage: https://github.com/cmbant/getdist
 

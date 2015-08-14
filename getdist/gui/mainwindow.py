@@ -514,6 +514,8 @@ class MainWindow(QMainWindow):
         adir = self.getSettings().value('lastSearchDirectory')
         batchjob.resetGrid(adir)
         self.openDirectory(adir)
+        if self.plotter:
+            self.plotter.sampleAnalyser.reset(self.iniFile)
 
     def getRootname(self):
         rootname = None
@@ -634,7 +636,8 @@ class MainWindow(QMainWindow):
     def settingsChanged(self):
         if self.plotter:
             self.plotter.sampleAnalyser.reset(self.iniFile)
-            self.plotData()
+            if self.plotter.fig:
+                self.plotData()
 
     def showPlotSettings(self):
         """
