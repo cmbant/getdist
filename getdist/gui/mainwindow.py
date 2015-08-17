@@ -113,10 +113,10 @@ class MainWindow(QMainWindow):
             Dirs = [Dirs]  # Qsettings doesn't save single item lists reliably
         if Dirs is not None:
             Dirs = [x for x in Dirs if os.path.exists(x)]
-            if not lastDir in Dirs and os.path.exists(lastDir):
+            if lastDir is not None and not lastDir in Dirs and os.path.exists(lastDir):
                 Dirs.insert(0, lastDir)
             self.listDirectories.addItems(Dirs)
-            if os.path.exists(lastDir):
+            if lastDir is not None and os.path.exists(lastDir):
                 self.listDirectories.setCurrentIndex(Dirs.index(lastDir))
                 self.openDirectory(lastDir)
             else:
@@ -512,8 +512,9 @@ class MainWindow(QMainWindow):
 
     def reLoad(self):
         adir = self.getSettings().value('lastSearchDirectory')
-        batchjob.resetGrid(adir)
-        self.openDirectory(adir)
+        if adir is not None:
+            batchjob.resetGrid(adir)
+            self.openDirectory(adir)
         if self.plotter:
             self.plotter.sampleAnalyser.reset(self.iniFile)
 
@@ -743,11 +744,12 @@ class MainWindow(QMainWindow):
 
     def saveDirectories(self):
         dirs = self.getDirectories()
-        dirs = [self.rootdirname] + [x for x in dirs if not x == self.rootdirname]
+        dirs = [self.rootdirname] if self.rootdirname else [] + [x for x in dirs if not x == self.rootdirname]
         if len(dirs) > 10: dirs = dirs[:10]
         settings = self.getSettings()
         settings.setValue('directoryList', dirs)
-        settings.setValue('lastSearchDirectory', self.rootdirname)
+        if self.rootdirname:
+            settings.setValue('lastSearchDirectory', self.rootdirname)
 
     def selectRootDirName(self):
         """
