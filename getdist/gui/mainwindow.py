@@ -744,7 +744,8 @@ class MainWindow(QMainWindow):
 
     def saveDirectories(self):
         dirs = self.getDirectories()
-        dirs = [self.rootdirname] if self.rootdirname else [] + [x for x in dirs if not x == self.rootdirname]
+        if self.rootdirname:
+            dirs = [self.rootdirname] + [x for x in dirs if not x == self.rootdirname]
         if len(dirs) > 10: dirs = dirs[:10]
         settings = self.getSettings()
         settings.setValue('directoryList', dirs)
