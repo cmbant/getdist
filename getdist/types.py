@@ -772,6 +772,8 @@ class LikeStats(ParamResults):
         self.logMeanInvLike = results.get('Ln(mean 1/like)', None)
         self.meanLogLike = results.get('mean(-Ln(like))', None)
         self.logMeanLike = results.get('-Ln(mean like)', None)
+        self.complexity = results.get('complexity',None)
+
         # TODO: load N-D limits
 
     def likeSummary(self):
@@ -780,6 +782,8 @@ class LikeStats(ParamResults):
             text += "Ln(mean 1/like) = %f\n" % self.logMeanInvLike
         text += "mean(-Ln(like)) = %f\n" % self.meanLogLike
         text += "-Ln(mean like)  = %f\n" % self.logMeanLike
+        #text += "complexity = %f\n" % self.complexity
+
         return text
 
     def headerLine(self):
