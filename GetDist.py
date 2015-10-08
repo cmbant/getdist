@@ -55,9 +55,11 @@ def main(args):
         ignorerows = ini.float('ignore_rows', 0.0)
 
     samples_are_chains = ini.bool('samples_are_chains', True)
+    
+    paramnames = ini.string('parameter_names', '')
 
     # Create instance of MCSamples
-    mc = MCSamples(in_root, files_are_chains=samples_are_chains)
+    mc = MCSamples(in_root, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
 
     mc.initParameters(ini)
 
