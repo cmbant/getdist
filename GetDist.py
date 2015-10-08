@@ -57,13 +57,9 @@ def main(args):
     samples_are_chains = ini.bool('samples_are_chains', True)
     
     paramnames = ini.string('parameter_names', '')
-    
 
     # Create instance of MCSamples
-    if paramnames is not None:
-        mc = MCSamples(in_root, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
-    else:
-        mc = MCSamples(in_root, files_are_chains=samples_are_chains)
+    mc = MCSamples(in_root, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
 
     mc.initParameters(ini)
 
