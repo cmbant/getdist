@@ -54,7 +54,7 @@ def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-
         index += 1
         fname = root + ('', '_' + str(index))[index > 0]
         if not ext in fname: fname += ext
-        if index > 0 and not os.path.exists(fname) or 0 < last_chain <= index: break
+        if index > 0 and not os.path.exists(fname) or 0 < last_chain < index: break
         if (chain_indices is None or index in chain_indices) \
                 and (chain_exclude is None or not index in chain_exclude) \
                 and index >= first_chain and os.path.exists(fname):

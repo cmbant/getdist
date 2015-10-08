@@ -55,9 +55,11 @@ def main(args):
         ignorerows = ini.float('ignore_rows', 0.0)
 
     samples_are_chains = ini.bool('samples_are_chains', True)
+    
+    paramnames = ini.string('parameter_names', '')
 
     # Create instance of MCSamples
-    mc = MCSamples(in_root, files_are_chains=samples_are_chains)
+    mc = MCSamples(in_root, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
 
     mc.initParameters(ini)
 
@@ -83,6 +85,8 @@ def main(args):
 
     shade_meanlikes = ini.bool('shade_meanlikes', False)
     plot_meanlikes = ini.bool('plot_meanlikes', False)
+
+    dumpNDbins = ini.bool('dump_ND_bins', False)
 
     out_dir = ini.string('out_dir', './')
     if out_dir:
@@ -147,7 +151,8 @@ def main(args):
                 elif mc.paramNames.parWithName(name):
                     pars.append(name)
         if num is not None and len(pars) != num:
-            raise Exception('%iD plot has missing parameter or wrong number of parameters: %s' % (num, pars))
+            print('%iD plot has missing parameter or wrong number of parameters: %s' % (num, pars))
+            pars = None
         return pars
 
 
@@ -176,7 +181,7 @@ def main(args):
     if PCA_num > 0 and not plots_only:
         mc.PCA(PCA_params, PCA_func, PCA_NormParam, writeDataToFile=True)
 
-    if not no_plots:
+    if not no_plots or dumpNDbins:
         # set plot_data_dir before we generate the 1D densities below
         plot_data_dir = ini.string('plot_data_dir', default='', allowEmpty=True)
         if plot_data_dir and not os.path.isdir(plot_data_dir):
@@ -209,8 +214,12 @@ def main(args):
             for i in range(1, num_cust2D_plots + 1):
                 line = ini.string('plot' + str(i))
                 pars = filterParList(line, 2)
-                cust2DPlots.append(pars)
+                if pars is not None:
+                    cust2DPlots.append(pars)
+                else:
+                    num_cust2D_plots -= 1
 
+                
         triangle_params = []
         triangle_plot = ini.bool('triangle_plot', False)
         if triangle_plot:
@@ -223,9 +232,13 @@ def main(args):
         plot_3D = []
         for ix in range(1, num_3D_plots + 1):
             line = ini.string('3D_plot' + str(ix))
-            plot_3D.append(filterParList(line, 3))
-
-
+            pars = filterParList(line, 3)
+            if pars is not None:
+                plot_3D.append(pars)
+            else:
+                num_3D_plots -= 1
+            
+      
         # Produce file of weight-1 samples if requested
         if (num_3D_plots and not make_single_samples or make_scatter_samples) and not no_plots:
             make_single_samples = True
@@ -288,6 +301,24 @@ def main(args):
 
         # Limits from global likelihood
         if mc.loglikes is not None: mc.getLikeStats().saveAsText(rootdirname + '.likestats')
+
+
+    if dumpNDbins:
+        num_bins_ND = ini.int('num_bins_ND', 10)
+        line = ini.string('ND_params','')
+        
+        if line not in ["",'0']:
+            ND_params = filterParList(line)
+            print(ND_params)
+
+            ND_dim=len(ND_params)
+            print(ND_dim)
+           
+            mc.getRawNDDensityGridData(ND_params, writeDataToFile=True,
+                                       meanlikes=shade_meanlikes)
+    
+
+
 
     # System command
     if finish_run_command:

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import splrep, splev, RectBivariateSpline
+from scipy.interpolate import splrep, splev, RectBivariateSpline, LinearNDInterpolator
 
 
 class DensitiesError(Exception):
@@ -267,3 +267,85 @@ class Density2D(GridDensity, RectBivariateSpline):
         """
         if self.spl is None: self._initSpline()
         return self.spl.ev(x, y)
+    
+
+class DensityND(GridDensity, LinearNDInterpolator):
+    """
+    Class for ND marginalized densities, inheriting from :class:`GridDensity` and :class:`~scipy:scipy.interpolate.LinearNDInterpolator`.
+    """
+
+    def __init__(self, xs, P=None, view_ranges=None):
+        """
+        :param xs: list of arrays of x values        
+        :param P: ND array of density values at xs
+        :param view_ranges: optional ranges for viewing density
+        """
+        self.dim=len(xs)
+
+        # for compat and tests
+        self.x = xs[0]
+        if (self.dim >= 2):
+            self.y = xs[1]
+        if (self.dim >= 3):
+            self.z = xs[2]
+
+        self.xs = xs
+        self.axes = xs[::-1]
+        self.view_ranges = view_ranges
+
+        self.spacing = 1.
+        for i in range(len(xs)):
+            self.spacing = self.spacing*(self.xs[i][1] - self.xs[i][0])
+
+        self.setP(P)       
+
+        
+
+    def integrate(self, P):
+   
+        ndim=len(P)
+
+        multinorm=np.zeros(ndim+1)
+
+        # count inner volume and all boundaries separately
+        for ind in np.ndindex(P.shape):
+            dni = list(np.asarray(ind) - np.asarray(P.shape) + 1)
+            # how many indices are on the minimal value
+            niszero = ind.count(0)
+            # how many indices are on the maximal value
+            nismax = dni.count(0)
+
+            # number of indices matching boundaries
+            nboundaries = niszero + nismax
+
+            # accumulate P over all hypersurfaces
+            multinorm[nboundaries] += P[ind]
+       
+        norm = 0.    
+        for i in range(len(multinorm)):
+            # i=0, we are inside
+            # i=1, one coordinate on the boundary -> hypercube face of dimension D-1 -> 1 co-dimension
+            # i=2, two coordinates on the boundary -> hypercube line of dimension D-2 -> 2 co-dimensions
+            # etc...
+
+            norm += multinorm[i] / 2**i
+        
+        return norm
+
+
+    def norm_integral(self):
+        return self.integrate(self.P)
+
+
+    def _initSpline(self):
+        LinearNDInterpolator.__init__(self, self.xs, self.P.T, rescale=True)
+        self.spl = self
+
+
+    def Prob(self, xs):
+        """
+        Evaluate density at x,y,z using interpolation
+        """
+        if self.spl is None: self._initSpline()
+        return self.spl.__call__(xs)
+
