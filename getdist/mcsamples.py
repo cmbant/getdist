@@ -1263,7 +1263,7 @@ class MCSamples(Chains):
         fine_bins = kwargs.get('fine_bins', self.fine_bins)
 
         paramrange = par.range_max - par.range_min
-        if paramrange == 0: raise MCSamplesError('Parameter range is zero: ' + par.name)
+        if paramrange <= 0: raise MCSamplesError('Parameter range is <= 0: ' + par.name)
         width = paramrange / (num_bins - 1)
 
         bin_indices, fine_width, binmin, binmax = self._binSamples(self.samples[:, j], par, fine_bins)
