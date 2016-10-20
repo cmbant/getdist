@@ -453,12 +453,12 @@ class MCSamples(Chains):
                     f.write("%16.7E" % (
                         np.exp(-(newL - self.loglikes[thin]) - MaxL * (1 - cool))))
                     f.write("%16.7E" % newL)
-                    for j in nparams:
+                    for j in range(nparams):
                         f.write("%16.7E" % (self.samples[i][j]))
                 else:
                     f.write("%f" % 1.)
                     f.write("%f" % (self.loglikes[thin]))
-                    for j in nparams:
+                    for j in range(nparams):
                         f.write("%16.7E" % (self.samples[i][j]))
                 i += 1
         print('Wrote ', len(thin_ix), ' thinned samples')

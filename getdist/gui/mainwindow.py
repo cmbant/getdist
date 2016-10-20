@@ -1088,6 +1088,7 @@ class MainWindow(QMainWindow):
         """
         Slot function called when pushButtonPlot is pressed.
         """
+        if self.updating: return
         self.showMessage("Generating plot....")
         actionText = "plot"
         try:
