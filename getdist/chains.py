@@ -693,7 +693,8 @@ class WeightedSamples(object):
         :param logLikes: array of -log(likelihood) for each sample to adjust
         """
         scale = np.min(logLikes)
-        self.loglikes += logLikes
+        if self.loglikes is not None:
+            self.loglikes += logLikes
         self.weights *= np.exp(-(logLikes - scale))
         self._weightsChanged()
 
