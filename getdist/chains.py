@@ -52,8 +52,13 @@ def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-
     files = []
     while True:
         index += 1
-        fname = root + ('', '_' + str(index))[index > 0]
-        if not ext in fname: fname += ext
+        fname = root
+        if index > 0:
+            # deal with just-folder prefix
+            if not root.endswith("/"):
+                fname += '_'
+            fname += str(index)
+        if not fname.endswith(ext): fname += ext
         if index > first_chain and not os.path.exists(fname) or 0 < last_chain < index: break
         if (chain_indices is None or index in chain_indices) \
                 and (chain_exclude is None or not index in chain_exclude) \
@@ -800,8 +805,12 @@ class Chains(WeightedSamples):
         self.jobItem = jobItem
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
         self.root = root
-        if not paramNamesFile and root and os.path.exists(root + '.paramnames'):
-            paramNamesFile = root + '.paramnames'
+        if not paramNamesFile and root:
+            mid = ('' if root.endswith("/") else "__")
+            if os.path.exists(root + '.paramnames'):
+                paramNamesFile = root + '.paramnames'
+            elif os.path.exists(root + mid + 'full.yaml'):
+                paramNamesFile = root + mid + 'full.yaml'
         self.needs_update = True
         self.chains = None
         self.setParamNames(paramNamesFile or names)

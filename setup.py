@@ -38,7 +38,8 @@ setup(name='GetDist',
           'matplotlib',
           'six',
           "scipy (>=0.11.0)",
-          'PySide'],
+          'PySide',
+          'pyyaml'],
       #  optional (for faster file read)
       # 'pandas (>=0.14.0)'
       classifiers=[

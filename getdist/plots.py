@@ -440,7 +440,8 @@ class MCSampleAnalysis(object):
 
     def samplesForRoot(self, root, file_root=None, cache=True, settings=None):
         """
-        Gets :class:`~.mcsamples.MCSamples` from root name (or just return root if it is already an MCSamples instance).
+        Gets :class:`~.mcsamples.MCSamples` from root name
+        (or just return root if it is already an MCSamples instance).
 
         :param root: The root name (without path, e.g. my_chains)
         :param file_root: optional full root path, by default searches in self.chain_dirs
@@ -449,7 +450,11 @@ class MCSampleAnalysis(object):
         """
         if isinstance(root, MCSamples): return root
         if os.path.isabs(root):
-            root = os.path.basename(root)
+            # deal with just-folder prefix
+            if root.endswith("/"):
+                root = os.path.basename(root[:-1])+"/"
+            else:
+                root = os.path.basename(root)
         if root in self.mcsamples and cache: return self.mcsamples[root]
         jobItem = None
         dist_settings = settings or {}
