@@ -790,6 +790,7 @@ class MainWindow(QMainWindow):
                 self._resetGridData()
 
             root_list = GetChainRootFiles(dirName)
+            print("TODO: TEST ME WITH OTHER KINDS OF PREFIXES!!!")
             if not len(root_list):
                 QMessageBox.critical(self, "Open chains", "No chains or grid found in that directory")
                 cur_dirs = self.getDirectories()
@@ -901,7 +902,9 @@ class MainWindow(QMainWindow):
         self.comboBoxRootname.clear()
         self.listRoots.show()
         self.pushButtonRemove.show()
-        baseRoots = [os.path.basename(root) for root in listOfRoots]
+        baseRoots = [(os.path.basename(root) if not root.endswith("/")
+                      else os.path.basename(root[:-1])+"/")
+                     for root in listOfRoots]
         self.comboBoxRootname.addItems(baseRoots)
         if len(baseRoots) > 1:
             self.comboBoxRootname.setCurrentIndex(-1)
@@ -931,6 +934,9 @@ class MainWindow(QMainWindow):
                 path = self.batch.resolveRoot(root).chainPath
             else:
                 path = self.rootdirname
+            # new style, if the prefix is just a folder
+            if root[-1] == "/":
+                path = "/".join(path.split("/")[:-1])
             info = plots.RootInfo(root, path, self.batch)
             plotter.sampleAnalyser.addRoot(info)
 

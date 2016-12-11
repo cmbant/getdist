@@ -2,7 +2,7 @@
 import os
 import fnmatch
 import six
-
+from yaml_loader import yaml_odict_sci_load
 
 class ParamInfo(object):
     """
@@ -268,12 +268,29 @@ class ParamNames(ParamList):
 
     def loadFromFile(self, fileName):
         """
-        loads from fileName, a plain text .paramnames file
+        loads from fileName, a plain text .paramnames file or a "full" yaml file
         """
-
         self.filenameLoadedFrom = os.path.split(fileName)[1]
-        with open(fileName) as f:
-            self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
+        if fileName.endswith(".paramnames"):
+            with open(fileName) as f:
+                self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
+        elif fileName.endswith("full.yaml"):
+            with open(fileName) as f:
+                info = yaml_odict_sci_load(f)
+                info_params = info.get("params")
+                # If the parameters are separated between theory/likelihood, join them
+                if "theory" in info_params:
+                    info_params.update(info_params.pop("theory"))
+                    info_params.update(info_params.pop("likelihood"))
+                # Now add prior and likelihoods
+                info_params["minuslogprior"] = {"latex": r"-\log\pi"}
+                info_liks = info.get("likelihood")
+                for lik in info_liks:
+                    info_params["chi2_"+lik] = {"latex": r"-\chi^2_\mathrm{"+lik+r"}"}
+            print("TODO: Here comes the adaptation for derived parameters")
+            print("TODO: Check that the order is preserved when using theory+likelihoods")
+            self.names = [ParamInfo(param+" "+info_params[param]["latex"])
+                          for param in info_params]
 
     def loadFromKeyWords(self, keywordProvider):
         num_params_used = keywordProvider.keyWord_int('num_params_used')

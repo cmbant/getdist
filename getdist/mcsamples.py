@@ -71,7 +71,11 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     if not os.path.exists(path): os.mkdir(path)
     cachefile = os.path.join(path, name) + '.py_mcsamples'
     samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=settings)
-    allfiles = files + [file_root + '.ranges', file_root + '.paramnames', file_root + '.properties.ini']
+    if os.path.isfile(file_root + '.paramnames'):
+        allfiles = files + [file_root + '.ranges', file_root + '.paramnames', file_root + '.properties.ini']
+    else:
+        mid = "" if file_root.endswith("/") else "__"
+        allfiles = files + [file_root + mid + ending for ending in ['input.yaml','full.yaml']]
     if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
         try:
             with open(cachefile, 'rb') as inp:
@@ -2309,6 +2313,9 @@ def GetChainRootFiles(rootdir):
     """
     pattern = os.path.join(rootdir, '*.paramnames')
     files = [os.path.splitext(f)[0] for f in glob.glob(pattern)]
+    ending = 'full.yaml'
+    pattern = os.path.join(rootdir, "*"+ending)
+    files += [f[:-len(ending)].rstrip("_") for f in glob.glob(pattern)]
     files.sort()
     return files
 
