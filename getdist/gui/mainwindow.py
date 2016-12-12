@@ -790,7 +790,6 @@ class MainWindow(QMainWindow):
                 self._resetGridData()
 
             root_list = GetChainRootFiles(dirName)
-            print("TODO: TEST ME WITH OTHER KINDS OF PREFIXES!!!")
             if not len(root_list):
                 QMessageBox.critical(self, "Open chains", "No chains or grid found in that directory")
                 cur_dirs = self.getDirectories()
