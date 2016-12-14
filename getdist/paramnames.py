@@ -2,6 +2,7 @@
 import os
 import fnmatch
 import six
+from collections import OrderedDict as odict
 from yaml_loader import yaml_odict_sci_load
 
 class ParamInfo(object):
@@ -278,19 +279,25 @@ class ParamNames(ParamList):
             with open(fileName) as f:
                 info = yaml_odict_sci_load(f)
                 info_params = info.get("params")
-                # If the parameters are separated between theory/likelihood, join them
-                # (preserving the ordering)
-                if "theory" in info_params:
-                    for block in info_params:
-                        if block in ["theory", "likelihood"]:
-                            info_params.update(info_params.pop(block))
-                # Now add prior and likelihoods
-                info_params["minuslogprior"] = {"latex": r"-\log\pi"}
-                info_liks = info.get("likelihood")
-                for lik in info_liks:
-                    info_params["chi2_"+lik] = {"latex": r"-\chi^2_\mathrm{"+lik+r"}"}
+            # If the parameters are separated between theory/likelihood, join them
+            # (preserving the ordering)
+            if "theory" in info_params:
+                for block in info_params:
+                    if block in ["theory", "likelihood"]:
+                        info_params.update(info_params.pop(block))
+            # Prune the fixed ones
+            info_params = odict([(param,value) for param,value in info_params.iteritems()
+                                 if hasattr(value, "get")])
+            print len(info_params), info_params
+            # Now add prior and likelihoods
+            print info_params.get("minuslogprior")
+            info_params["minuslogprior"] = {"latex": r"-\log\pi"}
+            print info_params.get("minuslogprior")
+            info_liks = info.get("likelihood")
+            for lik in info_liks:
+                info_params["chi2_"+lik] = {"latex": r"-\chi^2_\mathrm{"+lik+r"}"}
             print("TODO: Here comes the dealing with derived parameters (add *, etc)")
-            self.names = [ParamInfo(param+" "+info_params[param]["latex"])
+            self.names = [ParamInfo(param+" "+(info_params[param]["latex"] or param))
                           for param in info_params]
 
     def loadFromKeyWords(self, keywordProvider):
