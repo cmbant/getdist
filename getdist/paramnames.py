@@ -301,14 +301,13 @@ class ParamNames(ParamList):
             # Prune the fixed ones
             info_params = odict([(param,value) for param,value in info_params.iteritems()
                                  if hasattr(value, "get")])
-            print len(info_params), info_params
             # Now add prior and likelihoods
-            print info_params.get("minuslogprior")
             info_params["minuslogprior"] = {"latex": r"-\log\pi"}
-            print info_params.get("minuslogprior")
+            info_params["chi2"] = {"latex": r"\chi^2"}
             info_liks = info.get("likelihood")
             for lik in info_liks:
-                info_params["chi2_"+lik] = {"latex": r"-\chi^2_\mathrm{"+lik+r"}"}
+                info_params["chi2_"+lik] = {
+                    "latex": r"\chi^2_\mathrm{"+lik.replace("_","\ ")+r"}"}
             print("TODO: Here comes the dealing with derived parameters (add *, etc)")
             self.names = [ParamInfo(param+" "+(info_params[param]["latex"] or param))
                           for param in info_params]
