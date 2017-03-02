@@ -1731,6 +1731,10 @@ class GetDistPlotter(object):
         axis.set_ticks(tick)
         return tick
 
+    def _inner_ticks(self, ax, top_and_left=True):
+        for ax in [ax.get_xaxis(), ax.get_yaxis()]:
+            ax.set_tick_params(which='both', direction='in', right=top_and_left, top=top_and_left)
+
     def triangle_plot(self, roots, params=None, legend_labels=None, plot_3d_with_param=None, filled=False, shaded=False,
                       contour_args=None, contour_colors=None, contour_ls=None, contour_lws=None, line_args=None,
                       label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, upper_kwargs={}, **kwargs):
@@ -1824,6 +1828,7 @@ class GetDistPlotter(object):
 
         for i, param in enumerate(params):
             ax = self._subplot(i, i)
+            self._inner_ticks(ax, False)
             self.plot_1d(roots1d, param, do_xlabel=i == plot_col - 1,
                          no_label_no_numbers=self.settings.no_triangle_axis_labels,
                          label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args)
@@ -1848,6 +1853,7 @@ class GetDistPlotter(object):
                 ax.set_yticks(ticks[i2])
                 ax.set_xlim(lims[i])
                 ax.set_ylim(lims[i2])
+                self._inner_ticks(ax)
 
                 if upper_roots is not None:
                     ax = self._subplot(i2, i)
@@ -1867,6 +1873,7 @@ class GetDistPlotter(object):
                     ax.set_yticks(ticks[i])
                     ax.set_xlim(lims[i2])
                     ax.set_ylim(lims[i])
+                    self._inner_ticks(ax)
 
         if upper_roots is not None:
             # make label on first 1D plot appropriate for 2D plots in rest of row
@@ -1967,6 +1974,7 @@ class GetDistPlotter(object):
                 if x == 0: yshares.append(ax)
                 if plot_texts and plot_texts[x][y]:
                     self.add_text_left(plot_texts[x][y], y=0.9, ax=ax)
+                self._inner_ticks(ax)
                 axarray.append(ax)
             ax_arr.append(axarray)
         for xparam, ax in zip(xparams, xshares):
