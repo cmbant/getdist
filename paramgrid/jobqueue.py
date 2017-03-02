@@ -28,6 +28,8 @@ def addArguments(parser, combinedJobs=False):
     parser.add_argument('--job_template', help="template file for the job submission script")
     parser.add_argument('--program', help='actual program to run (default: ./cosmomc)')
     parser.add_argument('--queue', help='name of queue to submit to')
+    parser.add_argument('--jobclass', help='any class name of the job')
+
     parser.add_argument('--qsub', help='option to change qsub command to something else')
 
     parser.add_argument('--dryrun', action='store_true')
@@ -112,6 +114,8 @@ class jobSettings(object):
         self.walltime = getDefaulted('walltime', '24:00:00', template=template, **kwargs)
         self.program = getDefaulted('program', './cosmomc', template=template, **kwargs)
         self.queue = getDefaulted('queue', '', template=template, **kwargs)
+        self.jobclass = getDefaulted('jobclass', '', template=template, **kwargs)
+
         self.gridEngine = getDefaulted('GridEngine', grid_engine, template=template, **kwargs)
         if grid_engine == 'OGS' and os.getenv('SGE_CLUSTER_NAME', '') == 'starcluster':
             self.qsub = 'qsub -pe orte ##NUMSLOTS##'
@@ -275,6 +279,8 @@ def submitJob(jobName, paramFiles, sequential=False, msg=False, **kwargs):
     vals['ONERUN'] = j.onerun
     vals['PROGRAM'] = j.program
     vals['QUEUE'] = j.queue
+    if hasattr(j,'jobclass'):
+        vals['JOBCLASS'] = j.jobclass
 
     j.names = [os.path.basename(param) for param in paramFiles]
 
