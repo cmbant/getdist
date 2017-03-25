@@ -295,9 +295,8 @@ class MCSamples(Chains):
 
         if ini.hasKey('contours'):
             ini.setAttr('contours', self)
-        elif ini.hasKey('num_contours'):
-            num_contours = ini.int('num_contours', 2)
-            self.contours = np.array([ini.float('contour' + str(i + 1)) for i in range(num_contours)])
+            self.num_contours = len(self.contours)
+
         # how small the end bin must be relative to max to use two tail
         self.max_frac_twotail = []
         for i, contour in enumerate(self.contours):
@@ -2288,6 +2287,7 @@ class MCSamples(Chains):
             else:
                 f.write("g=plots.GetDistPlotter(chain_dir=r'%s')\n" % os.path.dirname(self.root))
 
+            f.write("g.settings.num_plot_contours = %d\n" % self.num_contours)
             f.write("g.settings.setWithSubplotSize(%s)\n" % subplot_size)
             f.write("roots = ['%s']\n" % self.rootname)
             f.write(text + '\n')
