@@ -143,7 +143,7 @@ class WeightedSamples(object):
     """
 
     def __init__(self, filename=None, ignore_rows=0, samples=None, weights=None, loglikes=None, name_tag=None,
-                 files_are_chains=True):
+                 files_are_chains=True, blind=True):
         """
         :param filename: A filename of a plain text file to load from
         :param ignore_rows: 
@@ -154,13 +154,30 @@ class WeightedSamples(object):
         :param loglikes: array of -log(Likelihood)
         :param name_tag: The name of this instance.
         :param files_are_chains: use False if the samples file (filename) does not start with two columns giving weights and -log(Likelihoods)
+        :param blind: use False to unblind, by default parameter values are modified to center around zero
         """
 
         if filename:
             cols = loadNumpyTxt(filename, skiprows=ignore_rows)
+            nrows, ncols = cols.shape
+            if blind:
+                nstart = 0
+                wt = None
+                if files_are_chains:
+                    nstart = 2
+                    wt = cols[:, 0]
+                for i in range(nstart, ncols):
+                    mean = np.average(cols[:, i], weights=wt)
+                    cols[:, i] -= mean
             self.setColData(cols, are_chains=files_are_chains)
             self.name_tag = name_tag or os.path.basename(filename)
         else:
+            if blind and samples is not None:
+                nrows, ncols = samples.shape
+                nstart = 0
+                for i in range(nstart, ncols):
+                    mean = np.average(samples[:, i], weights=weights)
+                    samples[:, i] -= mean
             self.setSamples(samples, weights, loglikes)
             self.name_tag = name_tag
         self.needs_update = True
@@ -773,7 +790,7 @@ class Chains(WeightedSamples):
     :ivar paramNames: a :class:`~.paramnames.ParamNames` instance holding the parameter names and labels
     """
 
-    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, **kwargs):
+    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, blind=True, **kwargs):
         """
 
         :param root: optional root name for files
@@ -784,11 +801,12 @@ class Chains(WeightedSamples):
         :param kwargs: extra options for :class:`~.chains.WeightedSamples`'s constructor
 
         """
-        WeightedSamples.__init__(self, **kwargs)
+        WeightedSamples.__init__(self, blind=blind, **kwargs)
         self.jobItem = jobItem
         self.precision = '%.8e'
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
         self.root = root
+        self.blind = blind
         if not paramNamesFile and root and os.path.exists(root + '.paramnames'):
             paramNamesFile = root + '.paramnames'
         self.needs_update = True
@@ -923,7 +941,7 @@ class Chains(WeightedSamples):
         self.name_tag = self.name_tag or os.path.basename(root)
         for fname in files:
             if print_load_details: print(fname)
-            self.chains.append(WeightedSamples(fname, ignore_lines or self.ignore_lines))
+            self.chains.append(WeightedSamples(fname, ignore_lines or self.ignore_lines, blind=self.blind))
         if len(self.chains) == 0:
             raise WeightedSampleError('loadChains - no chains found for ' + root)
         if self.paramNames is None:
@@ -993,6 +1011,9 @@ class Chains(WeightedSamples):
 
         :return: The list of :class:`~.chains.WeightedSamples` for each chain. 
         """
+        if self.blind:
+            import warnings
+            warnings.warn("The separate chains appended for G-R statistics will not be blinded, proceed with extreme caution")
         if self.chains is not None:
             return self.chains
         chainlist = []

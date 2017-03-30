@@ -43,7 +43,7 @@ class ParamError(MCSamplesError):
     pass
 
 
-def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}, dist_settings={}):
+def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}, dist_settings={}, blind=True):
     """
     Loads a set of samples from a file or files.
     
@@ -61,6 +61,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     :param no_cache: Indicates whether or not we should cached loaded samples in a pickle
     :param settings: dictionary of analysis settings to override defaults
     :param dist_settings: (old) alias for settings
+    :param blind: use False to unblind, by default parameter values are modified to center around zero
     :return: The :class:`MCSamples` instance
     """
     if settings and dist_settings: raise ValueError('Use settings or dist_settings')
@@ -69,8 +70,11 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     path, name = os.path.split(file_root)
     path = getdist.cache_dir or path
     if not os.path.exists(path): os.mkdir(path)
-    cachefile = os.path.join(path, name) + '.py_mcsamples'
-    samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=settings)
+    if blind:
+        cachefile = os.path.join(path, name) + '.py_mcsamples.blind'
+    else:
+        cachefile = os.path.join(path, name) + '.py_mcsamples'
+    samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=settings, blind=blind)
     allfiles = files + [file_root + '.ranges', file_root + '.paramnames', file_root + '.properties.ini']
     if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
         try:
@@ -108,7 +112,7 @@ class MCSamples(Chains):
     Derives from :class:`.chains.Chains`, adding high-level functions including Kernel Density estimates, parameter ranges and custom settings.
     """
 
-    def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, **kwargs):
+    def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, blind=True, **kwargs):
         """        
         For a description of the various analysis settings and default values see
         `analysis_defaults.ini <http://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
@@ -119,6 +123,7 @@ class MCSamples(Chains):
         :param ini: a .ini file to use for custom analysis settings
         :param settings: a dictionary of custom analysis settings
         :param ranges: a dictionary giving any additional hard prior bounds for parameters, eg. {'x':[0, 1], 'y':[None,2]}
+        :param blind: use False to unblind, by default parameter values are modified to center around zero
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from sample arrays in memory:
         
                - **paramNamesFile**: optional name of .paramnames file with parameter names
@@ -133,7 +138,7 @@ class MCSamples(Chains):
                      - if float <1: The fraction of rows to skip at the beginning of the file
                - **name_tag**: a name tag for this instance
         """
-        Chains.__init__(self, root, jobItem=jobItem, **kwargs)
+        Chains.__init__(self, root, jobItem=jobItem, blind=blind, **kwargs)
 
         self.version = pickle_version
 
@@ -141,7 +146,10 @@ class MCSamples(Chains):
 
         self.ini = ini
 
-        self._readRanges()
+        if not blind:
+            self._readRanges()
+        else:
+            self.ranges=ParamBounds()
         if ranges:
             self.setRanges(ranges)
 

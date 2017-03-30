@@ -258,7 +258,8 @@ def getSubplotPlotter(subplot_size=2, width_inch=None, **kwargs):
 
 class SampleAnalysisGetDist(object):
     # Old class to support pre-computed GetDist plot_data output
-    def __init__(self, plot_data):
+    def __init__(self, plot_data, blind=True):
+        raise ValueError("Old pre-computed GetDist plot_data output does not support the blind option\n")
         self.plot_data = plot_data
         self.newPlot()
         self.paths = dict()
@@ -362,7 +363,7 @@ class MCSampleAnalysis(object):
     get an :class:`~.mcsamples.MCSamples` instance from a root name being used by a plotter, use plotter.sampleAnalyser.samplesForRoot(name).
     """
 
-    def __init__(self, chain_locations, settings=None):
+    def __init__(self, chain_locations, settings=None, blind=True):
         """
         :param chain_locations: either a directory or the path of a grid of runs;
                it can also be a list of such, which is searched in order
@@ -372,6 +373,7 @@ class MCSampleAnalysis(object):
         self.chain_dirs = []
         self.chain_locations = []
         self.ini = None
+        self.blind = blind
         if chain_locations is not None:
             if isinstance(chain_locations, six.string_types):
                 chain_locations = [chain_locations]
@@ -461,7 +463,7 @@ class MCSampleAnalysis(object):
         if not file_root:
             raise GetDistPlotError('chain not found: ' + root)
 
-        self.mcsamples[root] = loadMCSamples(file_root, self.ini, jobItem, settings=dist_settings)
+        self.mcsamples[root] = loadMCSamples(file_root, self.ini, jobItem, settings=dist_settings, blind=self.blind)
         return self.mcsamples[root]
 
     def addRoots(self, roots):
@@ -599,7 +601,7 @@ class GetDistPlotter(object):
          and derived data from a given root name tag (e.g. sampleAnalyser.samplesForRoot('rootname'))
     """
 
-    def __init__(self, plot_data=None, chain_dir=None, settings=None, analysis_settings=None, mcsamples=True):
+    def __init__(self, plot_data=None, chain_dir=None, settings=None, analysis_settings=None, mcsamples=True, blind=True):
         """
         
         :param plot_data: (deprecated) directory name if you have pre-computed plot_data/ directory from GetDist; None by default
@@ -618,9 +620,9 @@ class GetDistPlotter(object):
         else:
             self.plot_data = plot_data
         if chain_dir is not None or mcsamples and plot_data is None:
-            self.sampleAnalyser = MCSampleAnalysis(chain_dir, analysis_settings)
+            self.sampleAnalyser = MCSampleAnalysis(chain_dir, analysis_settings, blind=blind)
         else:
-            self.sampleAnalyser = SampleAnalysisGetDist(self.plot_data)
+            self.sampleAnalyser = SampleAnalysisGetDist(self.plot_data, blind=blind)
         self.newPlot()
 
     def newPlot(self):
