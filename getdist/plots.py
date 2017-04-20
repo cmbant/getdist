@@ -258,8 +258,8 @@ def getSubplotPlotter(subplot_size=2, width_inch=None, **kwargs):
 
 class SampleAnalysisGetDist(object):
     # Old class to support pre-computed GetDist plot_data output
-    def __init__(self, plot_data, blind=True):
-        raise ValueError("Old pre-computed GetDist plot_data output does not support the blind option\n")
+    def __init__(self, plot_data, blind=False):
+        warnings.warn("Old pre-computed GetDist plot_data output does not support the blind option\n")
         self.plot_data = plot_data
         self.newPlot()
         self.paths = dict()
@@ -363,7 +363,7 @@ class MCSampleAnalysis(object):
     get an :class:`~.mcsamples.MCSamples` instance from a root name being used by a plotter, use plotter.sampleAnalyser.samplesForRoot(name).
     """
 
-    def __init__(self, chain_locations, settings=None, blind=True):
+    def __init__(self, chain_locations, settings=None, blind=False):
         """
         :param chain_locations: either a directory or the path of a grid of runs;
                it can also be a list of such, which is searched in order
@@ -601,7 +601,7 @@ class GetDistPlotter(object):
          and derived data from a given root name tag (e.g. sampleAnalyser.samplesForRoot('rootname'))
     """
 
-    def __init__(self, plot_data=None, chain_dir=None, settings=None, analysis_settings=None, mcsamples=True, blind=True):
+    def __init__(self, plot_data=None, chain_dir=None, settings=None, analysis_settings=None, mcsamples=True, blind=False):
         """
         
         :param plot_data: (deprecated) directory name if you have pre-computed plot_data/ directory from GetDist; None by default

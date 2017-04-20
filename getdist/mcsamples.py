@@ -43,7 +43,7 @@ class ParamError(MCSamplesError):
     pass
 
 
-def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}, dist_settings={}, blind=True):
+def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}, dist_settings={}, blind=False):
     """
     Loads a set of samples from a file or files.
     
@@ -112,7 +112,7 @@ class MCSamples(Chains):
     Derives from :class:`.chains.Chains`, adding high-level functions including Kernel Density estimates, parameter ranges and custom settings.
     """
 
-    def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, blind=True, **kwargs):
+    def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, blind=False, **kwargs):
         """        
         For a description of the various analysis settings and default values see
         `analysis_defaults.ini <http://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.

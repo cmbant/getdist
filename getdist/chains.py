@@ -143,7 +143,7 @@ class WeightedSamples(object):
     """
 
     def __init__(self, filename=None, ignore_rows=0, samples=None, weights=None, loglikes=None, name_tag=None,
-                 files_are_chains=True, blind=True):
+                 files_are_chains=True, blind=False):
         """
         :param filename: A filename of a plain text file to load from
         :param ignore_rows: 
@@ -790,7 +790,7 @@ class Chains(WeightedSamples):
     :ivar paramNames: a :class:`~.paramnames.ParamNames` instance holding the parameter names and labels
     """
 
-    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, blind=True, **kwargs):
+    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, blind=False, **kwargs):
         """
 
         :param root: optional root name for files
