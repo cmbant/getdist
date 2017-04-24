@@ -3,7 +3,7 @@ import os
 import fnmatch
 import six
 import matplotlib
-
+from new_format_tools import load_info_params
 
 def escapeLatex(text):
     if text and matplotlib.rcParams['text.usetex']:
@@ -285,30 +285,12 @@ class ParamNames(ParamList):
         """
 
         self.filenameLoadedFrom = os.path.split(fileName)[1]
-        if fileName.endswith(".paramnames"):
+        extension = os.path.splitext(fileName)[-1]
+        if extension == '.paramnames':
             with open(fileName) as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
-        elif fileName.endswith("full.yaml"):
-            with open(fileName) as f:
-                info = yaml_odict_sci_load(f)
-                info_params = info.get("params")
-            # If the parameters are separated between theory/likelihood, join them
-            # (preserving the ordering)
-            if "theory" in info_params:
-                for block in info_params:
-                    if block in ["theory", "likelihood"]:
-                        info_params.update(info_params.pop(block))
-            # Prune the fixed ones
-            info_params = odict([(param,value) for param,value in info_params.iteritems()
-                                 if hasattr(value, "get")])
-            # Now add prior and likelihoods
-            info_params["minuslogprior"] = {"latex": r"-\log\pi"}
-            info_params["chi2"] = {"latex": r"\chi^2"}
-            info_liks = info.get("likelihood")
-            for lik in info_liks:
-                info_params["chi2_"+lik] = {
-                    "latex": r"\chi^2_\mathrm{"+lik.replace("_","\ ")+r"}"}
-            print("TODO: Here comes the dealing with derived parameters (add *, etc)")
+        elif extension in ('.yaml', '.yml'):
+            info_params = load_info_params(fileName)
             self.names = [ParamInfo(param+" "+(info_params[param]["latex"] or param))
                           for param in info_params]
 
