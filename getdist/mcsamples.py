@@ -73,7 +73,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=settings)
     if os.path.isfile(file_root + '.paramnames'):
         allfiles = files + [file_root + '.ranges', file_root + '.paramnames', file_root + '.properties.ini']
-    else:
+    else: # new format (txt+yaml)
         mid = "" if file_root.endswith("/") else "__"
         allfiles = files + [file_root + mid + ending for ending in ['input.yaml','full.yaml']]
     if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
@@ -1938,10 +1938,13 @@ class MCSamples(Chains):
 
     def _readRanges(self):
         if self.root:
-            ranges_file = self.root + '.ranges'
-            if os.path.isfile(ranges_file):
-                self.ranges = ParamBounds(ranges_file)
-                return
+            ranges_file_classic = self.root + '.ranges'
+            ranges_file_new     = (
+                self.root + ('' if self.root.endswith('/') else '__') + 'full.yaml')
+            for ranges_file in [ranges_file_classic, ranges_file_new]:
+                if os.path.isfile(ranges_file):
+                    self.ranges = ParamBounds(ranges_file)
+                    return
         self.ranges = ParamBounds()
 
     def getBounds(self):

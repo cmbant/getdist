@@ -1,3 +1,4 @@
+from new_format_tools import load_info_params
 import os
 
 
@@ -22,11 +23,28 @@ class ParamBounds(object):
 
     def loadFromFile(self, fileName):
         self.filenameLoadedFrom = os.path.split(fileName)[1]
-        with open(fileName) as f:
-            for line in f:
-                strings = [text.strip() for text in line.split()]
-                if len(strings) == 3:
-                    self.setRange(strings[0], strings[1:])
+        extension = os.path.splitext(fileName)[-1]
+        if extension in ('.ranges', '.bounds'):
+            with open(fileName) as f:
+                for line in f:
+                    strings = [text.strip() for text in line.split()]
+                    if len(strings) == 3:
+                        self.setRange(strings[0], strings[1:])
+        elif extension in ('.yaml', '.yml'):
+            info_params = load_info_params(fileName)
+            for p, info in info_params.iteritems():
+                # sampled
+                if "prior" in info:
+                    if "min" in info["prior"] or "max" in info["prior"]:
+                        lims = [info["prior"].get("min"), info["prior"].get("max")]
+                    elif "loc" in info["prior"] or "scale" in info["prior"]:
+                        if info["prior"]["dist"] in [None, "uniform"]:
+                            lims = [info["prior"].get("loc"),
+                                    info["prior"].get("loc")+info["prior"].get("scale")]
+                # derived
+                else:
+                    lims = [info.get("min"), info.get("max")]
+                self.setRange(p, lims)
 
     def __str__(self):
         s = ''
