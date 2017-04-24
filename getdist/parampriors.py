@@ -1,4 +1,6 @@
 from new_format_tools import load_info_params
+
+from importlib import import_module
 import os
 
 
@@ -35,12 +37,14 @@ class ParamBounds(object):
             for p, info in info_params.iteritems():
                 # sampled
                 if "prior" in info:
-                    if "min" in info["prior"] or "max" in info["prior"]:
+                    info_lims = dict([[l,info["prior"].get(l)]
+                                      for l in "min", "max", "loc", "scale"])
+                    if info_lims["min"] != None or info_lims["max"] != None:
                         lims = [info["prior"].get("min"), info["prior"].get("max")]
-                    elif "loc" in info["prior"] or "scale" in info["prior"]:
-                        if info["prior"]["dist"] in [None, "uniform"]:
-                            lims = [info["prior"].get("loc"),
-                                    info["prior"].get("loc")+info["prior"].get("scale")]
+                    elif info_lims["loc"] != None or info_lims["scale"] != None:
+                        dist = info["prior"].pop("dist", "uniform")
+                        pdf_dist = getattr(import_module("scipy.stats", dist), dist)
+                        lims = pdf_dist.interval(1, **info["prior"])
                 # derived
                 else:
                     lims = [info.get("min"), info.get("max")]
