@@ -153,7 +153,7 @@ class GetDistTest(unittest.TestCase):
         d2 = samps.get2DDensity('x', 'y')
         self.assertTrue(np.allclose(d.P, d2.P[::-1, ::], atol=1e-5))
 
-    def textMixtures(self):
+    def testMixtures(self):
         from getdist.gaussian_mixtures import Mixture2D, GaussianND
         cov1 = [[0.001 ** 2, 0.0006 * 0.05], [0.0006 * 0.05, 0.05 ** 2]]
         cov2 = [[0.001 ** 2, -0.0006 * 0.05], [-0.0006 * 0.05, 0.05 ** 2]]
