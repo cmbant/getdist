@@ -104,7 +104,7 @@ class MixtureND(object):
                     if mn is not None: xmax = max(xmax, mn + sigma_max * sigma)
                     if mx is not None: xmin = min(xmin, mx - sigma_max * sigma)
                     covmin = min(xmin, covmin) if covmin is not None else xmin
-                    covmax = max(xmax, covmax)
+                    covmax = max(xmax, covmax) if covmax is not None else xmax
             res.append((covmin if mn is None else mn, covmax if mx is None else mx))
         return res
 
