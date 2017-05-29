@@ -16,6 +16,7 @@ import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
+from getdist.gaussian_mixtures import MixtureND
 import logging
 
 """Plotting scripts for GetDist outputs"""
@@ -47,6 +48,7 @@ class GetDistPlotSettings(object):
 
     :ivar alpha_factor_contour_lines: alpha factor for adding contour lines between filled contours
     :ivar alpha_filled_add: alpha for adding filled contours to a plot
+    :ivar auto_ticks: use matplotlib 2+ auto tick spacing/numbers (default: False, use own heuristics)
     :ivar axis_marker_color: The color for a marker
     :ivar axis_marker_ls: The line style for a marker
     :ivar axis_marker_lw: The line width for a marker
@@ -83,6 +85,7 @@ class GetDistPlotSettings(object):
     :ivar shade_meanlikes: 2D shading uses mean likelihoods rather than marginalized density
     :ivar solid_colors: List of default colors for filled 2D plots. Each element is either a color, or a tuple of values for different contour levels.
     :ivar solid_contour_palefactor: factor by which to make 2D outer filled contours paler when only specifying one contour colour
+    :ivar thin_long_subplot_ticks: if auto_tick=False, whether to thin out tick labels where they are long to try to prevent overlap (default: True)
     :ivar tick_prune: None, 'upper' or 'lower' to prune ticks
     :ivar tight_gap_fraction: fraction of plot width for closest tick to the edge
     :ivar tight_layout: use tight_layout to lay out and remove white space
@@ -152,6 +155,9 @@ class GetDistPlotSettings(object):
         self.axis_marker_color = 'gray'
         self.axis_marker_ls = '--'
         self.axis_marker_lw = 0.5
+
+        self.auto_ticks = False
+        self.thin_long_subplot_ticks = True
 
     def setWithSubplotSize(self, size_inch=3.5, size_mm=None):
         """
@@ -395,7 +401,8 @@ class MCSampleAnalysis(object):
                 batch = batchjob.readobject(chain_dir)
             self.chain_dirs.append(batch)
             # this gets things like specific parameter limits etc. specific to the grid
-            # TODO: yuk, should get rid of this next refactor when grids should store this information
+            # yuk, this should only be for old Planck grids. New ones don't need getdist_common
+            # should instead set custom settings in the grid setting file
             if os.path.exists(batch.commonPath + 'getdist_common.ini'):
                 batchini = IniFile(batch.commonPath + 'getdist_common.ini')
                 if self.ini:
@@ -430,7 +437,7 @@ class MCSampleAnalysis(object):
         self.densities_2D = dict()
         self.single_samples = dict()
 
-    def samplesForRoot(self, root, file_root=None, cache=True):
+    def samplesForRoot(self, root, file_root=None, cache=True, settings=None):
         """
         Gets :class:`~.mcsamples.MCSamples` from root name (or just return root if it is already an MCSamples instance).
 
@@ -444,14 +451,16 @@ class MCSampleAnalysis(object):
             root = os.path.basename(root)
         if root in self.mcsamples and cache: return self.mcsamples[root]
         jobItem = None
-        dist_settings = {}
+        dist_settings = settings or {}
         if not file_root:
             for chain_dir in self.chain_dirs:
                 if hasattr(chain_dir, "resolveRoot"):
                     jobItem = chain_dir.resolveRoot(root)
                     if jobItem:
                         file_root = jobItem.chainRoot
-                        dist_settings = jobItem.dist_settings
+                        if hasattr(chain_dir, 'getdist_options'):
+                            dist_settings.update(chain_dir.getdist_options)
+                        dist_settings.update(jobItem.dist_settings)
                         break
                 else:
                     name = os.path.join(chain_dir, root)
@@ -586,7 +595,10 @@ class MCSampleAnalysis(object):
         :param root: The root name to use.
         :return: object with getUpper() and getLower() functions
         """
-        return self.samplesForRoot(root)  # #defines getUpper and getLower, all that's needed
+        if hasattr(root, 'getUpper'):
+            return root
+        else:
+            return self.samplesForRoot(root)  # #defines getUpper and getLower, all that's needed
 
 
 class GetDistPlotter(object):
@@ -790,6 +802,25 @@ class GetDistPlotter(object):
         if up is not None: xmax = min(xmax, up)
         return xmin, xmax
 
+    def _get_param_bounds(self, roots, name):
+        xmin, xmax = None, None
+        for root in roots:
+            d = self.paramBoundsForRoot(root)
+            low = d.getLower(name)
+            if low is not None:
+                if xmin is None:
+                    xmin = low
+                else:
+                    xmin = max(xmin, low)
+            up = d.getUpper(name)
+            if up is not None:
+                if xmax is None:
+                    xmax = up
+                else:
+                    xmax = min(xmax, up)
+            xmin, xmax = self._check_param_ranges(root, name, xmin, xmax)
+        return xmin, xmax
+
     def add_1d(self, root, param, plotno=0, normalized=False, ax=None, **kwargs):
         """
         Low-level function to add a 1D marginalized density line to a plot
@@ -804,7 +835,11 @@ class GetDistPlotter(object):
         """
         ax = ax or plt.gca()
         param = self._check_param(root, param)
-        density = self.sampleAnalyser.get_density(root, param, likes=self.settings.plot_meanlikes)
+        if isinstance(root, MixtureND):
+            density = root.density1D(param.name)
+            if not normalized: density.normalize(by='max')
+        else:
+            density = self.sampleAnalyser.get_density(root, param, likes=self.settings.plot_meanlikes)
         if density is None: return None;
         if normalized: density.normalize()
 
@@ -864,7 +899,12 @@ class GetDistPlotter(object):
                 if add_legend_proxy: self.contours_added.append(None)
                 return None
         if alpha is None: alpha = self._get_alpha2D(plotno, **kwargs)
-        if contour_levels is None: contour_levels = density.contours
+        if contour_levels is None:
+            if not hasattr(density, 'contours'):
+                contours = self.sampleAnalyser.ini.ndarray('contours')
+                if contours is not None: contours = contours[:self.settings.num_plot_contours]
+                density.contours = density.getContourLevels(contours)
+            contour_levels = density.contours
 
         if add_legend_proxy:
             proxyIx = len(self.contours_added)
@@ -956,6 +996,39 @@ class GetDistPlotter(object):
         ax.contourf(density.x, density.y, points, self.settings.num_shades, colors=cols, levels=levels, **kwargs)
         # doing contourf gets rid of annoying white lines in pdfs
         ax.contour(density.x, density.y, points, self.settings.num_shades, colors=cols, levels=levels, **kwargs)
+
+    def add_2D_covariance(self, means, cov, xvals=None, yvals=None, def_width=4.0, samples_per_std=50., **kwargs):
+        """
+        Plot 2D Gaussian ellipse. By default plots contours for 1 and 2 sigma.
+        Specify contour_levels argument to plot other contours (for density normalized to peak at unity).
+
+        :param means: array of means
+        :param cov: the 2x2 covariance
+        :param xvals: optional array of x values to evaluate at
+        :param yvals: optional array of y values to evaluate at
+        :param def_width: if evaluation array not specified, width to use in units of standard deviation
+        :param samples_per_std: if evaluation array not specified, number of grid points per standard deviation
+        :param kwargs: keyword arguments for :func:`~GetDistPlotter.add_2D_contours`
+        """
+
+        cov = np.asarray(cov)
+        assert (cov.shape[0] == 2 and cov.shape[1] == 2)
+        if xvals is None:
+            err = np.sqrt(cov[0, 0])
+            xvals = np.arange(means[0] - def_width * err, means[0] + def_width * err, err / samples_per_std)
+        if yvals is None:
+            err = np.sqrt(cov[1, 1])
+            yvals = np.arange(means[1] - def_width * err, means[1] + def_width * err, err / samples_per_std)
+        x, y = np.meshgrid(xvals - means[0], yvals - means[1])
+        inv_cov = np.linalg.inv(cov)
+        like = x ** 2 * inv_cov[0, 0] + 2 * x * y * inv_cov[0, 1] + y ** 2 * inv_cov[1, 1]
+        density = Density2D(xvals, yvals, np.exp(-like / 2))
+        density.contours = [0.32, 0.05]
+        return self.add_2d_density_contours(density, **kwargs)
+
+    def add_2D_mixture_projection(self, mixture, param1, param2, **kwargs):
+        density = mixture.marginalizedMixture(params=[param1, param2]).density2D()
+        return self.add_2d_density_contours(density, **kwargs)
 
     def _updateLimit(self, bounds, curbounds):
         """
@@ -1063,9 +1136,15 @@ class GetDistPlotter(object):
         xbounds, ybounds = None, None
         contour_args = self._make_contour_args(len(roots), **kwargs)
         for i, root in enumerate(roots):
-            res = self.add_2d_contours(root, param_pair[0], param_pair[1], line_offset + i, of=len(roots),
-                                       add_legend_proxy=add_legend_proxy and not root in proxy_root_exclude,
-                                       **contour_args[i])
+            if isinstance(root, MixtureND):
+                res = self.add_2D_mixture_projection(root, param_pair[0], param_pair[1], plotno=line_offset + i,
+                                                     of=len(roots),
+                                                     add_legend_proxy=add_legend_proxy and not root in proxy_root_exclude,
+                                                     **contour_args[i])
+            else:
+                res = self.add_2d_contours(root, param_pair[0], param_pair[1], line_offset + i, of=len(roots),
+                                           add_legend_proxy=add_legend_proxy and not root in proxy_root_exclude,
+                                           **contour_args[i])
             xbounds, ybounds = self._updateLimits(res, xbounds, ybounds)
         if xbounds is None: return
         if not 'lims' in kwargs:
@@ -1168,11 +1247,17 @@ class GetDistPlotter(object):
         :param x: True if x axis, False for y axis
         :param prune: Parameter for MaxNLocator constructor,  ['lower' | 'upper' | 'both' | None]
         """
-        if x: xmin, xmax = axis.get_view_interval()
-        if x and (abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000):
-            axis.set_major_locator(plt.MaxNLocator(self.settings.subplot_size_inch / 2 + 3, prune=prune))
+
+        if self.settings.auto_ticks:
+            axis.set_major_locator(plt.MaxNLocator(nbins='auto', steps=[1, 2, 2.5, 5, 10], prune=prune))
         else:
-            axis.set_major_locator(plt.MaxNLocator(self.settings.subplot_size_inch / 2 + 4, prune=prune))
+            # if prune is None and hasattr(plt.colors, 'is_color_like'): return  # is_color_like tests for matplotlib 2
+            if x: xmin, xmax = axis.get_view_interval()
+            if x and (abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000):
+                axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) + 3, prune=prune,
+                                                       steps=np.arange(1, 11)))
+            else:
+                axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) - 1 + 4, prune=prune))
 
     def _setAxisProperties(self, axis, x, prune=None):
         """
@@ -1372,12 +1457,19 @@ class GetDistPlotter(object):
         :param renames: optional dictionary mapping input names and equivalent names used by the samples
         :return: list of :class:`~.paramnames.ParamInfo` instances for the parameters
         """
+        if hasattr(root, 'paramNames'):
+            names = root.paramNames
+        elif hasattr(root, 'names'):
+            names = ParamNames(names=root.names, default=getattr(root, 'dim', 0))
+        else:
+            names = self.paramNamesForRoot(root)
+
         if params is None or len(params) == 0:
-            return self.paramNamesForRoot(root).names
+            return names.names
         else:
             if isinstance(params, six.string_types) or \
                     not all([isinstance(param, ParamInfo) for param in params]):
-                return self.paramNamesForRoot(root).parsWithNames(params, error=True, renames=renames)
+                return names.parsWithNames(params, error=True, renames=renames)
         return params
 
     def _check_param(self, root, param, renames={}):
@@ -1474,7 +1566,7 @@ class GetDistPlotter(object):
             for h, text in zip(self.legend.legendHandles, self.legend.get_texts()):
                 h.set_visible(False)
                 if isinstance(h, plt.Line2D):
-                    c = h._get_color()
+                    c = h.get_color()
                 elif isinstance(h, matplotlib.patches.Patch):
                     c = h.get_facecolor()
                 else:
@@ -1533,6 +1625,8 @@ class GetDistPlotter(object):
     def _rootDisplayName(self, root, i):
         if isinstance(root, MCSamples):
             root = root.getName()
+        if hasattr(root, 'label'):
+            root = root.label
         if not root: root = 'samples' + str(i)
         return self._escapeLatex(root)
 
@@ -1607,7 +1701,8 @@ class GetDistPlotter(object):
             self.plot_1d(plot_roots, param, no_ylabel=share_y and i % self.plot_col > 0, marker=marker,
                          param_renames=param_renames, **kwargs)
             if xlims is not None: ax.set_xlim(xlims[i][0], xlims[i][1])
-            if share_y: self._spaceTicks(ax.xaxis, expand=True)
+            if share_y: self._spaceTicks(ax.xaxis, expand=xlims is None,
+                                         bounds=self._get_param_bounds(plot_roots, param.name))
         self.finish_plot(self._default_legend_labels(legend_labels, roots), legend_ncol=legend_ncol,
                          label_order=label_order)
         if share_y: plt.subplots_adjust(wspace=0)
@@ -1710,26 +1805,40 @@ class GetDistPlotter(object):
         self.finish_plot()
         return plot_col, plot_row
 
-    def _spaceTicks(self, axis, expand=True):
+    def _spaceTicks(self, axis, expand=True, bounds=[None, None]):
         """
         Space the axis ticks so there are none near the edges (which are likely to overlap on packed subplots)
 
         :param axis: axis instance
-        :param expand: if True, increase axis range so existing ticks are safely not near edgel
+        :param expand: if True, increase axis range so existing ticks are safely not near edge
                         otherwise remove end ticks
         :return: list of tick values
         """
-        lims = axis.get_view_interval()
-        tick = [x for x in axis.get_ticklocs() if lims[0] < x < lims[1]]
-        gap_wanted = (lims[1] - lims[0]) * self.settings.tight_gap_fraction
-        if expand:
-            lims = [min(tick[0] - gap_wanted, lims[0]), max(tick[-1] + gap_wanted, lims[1])]
-            axis.set_view_interval(lims[0], lims[1])
+        if self.settings.auto_ticks:
+            axis.set_major_locator(plt.MaxNLocator(nbins='auto', steps=[1, 2, 2.5, 5, 10], prune='both'))
         else:
-            if tick[0] - lims[0] < gap_wanted: tick = tick[1:]
-            if lims[1] - tick[-1] < gap_wanted: tick = tick[:-1]
-        axis.set_ticks(tick)
-        return tick
+            xmin, xmax = axis.get_view_interval()
+            tick = [x for x in axis.get_ticklocs() if xmin < x < xmax]
+            gap_wanted = (xmax - xmin) * self.settings.tight_gap_fraction
+            if expand:
+                if bounds[0] is None or bounds[0] < xmin * 0.9999:
+                    xmin = min(tick[0] - gap_wanted, xmin)
+                else:
+                    if tick[0] - xmin < gap_wanted: tick = tick[1:]
+                if bounds[1] is None or bounds[1] > xmax * 1.0001:
+                    xmax = max(tick[-1] + gap_wanted, xmax)
+                else:
+                    if xmax - tick[-1] < gap_wanted: tick = tick[:-1]
+                axis.set_view_interval(xmin, xmax)
+            else:
+                if tick[0] - xmin < gap_wanted: tick = tick[1:]
+                if xmax - tick[-1] < gap_wanted: tick = tick[:-1]
+
+            if self.settings.thin_long_subplot_ticks and (
+                            abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000) and len(tick) > 2:
+                axis.set_ticks(tick[0::2])
+            else:
+                axis.set_ticks(tick)
 
     def _inner_ticks(self, ax, top_and_left=True):
         for ax in [ax.get_xaxis(), ax.get_yaxis()]:
@@ -1833,7 +1942,8 @@ class GetDistPlotter(object):
                          no_label_no_numbers=self.settings.no_triangle_axis_labels,
                          label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args)
             # set no_ylabel=True for now, can't see how to not screw up spacing with right-sided y label
-            if self.settings.no_triangle_axis_labels: self._spaceTicks(ax.xaxis)
+            if self.settings.no_triangle_axis_labels:
+                self._spaceTicks(ax.xaxis, bounds=self._get_param_bounds(roots1d, param.name))
             lims[i] = ax.get_xlim()
             ticks[i] = ax.get_xticks()
         for i, param in enumerate(params):
@@ -1979,11 +2089,13 @@ class GetDistPlotter(object):
             ax_arr.append(axarray)
         for xparam, ax in zip(xparams, xshares):
             ax.set_xlim(param_limits.get(xparam, limits[xparam]))
-            self._spaceTicks(ax.xaxis)
+            self._spaceTicks(ax.xaxis, expand=xparam not in param_limits,
+                             bounds=self._get_param_bounds(yroots[0], xparam))
             ax.set_xlim(ax.xaxis.get_view_interval())
         for yparam, ax in zip(yparams, yshares):
             ax.set_ylim(param_limits.get(yparam, limits[yparam]))
-            self._spaceTicks(ax.yaxis)
+            self._spaceTicks(ax.yaxis, expand=yparam not in param_limits,
+                             bounds=self._get_param_bounds(yroots[0], yparam))
             ax.set_ylim(ax.yaxis.get_view_interval())
         plt.subplots_adjust(wspace=0, hspace=0)
         if roots: legend_labels = self._default_legend_labels(legend_labels, roots)

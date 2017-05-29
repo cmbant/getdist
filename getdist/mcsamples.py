@@ -140,6 +140,10 @@ class MCSamples(Chains):
         self.markers = {}
 
         self.ini = ini
+        if self.jobItem:
+            self.batch_path = self.jobItem.batchPath
+        else:
+            self.batch_path = ''
 
         self._readRanges()
         if ranges:
@@ -309,6 +313,7 @@ class MCSamples(Chains):
         ini.setAttr('converge_test_limit', self, self.contours[-1])
         ini.setAttr('corr_length_thin', self)
         ini.setAttr('corr_length_steps', self)
+        self.batch_path = ini.string('batch_path', self.batch_path, allowEmpty=False)
 
     def _initLimits(self, ini=None):
         bin_limits = ""
@@ -2174,6 +2179,14 @@ class MCSamples(Chains):
 
         return cust2DPlots
 
+    def getParamSampleDict(self, ix):
+        """
+        Returns a dictionary of parameter values for sample number ix
+        """
+        res = super(MCSamples, self).getParamSampleDict(ix)
+        res.update(self.ranges.fixedValueDict())
+        return res
+
     def saveAsText(self, root, chain_index=None, make_dirs=False):
         """
         Saves samples as text file, including .ranges and .paramnames.
@@ -2186,8 +2199,17 @@ class MCSamples(Chains):
         if not chain_index:
             self.ranges.saveToFile(root + '.ranges')
 
-    # Write functions for GetDist.py
+    def saveChainsAsText(self, root, make_dirs=False):
+        if self.chains is None:
+            chains = self.getSeparateChains()
+        else:
+            chains = self.chains
+        for i, chain in enumerate(chains):
+            chain.saveAsText(root, i, make_dirs)
+        self.ranges.saveToFile(root + '.ranges')
+        self.paramNames.saveAsText(root + '.paramnames')
 
+    # Write functions for GetDist.py
     def writeScriptPlots1D(self, filename, plotparams=None, ext=None):
         """
         Write a script that generates a 1D plot. Only intended for use by GetDist.py script.
@@ -2196,7 +2218,7 @@ class MCSamples(Chains):
         :param plotparams: The list of parameters to plot (default: all)
         :param ext: The extension for the filename, Default if None
         """
-        text = 'markers=' + str(self.markers) + '\n'
+        text = 'markers = ' + (str(self.markers) if self.markers else 'None') + '\n'
         if plotparams:
             text += 'g.plots_1d(roots,[' + ",".join(['\'' + par + '\'' for par in plotparams]) + '], markers=markers)'
         else:
@@ -2286,7 +2308,7 @@ class MCSamples(Chains):
             if self.plot_data_dir:
                 f.write("g=plots.GetDistPlotter(plot_data=r'%s')\n" % self.plot_data_dir)
             else:
-                f.write("g=plots.GetDistPlotter(chain_dir=r'%s')\n" % os.path.dirname(self.root))
+                f.write("g=plots.GetDistPlotter(chain_dir=r'%s')\n" % (self.batch_path or os.path.dirname(self.root)))
 
             f.write("g.settings.setWithSubplotSize(%s)\n" % subplot_size)
             f.write("roots = ['%s']\n" % self.rootname)

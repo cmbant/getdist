@@ -32,11 +32,11 @@ Other main modules:
    chains
    covmat
    densities
+   gaussian_mixtures
    inifile
    paramnames
    parampriors
    types
- 
 
 * :ref:`genindex`
 

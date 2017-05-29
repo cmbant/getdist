@@ -40,6 +40,7 @@ def main(args):
     # Input parameters
     ini = IniFile(args.ini_file)
 
+    batch_path = ini.params.get('batch_path')
     # File root
     if chain_root is not None:
         in_root = chain_root
@@ -55,13 +56,13 @@ def main(args):
         ignorerows = ini.float('ignore_rows', 0.0)
 
     samples_are_chains = ini.bool('samples_are_chains', True)
-    
+
     paramnames = ini.string('parameter_names', '')
 
     # Create instance of MCSamples
-    mc = MCSamples(in_root, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
+    mc = MCSamples(in_root, ini=ini, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
 
-    mc.initParameters(ini)
+#    mc.initParameters(ini)
 
     if ini.bool('adjust_priors', False) or ini.bool('map_params', False):
         doError(
@@ -137,6 +138,12 @@ def main(args):
     mc.loadChains(in_root, chain_files)
 
     mc.removeBurnFraction(ignorerows)
+    if chains.print_load_details:
+        if ignorerows:
+            print('Removed %s as burn in' % ignorerows)
+        else:
+            print('Removed no burn in')
+
     mc.deleteFixedParams()
     mc.makeSingle()
 
@@ -154,7 +161,6 @@ def main(args):
             print('%iD plot has missing parameter or wrong number of parameters: %s' % (num, pars))
             pars = None
         return pars
-
 
     if cool != 1:
         print('Cooling chains by ', cool)
@@ -195,7 +201,7 @@ def main(args):
 
     if not no_plots:
         # Output files for 1D plots
-        print('Calculating plot data...')
+        if plot_data_dir: print('Calculating plot data...')
 
         plotparams = []
         line = ini.string('plot_params', '')
@@ -219,7 +225,6 @@ def main(args):
                 else:
                     num_cust2D_plots -= 1
 
-                
         triangle_params = []
         triangle_plot = ini.bool('triangle_plot', False)
         if triangle_plot:
@@ -237,8 +242,7 @@ def main(args):
                 plot_3D.append(pars)
             else:
                 num_3D_plots -= 1
-            
-      
+
         # Produce file of weight-1 samples if requested
         if (num_3D_plots and not make_single_samples or make_scatter_samples) and not no_plots:
             make_single_samples = True
@@ -253,7 +257,7 @@ def main(args):
             mc.getParamNames().saveAsText(os.path.join(plot_data_dir, rootname + '.paramnames'))
             mc.getBounds().saveToFile(os.path.join(plot_data_dir, rootname + '.bounds'))
 
-        make_plots = ini.bool('make_plots', False)
+        make_plots = ini.bool('make_plots', False) or args.make_plots
 
         done2D = {}
 
@@ -302,23 +306,19 @@ def main(args):
         # Limits from global likelihood
         if mc.loglikes is not None: mc.getLikeStats().saveAsText(rootdirname + '.likestats')
 
-
     if dumpNDbins:
         num_bins_ND = ini.int('num_bins_ND', 10)
-        line = ini.string('ND_params','')
-        
-        if line not in ["",'0']:
+        line = ini.string('ND_params', '')
+
+        if line not in ["", '0']:
             ND_params = filterParList(line)
             print(ND_params)
 
-            ND_dim=len(ND_params)
+            ND_dim = len(ND_params)
             print(ND_dim)
-           
+
             mc.getRawNDDensityGridData(ND_params, writeDataToFile=True,
                                        meanlikes=shade_meanlikes)
-    
-
-
 
     # System command
     if finish_run_command:
@@ -344,6 +344,7 @@ if __name__ == '__main__':
                         help='set initial fraction of chains to cut as burn in (fraction of total rows, or >1 number of rows); overrides any value in ini_file if set')
     parser.add_argument('--make_param_file',
                         help='Produce a sample distparams.ini file that you can edit and use when running GetDist')
+    parser.add_argument('--make_plots', action='store_true', help= 'Make PDFs from any requested plot script files')
     parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
     args = parser.parse_args()
     if args.make_param_file:

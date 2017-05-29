@@ -66,7 +66,7 @@ def updateIniParams(ini, params, path):
 
 def pathIsGrid(batchPath):
     return os.path.exists(os.path.join(batchPath, 'batch.pyobj')) or os.path.exists(
-                                    os.path.join(batchPath, 'config', 'config.ini'))
+        os.path.join(batchPath, 'config', 'config.ini'))
 
 
 def makeGrid(batchPath, settingName=None, settings=None, readOnly=False, interactive=False):
@@ -187,6 +187,7 @@ def makeGrid(batchPath, settingName=None, settings=None, readOnly=False, interac
 
             # add ini files for importance sampling runs
         for imp in jobItem.importanceJobs():
+            if not getattr(jobItem, 'importanceFilter', None): continue
             if batch.hasName(imp.name.replace('_post', '')): raise Exception(
                 'importance sampling something you already have?')
             for minimize in (False, True):
@@ -216,5 +217,3 @@ def makeGrid(batchPath, settingName=None, settings=None, readOnly=False, interac
     print('')
     print('for importance sampled: python python/runbatch.py ' + batchPath + ' --importance')
     print('for best-fit for importance sampled: python python/runbatch.py ' + batchPath + ' --importance_minimize')
-
-

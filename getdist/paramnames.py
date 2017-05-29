@@ -80,7 +80,7 @@ class ParamList(object):
     :ivar names: list of :class:`ParamInfo` objects
     """
 
-    def __init__(self, fileName=None, setParamNameFile=None, default=0, names=None):
+    def __init__(self, fileName=None, setParamNameFile=None, default=0, names=None, labels=None):
         """
         :param fileName: name of .paramnames file to load from
         :param setParamNameFile: override specific parameter names' labels using another file
@@ -92,6 +92,7 @@ class ParamList(object):
         if names is not None: self.setWithNames(names)
         if fileName is not None: self.loadFromFile(fileName)
         if setParamNameFile is not None: self.setLabelsAndDerivedFromParamNames(setParamNameFile)
+        if labels is not None: self.setLabels(labels)
 
     def setDefault(self, n):
         self.names = [ParamInfo(name='param' + str(i + 1), label='p_{' + str(i + 1) + '}') for i in range(n)]
@@ -187,7 +188,10 @@ class ParamList(object):
         return pars
 
     def setLabelsAndDerivedFromParamNames(self, fname):
-        p = ParamNames(fname)
+        if isinstance(fname, ParamNames):
+            p = fname
+        else:
+            p = ParamNames(fname)
         for par in p.names:
             param = self.parWithName(par.name)
             if not param is None:

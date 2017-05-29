@@ -71,3 +71,28 @@ class ParamBounds(object):
         :return: lower limit, or None if not specified
         """
         return self.lower.get(name, None)
+
+    def fixedValue(self, name):
+        """
+        :param name: parameter name
+        :return: if range has zero width return fixed value else return None
+        """
+        lower = self.lower.get(name, None)
+        if lower is not None:
+            higher = self.upper.get(name, None)
+            if higher is not None:
+                if higher == lower:
+                    return lower
+        return None
+
+    def fixedValueDict(self):
+        """
+        :return: dictionary of fixed parameter values
+        """
+
+        res = {}
+        for name in self.names:
+            value = self.fixedValue(name)
+            if value is not None:
+                res[name] = value
+        return res
