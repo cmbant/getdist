@@ -46,7 +46,7 @@ class MixtureND(object):
     def sim(self, size):
         """
         Generate an array of independent samples
-        
+
         :param size: number of samples
         :return: 2D array of sample values
         """
@@ -112,7 +112,7 @@ class MixtureND(object):
         """
         Calculate the PDF. Note this assumes x is within the boundaries (does not return zero outside)
         Result is also only normalized if no boundaries.
-        
+
         :param x: array of parameter values to evaluate at
         :return: pdf at x
         """
@@ -129,7 +129,7 @@ class MixtureND(object):
     def pdf_marged(self, index, x, no_limit_marge=False):
         """
         Calculate the 1D marginalized PDF. Only works if no other parameter limits are marginalized
-        
+
         :param index: index or name of parameter
         :param x: value to evaluate PDF at
         :param no_limit_marge: if true don't raise an error if mixture has limits
@@ -151,7 +151,7 @@ class MixtureND(object):
     def density1D(self, index=0, num_points=1024, sigma_max=4, no_limit_marge=False):
         """
         Get 1D marginalized density. Only works if no hard limits in other parameters.
-        
+
         :param index: parameter name or index
         :param num_points: number of grid points to evaluate PDF
         :param sigma_max: maximum number of standard deviations away from means to include in computed range
@@ -169,14 +169,14 @@ class MixtureND(object):
         """
         Get 2D marginalized density for a pair of parameters.
          
-        :param params: list of two parameter names or indices to use. If already 2D, can be None. 
+        :param params: list of two parameter names or indices to use. If already 2D, can be None.
         :param num_points: number of grid points for evaluation
         :param xmin: optional lower value for first parameter
         :param xmax: optioanl upper value for first parameter
         :param ymin: optional lower value for second parameter
         :param ymax: optional upper value for second parameter
         :param sigma_max: maximum number of standard deviations away from mean to include in calculated range
-        :return: :class:`~.densities.Density2D` instance 
+        :return: :class:`~.densities.Density2D` instance
         """
         if self.dim > 2 or params is not None or not isinstance(self, Mixture2D):
             mixture = self.marginalizedMixture(params=params)
@@ -191,7 +191,7 @@ class MixtureND(object):
     def marginalizedMixture(self, params, label=None, no_limit_marge=False):
         """
         Calculates a reduced mixture model by marginalization over unwanted parameters
-        
+
         :param params: array of parameter names or indices to retain. If none, will simply return a copy of this mixture.
         :param label: optional label for the marginalized mixture
         :param no_limit_marge: if true don't raise an error if mixture has limits.
@@ -298,7 +298,7 @@ class Mixture2D(MixtureND):
         """
         Calculate the PDF. Note this assumes x and y are within the boundaries (does not return zero outside)
         Result is also only normalized if no boundaries
-        
+
         :param x: value of x to evaluate pdf
         :param y: optional value of y to evaluate pdf. If not specified, returns 1D marginalized value for x.
         :return: value of pdf at x or x,y
@@ -323,9 +323,9 @@ class Gaussian2D(Mixture2D):
 
     def __init__(self, mean, cov, **kwargs):
         """
-        :param mean: 2 element array with mean 
+        :param mean: 2 element array with mean
         :param cov: 2x2 array of covariance, or list of [sigma_x, sigma_y, correlation] values
-        :param kwargs: arguments passed to :class:`Mixture2D` 
+        :param kwargs: arguments passed to :class:`Mixture2D`
         """
         super(Gaussian2D, self).__init__([mean], [cov], **kwargs)
 
@@ -339,7 +339,7 @@ class GaussianND(MixtureND):
         """
         :param mean: array specifying means of parameters
         :param cov: covariance array
-        :param kwargs: arguments passed to :class:`MixtureND` 
+        :param kwargs: arguments passed to :class:`MixtureND`
         """
         super(GaussianND, self).__init__([mean], [cov], **kwargs)
 
@@ -352,7 +352,6 @@ class Mixture1D(MixtureND):
     def __init__(self, means, sigmas, weights=None, lims=None, name='x',
                  xmin=None, xmax=None, **kwargs):
         """
-    
         :param means: array of means for each component
         :param sigmas: array of standard deviations for each component
         :param weights: weights for each component (defaults to equal weight)
@@ -360,7 +359,7 @@ class Mixture1D(MixtureND):
         :param name: parameter name (default 'x')
         :param xmin: optional lower limit
         :param xmax:  optional upper limit
-        :param kwargs: arguments passed to :class:`MixtureND` 
+        :param kwargs: arguments passed to :class:`MixtureND`
         """
         if lims is not None:
             limits = [(xmin if xmin is not None else lims[0], xmax if xmax is not None else lims[1])]
@@ -381,10 +380,9 @@ class Gaussian1D(Mixture1D):
 
     def __init__(self, mean, sigma, **kwargs):
         """
-        
         :param mean: mean
         :param sigma:  standard deviation
-        :param kwargs:  arguments passed to :class:`Mixture1D` 
+        :param kwargs:  arguments passed to :class:`Mixture1D`
         """
         super(Gaussian1D, self).__init__([mean], [sigma], **kwargs)
 
@@ -397,7 +395,6 @@ class RandomTestMixtureND(MixtureND):
 
     def __init__(self, ndim=4, ncomponent=1, names=None, weights=None, seed=0, label='RandomMixture'):
         """
-        
         :param ndim: number of dimensions
         :param ncomponent: number of components
         :param names: names for the parameters

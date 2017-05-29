@@ -153,7 +153,7 @@ class WeightedSamples(object):
         :param weights: array of weights
         :param loglikes: array of -log(Likelihood)
         :param name_tag: The name of this instance.
-        :param label: synonym for name_tag: The name of this instance.
+        :param label: latex label for these samples
         :param files_are_chains: use False if the samples file (filename) does not start with two columns giving weights and -log(Likelihoods)
         """
 
@@ -183,7 +183,7 @@ class WeightedSamples(object):
     def getLabel(self):
         """
         Return the latex label for the samples
-        
+
         :return: the label 
         """
         return self.label or escapeLatex(self.getName())

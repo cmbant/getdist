@@ -40,7 +40,6 @@ def main(args):
     # Input parameters
     ini = IniFile(args.ini_file)
 
-    batch_path = ini.params.get('batch_path')
     # File root
     if chain_root is not None:
         in_root = chain_root
@@ -61,8 +60,6 @@ def main(args):
 
     # Create instance of MCSamples
     mc = MCSamples(in_root, ini=ini, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
-
-#    mc.initParameters(ini)
 
     if ini.bool('adjust_priors', False) or ini.bool('map_params', False):
         doError(
@@ -344,7 +341,7 @@ if __name__ == '__main__':
                         help='set initial fraction of chains to cut as burn in (fraction of total rows, or >1 number of rows); overrides any value in ini_file if set')
     parser.add_argument('--make_param_file',
                         help='Produce a sample distparams.ini file that you can edit and use when running GetDist')
-    parser.add_argument('--make_plots', action='store_true', help= 'Make PDFs from any requested plot script files')
+    parser.add_argument('--make_plots', action='store_true', help='Make PDFs from any requested plot script files')
     parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
     args = parser.parse_args()
     if args.make_param_file:
