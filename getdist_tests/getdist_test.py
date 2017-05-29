@@ -37,7 +37,7 @@ class GetDistFileTest(unittest.TestCase):
         self.assertEqual(g.sampleAnalyser.samplesForRoot('testchain').numrows, samples.numrows,
                          "Inconsistent chain loading")
         self.assertEqual(g.sampleAnalyser.samplesForRoot('testchain').getTable().tableTex(),
-            samples.getTable().tableTex(), 'Inconsistent load result')
+                         samples.getTable().tableTex(), 'Inconsistent load result')
         samples.getConvergeTests(0.95)
         self.assertAlmostEqual(0.0009368, samples.GelmanRubin, 5, 'Gelman Rubin error, got ' + str(samples.GelmanRubin))
 
@@ -46,7 +46,7 @@ class GetDistFileTest(unittest.TestCase):
         g.export(self.root + '_plot.pdf')
 
         g = plots.getSinglePlotter(chain_dir=self.tempdir,
-                                    analysis_settings={'ignore_rows': 0.1, 'contours':[0.68, 0.95, 0.99]})
+                                   analysis_settings={'ignore_rows': 0.1, 'contours': [0.68, 0.95, 0.99]})
         g.settings.num_plot_contours = 3
         g.plot_2d('testchain', ['x', 'y'])
 
@@ -56,7 +56,8 @@ class GetDistFileTest(unittest.TestCase):
             if os.getenv('TRAVIS', None):
                 return str(subprocess.check_output(['GetDist.py'] + args))
             else:
-                return str(subprocess.check_output(['python', os.path.join(os.path.dirname(__file__), '..' + os.sep, 'GetDist.py')] + args))
+                return str(subprocess.check_output(
+                    ['python', os.path.join(os.path.dirname(__file__), '..' + os.sep, 'GetDist.py')] + args))
 
         os.chdir(self.tempdir)
         res = callGetDist([self.root])
@@ -76,6 +77,7 @@ class GetDistFileTest(unittest.TestCase):
         res = callGetDist([fname, self.root])
         self.assertTrue('-Ln(mean like)  = 2.30' in res)
         self.assertFalse(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
+
         def checkRun():
             for f in ['.py', '_2D.py', '_3D.py', '_tri.py']:
                 pyname = self.root + f
@@ -135,22 +137,40 @@ class GetDistTest(unittest.TestCase):
         samps = Gaussian1D(0, 1, xmin=-1, xmax=4).MCSamples(12000)
         d = samps.get1DDensity('x')
         samps.samples[:, 0] *= -1
-        samps = MCSamples(samples=samps.samples, names=['x'], ranges={'x':[-4, 1]})
+        samps = MCSamples(samples=samps.samples, names=['x'], ranges={'x': [-4, 1]})
         d2 = samps.get1DDensity('x')
         self.assertTrue(np.allclose(d.P, d2.P[::-1]))
 
         samps = Gaussian2D([0, 0], np.diagflat([1, 2]), xmin=-1, xmax=2, ymin=0, ymax=3).MCSamples(12000)
         d = samps.get2DDensity('x', 'y')
         samps.samples[:, 0] *= -1
-        samps = MCSamples(samples=samps.samples, names=['x', 'y'], ranges={'x':[-2, 1], 'y':[0, 3]})
+        samps = MCSamples(samples=samps.samples, names=['x', 'y'], ranges={'x': [-2, 1], 'y': [0, 3]})
         d2 = samps.get2DDensity('x', 'y')
         self.assertTrue(np.allclose(d.P, d2.P[:, ::-1]))
         samps.samples[:, 0] *= -1
         samps.samples[:, 1] *= -1
-        samps = MCSamples(samples=samps.samples, names=['x', 'y'], ranges={'x':[-1, 2], 'y':[-3, 0]})
+        samps = MCSamples(samples=samps.samples, names=['x', 'y'], ranges={'x': [-1, 2], 'y': [-3, 0]})
         d2 = samps.get2DDensity('x', 'y')
         self.assertTrue(np.allclose(d.P, d2.P[::-1, ::], atol=1e-5))
 
+    def textMixtures(self):
+        from getdist.gaussian_mixtures import Mixture2D, GaussianND
+        cov1 = [[0.001 ** 2, 0.0006 * 0.05], [0.0006 * 0.05, 0.05 ** 2]]
+        cov2 = [[0.001 ** 2, -0.0006 * 0.05], [-0.0006 * 0.05, 0.05 ** 2]]
+        mean1 = [0.02, 0.2]
+        mean2 = [0.023, 0.09]
+        mixture = Mixture2D([mean1, mean2], [cov1, cov2], names=['zobs', 't'], labels=[r'z_{\rm obs}', 't'],
+                            label='Model')
+        samples = mixture.MCSamples(3000, label='Samples')
+        g = plots.getSubplotPlotter()
+        g.triangle_plot([samples, mixture], filled=False)
+
+        s1 = 0.0003
+        covariance = [[s1 ** 2, 0.6 * s1 * 0.05, 0], [0.6 * s1 * 0.05, 0.05 ** 2, 0.2 ** 2], [0, 0.2 ** 2, 2 ** 2]]
+        mean = [0.017, 1, -2]
+        gauss = GaussianND(mean, covariance)
+        g = plots.getSubplotPlotter()
+        g.triangle_plot(gauss, filled=True)
 
     def testPlots(self):
         self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
@@ -200,4 +220,3 @@ class GetDistTest(unittest.TestCase):
         g.plot_2d(samples, 'x', 'y', filled=True)
         g.add_y_bands(0.2, 1.5)
         g.add_x_bands(-0.1, 1.2, color='red')
-

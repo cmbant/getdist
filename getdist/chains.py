@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 import random
 import numpy as np
-from getdist.paramnames import ParamNames, ParamInfo
+from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
 import pickle
 import six
@@ -143,8 +143,7 @@ class WeightedSamples(object):
     """
 
     def __init__(self, filename=None, ignore_rows=0, samples=None, weights=None, loglikes=None, name_tag=None,
-                 label=None,
-                 files_are_chains=True):
+                 label=None, files_are_chains=True):
         """
         :param filename: A filename of a plain text file to load from
         :param ignore_rows: 
@@ -158,9 +157,6 @@ class WeightedSamples(object):
         :param files_are_chains: use False if the samples file (filename) does not start with two columns giving weights and -log(Likelihoods)
         """
 
-        if label and name_tag:
-            raise WeightedSampleError('Use either label or name_Tag')
-        name_tag = name_tag or label
         self.precision = '%.8e'
         if filename:
             cols = loadNumpyTxt(filename, skiprows=ignore_rows)
@@ -169,6 +165,7 @@ class WeightedSamples(object):
         else:
             self.setSamples(samples, weights, loglikes)
             self.name_tag = name_tag
+        self.label = label
         self.needs_update = True
 
     def setColData(self, coldata, are_chains=True):
@@ -182,6 +179,14 @@ class WeightedSamples(object):
             self.setSamples(coldata[:, 2:], coldata[:, 0], coldata[:, 1])
         else:
             self.setSamples(coldata)
+
+    def getLabel(self):
+        """
+        Return the latex label for the samples
+        
+        :return: the label 
+        """
+        return self.label or escapeLatex(self.getName())
 
     def getName(self):
         """

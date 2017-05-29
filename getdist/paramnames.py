@@ -1,7 +1,15 @@
-# AL 2011-2015
+# AL 2011-2017
 import os
 import fnmatch
 import six
+import matplotlib
+
+
+def escapeLatex(text):
+    if text and matplotlib.rcParams['text.usetex']:
+        return text.replace('_', '{\\textunderscore}')
+    else:
+        return text
 
 
 class ParamInfo(object):

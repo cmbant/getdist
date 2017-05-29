@@ -14,6 +14,7 @@ import numpy as np
 from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
+from getdist.paramnames import escapeLatex
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
 from getdist.gaussian_mixtures import MixtureND
@@ -1257,7 +1258,7 @@ class GetDistPlotter(object):
                 axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) + 3, prune=prune,
                                                        steps=np.arange(1, 11)))
             else:
-                axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) - 1 + 4, prune=prune))
+                axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) + 4, prune=prune))
 
     def _setAxisProperties(self, axis, x, prune=None):
         """
@@ -1616,19 +1617,15 @@ class GetDistPlotter(object):
                 elif 'lower' in legend_loc:
                     plt.subplots_adjust(bottom=frac / self.plot_row)
 
-    def _escapeLatex(self, text):
-        if matplotlib.rcParams['text.usetex']:
-            return text.replace('_', '{\\textunderscore}')
-        else:
-            return text
-
     def _rootDisplayName(self, root, i):
-        if isinstance(root, MCSamples):
-            root = root.getName()
-        if hasattr(root, 'label'):
+        if hasattr(root, 'getLabel'):
+            root = root.getLabel()
+        elif hasattr(root, 'label'):
             root = root.label
+        elif hasattr(root, 'getName'):
+            root = escapeLatex(root.getName())
         if not root: root = 'samples' + str(i)
-        return self._escapeLatex(root)
+        return root
 
     def _default_legend_labels(self, legend_labels, roots):
         """
@@ -1834,9 +1831,14 @@ class GetDistPlotter(object):
                 if tick[0] - xmin < gap_wanted: tick = tick[1:]
                 if xmax - tick[-1] < gap_wanted: tick = tick[:-1]
 
-            if self.settings.thin_long_subplot_ticks and (
-                            abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000) and len(tick) > 2:
-                axis.set_ticks(tick[0::2])
+            if self.settings.thin_long_subplot_ticks and len(tick) > 2 and \
+                    (abs(tick[-1] - tick[0]) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000
+                     or any([len(str(round(t, 4))) > 4 for t in tick])):
+                if len(tick) % 2 == 0 and min([len(str(round(t, 4))) for t in tick[1::2]]) < min(
+                        [len(str(round(t, 4))) for t in tick[::2]]):
+                    axis.set_ticks(tick[1::2])
+                else:
+                    axis.set_ticks(tick[0::2])
             else:
                 axis.set_ticks(tick)
 
@@ -2423,7 +2425,7 @@ class GetDistPlotter(object):
         adir = os.path.dirname(fname)
         if adir and not os.path.exists(adir): os.makedirs(adir)
         if watermark:
-            self.fig.text(0.45, 0.5, self._escapeLatex(watermark), fontsize=30, color='gray', ha='center', va='center',
+            self.fig.text(0.45, 0.5, escapeLatex(watermark), fontsize=30, color='gray', ha='center', va='center',
                           alpha=0.2)
 
         self.fig.savefig(fname, bbox_extra_artists=self.extra_artists, bbox_inches='tight')
