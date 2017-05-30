@@ -1816,13 +1816,14 @@ class GetDistPlotter(object):
         else:
             xmin, xmax = axis.get_view_interval()
             tick = [x for x in axis.get_ticklocs() if xmin < x < xmax]
-            gap_wanted = (xmax - xmin) * self.settings.tight_gap_fraction
+            width = xmax - xmin
+            gap_wanted = width * self.settings.tight_gap_fraction
             if expand:
-                if bounds[0] is None or bounds[0] < xmin * 0.9999:
+                if bounds[0] is None or bounds[0] < xmin - 0.001 * width:
                     xmin = min(tick[0] - gap_wanted, xmin)
                 else:
                     if tick[0] - xmin < gap_wanted: tick = tick[1:]
-                if bounds[1] is None or bounds[1] > xmax * 1.0001:
+                if bounds[1] is None or bounds[1] > xmax + 0.001 * width:
                     xmax = max(tick[-1] + gap_wanted, xmax)
                 else:
                     if xmax - tick[-1] < gap_wanted: tick = tick[:-1]
