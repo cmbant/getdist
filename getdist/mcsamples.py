@@ -1328,15 +1328,15 @@ class MCSamples(Chains):
                 # cf arXiv:1411.5528
                 xWin = Kernel.Win * Kernel.x
                 a1 = convolve1D(prior_mask, xWin, 'valid', cache=cache)[ix]
-                a2 = convolve1D(prior_mask, xWin * Kernel.x, 'valid', cache=cache)[ix]
+                a2 = convolve1D(prior_mask, xWin * Kernel.x, 'valid', cache=cache, cache_args=[1])[ix]
                 xP = convolve1D(bins, xWin, 'same', cache=cache)[ix]
                 if boundary_correction_order == 1:
                     corrected = (density1D.P[ix] * a2 - xP * a1) / (a0 * a2 - a1 ** 2)
                 else:
                     # quadratic correction
-                    a3 = convolve1D(prior_mask, xWin * Kernel.x ** 2, 'valid', cache=cache)[ix]
-                    a4 = convolve1D(prior_mask, xWin * Kernel.x ** 3, 'valid', cache=cache)[ix]
-                    x2P = convolve1D(bins, xWin * Kernel.x, 'same', cache=cache)[ix]
+                    a3 = convolve1D(prior_mask, xWin * Kernel.x ** 2, 'valid', cache=cache, cache_args=[1])[ix]
+                    a4 = convolve1D(prior_mask, xWin * Kernel.x ** 3, 'valid', cache=cache, cache_args=[1])[ix]
+                    x2P = convolve1D(bins, xWin * Kernel.x, 'same', cache=cache, cache_args=[1])[ix]
                     denom = a4 * a2 * a0 - a4 * a1 ** 2 - a2 ** 3 - a3 ** 2 * a0 + 2 * a1 * a2 * a3
                     A = a4 * a2 - a3 ** 2
                     B = a2 * a3 - a4 * a1
@@ -1362,14 +1362,14 @@ class MCSamples(Chains):
                 prior_mask[0] *= 0.5
             if par.has_limits_top:
                 prior_mask[-1] *= 0.5
-            a0 = convolve1D(prior_mask, Kernel.Win, 'same', cache=cache)
+            a0 = convolve1D(prior_mask, Kernel.Win, 'same', cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
                 # estimate using flattened samples to remove second order biases
                 # mostly good performance, see http://www.jstor.org/stable/2965571 method 3,1 for first order
                 prob1 = density1D.P.copy()
                 prob1[prob1 == 0] = 1
                 fine = bins / prob1
-                conv = convolve1D(fine, Kernel.Win, 'same', cache=cache)
+                conv = convolve1D(fine, Kernel.Win, 'same', cache=cache, cache_args=[2])
                 density1D.setP(density1D.P * conv)
                 density1D.P /= a0
 
@@ -1381,7 +1381,7 @@ class MCSamples(Chains):
         if meanlikes:
             ix = density1D.P > 0
             finebinlikes[ix] /= density1D.P[ix]
-            binlikes = convolve1D(finebinlikes, Kernel.Win, 'same', cache=cache)
+            binlikes = convolve1D(finebinlikes, Kernel.Win, 'same', cache=cache, cache_args=[2])
             binlikes[ix] *= density1D.P[ix] / rawbins[ix]
             if self.shade_likes_is_mean_loglikes:
                 maxbin = np.min(binlikes)
@@ -1586,11 +1586,11 @@ class MCSamples(Chains):
         bins2D = convolve2D(histbins, Win, 'same', largest_size=convolvesize, cache=cache)
 
         if meanlikes:
-            bin2Dlikes = convolve2D(finebinlikes, Win, 'same', largest_size=convolvesize, cache=cache)
+            bin2Dlikes = convolve2D(finebinlikes, Win, 'same', largest_size=convolvesize, cache=cache, cache_args=[2])
             if mult_bias_correction_order:
                 ix = bin2Dlikes > 0
                 finebinlikes[ix] /= bin2Dlikes[ix]
-                likes2 = convolve2D(finebinlikes, Win, 'same', largest_size=convolvesize, cache=cache)
+                likes2 = convolve2D(finebinlikes, Win, 'same', largest_size=convolvesize, cache=cache, cache_args=[2])
                 likes2[ix] *= bin2Dlikes[ix]
                 bin2Dlikes = likes2
             del finebinlikes
@@ -1618,9 +1618,14 @@ class MCSamples(Chains):
                 winy = Win * y
                 a10 = convolve2D(prior_mask, winx, 'valid', largest_size=convolvesize, cache=cache)[ix]
                 a01 = convolve2D(prior_mask, winy, 'valid', largest_size=convolvesize, cache=cache)[ix]
-                a20 = convolve2D(prior_mask, winx * indexes, 'valid', largest_size=convolvesize, cache=cache)[ix]
-                a02 = convolve2D(prior_mask, winy * y, 'valid', largest_size=convolvesize, cache=cache)[ix]
-                a11 = convolve2D(prior_mask, winy * indexes, 'valid', largest_size=convolvesize, cache=cache)[ix]
+                a20 = \
+                convolve2D(prior_mask, winx * indexes, 'valid', largest_size=convolvesize, cache=cache, cache_args=[1])[
+                    ix]
+                a02 = convolve2D(prior_mask, winy * y, 'valid', largest_size=convolvesize, cache=cache, cache_args=[1])[
+                    ix]
+                a11 = \
+                convolve2D(prior_mask, winy * indexes, 'valid', largest_size=convolvesize, cache=cache, cache_args=[1])[
+                    ix]
                 xP = convolve2D(histbins, winx, 'same', largest_size=convolvesize, cache=cache)[ix]
                 yP = convolve2D(histbins, winy, 'same', largest_size=convolvesize, cache=cache)[ix]
                 denom = (a20 * a01 ** 2 + a10 ** 2 * a02 - a00 * a02 * a20 + a11 ** 2 * a00 - 2 * a01 * a10 * a11)
@@ -1638,17 +1643,16 @@ class MCSamples(Chains):
         if mult_bias_correction_order:
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
             self._setEdgeMask2D(parx, pary, prior_mask, winw, alledge=True)
-            a00 = convolve2D(prior_mask, Win, 'valid', largest_size=convolvesize, cache=cache)
+            a00 = convolve2D(prior_mask, Win, 'valid', largest_size=convolvesize, cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
-                box = histbins.copy()  # careful with cache in convolve2D.
+                box = histbins.copy()
                 ix2 = bins2D > np.max(bins2D) * 1e-8
                 box[ix2] /= bins2D[ix2]
-                bins2D *= convolve2D(box, Win, 'same', largest_size=convolvesize, cache=cache)
+                bins2D *= convolve2D(box, Win, 'same', largest_size=convolvesize, cache=cache, cache_args=[2])
                 bins2D /= a00
 
         x = np.linspace(xbinmin, xbinmax, xsize)
         y = np.linspace(ybinmin, ybinmax, ysize)
-
         density = Density2D(x, y, bins2D,
                             view_ranges=[(parx.range_min, parx.range_max), (pary.range_min, pary.range_max)])
         density.normalize('max', in_place=True)
