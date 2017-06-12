@@ -32,6 +32,8 @@ class MixtureND(object):
         self.invcovs = [np.linalg.inv(cov) for cov in self.covs]
         if weights is None: weights = [1. / len(means)] * len(means)
         self.weights = np.array(weights, dtype=np.float64)
+        if np.sum(self.weights) <= 0:
+            raise ValueError('Weight <= 0 in MixtureND')
         self.weights /= np.sum(weights)
         self.norms = (2 * np.pi) ** (0.5 * self.dim) * np.array([np.sqrt(np.linalg.det(cov)) for cov in self.covs])
         self.lims = lims
@@ -117,9 +119,13 @@ class MixtureND(object):
         :return: pdf at x
         """
         tot = None
+        x = np.asarray(x)
         for i, (mean, icov, weight, norm) in enumerate(zip(self.means, self.invcovs, self.weights, self.norms)):
             dx = x - mean
-            res = np.exp(-np.einsum('ik,km,im->i', dx, icov, dx) / 2) / norm
+            if len(x.shape) == 1:
+                res = np.exp(-icov.dot(dx).dot(dx) / 2) / norm
+            else:
+                res = np.exp(-np.einsum('ik,km,im->i', dx, icov, dx) / 2) / norm
             if not i:
                 tot = res * weight
             else:
@@ -168,7 +174,7 @@ class MixtureND(object):
     def density2D(self, params=None, num_points=1024, xmin=None, xmax=None, ymin=None, ymax=None, sigma_max=5):
         """
         Get 2D marginalized density for a pair of parameters.
-         
+
         :param params: list of two parameter names or indices to use. If already 2D, can be None.
         :param num_points: number of grid points for evaluation
         :param xmin: optional lower value for first parameter
@@ -188,16 +194,7 @@ class MixtureND(object):
         return mixture._density2D(num_points=num_points, xmin=xmin, xmax=xmax, ymin=ymin,
                                   ymax=ymax, sigma_max=sigma_max)
 
-    def marginalizedMixture(self, params, label=None, no_limit_marge=False):
-        """
-        Calculates a reduced mixture model by marginalization over unwanted parameters
-
-        :param params: array of parameter names or indices to retain. If none, will simply return a copy of this mixture.
-        :param label: optional label for the marginalized mixture
-        :param no_limit_marge: if true don't raise an error if mixture has limits.
-        :return: a new marginalized MixtureND instance
-        """
-
+    def _params_to_indices(self, params):
         indices = []
         if params is None: params = self.names
         for p in params:
@@ -207,6 +204,19 @@ class MixtureND(object):
                 indices.append(self.names.index(p.name))
             else:
                 indices.append(p)
+        return indices
+
+    def marginalizedMixture(self, params, label=None, no_limit_marge=False):
+        """
+        Calculates a reduced mixture model by marginalization over unwanted parameters
+
+        :param params: array of parameter names or indices to retain. If none, will simply return a copy of this mixture.
+        :param label: optional label for the marginalized mixture
+        :param no_limit_marge: if true don't raise an error if mixture has limits.
+        :return: a new marginalized  :class:`MixtureND` instance
+        """
+
+        indices = self._params_to_indices(params)
         if not no_limit_marge: self.checkNoLimits(indices)
         indices = np.array(indices)
         if self.names is not None:
@@ -226,6 +236,55 @@ class MixtureND(object):
             tp = MixtureND
         mixture = tp(means, covs, self.weights, lims=lims,
                      names=names, label=label)
+        mixture.paramNames.setLabelsAndDerivedFromParamNames(self.paramNames)
+        return mixture
+
+    def conditionalMixture(self, fixed_params, fixed_param_values, label=None):
+        """
+        Returns a reduced conditional mixture model for the distribution when certainly parameters are fixed.
+
+        :param fixed_params: list of names or numbers of parameters to fix
+        :param fixed_param_values:  list of values for the fixed parameters
+        :param label: optional label for the new mixture
+        :return: A new :class:`MixtureND` instance with cov_i = Projection(Cov_i^{-1})^{-1} and shifted conditional means
+        """
+
+        fixed_params = self._params_to_indices(fixed_params)
+        self.checkNoLimits(fixed_params)
+        keep_params = [i for i in range(self.dim) if not i in fixed_params]
+        if not len(keep_params):
+            raise ValueError('conditionalMixture must leave at least one non-fixed parameter')
+        new_means = []
+        new_covs = []
+        new_weights = []
+        for mean, cov, invcov, weight in zip(self.means, self.covs, self.invcovs, self.weights):
+            deltas = np.asarray(fixed_param_values) - mean[fixed_params]
+            new_cov = np.linalg.inv(invcov[np.ix_(keep_params, keep_params)])
+            new_mean = mean[keep_params] - new_cov.dot(invcov[np.ix_(keep_params, fixed_params)].dot(deltas))
+            if len(self.weights) == 1 and False:
+                logw = 0
+            else:
+                logw = invcov[np.ix_(fixed_params, fixed_params)].dot(deltas).dot(deltas) \
+                       + np.log(np.linalg.det(cov[np.ix_(fixed_params, fixed_params)]
+                                              - cov[np.ix_(fixed_params, keep_params)].dot(
+                    np.linalg.inv(cov[np.ix_(keep_params, keep_params)]).dot(
+                        cov[np.ix_(keep_params, fixed_params)]))))
+                w = np.exp(
+                    -invcov[np.ix_(fixed_params, fixed_params)].dot(deltas).dot(deltas) / 2) / \
+                    np.sqrt(np.linalg.det(cov[np.ix_(fixed_params, fixed_params)]
+                                          - cov[np.ix_(fixed_params, keep_params)].dot(
+                        np.linalg.inv(cov[np.ix_(keep_params, keep_params)]).dot(
+                            cov[np.ix_(keep_params, fixed_params)]))))
+            new_weights.append(logw)
+            new_means.append(new_mean)
+            new_covs.append(new_cov)
+
+        new_weights = np.exp(-(np.asarray(new_weights) - min(new_weights)) / 2)
+        if self.names is not None:
+            names = [self.names[i] for i in keep_params]
+        else:
+            names = None
+        mixture = MixtureND(new_means, new_covs, new_weights, names=names, label=label)
         mixture.paramNames.setLabelsAndDerivedFromParamNames(self.paramNames)
         return mixture
 
@@ -263,7 +322,7 @@ class Mixture2D(MixtureND):
         :param xmax: optional upper hard bound for x
         :param ymin: optional lower hard bound for y
         :param ymax: optional upper hard bound for y
-        :param kwargs: arguments passed to :class:`MixtureND` 
+        :param kwargs: arguments passed to :class:`MixtureND`
         """
 
         if lims is not None:
@@ -335,12 +394,16 @@ class GaussianND(MixtureND):
         Simple special case of a Gaussian mixture model with only one Gaussian component
     """
 
-    def __init__(self, mean, cov, **kwargs):
+    def __init__(self, mean, cov, is_inv_cov=False, **kwargs):
         """
         :param mean: array specifying means of parameters
-        :param cov: covariance array
+        :param cov: covariance matrix (or filename of text file with covariance matrix)
+        :param is_inv_covP set True if cov is actually an inverse covariance
         :param kwargs: arguments passed to :class:`MixtureND`
         """
+        if isinstance(mean, six.string_types): mean = np.loadtxt(mean)
+        if isinstance(cov, six.string_types): cov = np.loadtxt(cov)
+        if is_inv_cov: cov = np.linalg.inv(cov)
         super(GaussianND, self).__init__([mean], [cov], **kwargs)
 
 

@@ -155,15 +155,23 @@ class GetDistTest(unittest.TestCase):
 
     def testMixtures(self):
         from getdist.gaussian_mixtures import Mixture2D, GaussianND
+
         cov1 = [[0.001 ** 2, 0.0006 * 0.05], [0.0006 * 0.05, 0.05 ** 2]]
-        cov2 = [[0.001 ** 2, -0.0006 * 0.05], [-0.0006 * 0.05, 0.05 ** 2]]
+        cov2 = [[0.01 ** 2, -0.005 * 0.03], [-0.005 * 0.03, 0.03 ** 2]]
         mean1 = [0.02, 0.2]
         mean2 = [0.023, 0.09]
         mixture = Mixture2D([mean1, mean2], [cov1, cov2], names=['zobs', 't'], labels=[r'z_{\rm obs}', 't'],
                             label='Model')
+        tester = 0.03
+        cond = mixture.conditionalMixture(['zobs'], [tester])
+        marge = mixture.marginalizedMixture(['zobs'])
+        # test P(x,y) = P(y)P(x|y)
+        self.assertAlmostEqual(mixture.pdf([tester, 0.15]), marge.pdf([tester]) * cond.pdf([0.15]))
+
         samples = mixture.MCSamples(3000, label='Samples')
         g = plots.getSubplotPlotter()
         g.triangle_plot([samples, mixture], filled=False)
+        g.plot_1d(cond,'t')
 
         s1 = 0.0003
         covariance = [[s1 ** 2, 0.6 * s1 * 0.05, 0], [0.6 * s1 * 0.05, 0.05 ** 2, 0.2 ** 2], [0, 0.2 ** 2, 2 ** 2]]
