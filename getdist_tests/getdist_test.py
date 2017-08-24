@@ -61,6 +61,7 @@ class GetDistFileTest(unittest.TestCase):
 
         os.chdir(self.tempdir)
         res = callGetDist([self.root])
+        # Note this can fail if your local analysis defaults changes the default ignore_rows
         self.assertTrue('-Ln(mean like)  = 2.30' in res)
         fname = 'testchain_pars.ini'
         callGetDist(['--make_param_file', fname])
