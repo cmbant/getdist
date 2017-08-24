@@ -87,13 +87,18 @@ def gaussian_kde_bandwidth(samples, Neff=None, range_min=None, range_max=None, n
         Neff = np.count_nonzero(np.diff(samples)) + 1
     bins, R = bin_samples(samples, range_min, range_max, nbins)
     data = np.bincount(bins, minlength=nbins)
-    return gaussian_kde_bandwidth_binned(data, Neff) * R
+    h = gaussian_kde_bandwidth_binned(data, Neff)
+    if h is None:
+        return None
+    else:
+        return h * R
 
 
 def gaussian_kde_bandwidth_binned(data, Neff, a=None):
     """
      Return optimal standard kernel bandwidth assuming data is binned from Neff independent samples
-     Return value is the bandwidth in units of the range of data (i.e. multiply by max(data)-min(data))
+     Return value is the bandwidth in units of the range of data (i.e. multiply by max(data)-min(data)),
+     or None if failed
 
      Uses Improved Sheather-Jones algorithm from
      Kernel density estimation via diffusion: Z. I. Botev, J. F. Grotowski, and D. P. Kroese (2010)
@@ -106,11 +111,13 @@ def gaussian_kde_bandwidth_binned(data, Neff, a=None):
     a2 = (a[1:] / 2) ** 2
     hfrac = 0.53 * Neff ** (-1. / 5)  # default value in case of failure
     try:
-        #hfrac = brentq(_bandwidth_fixed_point, 0, 0.2, (Neff, I, logI, a2), xtol=hfrac / 20)
+        # hfrac = brentq(_bandwidth_fixed_point, 0, 0.2, (Neff, I, logI, a2), xtol=hfrac / 20)
         hfrac = fsolve(_bandwidth_fixed_point, hfrac, (Neff, I, logI, a2), xtol=hfrac / 20)[0]
     except:
         logging.warning('1D auto bandwidth failed. Using fallback.')
+        return None
     return hfrac
+
 
 # ##2D functions
 

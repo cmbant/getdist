@@ -236,7 +236,7 @@ class jobItem(propertiesItem):
                 if len(impRun) > 2 and not impRun[2].wantImportance(self): continue
                 impRun = importanceSetting(impRun[0], impRun[1])
             if len(set(impRun.names).intersection(self.data_set.names)) > 0:
-                print('importance job duplicating parent data set:' + self.name)
+                print('importance job duplicating parent data set: %s with %s'%(self.name,impRun.names))
                 continue
             data = self.data_set.extendForImportance(impRun.names, impRun.inis)
             job = jobItem(self.batchPath, self.param_set, data, minimize=impRun.want_minimize)
@@ -460,9 +460,9 @@ class batchJob(propertiesItem):
 
         if hasattr(settings, 'importance_filters'):
             for job in self.jobItems:
-                job.makeImportance(settings.importance_filters)
                 for item in job.importanceJobs():
                     item.makeImportance(settings.importance_filters)
+                job.makeImportance(settings.importance_filters)
 
         for item in list(self.items()):
             for x in [imp for imp in item.importanceJobsRecursive()]:

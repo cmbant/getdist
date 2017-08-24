@@ -1036,7 +1036,7 @@ class MCSamples(Chains):
 
     def getAutoBandwidth1D(self, bins, par, param, mult_bias_correction_order=None, kernel_order=1, N_eff=None):
         """
-        Get optimized kernel density bandwidth (in units the range of the bins)
+        Get optimized kernel density bandwidth (in units of the range of the bins)
         Based on optimal Improved Sheather-Jones bandwidth for basic Parzen kernel, then scaled if higher-order method being used.
         For details see the `notes <http://cosmologist.info/notes/GetDist.pdf>`_.
 
@@ -1051,9 +1051,12 @@ class MCSamples(Chains):
         if N_eff is None:
             N_eff = self._get1DNeff(par, param)
         h = kde.gaussian_kde_bandwidth_binned(bins, Neff=N_eff)
-        if h < 0.002:
-            logging.warning('auto bandwidth for %s very small. Using fallback' % par.name)
-            h = 0.53 * N_eff ** (-1. / 5)
+        if h is None or h < 0.01 * N_eff ** (-1. / 5):
+            hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / (par.range_max - par.range_min)
+            logging.warning(
+                'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
+                    par.name, h, N_eff, hnew))
+            h = hnew
 
         par.kde_h = h
         m = mult_bias_correction_order

@@ -171,7 +171,7 @@ class GetDistTest(unittest.TestCase):
         samples = mixture.MCSamples(3000, label='Samples')
         g = plots.getSubplotPlotter()
         g.triangle_plot([samples, mixture], filled=False)
-        g.plot_1d(cond,'t')
+        g.plot_1d(cond, 't')
 
         s1 = 0.0003
         covariance = [[s1 ** 2, 0.6 * s1 * 0.05, 0], [0.6 * s1 * 0.05, 0.05 ** 2, 0.2 ** 2], [0, 0.2 ** 2, 2 ** 2]]
