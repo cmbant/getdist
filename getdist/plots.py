@@ -1627,6 +1627,8 @@ class GetDistPlotter(object):
             root = root.label
         elif hasattr(root, 'getName'):
             root = escapeLatex(root.getName())
+        elif isinstance(root, six.string_types):
+            root = escapeLatex(root)
         if not root: root = 'samples' + str(i)
         return root
 
@@ -2003,6 +2005,7 @@ class GetDistPlotter(object):
             self._setAxisProperties(label_ax.yaxis, False)
 
         if self.settings.no_triangle_axis_labels: plt.subplots_adjust(wspace=0, hspace=0)
+
         if plot_3d_with_param is not None:
             bottom = 0.5
             if len(params) == 2: bottom += 0.1;
@@ -2018,6 +2021,7 @@ class GetDistPlotter(object):
                          legend_ncol=legend_ncol or (None if upper_roots is None else len(labels)),
                          legend_loc=legend_loc, no_gap=self.settings.no_triangle_axis_labels,
                          no_extra_legend_space=upper_roots is None)
+        if self.settings.no_triangle_axis_labels: plt.subplots_adjust(wspace=0, hspace=0)
 
     def rectangle_plot(self, xparams, yparams, yroots=None, roots=None, plot_roots=None, plot_texts=None,
                        xmarkers=None, ymarkers=None, marker_args={}, param_limits={},
@@ -2107,6 +2111,7 @@ class GetDistPlotter(object):
         if roots: legend_labels = self._default_legend_labels(legend_labels, roots)
         self.finish_plot(no_gap=True, legend_labels=legend_labels, label_order=label_order,
                          legend_ncol=legend_ncol or len(legend_labels))
+        plt.subplots_adjust(wspace=0, hspace=0)
         return ax_arr
 
     def rotate_yticklabels(self, ax=None, rotation=90):

@@ -66,7 +66,7 @@ def loadNumpyTxt(fname, skiprows=None):
     """
     Utility routine to loads numpy array from file.
     Uses faster pandas read routine if pandas is installed, or falls back to numpy's loadtxt otherwise
-  
+
     :param fname: The file to load
     :param skiprows: The number of rows to skip at the begging of the file
     :return: numpy array of the data values
@@ -133,7 +133,7 @@ class ParSamples(object):
 class WeightedSamples(object):
     """
     WeightedSamples is the base class for a set of weighted parameter samples
-    
+
     :ivar weights:  array of weights for each sample (default: array of 1)
     :ivar loglikes: array of -log(Likelihoods) for each sample (default: array of 0)
     :ivar samples: n_samples x n_parameters numpy array of parameter values
@@ -146,7 +146,7 @@ class WeightedSamples(object):
                  label=None, files_are_chains=True):
         """
         :param filename: A filename of a plain text file to load from
-        :param ignore_rows: 
+        :param ignore_rows:
             - if int >=1: The number of rows to skip at the file in the beginning of the file
             - if float <1: The fraction of rows to skip at the beginning of the file
         :param samples: array of parameter values for each sample, passed to :func:`setSamples`
@@ -184,7 +184,7 @@ class WeightedSamples(object):
         """
         Return the latex label for the samples
 
-        :return: the label 
+        :return: the label
         """
         return self.label or escapeLatex(self.getName())
 
@@ -259,7 +259,7 @@ class WeightedSamples(object):
         Get covariance matrix of the parameters. By default uses all parameters, or can limit to max number or list.
 
         :param nparam: if specified, only use the first nparam parameters
-        :param pars: if specified, a list of parameter indices (0,1,2..) to include 
+        :param pars: if specified, a list of parameter indices (0,1,2..) to include
         :return: covariance matrix.
         """
         if self.fullcov is None:
@@ -291,7 +291,7 @@ class WeightedSamples(object):
     def setMeans(self):
         """
         Calculates and saves the means for the samples
-     
+
         :return: numpy array of parameter means
         """
         self.means = self.weights.dot(self.samples) / self.norm
@@ -336,7 +336,7 @@ class WeightedSamples(object):
     def getAutocorrelation(self, paramVec, maxOff=None, weight_units=True, normalized=True):
         """
         Gets auto-correlation of an array of parameter values (e.g. for correlated samples from MCMC)
-        
+
         By default uses weight units (i.e. standard units for separate samples from original chain).
         If samples are made from multiple chains, neglects edge effects.
 
@@ -383,17 +383,17 @@ class WeightedSamples(object):
     def getEffectiveSamplesGaussianKDE(self, paramVec, h=0.2, scale=None, maxoff=None, min_corr=0.05):
         """
         Roughly estimate an effective sample number for use in the leading term for the MISE (mean integrated squared error)
-        of a Gaussian-kernel KDE (Kernel Density Estimate). This is used for optimizing the kernel bandwidth, and though 
+        of a Gaussian-kernel KDE (Kernel Density Estimate). This is used for optimizing the kernel bandwidth, and though
         approximate should be better than entirely ignoring samples correlations, or only counting distinct samples.
-        
+
         Uses fiducial assumed kernel scale h; result does depend on this (typically by factors O(2))
-        
+
         For bias-corrected KDE only need very rough estimate to use in rule of thumb for bandwidth.
-        
-        In the limit h-> 0 (but still >0) answer should be correct (then just includes MCMC rejection duplicates).        
+
+        In the limit h-> 0 (but still >0) answer should be correct (then just includes MCMC rejection duplicates).
         In reality correct result for practical h should depends on shape of the correlation function
 
-        :param paramVec: parameter array, or int index of parameter to use 
+        :param paramVec: parameter array, or int index of parameter to use
         :param h: fiducial assumed kernel scale.
         :param scale: a scale parameter to determine fiducial kernel width, by default the parameter standard deviation
         :param maxoff: maximum value of auto-correlation length to use
@@ -405,6 +405,7 @@ class WeightedSamples(object):
         kernel_std = (scale or self.std(d)) * h
         # Dependence is from very correlated points due to MCMC rejections; shouldn't need more than about correlation length
         if maxoff is None: maxoff = int(self.getCorrelationLength(d, weight_units=False) * 1.5) + 4
+        maxoff = min(maxoff, self.numrows // 10)  #can get problems otherwise if weights are all very large
         uncorr_len = self.numrows // 2
         UncorrTerm = 0
         nav = 0
@@ -487,7 +488,7 @@ class WeightedSamples(object):
 
     def cov(self, pars=None, where=None):
         """
-        Get parameter covariance 
+        Get parameter covariance
 
         :param pars: if specified, a list of parameter vectors or int indices to use
         :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
@@ -567,7 +568,7 @@ class WeightedSamples(object):
         Initialize cache of data for calculating confidence intervals
 
         :param paramVec: array of parameter values or int index of parameter to use
-        :param start: The sample start index to use 
+        :param start: The sample start index to use
         :param end: The sample end index to use, use None to go all the way to the end of the vector
         :param weights: A numpy array of weights for each sample, defaults to self.weights
         :return: :class:`~.chains.ParamConfidenceData` instance
@@ -778,9 +779,9 @@ class WeightedSamples(object):
 
 class Chains(WeightedSamples):
     """
-    Holds one or more sets of weighted samples, for example a set of MCMC chains. 
+    Holds one or more sets of weighted samples, for example a set of MCMC chains.
     Inherits from :class:`~.chains.WeightedSamples`, also adding parameter names and labels
-    
+
     :ivar paramNames: a :class:`~.paramnames.ParamNames` instance holding the parameter names and labels
     """
 
@@ -826,6 +827,24 @@ class Chains(WeightedSamples):
         if self.paramNames:
             self._getParamIndices()
 
+    def filter(self, where):
+        """
+        Filter the stored samples to keep only samples matching filter
+
+        :param where: list of sample indices to keep, or boolean array filter (e.g. x>5 to keep only samples where x>5)
+        """
+
+        if self.chains is None:
+            if hasattr(self, 'chain_offsets'):
+                # must update chain_offsets to be able to correctly split back into separate filtered chains if needed
+                lens = [0]
+                for off1, off2 in zip(self.chain_offsets[:-1], self.chain_offsets[1:]):
+                    lens.append(np.count_nonzero(where[off1:off2]))
+                self.chain_offsets = np.cumsum(np.array(lens))
+            super(Chains, self).filter(where)
+        else:
+            raise ValueError('chains are separated, makeSingle first or call filter on individual chains')
+
     def getParamNames(self):
         """
         Get :class:`~.paramnames.ParamNames` object with names for the parameters
@@ -852,7 +871,7 @@ class Chains(WeightedSamples):
         """
         Adds array variables obj.name1, obj.name2 etc, where
         obj.name1 is the vector of samples with name 'name1'
-        
+
         if a parameter name is of the form aa.bb.cc, it makes subobjects so you can reference obj.aa.bb.cc
 
         :param obj: The object instance to add the parameter vectors variables
@@ -996,7 +1015,7 @@ class Chains(WeightedSamples):
         """
         Combines separate chains into one samples array, so self.samples has all the samples
         and this instance can then be used as a general :class:`~.chains.WeightedSamples` instance.
-        
+
         :return: self
         """
         self.chain_offsets = np.cumsum(np.array([0] + [chain.samples.shape[0] for chain in self.chains]))
@@ -1009,10 +1028,10 @@ class Chains(WeightedSamples):
 
     def getSeparateChains(self):
         """
-        Gets a list of samples for separate chains. 
+        Gets a list of samples for separate chains.
         If the chains have already been combined, uses the stored sample offsets to reconstruct the array (generally no array copying)
 
-        :return: The list of :class:`~.chains.WeightedSamples` for each chain. 
+        :return: The list of :class:`~.chains.WeightedSamples` for each chain.
         """
         if self.chains is not None:
             return self.chains
@@ -1055,7 +1074,7 @@ class Chains(WeightedSamples):
 
     def saveAsText(self, root, chain_index=None, make_dirs=False):
         """
-        Saves the samples as text files, including parameter names as .paramnames file. 
+        Saves the samples as text files, including parameter names as .paramnames file.
 
         :param root: The root name to use
         :param chain_index: Optional index to be used for the filename, zero based, e.g. for saving one of multiple chains

@@ -558,7 +558,7 @@ class MCSamples(Chains):
             param_map = ''
             for par in self.paramNames.parsWithNames(params):
                 self._initParamRanges(par.name)
-                if par.param_max < 0 or par.param_min < par.param_max - par.param_min:
+                if par.param_max < 0 or par.param_min < (par.param_max - par.param_min) / 10:
                     param_map += 'N'
                 else:
                     param_map += 'L'
@@ -1051,6 +1051,10 @@ class MCSamples(Chains):
         if N_eff is None:
             N_eff = self._get1DNeff(par, param)
         h = kde.gaussian_kde_bandwidth_binned(bins, Neff=N_eff)
+        if h < 0.002:
+            logging.warning('auto bandwidth for %s very small. Using fallback' % par.name)
+            h = 0.53 * N_eff ** (-1. / 5)
+
         par.kde_h = h
         m = mult_bias_correction_order
         if m is None: m = self.mult_bias_correction_order
@@ -1134,10 +1138,17 @@ class MCSamples(Chains):
             hx = parx.sigma_range / N_eff ** (1. / 6)
             hy = pary.sigma_range / N_eff ** (1. / 6)
         else:
-            opt = kde.KernelOptimizer2D(bins, N_eff, corr, do_correlation=not has_limits)
-            hx, hy, c = opt.get_h()
-            hx *= rangex
-            hy *= rangey
+            try:
+                opt = kde.KernelOptimizer2D(bins, N_eff, corr, do_correlation=not has_limits)
+                hx, hy, c = opt.get_h()
+                hx *= rangex
+                hy *= rangey
+            except ValueError:
+                logging.warning('2D kernel density bandwidth optimizer failed for %s, %s. Using fallback width.' % (
+                    parx.name, pary.name))
+                c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
+                hx = parx.sigma_range / N_eff ** (1. / 6)
+                hy = pary.sigma_range / N_eff ** (1. / 6)
 
         if mult_bias_correction_order is None: mult_bias_correction_order = self.mult_bias_correction_order
         logging.debug('hx/sig, hy/sig, corr =%s, %s, %s', hx / parx.err, hy / pary.err, c)
@@ -1284,6 +1295,7 @@ class MCSamples(Chains):
             # Set automatically.
             smooth_1D = self.getAutoBandwidth1D(bins, par, j, mult_bias_correction_order, boundary_correction_order) \
                         * (binmax - binmin) * abs(smooth_scale_1D) / fine_width
+
         elif smooth_scale_1D < 1.0:
             smooth_1D = smooth_scale_1D * par.err / fine_width
         else:

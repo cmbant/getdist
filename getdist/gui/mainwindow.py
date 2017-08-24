@@ -38,6 +38,8 @@ except ImportError:
     sys.exit()
 
 from paramgrid import batchjob, gridconfig
+
+
 # ==============================================================================
 
 class GuiSelectionError(Exception):
@@ -654,7 +656,7 @@ class MainWindow(QMainWindow):
                 'legend_frame', 'figure_legend_frame', 'figure_legend_ncol', 'legend_rect_border',
                 'legend_frac_subplot_margin', 'legend_frac_subplot_line', 'num_plot_contours',
                 'solid_contour_palefactor', 'alpha_filled_add', 'alpha_factor_contour_lines', 'axis_marker_color',
-                'axis_marker_ls', 'axis_marker_lw']
+                'axis_marker_ls', 'axis_marker_lw', 'auto_ticks', 'thin_long_subplot_ticks']
         pars.sort()
         ini = IniFile()
         for par in pars:
@@ -1074,7 +1076,7 @@ class MainWindow(QMainWindow):
                 import traceback
 
                 msg = "\n".join(traceback.format_tb(sys.exc_info()[2])[-5:])
-            QMessageBox.critical(self, caption, str(e) + "\n\n" + msg)
+            QMessageBox.critical(self, caption, type(e).__name__ + ': ' + str(e) + "\n\n" + msg)
             del msg
 
         if not isinstance(e, GuiSelectionError) and not capture: raise
