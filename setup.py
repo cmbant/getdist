@@ -19,9 +19,14 @@ def find_version():
     raise RuntimeError("Unable to find version string.")
 
 
+def get_long_description():
+    with open('README.rst') as f:
+        return f.read()
+
 setup(name='GetDist',
       version=find_version(),
       description='GetDist Monte Carlo sample analysis, plotting and GUI',
+      long_description=get_long_description(),
       author='Antony Lewis',
       url="https://github.com/cmbant/getdist",
       packages=['getdist', 'getdist.gui', 'paramgrid', 'getdist_tests'],
