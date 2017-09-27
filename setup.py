@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import io
 import re
 import os
+
 try:
     from setuptools import setup
 except ImportError:
@@ -36,11 +37,12 @@ setup(name='GetDist',
       #  optional (for faster file read)
       # 'pandas (>=0.14.0)'
       classifiers=[
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
+          "Programming Language :: Python :: 2",
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.4',
+          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
       ],
       keywords=['MCMC', 'KDE', 'sample', 'density estimation', 'plot']
       )

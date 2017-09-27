@@ -3,7 +3,7 @@ python:
   - 2.7
   - 3.4
   - 3.6
- 
+
 install:
   # Setup anaconda following http://conda.pydata.org/docs/travis.html
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -21,8 +21,15 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib
   - source activate test-environment
   - python setup.py install
- 
+
 script:
     - python setup.py test
 
- 
+
+deploy:
+  - provider: pypi
+    distributions: sdist
+    on:
+      branch: master
+      repo: cmbant/getdist
+      tags: true
