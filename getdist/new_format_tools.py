@@ -1,16 +1,25 @@
+# JT 2017
+
+from __future__ import division
+from six import string_types, integer_types
+from numbers import Number
+import yaml
+import re
+from collections import OrderedDict as odict
+
+# Conventions
+_prior = "prior"
+
+# Exceptions
+class InputSyntaxError(Exception):
+    """Syntax error in YAML input."""
+
 # Better loader for YAML
 # 1. Matches 1e2 as 100 (no need for dot, or sign after e),
 #    from http://stackoverflow.com/a/30462009
 # 2. Wrapper to load mappings as OrderedDict (for likelihoods and params),
 #    from http://stackoverflow.com/a/21912744
-
-import yaml
-import re
-from collections import OrderedDict as odict
-import six
-
-def yaml_custom_load(stream, Loader=yaml.Loader, object_pairs_hook=odict,
-                        file_name=None):
+def yaml_custom_load(text_stream, Loader=yaml.Loader, object_pairs_hook=odict, file_name=None):
         class OrderedLoader(Loader):
             pass
         def construct_mapping(loader, node):
@@ -29,18 +38,36 @@ def yaml_custom_load(stream, Loader=yaml.Loader, object_pairs_hook=odict,
             |\\.(?:nan|NaN|NAN))$''', re.X),
             list(u'-+0123456789.'))
         try:
-            return yaml.load(stream, OrderedLoader)
+            return yaml.load(text_stream, OrderedLoader)
         # Redefining the general exception to give more user-friendly information
         except yaml.YAMLError, exception:
             errstr = "Error in your input file "+("'"+file_name+"'" if file_name else "")
             if hasattr(exception, "problem_mark"):
-                raise yaml.YAMLError(errstr + " at line %d, column %d. "%(
-                    1+exception.problem_mark.line, 1+exception.problem_mark.column)+
-                    "Maybe inconsistent indentation, '=' instead of ':', "+
-                    "or a missing ':' on an empty group?")
+                line   = 1+exception.problem_mark.line
+                column = 1+exception.problem_mark.column
+                signal = " --> "
+                signal_right = "    <---- "
+                sep = "|"
+                context = 4
+                lines = text_stream.split("\n")
+                pre = ((("\n"+" "*len(signal)+sep).
+                         join([""]+lines[max(line-1-context,0):line-1])))+"\n"
+                errorline = (signal+sep+lines[line-1]
+                             + signal_right + "column %s"%column)
+                post = ((("\n"+" "*len(signal)+sep).
+                         join([""]+lines[line+1-1:min(line+1+context-1,len(lines))])))+"\n"
+                raise InputSyntaxError(
+                    errstr + " at line %d, column %d."%(line, column)+pre+errorline+post+
+                    "Maybe inconsistent indentation, '=' instead of ':', "
+                    "no space after ':', or a missing ':' on an empty group?")
             else:
-                raise yaml.YAMLError(errstr)
+                raise InputSyntaxError(errstr)
 
+def yaml_load_file(input_file):
+    """Wrapper to load a yaml file."""
+    with open(input_file,"r") as file:
+        lines = "".join(file.readlines())
+    return yaml_load(lines, file_name=input_file)
 
 # Extracting parameter info from the new yaml format
 def load_info_params(fileName):
@@ -57,7 +84,7 @@ def load_info_params(fileName):
             info_params_flat[p] = info_params[p]
         # fixed? discard
         last = info_params_flat.keys()[-1]
-        if isinstance(last, float) or isinstance(last, six.integer_types):
+        if isinstance(last, float) or isinstance(last, integer_types):
             info_params_flat.pop(last)
     # Now add prior and likelihoods
     info_params_flat["minuslogprior"] = {"latex": r"-\log\pi"}
@@ -66,3 +93,22 @@ def load_info_params(fileName):
         info_params_flat["chi2_"+lik] = {
             "latex": r"\chi^2_\mathrm{"+lik.replace("_","\ ")+r"}"}
     return info_params_flat
+
+def is_fixed_param(info_param):
+    """
+    Returns True if `info_param` is a number, a string or a function.
+    """
+    return (isinstance(info_param, Number) or isinstance(info_param, string_types)
+            or callable(info_param))
+
+def is_sampled_param(info_param):
+    """
+    Returns True if `info_param` has a `%s` field.
+    """%_prior
+    return _prior in (info_param if hasattr(info_param, "get") else {})
+
+def is_derived_param(info_param):
+    """
+    Returns False if `info_param` is "fixed" or "sampled".
+    """
+    return not(is_fixed_param(info_param) or is_sampled_param(info_param))
