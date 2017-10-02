@@ -12,8 +12,6 @@ def escapeLatex(text):
         return text.replace('_', '{\\textunderscore}')
     else:
         return text
-from collections import OrderedDict as odict
-from yaml_loader import yaml_odict_sci_load
 
 class ParamInfo(object):
     """

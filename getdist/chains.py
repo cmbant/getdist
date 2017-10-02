@@ -803,7 +803,6 @@ class Chains(WeightedSamples):
         """
         WeightedSamples.__init__(self, **kwargs)
         self.jobItem = jobItem
-        self.precision = '%.8e'
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
         self.root = root
         if not paramNamesFile and root:
