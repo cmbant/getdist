@@ -2,7 +2,9 @@
 import os
 import fnmatch
 import six
-from new_format_tools import load_info_params
+from numbers import Number
+
+from new_format_tools import load_info_params, is_sampled_param, is_derived_param
 
 class ParamInfo(object):
     """
@@ -275,10 +277,13 @@ class ParamNames(ParamList):
         if extension == '.paramnames':
             with open(fileName) as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
-        elif extension in ('.yaml', '.yml'):
+        elif extension.lower() in ('.yaml', '.yml'):
             info_params = load_info_params(fileName)
-            self.names = [ParamInfo(param+" "+(info_params[param]["latex"] or param))
-                          for param in info_params]
+            # first sampled, then derived
+            self.names = [ParamInfo(param+" "+(info["latex"] or param))
+                          for param,info in info_params.items() if is_sampled_param(info)]
+            self.names += [ParamInfo(param+" "+(info["latex"] or param))
+                           for param,info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):
         num_params_used = keywordProvider.keyWord_int('num_params_used')

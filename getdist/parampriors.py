@@ -1,8 +1,8 @@
-from new_format_tools import load_info_params
-
 from importlib import import_module
 import os
+import numpy as np
 
+from new_format_tools import load_info_params, is_sampled_param, is_derived_param
 
 class ParamBounds(object):
     """
@@ -35,8 +35,8 @@ class ParamBounds(object):
         elif extension in ('.yaml', '.yml'):
             info_params = load_info_params(fileName)
             for p, info in info_params.iteritems():
-                # sampled
-                if "prior" in info:
+                # Sampled
+                if is_sampled_param(info):
                     info_lims = dict([[l,info["prior"].get(l)]
                                       for l in "min", "max", "loc", "scale"])
                     if info_lims["min"] != None or info_lims["max"] != None:
@@ -45,9 +45,12 @@ class ParamBounds(object):
                         dist = info["prior"].pop("dist", "uniform")
                         pdf_dist = getattr(import_module("scipy.stats", dist), dist)
                         lims = pdf_dist.interval(1, **info["prior"])
-                # derived
+                # Derived
+                elif is_derived_param(info):
+                    lims = [info.get("min", -np.inf), info.get("max", np.inf)]
+                # Fixed
                 else:
-                    lims = [info.get("min"), info.get("max")]
+                    continue
                 self.setRange(p, lims)
 
     def __str__(self):
