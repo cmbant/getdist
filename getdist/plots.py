@@ -1392,13 +1392,15 @@ class GetDistPlotter(object):
                 plotroot = root
         if plotparam is None: raise GetDistPlotError('No roots have parameter: ' + str(param))
         if marker is not None: self.add_x_marker(marker, marker_color)
-        if not 'lims' in kwargs:
+        if 'lims' in kwargs and kwargs['lims'] is not None:
+            xmin, xmax = kwargs['lims']
+        else:
             xmin, xmax = self._check_param_ranges(plotroot, plotparam.name, xmin, xmax)
-            if normalized:
-                mx = plt.gca().yaxis.get_view_interval()[-1]
-            else:
-                mx = 1.099
-            kwargs['lims'] = [xmin, xmax, 0, mx]
+        if normalized:
+            mx = plt.gca().yaxis.get_view_interval()[-1]
+        else:
+            mx = 1.099
+        kwargs['lims'] = [xmin, xmax, 0, mx]
         ax = self.setAxes([plotparam], **kwargs)
 
         if normalized:
@@ -1854,7 +1856,8 @@ class GetDistPlotter(object):
 
     def triangle_plot(self, roots, params=None, legend_labels=None, plot_3d_with_param=None, filled=False, shaded=False,
                       contour_args=None, contour_colors=None, contour_ls=None, contour_lws=None, line_args=None,
-                      label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, upper_kwargs={}, **kwargs):
+                      label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, upper_kwargs={}, lims=None,
+                      **kwargs):
         """
         Make a trianglular array of 1D and 2D plots.
 
@@ -1878,6 +1881,7 @@ class GetDistPlotter(object):
         :param upper_roots: set to fill the upper triangle with subplots using this list of sample root names
                              (TODO: this needs some work to easily work without a lot of tweaking)
         :param upper_kwargs: list of dict for arguments when making upper-triangle 2D plots
+        :param lims: list of limits for parameter ranges
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d` or :func:`~GetDistPlotter.plot_3d` (lower triangle only)
 
         .. plot::
@@ -1902,8 +1906,9 @@ class GetDistPlotter(object):
         plot_col = len(params)
         if plot_3d_with_param is not None: col_param = self._check_param(roots[0], plot_3d_with_param)
         self.make_figure(nx=plot_col, ny=plot_col)
-        lims = dict()
-        ticks = dict()
+        if lims is None:
+            lims = [None] * len(params)
+        ticks = [None] * len(params) 
         filled = kwargs.get('filled_compare', filled)
 
         def defLineArgs(cont_args):
@@ -1948,7 +1953,8 @@ class GetDistPlotter(object):
             self._inner_ticks(ax, False)
             self.plot_1d(roots1d, param, do_xlabel=i == plot_col - 1,
                          no_label_no_numbers=self.settings.no_triangle_axis_labels,
-                         label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args)
+                         label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
+                         lims=lims[i])
             # set no_ylabel=True for now, can't see how to not screw up spacing with right-sided y label
             if self.settings.no_triangle_axis_labels:
                 self._spaceTicks(ax.xaxis, bounds=self._get_param_bounds(roots1d, param.name))
