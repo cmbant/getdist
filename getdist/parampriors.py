@@ -47,7 +47,7 @@ class ParamBounds(object):
                         lims = pdf_dist.interval(1, **info["prior"])
                 # Derived
                 elif is_derived_param(info):
-                    lims = [info.get("min", -np.inf), info.get("max", np.inf)]
+                    lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(info or {})
                 # Fixed
                 else:
                     continue
