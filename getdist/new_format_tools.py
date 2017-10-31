@@ -10,9 +10,11 @@ from collections import OrderedDict as odict
 # Conventions
 _prior = "prior"
 
+
 # Exceptions
 class InputSyntaxError(Exception):
     """Syntax error in YAML input."""
+
 
 # Better loader for YAML
 # 1. Matches 1e2 as 100 (no need for dot, or sign after e),
@@ -63,18 +65,19 @@ def yaml_custom_load(text_stream, Loader=yaml.Loader, object_pairs_hook=odict, f
             else:
                 raise InputSyntaxError(errstr)
 
+
 def yaml_load_file(input_file):
     """Wrapper to load a yaml file."""
     with open(input_file,"r") as file:
         lines = "".join(file.readlines())
-    return yaml_load(lines, file_name=input_file)
+    return yaml_custom_load(lines, file_name=input_file)
+
 
 # Extracting parameter info from the new yaml format
 def load_info_params(fileName):
-    with open(fileName) as f:
-        info = yaml_custom_load(f)
+    info = yaml_load_file(fileName)
     # Flatten theory params, preserving the order, and prune the fixed ones
-    info_params = info.get("params")        
+    info_params = info.get("params")
     info_params_flat = odict()
     for p in info_params:
         if p == "theory":
@@ -94,18 +97,21 @@ def load_info_params(fileName):
             "latex": r"\chi^2_\mathrm{"+lik.replace("_","\ ")+r"}"}
     return info_params_flat
 
+
 def is_fixed_param(info_param):
     """
     Returns True if `info_param` is a number, a string or a function.
     """
-    return (isinstance(info_param, Number) or isinstance(info_param, string_types)
-            or callable(info_param))
+    return (isinstance(info_param, Number) or isinstance(info_param, string_types) or
+            callable(info_param))
+
 
 def is_sampled_param(info_param):
     """
     Returns True if `info_param` has a `%s` field.
     """%_prior
     return _prior in (info_param if hasattr(info_param, "get") else {})
+
 
 def is_derived_param(info_param):
     """

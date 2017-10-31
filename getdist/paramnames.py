@@ -292,9 +292,9 @@ class ParamNames(ParamList):
         elif extension.lower() in ('.yaml', '.yml'):
             info_params = load_info_params(fileName)
             # first sampled, then derived
-            self.names = [ParamInfo(param+" "+(info["latex"] or param))
+            self.names = [ParamInfo(param+" "+(info.get("latex", param)))
                           for param,info in info_params.items() if is_sampled_param(info)]
-            self.names += [ParamInfo(param+" "+(info["latex"] or param))
+            self.names += [ParamInfo(param+" "+(info.get("latex", param)))
                            for param,info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):
