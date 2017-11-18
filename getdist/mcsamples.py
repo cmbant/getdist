@@ -1270,6 +1270,8 @@ class MCSamples(Chains):
                - **num_bins**
         :return: A :class:`~.densities.Density1D` instance
         """
+
+        if self.needs_update: self.updateBaseStatistics()
         j = self._parAndNumber(j)[0]
         if j is None: return None
 
