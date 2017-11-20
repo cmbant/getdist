@@ -405,7 +405,7 @@ class WeightedSamples(object):
         kernel_std = (scale or self.std(d)) * h
         # Dependence is from very correlated points due to MCMC rejections; shouldn't need more than about correlation length
         if maxoff is None: maxoff = int(self.getCorrelationLength(d, weight_units=False) * 1.5) + 4
-        maxoff = min(maxoff, self.numrows // 10)  #can get problems otherwise if weights are all very large
+        maxoff = min(maxoff, self.numrows // 10)  # can get problems otherwise if weights are all very large
         uncorr_len = self.numrows // 2
         UncorrTerm = 0
         nav = 0
@@ -802,7 +802,6 @@ class Chains(WeightedSamples):
         self.root = root
         if not paramNamesFile and root and os.path.exists(root + '.paramnames'):
             paramNamesFile = root + '.paramnames'
-        self.needs_update = True
         self.chains = None
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
@@ -826,6 +825,7 @@ class Chains(WeightedSamples):
             self.paramNames = ParamNames(default=self.n)
         if self.paramNames:
             self._getParamIndices()
+        self.needs_update = True
 
     def filter(self, where):
         """
