@@ -741,9 +741,11 @@ class WeightedSamples(object):
 
         :param min_weight_ratio: minimum ratio to max to exclude
         """
-        if self.weights is not None:
+        if self.weights is not None and min_weight_ratio >= 0:
             max_weight = np.max(self.weights)
-            self.filter(self.weights > max_weight * min_weight_ratio)
+            min_weight = np.min(self.weights)
+            if min_weight < max_weight * min_weight_ratio:
+                self.filter(self.weights > max_weight * min_weight_ratio)
 
     def deleteFixedParams(self):
         """
