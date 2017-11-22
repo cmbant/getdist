@@ -76,7 +76,8 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
         try:
             with open(cachefile, 'rb') as inp:
                 cache = pickle.load(inp)
-            if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows:
+            if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows \
+                    and samples.min_weight_ratio == cache.min_weight_ratio:
                 changed = len(samples.contours) != len(cache.contours) or \
                           np.any(np.array(samples.contours) != np.array(cache.contours))
                 cache.updateSettings(ini=ini, settings=settings, doUpdate=changed)
@@ -259,6 +260,7 @@ class MCSamples(Chains):
             self.ignore_frac = self.ignore_rows
         else:
             self.ignore_frac = 0
+        ini.setAttr('min_weight_ratio', self)
 
     def initParameters(self, ini):
         """
@@ -1051,8 +1053,9 @@ class MCSamples(Chains):
         if N_eff is None:
             N_eff = self._get1DNeff(par, param)
         h = kde.gaussian_kde_bandwidth_binned(bins, Neff=N_eff)
-        if h is None or h < 0.01 * N_eff ** (-1. / 5):
-            hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / (par.range_max - par.range_min)
+        bin_range = max(par.param_max, par.range_max) - min(par.param_min, par.range_min)
+        if h is None or h < 0.01 * N_eff ** (-1. / 5) * (par.range_max - par.range_min) / bin_range:
+            hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / bin_range
             logging.warning(
                 'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
                     par.name, h, N_eff, hnew))
