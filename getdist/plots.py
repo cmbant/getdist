@@ -1953,7 +1953,7 @@ class GetDistPlotter(object):
             self.plot_1d(roots1d, param, do_xlabel=i == plot_col - 1,
                          no_label_no_numbers=self.settings.no_triangle_axis_labels,
                          label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
-                         lims=param_limits.get(param.name,None))
+                         lims=param_limits.get(param.name, None))
             # set no_ylabel=True for now, can't see how to not screw up spacing with right-sided y label
             if self.settings.no_triangle_axis_labels:
                 self._spaceTicks(ax.xaxis, bounds=self._get_param_bounds(roots1d, param.name))
@@ -2211,7 +2211,8 @@ class GetDistPlotter(object):
         kwargs = {'fixed_color': color}
         return self.add_3d_scatter(root, [x, y], False, alpha, extra_thin, scatter_size, ax, **kwargs)
 
-    def add_3d_scatter(self, root, params, color_bar=True, alpha=1, extra_thin=1, scatter_size=None, ax=None, **kwargs):
+    def add_3d_scatter(self, root, params, color_bar=True, alpha=1, extra_thin=1, scatter_size=None,
+                       alpha_samples=False, ax=None, **kwargs):
         """
         Low-level function to add a 3D scatter plot to the current axes (or ax if specified).
 
@@ -2221,12 +2222,18 @@ class GetDistPlotter(object):
         :param alpha: The alpha to use.
         :param extra_thin: thin the weight one samples by this additional factor before plotting
         :param scatter_size: point size (default: settings.scatter_size)
+        :param alpha_samples: use all samples, giving each point alpha corresponding to relative weight
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
         :param kwargs: arguments for :func:`~GetDistPlotter.add_colorbar`
         :return: (xmin, xmax), (ymin, ymax) bounds for the axes.
         """
         params = self.get_param_array(root, params)
-        pts = self.sampleAnalyser.load_single_samples(root)
+        if alpha_samples:
+            mcsamples = self.sampleAnalyser.samplesForRoot(root)
+            weights, pts = mcsamples.weights, mcsamples.samples
+        else:
+            pts = self.sampleAnalyser.load_single_samples(root)
+            weights = 1
         names = self.paramNamesForRoot(root)
         fixed_color = kwargs.get('fixed_color')  # if actually just a plain scatter plot
         samples = []
@@ -2235,13 +2242,45 @@ class GetDistPlotter(object):
                 samples.append(param.getDerived(self._makeParamObject(names, pts)))
             else:
                 samples.append(pts[:, names.numberOfName(param.name)])
-        if extra_thin > 1:
-            samples = [pts[::extra_thin] for pts in samples]
-        self.last_scatter = (ax or plt.gca()).scatter(samples[0], samples[1], edgecolors='none',
-                                                      s=scatter_size or self.settings.scatter_size,
-                                                      c=fixed_color or samples[2],
-                                                      cmap=self.settings.colormap_scatter, alpha=alpha)
-        if not ax: plt.sci(self.last_scatter)
+        if alpha_samples:
+            # use most sampples, but alpha with weight
+            from matplotlib.cm import ScalarMappable
+            from matplotlib.colors import Normalize, to_rgb
+            max_weight = weights.max()
+            dup_fac = 4
+            filter = weights > max_weight / (100 * dup_fac)
+            x = samples[0][filter]
+            y = samples[1][filter]
+            z = samples[2][filter]
+            # split up high-weighted samples into multiple copies
+            weights = weights[filter] / max_weight * dup_fac
+            intweights = np.ceil(weights)
+            thin_ix = mcsamples.thin_indices(1, intweights)
+            x = x[thin_ix]
+            y = y[thin_ix]
+            z = z[thin_ix]
+            weights /= intweights
+            weights = weights[thin_ix]
+            map = ScalarMappable(Normalize(z.min(), z.max()), self.settings.colormap_scatter)
+            map.set_array(z)
+            cols = map.to_rgba(z)
+            if fixed_color:
+                cols[:, :3] = to_rgb(fixed_color)
+            cols[:, 3] = weights / dup_fac * alpha
+            alpha = None
+            self.last_scatter = map
+            scat = (ax or plt.gca()).scatter(x, y, edgecolors='none',
+                                             s=scatter_size or self.settings.scatter_size,
+                                             c=cols, alpha=alpha)
+        else:
+            if extra_thin > 1:
+                samples = [pts[::extra_thin] for pts in samples]
+            self.last_scatter = scat = (ax or plt.gca()).scatter(samples[0], samples[1], edgecolors='none',
+                                                                 s=scatter_size or self.settings.scatter_size,
+                                                                 c=fixed_color or samples[2],
+                                                                 cmap=self.settings.colormap_scatter, alpha=alpha)
+
+        if not ax: plt.sci(scat)
         if color_bar and not fixed_color: self.last_colorbar = self.add_colorbar(params[2], mappable=self.last_scatter,
                                                                                  ax=ax, **kwargs)
         xbounds = [min(samples[0]), max(samples[0])]
@@ -2281,7 +2320,7 @@ class GetDistPlotter(object):
         self.plot_3d(roots, [param1, param2], False, line_offset, add_legend_proxy, **kwargs)
 
     def plot_3d(self, roots, params=None, params_for_plots=None, color_bar=True, line_offset=0,
-                add_legend_proxy=True, **kwargs):
+                add_legend_proxy=True, alpha_samples=False, **kwargs):
         """
         Make a 2D scatter plot colored by the value of a third parameter (a 3D plot).
 
@@ -2293,6 +2332,7 @@ class GetDistPlotter(object):
         :param color_bar: True if should include a color bar
         :param line_offset: The line index offset for added contours
         :param add_legend_proxy: True if should add a legend proxy
+        :param alpha_samples: if True, use alternative scatter style where all samples are plotted alphaed by their weights
         :param kwargs: additional optional arguments:
 
                 * **filled**: True for filled contours for second and later items in roots
@@ -2325,7 +2365,8 @@ class GetDistPlotter(object):
             kwargs = kwargs.copy()
             kwargs['filled'] = kwargs['filled_compare']
         contour_args = self._make_contour_args(len(roots) - 1, **kwargs)
-        xlims, ylims = self.add_3d_scatter(roots[0], params_for_plots[0], color_bar=color_bar, **kwargs)
+        xlims, ylims = self.add_3d_scatter(roots[0], params_for_plots[0], color_bar=color_bar,
+                                           alpha_samples=alpha_samples, **kwargs)
         for i, root in enumerate(roots[1:]):
             params = params_for_plots[i + 1]
             res = self.add_2d_contours(root, params[0], params[1], i + line_offset, add_legend_proxy=add_legend_proxy,

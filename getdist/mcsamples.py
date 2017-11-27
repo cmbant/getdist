@@ -420,8 +420,8 @@ class MCSamples(Chains):
         Make file of weight-1 samples by choosing samples
         with probability given by their weight.
 
-        :param filename: The filename to write to, Leave empty if no output file is needed
-        :param single_thin: factor to thin by; if not set generates as many samples as it can
+        :param filename: The filename to write to, leave empty if no output file is needed
+        :param single_thin: factor to thin by; if not set generates as many samples as it can up to self.max_scatter_points
         :return: numpy array of selected weight-1 samples
         """
         if single_thin is None:

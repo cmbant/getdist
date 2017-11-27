@@ -34,7 +34,7 @@ try:
     except ImportError:
         print("Missing Resources_pyside.py: Run script update_resources.sh")
 except ImportError:
-    print("Can't import PySide modules, install PySide with 'pip install PySide'.")
+    print("Can't import PySide modules, install PySide, using anaconda and 'conda install pyside' may be easiest")
     sys.exit()
 
 from paramgrid import batchjob, gridconfig
