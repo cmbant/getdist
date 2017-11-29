@@ -34,7 +34,12 @@ try:
     except ImportError:
         print("Missing Resources_pyside.py: Run script update_resources.sh")
 except ImportError:
-    print("Can't import PySide modules, install PySide, using anaconda and 'conda install pyside' may be easiest")
+    print("Can't import PySide modules, install PySide")
+    if 'conda' in sys.version:
+        print("To install use 'conda install pyside' or 'conda install -c conda-forge pyside'")
+    else:
+        print("Use 'pip install PySide', or to avoid compile errors install pre-build package using apt get install.")
+        print("Alternatively switch to using Anaconda python distribution and get it with that.")
     sys.exit()
 
 from paramgrid import batchjob, gridconfig
@@ -739,7 +744,8 @@ class MainWindow(QMainWindow):
             "\nMatplotlib: " + matplotlib.__version__ +
             "\nSciPy: " + scipy.__version__ +
             "\nNumpy: " + np.__version__ +
-            "\nPySide: " + PySide.__version__)
+            "\nPySide: " + PySide.__version__ +
+            "\nQt (PySide): " + PySide.QtCore.__version__)
 
     def getDirectories(self):
         return [self.listDirectories.itemText(i) for i in range(self.listDirectories.count())]
@@ -1166,7 +1172,8 @@ class MainWindow(QMainWindow):
             width = self.plotWidget.width() * 0.75
 
             def setSizeQT(sz):
-                self.plotter.settings.setWithSubplotSize(max(2.0, sz / 80.))
+                self.plotter.settings.setWithSubplotSize(max(1.5, sz / 80.))
+                if sz < 2: self.plotter.settings.l
 
             def setSizeForN(n):
                 setSizeQT(min(height, width) / max(n, 2))

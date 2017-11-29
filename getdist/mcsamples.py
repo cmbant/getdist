@@ -2205,6 +2205,22 @@ class MCSamples(Chains):
 
         return cust2DPlots
 
+    def addDerived(self, paramVec, name, label='', comment='', range=None):
+        """
+        Adds a new derived parameter
+
+        :param paramVec: The vector of parameter values to add. For example a combination of parameter arrays from MCSamples.getParams()
+        :param name: The name for the new parameter
+        :param label: optional latex label for the parameter
+        :param comment: optional comment describing the parameter
+        :param range: if specified, a tuple of min, max values for the new parameter hard prior bounds (either can be None for one-side bound)
+        :return: The added parameter's :class:`~.paramnames.ParamInfo` object
+        """
+
+        if range is not None:
+            self.ranges.setRange(name, range)
+        return super(MCSamples, self).addDerived(paramVec, name, label=label, comment=comment)
+
     def getParamSampleDict(self, ix):
         """
         Returns a dictionary of parameter values for sample number ix
