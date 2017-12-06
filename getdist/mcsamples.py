@@ -80,7 +80,8 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
         try:
             with open(cachefile, 'rb') as inp:
                 cache = pickle.load(inp)
-            if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows:
+            if cache.version == pickle_version and samples.ignore_rows == cache.ignore_rows \
+                    and samples.min_weight_ratio == cache.min_weight_ratio:
                 changed = len(samples.contours) != len(cache.contours) or \
                           np.any(np.array(samples.contours) != np.array(cache.contours))
                 cache.updateSettings(ini=ini, settings=settings, doUpdate=changed)
@@ -263,6 +264,7 @@ class MCSamples(Chains):
             self.ignore_frac = self.ignore_rows
         else:
             self.ignore_frac = 0
+        ini.setAttr('min_weight_ratio', self)
 
     def initParameters(self, ini):
         """
@@ -422,8 +424,8 @@ class MCSamples(Chains):
         Make file of weight-1 samples by choosing samples
         with probability given by their weight.
 
-        :param filename: The filename to write to, Leave empty if no output file is needed
-        :param single_thin: factor to thin by; if not set generates as many samples as it can
+        :param filename: The filename to write to, leave empty if no output file is needed
+        :param single_thin: factor to thin by; if not set generates as many samples as it can up to self.max_scatter_points
         :return: numpy array of selected weight-1 samples
         """
         if single_thin is None:
@@ -1055,8 +1057,9 @@ class MCSamples(Chains):
         if N_eff is None:
             N_eff = self._get1DNeff(par, param)
         h = kde.gaussian_kde_bandwidth_binned(bins, Neff=N_eff)
-        if h is None or h < 0.01 * N_eff ** (-1. / 5):
-            hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / (par.range_max - par.range_min)
+        bin_range = max(par.param_max, par.range_max) - min(par.param_min, par.range_min)
+        if h is None or h < 0.01 * N_eff ** (-1. / 5) * (par.range_max - par.range_min) / bin_range:
+            hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / bin_range
             logging.warning(
                 'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
                     par.name, h, N_eff, hnew))
@@ -1274,6 +1277,8 @@ class MCSamples(Chains):
                - **num_bins**
         :return: A :class:`~.densities.Density1D` instance
         """
+
+        if self.needs_update: self.updateBaseStatistics()
         j = self._parAndNumber(j)[0]
         if j is None: return None
 
@@ -2206,6 +2211,22 @@ class MCSamples(Chains):
             cust2DPlots.append([self.parName(x), self.parName(y)])
 
         return cust2DPlots
+
+    def addDerived(self, paramVec, name, label='', comment='', range=None):
+        """
+        Adds a new derived parameter
+
+        :param paramVec: The vector of parameter values to add. For example a combination of parameter arrays from MCSamples.getParams()
+        :param name: The name for the new parameter
+        :param label: optional latex label for the parameter
+        :param comment: optional comment describing the parameter
+        :param range: if specified, a tuple of min, max values for the new parameter hard prior bounds (either can be None for one-side bound)
+        :return: The added parameter's :class:`~.paramnames.ParamInfo` object
+        """
+
+        if range is not None:
+            self.ranges.setRange(name, range)
+        return super(MCSamples, self).addDerived(paramVec, name, label=label, comment=comment)
 
     def getParamSampleDict(self, ix):
         """

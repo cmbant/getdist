@@ -23,6 +23,7 @@ def get_long_description():
     with open('README.rst') as f:
         return f.read()
 
+
 setup(name='GetDist',
       version=find_version(),
       description='GetDist Monte Carlo sample analysis, plotting and GUI',
@@ -38,8 +39,8 @@ setup(name='GetDist',
           'matplotlib',
           'six',
           "scipy (>=0.11.0)",
-          'PySide',
           'pyyaml'],
+      # PySide is needed for the GUI
       #  optional (for faster file read)
       # 'pandas (>=0.14.0)'
       classifiers=[

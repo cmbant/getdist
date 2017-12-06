@@ -148,7 +148,7 @@ class WeightedSamples(object):
     """
 
     def __init__(self, filename=None, ignore_rows=0, samples=None, weights=None, loglikes=None, name_tag=None,
-                 label=None, files_are_chains=True):
+                 label=None, files_are_chains=True, min_weight_ratio=1e-30):
         """
         :param filename: A filename of a plain text file to load from
         :param ignore_rows:
@@ -160,9 +160,11 @@ class WeightedSamples(object):
         :param name_tag: The name of this instance.
         :param label: latex label for these samples
         :param files_are_chains: use False if the samples file (filename) does not start with two columns giving weights and -log(Likelihoods)
+        :param min_weight_ratio: remove samples with weight less than min_weight_ratio times the maximum weight
         """
 
         self.precision = '%.8e'
+        self.min_weight_ratio = min_weight_ratio
         if filename:
             cols = loadNumpyTxt(filename, skiprows=ignore_rows)
             self.setColData(cols, are_chains=files_are_chains)
@@ -201,13 +203,14 @@ class WeightedSamples(object):
         """
         return self.name_tag
 
-    def setSamples(self, samples, weights=None, loglikes=None):
+    def setSamples(self, samples, weights=None, loglikes=None, min_weight_ratio=None):
         """
         Sets the samples from numpy arrays
 
         :param samples: The samples values, n_samples x n_parameters numpy array, or can be a list of parameter vectors
         :param weights: Array of weights for each sample. Defaults to 1 for all samples if unspecified.
         :param loglikes: Array of -log(Likelihood) values for each sample
+        :param min_weight_ratio: remove samples with weight less than min_weight_ratio of the maximum
         """
         self.weights = weights
         self.loglikes = loglikes
@@ -220,6 +223,9 @@ class WeightedSamples(object):
             self.samples = samples
             self.n = self.samples.shape[1]
             self.numrows = self.samples.shape[0]
+            if min_weight_ratio is None: min_weight_ratio = self.min_weight_ratio
+            if min_weight_ratio is not None and min_weight_ratio >= 0:
+                self.setMinWeightRatio(min_weight_ratio)
         self._weightsChanged()
 
     def changeSamples(self, samples):
@@ -410,7 +416,7 @@ class WeightedSamples(object):
         kernel_std = (scale or self.std(d)) * h
         # Dependence is from very correlated points due to MCMC rejections; shouldn't need more than about correlation length
         if maxoff is None: maxoff = int(self.getCorrelationLength(d, weight_units=False) * 1.5) + 4
-        maxoff = min(maxoff, self.numrows // 10)  #can get problems otherwise if weights are all very large
+        maxoff = min(maxoff, self.numrows // 10)  # can get problems otherwise if weights are all very large
         uncorr_len = self.numrows // 2
         UncorrTerm = 0
         nav = 0
@@ -692,7 +698,7 @@ class WeightedSamples(object):
         :param factor: The factor to thin by
         """
         thin_ix = self.thin_indices(factor)
-        self.setSamples(self.samples[thin_ix, :], loglikes=self.loglikes[thin_ix])
+        self.setSamples(self.samples[thin_ix, :], loglikes=self.loglikes[thin_ix], min_weight_ratio=-1)
 
     def filter(self, where):
         """
@@ -700,7 +706,7 @@ class WeightedSamples(object):
 
         :param where: list of sample indices to keep, or boolean array filter (e.g. x>5 to keep only samples where x>5)
         """
-        self.setSamples(self.samples[where, :], self.weights[where], self.loglikes[where])
+        self.setSamples(self.samples[where, :], self.weights[where], self.loglikes[where], min_weight_ratio=-1)
 
     def reweightAddingLogLikes(self, logLikes):
         """
@@ -732,7 +738,19 @@ class WeightedSamples(object):
         Removes samples with zero weight
 
         """
-        self.filter(self.weights == 0)
+        self.filter(self.weights > 0)
+
+    def setMinWeightRatio(self, min_weight_ratio=1e-30):
+        """
+        Removes samples with weight less than min_weight_ratio times the maximum weight
+
+        :param min_weight_ratio: minimum ratio to max to exclude
+        """
+        if self.weights is not None and min_weight_ratio >= 0:
+            max_weight = np.max(self.weights)
+            min_weight = np.min(self.weights)
+            if min_weight < max_weight * min_weight_ratio:
+                self.filter(self.weights > max_weight * min_weight_ratio)
 
     def deleteFixedParams(self):
         """
@@ -811,7 +829,6 @@ class Chains(WeightedSamples):
                 paramNamesFile = root + '.paramnames'
             elif os.path.exists(root + mid + 'full.yaml'):
                 paramNamesFile = root + mid + 'full.yaml'
-        self.needs_update = True
         self.chains = None
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
@@ -835,6 +852,7 @@ class Chains(WeightedSamples):
             self.paramNames = ParamNames(default=self.n)
         if self.paramNames:
             self._getParamIndices()
+        self.needs_update = True
 
     def filter(self, where):
         """
@@ -972,7 +990,8 @@ class Chains(WeightedSamples):
         self.name_tag = self.name_tag or os.path.basename(root)
         for fname in files:
             if print_load_details: print(fname)
-            self.chains.append(WeightedSamples(fname, ignore_lines or self.ignore_lines))
+            self.chains.append(
+                WeightedSamples(fname, ignore_lines or self.ignore_lines, min_weight_ratio=self.min_weight_ratio))
         if len(self.chains) == 0:
             raise WeightedSampleError('loadChains - no chains found for ' + root)
         if self.paramNames is None:
@@ -1030,7 +1049,7 @@ class Chains(WeightedSamples):
         self.chain_offsets = np.cumsum(np.array([0] + [chain.samples.shape[0] for chain in self.chains]))
         weights = np.hstack((chain.weights for chain in self.chains))
         loglikes = np.hstack((chain.loglikes for chain in self.chains))
-        self.setSamples(np.vstack((chain.samples for chain in self.chains)), weights, loglikes)
+        self.setSamples(np.vstack((chain.samples for chain in self.chains)), weights, loglikes, min_weight_ratio=-1)
         self.chains = None
         self.needs_update = True
         return self
