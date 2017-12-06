@@ -377,7 +377,7 @@ class MCSamples(Chains):
         self.loadChains(self.root, chain_files)
 
         if self.ignore_frac and (not self.jobItem or
-                                     (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
+                                 (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
             if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
         else:
@@ -686,8 +686,8 @@ class MCSamples(Chains):
             PCAtext += '%4i' % (j + 1)
             for i in range(n):
                 PCAtext += '%8.3f' % (
-                    np.sum(self.weights * PCdata[:, i]
-                           * (self.samples[:, j] - self.means[j]) / self.sddev[j]) / self.norm)
+                        np.sum(self.weights * PCdata[:, i]
+                               * (self.samples[:, j] - self.means[j]) / self.sddev[j]) / self.norm)
 
             PCAtext += '   (%s)\n' % (self.parLabel(j))
 
@@ -806,7 +806,7 @@ class MCSamples(Chains):
             # Return the rms ([change in upper/lower quantile]/[standard deviation])
             # when data split into 2, 3,.. sets
             lines += "Split tests: rms_n([delta(upper/lower quantile)]/sd) n={2,3,4}, limit=%.0f%%:\n" % (
-                100 * self.converge_test_limit)
+                    100 * self.converge_test_limit)
             lines += "i.e. mean sample splitting change in the quantiles in units of the st. dev.\n"
             lines += "\n"
 
@@ -1102,6 +1102,14 @@ class MCSamples(Chains):
         has_limits = parx.has_limits or pary.has_limits
         do_correlated = not parx.has_limits or not pary.has_limits
 
+        def fallback_widths():
+            logging.warning('2D kernel density bandwidth optimizer failed for %s, %s. Using fallback width.' % (
+                parx.name, pary.name))
+            c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
+            hx = parx.sigma_range / N_eff ** (1. / 6)
+            hy = pary.sigma_range / N_eff ** (1. / 6)
+            return hx, hy, c
+
         if min_corr < abs(corr) <= self.max_corr_2D and do_correlated:
             # 'shear' the data so fairly uncorrelated, making sure shear keeps any bounds on one parameter unchanged
             # the binning step will rescale to make roughly isotropic as assumed by the 2D kernel optimizer psi_{ab} derivatives
@@ -1129,16 +1137,19 @@ class MCSamples(Chains):
             bin1, R1 = kde.bin_samples(p1, nbins=base_fine_bins_2D, range_min=imin, range_max=imax)
             bin2, R2 = kde.bin_samples(p2, nbins=base_fine_bins_2D)
             rotbins, _ = self._make2Dhist(bin1, bin2, base_fine_bins_2D, base_fine_bins_2D)
-            opt = kde.KernelOptimizer2D(rotbins, N_eff, 0, do_correlation=not has_limits)
-            hx, hy, c = opt.get_h()
-            hx *= R1
-            hy *= R2
-            kernelC = S.dot(np.array([[hx ** 2, hx * hy * c], [hx * hy * c, hy ** 2]])).dot(S.T)
-            hx, hy, c = np.sqrt(kernelC[0, 0]), np.sqrt(kernelC[1, 1]), kernelC[0, 1] / np.sqrt(
-                kernelC[0, 0] * kernelC[1, 1])
-            if pary.has_limits:
-                hx, hy = hy, hx
-                # print 'derotated pars', hx, hy, c
+            try:
+                opt = kde.KernelOptimizer2D(rotbins, N_eff, 0, do_correlation=not has_limits)
+                hx, hy, c = opt.get_h()
+                hx *= R1
+                hy *= R2
+                kernelC = S.dot(np.array([[hx ** 2, hx * hy * c], [hx * hy * c, hy ** 2]])).dot(S.T)
+                hx, hy, c = np.sqrt(kernelC[0, 0]), np.sqrt(kernelC[1, 1]), kernelC[0, 1] / np.sqrt(
+                    kernelC[0, 0] * kernelC[1, 1])
+                if pary.has_limits:
+                    hx, hy = hy, hx
+                    # print 'derotated pars', hx, hy, c
+            except ValueError:
+                hx, hy, c = fallback_widths()
         elif abs(corr) > self.max_corr_2D or not do_correlated and corr > 0.8:
             c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
             hx = parx.sigma_range / N_eff ** (1. / 6)
@@ -1150,11 +1161,7 @@ class MCSamples(Chains):
                 hx *= rangex
                 hy *= rangey
             except ValueError:
-                logging.warning('2D kernel density bandwidth optimizer failed for %s, %s. Using fallback width.' % (
-                    parx.name, pary.name))
-                c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
-                hx = parx.sigma_range / N_eff ** (1. / 6)
-                hy = pary.sigma_range / N_eff ** (1. / 6)
+                hx, hy, c = fallback_widths()
 
         if mult_bias_correction_order is None: mult_bias_correction_order = self.mult_bias_correction_order
         logging.debug('hx/sig, hy/sig, corr =%s, %s, %s', hx / parx.err, hy / pary.err, c)
@@ -1572,6 +1579,7 @@ class MCSamples(Chains):
 
         # smooth_x and smooth_y should be in rotated bin units
         if smooth_scale_2D < 0:
+
             rx, ry, corr = self.getAutoBandwidth2D(histbins, parx, pary, j, j2, corr, xbinmax - xbinmin,
                                                    ybinmax - ybinmin,
                                                    base_fine_bins_2D,
@@ -2159,7 +2167,7 @@ class MCSamples(Chains):
                 if not marge_limits_bot and not marge_limits_top:
                     # Two tail, check if limits are at very different density
                     if (math.fabs(density1D.Prob(tail_confid_top) -
-                                      density1D.Prob(tail_confid_bot)) < self.credible_interval_threshold):
+                                  density1D.Prob(tail_confid_bot)) < self.credible_interval_threshold):
                         tail_limit_top = tail_confid_top
                         tail_limit_bot = tail_confid_bot
 
