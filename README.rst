@@ -197,3 +197,11 @@ This GetDist package is general, but is mainly developed for analysing chains fr
 No need to install this package separately if you have a full CosmoMC installation.
 Detailed help is available for plotting Planck chains
 and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmomc/readme_python.html>`_.
+
+===================
+
+.. raw:: html
+
+    <a href="http://www.sussex.ac.uk/astronomy/"><img src="https://cdn.cosmologist.info/antony/Sussex.png" height="170px"></a>
+    <a href="http://erc.europa.eu/"><img src="https://erc.europa.eu/sites/default/files/content/erc_banner-vertical.jpg" height="200px"></a>
+    
