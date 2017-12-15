@@ -176,7 +176,9 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="GetDist-iPython-Plot-Gallery">GetDist iPython Plot Gallery<a class="anchor-link" href="#GetDist-iPython-Plot-Gallery">&#182;</a></h1>
+<h1 id="GetDist-Jupyter-Notebook-Plot-Gallery">GetDist Jupyter Notebook Plot Gallery<a class="anchor-link" href="#GetDist-Jupyter-Notebook-Plot-Gallery">&#182;</a></h1><p>Demonstrates the types of plot you can make with <a href="https://getdist.readthedocs.org">GetDist</a> and how to make them. 
+You can also <a href="https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb">run this notebook online</a>.</p>
+
 </div>
 </div>
 </div>
@@ -188,8 +190,8 @@ div#notebook {
 <div class=" highlight hl-ipython2"><pre><span></span><span class="c1">#Show plots inline, and load main getdist plot module and samples class</span>
 <span class="o">%</span><span class="k">matplotlib</span> inline
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="s1">r&#39;c:\work\dist\git\getdist&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">os</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span><span class="s1">&#39;..&#39;</span><span class="p">)))</span>
 <span class="kn">from</span> <span class="nn">getdist</span> <span class="kn">import</span> <span class="n">plots</span><span class="p">,</span> <span class="n">MCSamples</span>
 <span class="kn">import</span> <span class="nn">getdist</span><span class="o">,</span> <span class="nn">IPython</span>
 <span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">plt</span>
@@ -208,7 +210,7 @@ div#notebook {
 
 <div class="output_area"><div class="prompt"></div>
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>GetDist Version: 0.2.8.2, Matplotlib version: 2.0.2
+<pre>GetDist Version: 0.2.8.3, Matplotlib version: 2.0.2
 </pre>
 </div>
 </div>
