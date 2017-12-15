@@ -11,6 +11,8 @@ GetDist
         :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
    :target: https://getdist.readthedocs.org/en/latest
+.. image:: https://mybinder.org/badge.svg
+  :target: https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb
 
 Description
 ============
@@ -26,6 +28,7 @@ from Markov Chain Monte Carlo (MCMC).
 * **LaTeX tables** for marginalized 1D constraints
 
 See the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_
+(`run online <https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb>`_ 
 and `GetDist Documentation <http://getdist.readthedocs.org/en/latest/index.html>`_.
 
 
