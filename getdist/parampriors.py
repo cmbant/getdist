@@ -2,7 +2,7 @@ from importlib import import_module
 import os
 import numpy as np
 
-from new_format_tools import load_info_params, is_sampled_param, is_derived_param
+from getdist.yaml_format_tools import load_info_params, is_sampled_param, is_derived_param
 
 class ParamBounds(object):
     """
