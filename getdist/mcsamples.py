@@ -184,6 +184,9 @@ class MCSamples(Chains):
 
         self.rootdirname = ""
         self.indep_thin = 0
+        if 'ignore_rows' in kwargs:
+            if settings is None: settings = {}
+            settings['ignore_rows'] = kwargs['ignore_rows']
         self.ignore_rows = float(kwargs.get('ignore_rows', 0))
         self.subplot_size_inch = 4.0
         self.subplot_size_inch2 = self.subplot_size_inch
@@ -212,6 +215,8 @@ class MCSamples(Chains):
                 self.ignore_lines = 0
         else:
             self.properties = None
+        if self.samples is not None or self.chains is not None:
+            self.removeBurnFraction(self.ignore_rows)
 
     def setRanges(self, ranges):
         """
