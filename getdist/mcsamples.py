@@ -215,7 +215,7 @@ class MCSamples(Chains):
                 self.ignore_lines = 0
         else:
             self.properties = None
-        if self.samples is not None or self.chains is not None:
+        if self.ignore_rows and self.samples is not None or self.chains is not None:
             self.removeBurnFraction(self.ignore_rows)
 
     def setRanges(self, ranges):
