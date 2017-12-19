@@ -452,7 +452,7 @@ class MCSampleAnalysis(object):
         if os.path.isabs(root):
             # deal with just-folder prefix
             if root.endswith("/"):
-                root = os.path.basename(root[:-1])+"/"
+                root = os.path.basename(root[:-1]) + "/"
             else:
                 root = os.path.basename(root)
         if root in self.mcsamples and cache: return self.mcsamples[root]

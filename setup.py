@@ -38,8 +38,7 @@ setup(name='GetDist',
           'numpy',
           'matplotlib',
           'six',
-          "scipy (>=0.11.0)",
-          'pyyaml'],
+          "scipy (>=0.11.0)"],
       # PySide is needed for the GUI
       #  optional (for faster file read)
       # 'pandas (>=0.14.0)'

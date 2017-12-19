@@ -6,7 +6,7 @@ from new_format_tools import load_info_params, is_sampled_param, is_derived_para
 
 class ParamBounds(object):
     """
-    Class for holding list of parameter bounds (e.g. for plotting, or hard priors). 
+    Class for holding list of parameter bounds (e.g. for plotting, or hard priors).
     A limit is None if not specified, denoted by 'N' if read from a string or file
 
     :ivar names: list of parameter names
@@ -34,11 +34,11 @@ class ParamBounds(object):
                         self.setRange(strings[0], strings[1:])
         elif extension in ('.yaml', '.yml'):
             info_params = load_info_params(fileName)
-            for p, info in info_params.iteritems():
+            for p, info in info_params.items():
                 # Sampled
                 if is_sampled_param(info):
                     info_lims = dict([[l,info["prior"].get(l)]
-                                      for l in "min", "max", "loc", "scale"])
+                                      for l in ["min", "max", "loc", "scale"]])
                     if info_lims["min"] != None or info_lims["max"] != None:
                         lims = [info["prior"].get("min"), info["prior"].get("max")]
                     elif info_lims["loc"] != None or info_lims["scale"] != None:
