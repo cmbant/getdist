@@ -11,6 +11,8 @@ GetDist
         :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
    :target: https://getdist.readthedocs.org/en/latest
+.. image:: https://mybinder.org/badge.svg
+  :target: https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb
 
 Description
 ============
@@ -26,6 +28,7 @@ from Markov Chain Monte Carlo (MCMC).
 * **LaTeX tables** for marginalized 1D constraints
 
 See the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_
+(`run online <https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb>`_) 
 and `GetDist Documentation <http://getdist.readthedocs.org/en/latest/index.html>`_.
 
 
@@ -197,3 +200,11 @@ This GetDist package is general, but is mainly developed for analysing chains fr
 No need to install this package separately if you have a full CosmoMC installation.
 Detailed help is available for plotting Planck chains
 and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmomc/readme_python.html>`_.
+
+===================
+
+.. raw:: html
+
+    <a href="http://www.sussex.ac.uk/astronomy/"><img src="https://cdn.cosmologist.info/antony/Sussex.png" height="170px"></a>
+    <a href="http://erc.europa.eu/"><img src="https://erc.europa.eu/sites/default/files/content/erc_banner-vertical.jpg" height="200px"></a>
+    

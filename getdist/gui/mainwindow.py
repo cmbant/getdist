@@ -306,9 +306,13 @@ class MainWindow(QMainWindow):
 
         self.listParametersX = QListWidget(self.selectWidget)
         self.listParametersX.clear()
+        self.connect(self.listParametersX, SIGNAL("itemChanged(QListWidgetItem *)"),
+                     self.itemCheckChange)
 
         self.listParametersY = QListWidget(self.selectWidget)
         self.listParametersY.clear()
+        self.connect(self.listParametersY, SIGNAL("itemChanged(QListWidgetItem *)"),
+                     self.itemCheckChange)
 
         self.selectAllX = QCheckBox("Select All", self.selectWidget)
         self.selectAllX.setCheckState(Qt.Unchecked)
@@ -328,6 +332,10 @@ class MainWindow(QMainWindow):
         self.checkShade = QCheckBox("Shaded", self.selectWidget)
         self.checkShade.setEnabled(False)
 
+        self.checkInsideLegend = QCheckBox("Axis legend", self.selectWidget)
+        self.checkInsideLegend.setCheckState(Qt.Unchecked)
+        self.checkInsideLegend.setVisible(False)
+
         self.toggleColor = QRadioButton("Color by:")
         self.connect(self.toggleColor, SIGNAL("toggled(bool)"),
                      self.statusPlotType)
@@ -340,6 +348,8 @@ class MainWindow(QMainWindow):
 
         self.trianglePlot = QCheckBox("Triangle Plot", self.selectWidget)
         self.trianglePlot.setCheckState(Qt.Unchecked)
+        self.connect(self.trianglePlot, SIGNAL("toggled(bool)"),
+                     self.statusTriangle)
 
         self.pushButtonPlot = QPushButton("Make plot", self.selectWidget)
         self.connect(self.pushButtonPlot, SIGNAL("clicked()"), self.plotData)
@@ -360,7 +370,8 @@ class MainWindow(QMainWindow):
         layoutTop.addWidget(self.selectAllY, 5, 2, 1, 2)
         layoutTop.addWidget(self.listParametersX, 6, 0, 5, 2)
         layoutTop.addWidget(self.listParametersY, 6, 2, 1, 2)
-        layoutTop.addWidget(self.toggleFilled, 7, 2, 1, 2)
+        layoutTop.addWidget(self.toggleFilled, 7, 2, 1, 1)
+        layoutTop.addWidget(self.checkInsideLegend, 7, 3, 1, 2)
         layoutTop.addWidget(self.toggleLine, 8, 2, 1, 1)
         layoutTop.addWidget(self.checkShade, 8, 3, 1, 1)
 
@@ -1056,6 +1067,15 @@ class MainWindow(QMainWindow):
         self.checkShade.setEnabled(self.toggleLine.isChecked())
         self.comboBoxColor.setEnabled(self.toggleColor.isChecked())
 
+    def statusTriangle(self, checked):
+        self.checkInsideLegend.setVisible(not checked and len(self.getXParams()) == 1 and len(self.getYParams()) == 1)
+        self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
+
+    def itemCheckChange(self, item):
+        self.checkInsideLegend.setVisible(len(self.getXParams()) == 1 and len(
+            self.getYParams()) == 1 and self.trianglePlot.checkState() != Qt.Checked)
+        self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
+
     def _updateComboBoxColor(self, listOfParams):
         if self.rootdirname and os.path.isdir(self.rootdirname):
             param_old = str(self.comboBoxColor.currentText())
@@ -1244,9 +1264,11 @@ class MainWindow(QMainWindow):
 
                 else:
                     # 2D plot
+                    single = False
                     if len(items_x) == 1 and len(items_y) == 1:
                         pairs = [[items_x[0], items_y[0]]]
                         setSizeQT(min(height, width))
+                        single = self.checkInsideLegend.checkState() == Qt.Checked
                     elif len(items_x) == 1 and len(items_y) > 1:
                         item_x = items_x[0]
                         pairs = list(zip([item_x] * len(items_y), items_y))
@@ -1259,12 +1281,22 @@ class MainWindow(QMainWindow):
                         pairs = []
                     if filled or line:
                         actionText = '2D plot'
-                        script += "pairs = %s\n" % pairs
                         logging.debug("2D plot with pairs = %s" % str(pairs))
-                        self.plotter.plots_2d(roots, param_pairs=pairs, filled=filled, shaded=shaded)
+                        if single:
+                            self.plotter.make_figure(1)
+                            self.plotter.plot_2d(roots, pairs[0], filled=filled, shaded=shaded)
+                            script += "g.plot_2d(roots, %s, filled=%s, shaded=%s)\n" % (
+                                pairs[0], str(filled), str(shaded))
+                            labels = self.plotter._default_legend_labels(None, roots)
+                            self.plotter.add_legend(labels)
+                            script += 'g.add_legend(%s)\n' % labels
+                        else:
+                            script += "pairs = %s\n" % pairs
+                            self.plotter.plots_2d(roots, param_pairs=pairs, filled=filled, shaded=shaded)
+                            script += "g.plots_2d(roots, param_pairs=pairs, filled=%s, shaded=%s)\n" % (
+                                str(filled), str(shaded))
+
                         self.updatePlot()
-                        script += "g.plots_2d(roots, param_pairs=pairs, filled=%s, shaded=%s)\n" % (
-                            str(filled), str(shaded))
                     elif color:
                         # 3D plot
                         sets = [list(pair) + [color_param] for pair in pairs]

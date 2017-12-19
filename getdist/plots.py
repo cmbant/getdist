@@ -939,11 +939,13 @@ class GetDistPlotter(object):
                 else:
                     cols = color
             levels = sorted(np.append([density.P.max() + 1], contour_levels))
-            CS = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **kwargs)
+            cont_args = dict(kwargs)
+            if 'color' in cont_args: del cont_args['color']
+            CS = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **cont_args)
             if proxyIx >= 0: self.contours_added[proxyIx] = (plt.Rectangle((0, 0), 1, 1, fc=CS.tcolors[-1][0]))
             ax.contour(density.x, density.y, density.P, levels[:1], colors=CS.tcolors[-1],
                        linewidths=self.settings.lw_contour, alpha=alpha * self.settings.alpha_factor_contour_lines,
-                       **kwargs)
+                       **cont_args)
         else:
             args = self._get_line_styles(plotno, **kwargs)
             # if color is None: color = self._get_color(plotno, **kwargs)
@@ -1451,7 +1453,7 @@ class GetDistPlotter(object):
         if self.settings.fig_width_inch is not None:
             self.fig = plt.figure(figsize=(self.settings.fig_width_inch,
                                            (self.settings.fig_width_inch * self.plot_row * ystretch) / (
-                                               self.plot_col * xstretch)))
+                                                   self.plot_col * xstretch)))
         else:
             self.fig = plt.figure(figsize=(self.settings.subplot_size_inch * self.plot_col * xstretch,
                                            self.settings.subplot_size_inch * self.plot_row * ystretch))
@@ -1620,7 +1622,7 @@ class GetDistPlotter(object):
                     frac = self.settings.legend_frac_subplot_margin + nrows * self.settings.legend_frac_subplot_line
                 else:
                     frac = self.settings.legend_frac_subplot_margin + (
-                                                                          nrows * self.settings.legend_fontsize * 0.015) / self.settings.subplot_size_inch
+                            nrows * self.settings.legend_fontsize * 0.015) / self.settings.subplot_size_inch
                 if self.plot_row == 1: frac = min(frac, 0.5)
                 if 'upper' in legend_loc:
                     plt.subplots_adjust(top=1 - frac / self.plot_row)

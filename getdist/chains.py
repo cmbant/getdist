@@ -698,7 +698,8 @@ class WeightedSamples(object):
         :param factor: The factor to thin by
         """
         thin_ix = self.thin_indices(factor)
-        self.setSamples(self.samples[thin_ix, :], loglikes=self.loglikes[thin_ix], min_weight_ratio=-1)
+        self.setSamples(self.samples[thin_ix, :], loglikes=None if self.loglikes is None else self.loglikes[thin_ix],
+                        min_weight_ratio=-1)
 
     def filter(self, where):
         """
@@ -706,7 +707,8 @@ class WeightedSamples(object):
 
         :param where: list of sample indices to keep, or boolean array filter (e.g. x>5 to keep only samples where x>5)
         """
-        self.setSamples(self.samples[where, :], self.weights[where], self.loglikes[where], min_weight_ratio=-1)
+        self.setSamples(self.samples[where, :], self.weights[where],
+                        None if self.loglikes is None else self.loglikes[where], min_weight_ratio=-1)
 
     def reweightAddingLogLikes(self, logLikes):
         """
@@ -819,6 +821,7 @@ class Chains(WeightedSamples):
         :param kwargs: extra options for :class:`~.chains.WeightedSamples`'s constructor
 
         """
+        self.chains = None
         WeightedSamples.__init__(self, **kwargs)
         self.jobItem = jobItem
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
@@ -829,7 +832,6 @@ class Chains(WeightedSamples):
                 paramNamesFile = root + '.paramnames'
             elif os.path.exists(root + mid + 'full.yaml'):
                 paramNamesFile = root + mid + 'full.yaml'
-        self.chains = None
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
             self.paramNames.setLabels(labels)
