@@ -21,7 +21,10 @@ def find_version():
 
 def get_long_description():
     with open('README.rst') as f:
-        return f.read()
+        lines = f.readlines()
+        i = -1
+        while not '=====' in lines[i]: i -= 1
+        return "\n".join(lines[:i])
 
 
 setup(name='GetDist',
