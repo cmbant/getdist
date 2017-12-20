@@ -24,7 +24,7 @@ def get_long_description():
         lines = f.readlines()
         i = -1
         while not '=====' in lines[i]: i -= 1
-        return "\n".join(lines[:i])
+        return "".join(lines[:i])
 
 
 setup(name='GetDist',
