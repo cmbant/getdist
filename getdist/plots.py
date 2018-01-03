@@ -923,6 +923,12 @@ class GetDistPlotter(object):
         else:
             proxyIx = -1
 
+        def clean_args(args): #prevent unused argument warnings
+            cont_args = dict(args)
+            if 'color' in cont_args: del cont_args['color']
+            if 'ls' in cont_args: del cont_args['ls']
+            return cont_args
+
         if kwargs.get('filled'):
             if cols is None:
                 color = kwargs.get('color')
@@ -939,13 +945,11 @@ class GetDistPlotter(object):
                 else:
                     cols = color
             levels = sorted(np.append([density.P.max() + 1], contour_levels))
-            cont_args = dict(kwargs)
-            if 'color' in cont_args: del cont_args['color']
-            CS = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **cont_args)
+            CS = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
             if proxyIx >= 0: self.contours_added[proxyIx] = (plt.Rectangle((0, 0), 1, 1, fc=CS.tcolors[-1][0]))
             ax.contour(density.x, density.y, density.P, levels[:1], colors=CS.tcolors[-1],
                        linewidths=self.settings.lw_contour, alpha=alpha * self.settings.alpha_factor_contour_lines,
-                       **cont_args)
+                       **clean_args(kwargs))
         else:
             args = self._get_line_styles(plotno, **kwargs)
             # if color is None: color = self._get_color(plotno, **kwargs)
@@ -956,7 +960,7 @@ class GetDistPlotter(object):
             kwargs = self._get_plot_args(plotno, **kwargs)
             kwargs['alpha'] = alpha
             CS = ax.contour(density.x, density.y, density.P, sorted(contour_levels), colors=cols, linestyles=linestyles,
-                            linewidths=self.settings.lw_contour, **kwargs)
+                            linewidths=self.settings.lw_contour, **clean_args(kwargs))
             dashes = args.get('dashes')
             if dashes:
                 for c in CS.collections:
