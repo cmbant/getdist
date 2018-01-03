@@ -2219,7 +2219,7 @@ class GetDistPlotter(object):
         return self.add_3d_scatter(root, [x, y], False, alpha, extra_thin, scatter_size, ax, **kwargs)
 
     def add_3d_scatter(self, root, params, color_bar=True, alpha=1, extra_thin=1, scatter_size=None,
-                       alpha_samples=False, ax=None, **kwargs):
+                       ax=None, alpha_samples=False, **kwargs):
         """
         Low-level function to add a 3D scatter plot to the current axes (or ax if specified).
 
