@@ -10,13 +10,14 @@ import time
 import numpy as np
 from scipy.stats import norm
 import getdist
-from getdist import chains, types, covmat, ParamInfo, IniFile
+from getdist import types, covmat, ParamInfo, IniFile
 from getdist.densities import Density1D, Density2D, DensityND
 from getdist.densities import getContourLevels as getOtherContourLevels
 from getdist.chains import Chains, chainFiles, lastModified
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
+from getdist.yaml_format_tools import get_info_params, is_derived_param, _derived_pre, get_range
 import six
 
 pickle_version = 21
@@ -127,9 +128,9 @@ class MCSamples(Chains):
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from sample arrays in memory:
 
                - **paramNamesFile**: optional name of .paramnames file with parameter names
-               - **samples**: array of parameter values for each sample, passed to :meth:`setSamples`
-               - **weights**: array of weights for samples
-               - **loglikes**: array of -log(Likelihood) for samples
+               - **samples**: array of parameter values for each sample, passed to :meth:`setSamples`, or list of arrays if more than one chain
+               - **weights**: array of weights for samples, or list of arrays if more than one chain
+               - **loglikes**: array of -log(Likelihood) for samples, or list of arrays if more than one chain
                - **names**: list of names for the parameters
                - **labels**:  list of latex labels for the parameters
                - **ignore_rows**:
@@ -138,7 +139,9 @@ class MCSamples(Chains):
                      - if float <1: The fraction of rows to skip at the beginning of the file
                - **name_tag**: a name tag for this instance
         """
-        Chains.__init__(self, root, jobItem=jobItem, **kwargs)
+        Chains.__init__(self, root, jobItem=jobItem,
+                        **{k:v for k,v in kwargs.items()
+                           if k not in ["samples", "weights", "loglikes"]})
 
         self.version = pickle_version
 
@@ -215,8 +218,20 @@ class MCSamples(Chains):
                 self.ignore_lines = 0
         else:
             self.properties = None
-        if self.ignore_rows and self.samples is not None or self.chains is not None:
-            self.removeBurnFraction(self.ignore_rows)
+
+        # NOTE ------------------------------------------------------------
+        # Commented this out, since it should be done by readChains, right?
+#        if self.ignore_rows and self.samples is not None or self.chains is not None:
+#            self.removeBurnFraction(self.ignore_rows)
+
+        # NOTE ------------------------------------------------------------
+        # Chain loading moving to the end of the __init__, instead of being done
+        # via Chains.__init__ above, in case ignore_rows (or some other setting) is
+        # updated by properties.ini or something like that.
+
+        if kwargs.get("samples", None) is not None:
+            self.readChains(kwargs["samples"],
+                            **{k:kwargs.get(k, None) for k in ["weights", "loglikes"]})
 
     def setRanges(self, ranges):
         """
@@ -376,21 +391,25 @@ class MCSamples(Chains):
         if ini: self.initParameters(ini)
         if doUpdate and self.samples is not None: self.updateBaseStatistics()
 
-    def readChains(self, chain_files):
+    def readChains(self, files_or_samples=None, weights=None, loglikes=None):
         """
-        Loads samples from a list of files, removing burn in, deleting fixed parameters, and combining into one self.samples array
+        Loads samples from a list of files or array(s), removing burn in,
+        deleting fixed parameters, and combining into one self.samples array
 
         :param chain_files: The list of file names to read
         :return: self.
         """
-        self.loadChains(self.root, chain_files)
+        self.loadChains(self.root, files_or_samples, weights=weights, loglikes=loglikes)
 
-        if self.ignore_frac and (not self.jobItem or
-                                 (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
-            self.removeBurnFraction(self.ignore_frac)
-            if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
-        else:
-            if chains.print_load_details: print('Removed no burn in')
+        # NOTE ------------------------------------------------------------
+        # I have disabled the "ignore" for now, since I am not sure when it's done
+        # in the different cases (i.e. loading from files vs from arrays)
+#        if self.ignore_frac and (not self.jobItem or
+#                                 (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
+#            self.removeBurnFraction(self.ignore_frac)
+#            if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
+#        else:
+#            if chains.print_load_details: print('Removed no burn in')
 
         self.deleteFixedParams()
 

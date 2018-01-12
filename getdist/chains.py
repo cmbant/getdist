@@ -976,7 +976,8 @@ class Chains(WeightedSamples):
         self.changeSamples(np.c_[self.samples, paramVec])
         return self.paramNames.addDerived(name, **kwargs)
 
-    def loadChains(self, root, files, ignore_lines=None):
+    def loadChains(self, root, files_or_samples, weights=None, loglikes=None,
+                   ignore_lines=None):
         """
         Loads chains from files.
 
@@ -989,13 +990,24 @@ class Chains(WeightedSamples):
         self.samples = None
         self.weights = None
         self.loglikes = None
-        self.name_tag = self.name_tag or os.path.basename(root)
-        for fname in files:
-            if print_load_details: print(fname)
-            self.chains.append(
-                WeightedSamples(fname, ignore_lines or self.ignore_lines, min_weight_ratio=self.min_weight_ratio))
-        if len(self.chains) == 0:
-            raise WeightedSampleError('loadChains - no chains found for ' + root)
+        WSkwargs = {"ignore_rows": ignore_lines or self.ignore_lines,
+                    "min_weight_ratio": self.min_weight_ratio}
+        # From files
+        if isinstance(files_or_samples[0], six.string_types):
+            self.name_tag = self.name_tag or os.path.basename(root)
+            for fname in files_or_samples:
+                if print_load_details: print(fname)
+                self.chains.append(WeightedSamples(fname, **WSkwargs))
+            if len(self.chains) == 0:
+                raise WeightedSampleError('loadChains - no chains found for ' + root)
+        # From arrays
+        else:
+            if len(np.array(files_or_samples.shape)) != 3:
+                files_or_samples = [files_or_samples]
+            for i, samples_i in enumerate(files_or_samples):
+                self.chains.append(WeightedSamples(
+                    samples=samples_i, loglikes=np.atleast_2d(loglikes)[i],
+                    weights=np.atleast_2d(weights)[i], **WSkwargs))
         if self.paramNames is None:
             self.paramNames = ParamNames(default=self.chains[0].n)
         self._weightsChanged()
