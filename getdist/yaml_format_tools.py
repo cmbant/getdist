@@ -1,13 +1,16 @@
-# JT 2017
+# JT 2017-18
 
 from __future__ import division
+from importlib import import_module
 from six import string_types, integer_types
 from numbers import Number
 import re
 from collections import OrderedDict as odict
+import numpy as np
 
 # Conventions
 _prior = "prior"
+_derived_pre = "derived__"
 
 
 # Exceptions
@@ -78,8 +81,7 @@ def yaml_load_file(input_file):
 
 
 # Extracting parameter info from the new yaml format
-def load_info_params(fileName):
-    info = yaml_load_file(fileName)
+def get_info_params(info):
     # Flatten theory params, preserving the order, and prune the fixed ones
     info_params = info.get("params")
     info_params_flat = odict()
@@ -97,9 +99,29 @@ def load_info_params(fileName):
     info_params_flat["minuslogprior"] = {"latex": r"-\log\pi"}
     info_params_flat["chi2"] = {"latex": r"\chi^2"}
     for lik in info.get("likelihood"):
-        info_params_flat["chi2_" + lik] = {
+        info_params_flat["chi2__" + lik] = {
             "latex": r"\chi^2_\mathrm{" + lik.replace("_", "\ ") + r"}"}
     return info_params_flat
+
+
+def get_range(param_info):
+    # Sampled
+    if is_sampled_param(param_info):
+        info_lims = dict([[l, param_info["prior"].get(l)]
+                          for l in ["min", "max", "loc", "scale"]])
+        if info_lims["min"] is not None or info_lims["max"] is not None:
+            lims = [param_info["prior"].get("min"), param_info["prior"].get("max")]
+        elif info_lims["loc"] is not None or info_lims["scale"] is not None:
+            dist = param_info["prior"].pop("dist", "uniform")
+            pdf_dist = getattr(import_module("scipy.stats", dist), dist)
+            lims = pdf_dist.interval(1, **param_info["prior"])
+    # Derived
+    elif is_derived_param(param_info):
+        lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(param_info or {})
+    # Fixed
+    else:
+        lims = None
+    return lims
 
 
 def is_fixed_param(info_param):
