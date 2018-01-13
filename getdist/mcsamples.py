@@ -121,7 +121,9 @@ def loadCobayaSamples(info, collections, name=None, ignore_rows=0, ini=None, set
         raise ValueError("The given collections don't have the same columns.")
     # Check consistency with info
     info_params = get_info_params(info)
-    assert [p.lstrip(_derived_pre) for p in columns[2:]] == info_params.keys(), (
+    columns_noprefix = [p[(len(_derived_pre) if p.startswith(_derived_pre) else 0):]
+                        for p in columns[2:]]
+    assert columns_noprefix == info_params.keys(), (
         "Info and collections are not compatible. "
         "Are you sure that you are using an *updated* info dictionary?")
     names = [p+("*" if is_derived_param(info_params[p]) else "") for p in info_params]
