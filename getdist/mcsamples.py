@@ -123,7 +123,7 @@ def loadCobayaSamples(info, collections, name=None, ignore_rows=0, ini=None, set
     info_params = get_info_params(info)
     columns_noprefix = [p[(len(_derived_pre) if p.startswith(_derived_pre) else 0):]
                         for p in columns[2:]]
-    assert columns_noprefix == info_params.keys(), (
+    assert columns_noprefix == list(info_params.keys()), (
         "Info and collections are not compatible. "
         "Are you sure that you are using an *updated* info dictionary?")
     names = [p+("*" if is_derived_param(info_params[p]) else "") for p in info_params]
