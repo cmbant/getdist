@@ -92,7 +92,7 @@ def get_info_params(info):
         else:
             info_params_flat[p] = info_params[p]
         # fixed? discard
-        last = info_params_flat.keys()[-1]
+        last = list(info_params_flat.keys())[-1]
         if isinstance(last, float) or isinstance(last, integer_types):
             info_params_flat.pop(last)
     # Now add prior and likelihoods
