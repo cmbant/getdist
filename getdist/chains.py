@@ -19,6 +19,10 @@ except:
     use_pandas = False
 
 
+def slice_or_none(x, start=None, end=None):
+    return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
+
+
 class WeightedSampleError(Exception):
     """
     An exception that is raised when a WeightedSamples error occurs
@@ -170,7 +174,9 @@ class WeightedSamples(object):
             self.setColData(cols, are_chains=files_are_chains)
             self.name_tag = name_tag or os.path.basename(filename)
         else:
-            self.setSamples(samples, weights, loglikes)
+            self.setSamples(slice_or_none(samples, ignore_rows),
+                            slice_or_none(weights, ignore_rows),
+                            slice_or_none(loglikes, ignore_rows))
             self.name_tag = name_tag
         self.label = label
         self.needs_update = True
