@@ -1,8 +1,4 @@
 import os
-import numpy as np
-
-from getdist.yaml_format_tools import yaml_load_file, get_info_params, get_range
-from getdist.yaml_format_tools import is_sampled_param, is_derived_param
 
 
 class ParamBounds(object):
@@ -34,6 +30,7 @@ class ParamBounds(object):
                     if len(strings) == 3:
                         self.setRange(strings[0], strings[1:])
         elif extension in ('.yaml', '.yml'):
+            from getdist.yaml_format_tools import yaml_load_file, get_info_params, get_range
             info_params = get_info_params(yaml_load_file(fileName))
             for p, info in info_params.items():
                 self.setRange(p, get_range(info))

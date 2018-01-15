@@ -17,7 +17,6 @@ from getdist.chains import Chains, chainFiles, lastModified, print_load_details
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
-from getdist.yaml_format_tools import get_info_params, is_derived_param, _derived_pre, get_range
 import six
 
 pickle_version = 21
@@ -119,6 +118,7 @@ def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None,
     columns = list(collections[0].data)
     if not all([list(c.data) == columns for c in collections[1:]]):
         raise ValueError("The given collections don't have the same columns.")
+    from getdist.yaml_format_tools import get_info_params, is_derived_param, _derived_pre, get_range
     # Check consistency with info
     info_params = get_info_params(info)
     columns_noprefix = [p[(len(_derived_pre) if p.startswith(_derived_pre) else 0):]
@@ -126,11 +126,11 @@ def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None,
     assert columns_noprefix == list(info_params.keys()), (
         "Info and collections are not compatible. "
         "Are you sure that you are using an *updated* info dictionary?")
-    names = [p+("*" if is_derived_param(info_params[p]) else "") for p in info_params]
+    names = [p + ("*" if is_derived_param(info_params[p]) else "") for p in info_params]
     labels = [i["latex"] for i in info_params.values()]
     ranges = {p: get_range(info) for p, info in info_params.items()}
     data = np.array([c.data.as_matrix() for c in collections])
-    return MCSamples(samples=data[:,:,2:], weights=data[:,:,0], loglikes=-data[:,:,1],
+    return MCSamples(samples=data[:, :, 2:], weights=data[:, :, 0], loglikes=-data[:, :, 1],
                      names=names, labels=labels, ranges=ranges, ignore_rows=ignore_rows,
                      name_tag=name_tag, ini=ini, settings=settings)
 
@@ -153,7 +153,8 @@ class MCSamples(Chains):
     Derives from :class:`.chains.Chains`, adding high-level functions including Kernel Density estimates, parameter ranges and custom settings.
     """
 
-    def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None, **kwargs):
+    def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None,
+                 samples=None, weights=None, loglikes=None, **kwargs):
         """
         For a description of the various analysis settings and default values see
         `analysis_defaults.ini <http://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
@@ -164,12 +165,13 @@ class MCSamples(Chains):
         :param ini: a .ini file to use for custom analysis settings
         :param settings: a dictionary of custom analysis settings
         :param ranges: a dictionary giving any additional hard prior bounds for parameters, eg. {'x':[0, 1], 'y':[None,2]}
+        :param samples: if not loading from file, array of parameter values for each sample, passed to :meth:`setSamples`,
+                        or list of arrays if more than one chain
+        :param weights: array of weights for samples, or list of arrays if more than one chain
+        :param loglikes: array of -log(Likelihood) for samples, or list of arrays if more than one chain
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from sample arrays in memory:
 
                - **paramNamesFile**: optional name of .paramnames file with parameter names
-               - **samples**: array of parameter values for each sample, passed to :meth:`setSamples`, or list of arrays if more than one chain
-               - **weights**: array of weights for samples, or list of arrays if more than one chain
-               - **loglikes**: array of -log(Likelihood) for samples, or list of arrays if more than one chain
                - **names**: list of names for the parameters
                - **labels**:  list of latex labels for the parameters
                - **ignore_rows**:
@@ -178,9 +180,7 @@ class MCSamples(Chains):
                      - if float <1: The fraction of rows to skip at the beginning of the file
                - **name_tag**: a name tag for this instance
         """
-        Chains.__init__(self, root, jobItem=jobItem,
-                        **{k:v for k,v in kwargs.items()
-                           if k not in ["samples", "weights", "loglikes"]})
+        Chains.__init__(self, root, jobItem=jobItem, **kwargs)
 
         self.version = pickle_version
 
@@ -258,9 +258,8 @@ class MCSamples(Chains):
         else:
             self.properties = None
 
-        if kwargs.get("samples", None) is not None:
-            self.readChains(kwargs["samples"],
-                            **{k:kwargs.get(k, None) for k in ["weights", "loglikes"]})
+        if samples is not None:
+            self.readChains(samples, weights, loglikes)
 
     def setRanges(self, ranges):
         """
@@ -425,12 +424,15 @@ class MCSamples(Chains):
         Loads samples from a list of files or array(s), removing burn in,
         deleting fixed parameters, and combining into one self.samples array
 
-        :param chain_files: The list of file names to read
+        :param files_or_samples: The list of file names to read
+        :param weights: array of weights if setting from arrays
+        :param loglikes: array of -2 log(likelihood) if setting from arrays
         :return: self.
         """
         self.loadChains(self.root, files_or_samples, weights=weights, loglikes=loglikes)
 
-        if self.ignore_frac and (not self.jobItem or (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
+        if self.ignore_frac and (
+                not self.jobItem or (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
             if print_load_details: print('Removed %s as burn in' % self.ignore_frac)
         else:
