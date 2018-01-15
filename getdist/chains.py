@@ -1072,7 +1072,9 @@ class Chains(WeightedSamples):
         """
         self.chain_offsets = np.cumsum(np.array([0] + [chain.samples.shape[0] for chain in self.chains]))
         weights = np.hstack((chain.weights for chain in self.chains))
+        if None in weights: weights = None
         loglikes = np.hstack((chain.loglikes for chain in self.chains))
+        if None in loglikes: loglikes = None
         self.setSamples(np.vstack((chain.samples for chain in self.chains)), weights, loglikes, min_weight_ratio=-1)
         self.chains = None
         self.needs_update = True
