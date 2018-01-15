@@ -13,7 +13,7 @@ import getdist
 from getdist import types, covmat, ParamInfo, IniFile
 from getdist.densities import Density1D, Density2D, DensityND
 from getdist.densities import getContourLevels as getOtherContourLevels
-from getdist.chains import Chains, chainFiles, lastModified
+from getdist.chains import Chains, chainFiles, lastModified, print_load_details
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
@@ -96,7 +96,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     return samples
 
 
-def loadCobayaSamples(info, collections, name=None, ignore_rows=0, ini=None, settings={}):
+def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None, settings={}):
     """
     Loads a set of samples from Cobaya's output.
     Parameter names, ranges and labels are taken from the "info" dictionary
@@ -107,7 +107,7 @@ def loadCobayaSamples(info, collections, name=None, ignore_rows=0, ini=None, set
 
     :param info: info dictionary, common to all collections (use "updated" one)
     :param collections: collection(s) of samples from Cobaya
-    :param name: name for this sample to be shown in the plots' legend
+    :param name_tag: name for this sample to be shown in the plots' legend
     :param ignore_rows: initial samples to skip, number (`int>=1`) or fraction (`float<1`)
     :param ini: The name of a .ini file with analysis settings to use
     :param settings: dictionary of analysis settings to override defaults
@@ -132,7 +132,7 @@ def loadCobayaSamples(info, collections, name=None, ignore_rows=0, ini=None, set
     data = np.array([c.data.as_matrix() for c in collections])
     return MCSamples(samples=data[:,:,2:], weights=data[:,:,0], loglikes=-data[:,:,1],
                      names=names, labels=labels, ranges=ranges, ignore_rows=ignore_rows,
-                     name_tag=name, ini=ini, settings=settings)
+                     name_tag=name_tag, ini=ini, settings=settings)
 
 
 class Kernel1D(object):
@@ -257,16 +257,6 @@ class MCSamples(Chains):
                 self.ignore_lines = 0
         else:
             self.properties = None
-
-        # NOTE ------------------------------------------------------------
-        # Commented this out, since it should be done by readChains, right?
-#        if self.ignore_rows and self.samples is not None or self.chains is not None:
-#            self.removeBurnFraction(self.ignore_rows)
-
-        # NOTE ------------------------------------------------------------
-        # Chain loading moving to the end of the __init__, instead of being done
-        # via Chains.__init__ above, in case ignore_rows (or some other setting) is
-        # updated by properties.ini or something like that.
 
         if kwargs.get("samples", None) is not None:
             self.readChains(kwargs["samples"],
@@ -440,15 +430,11 @@ class MCSamples(Chains):
         """
         self.loadChains(self.root, files_or_samples, weights=weights, loglikes=loglikes)
 
-        # NOTE ------------------------------------------------------------
-        # I have disabled the "ignore" for now, since I am not sure when it's done
-        # in the different cases (i.e. loading from files vs from arrays)
-#        if self.ignore_frac and (not self.jobItem or
-#                                 (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
-#            self.removeBurnFraction(self.ignore_frac)
-#            if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
-#        else:
-#            if chains.print_load_details: print('Removed no burn in')
+        if self.ignore_frac and (not self.jobItem or (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
+            self.removeBurnFraction(self.ignore_frac)
+            if print_load_details: print('Removed %s as burn in' % self.ignore_frac)
+        else:
+            if print_load_details: print('Removed no burn in')
 
         self.deleteFixedParams()
 
