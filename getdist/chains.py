@@ -1012,7 +1012,7 @@ class Chains(WeightedSamples):
                 raise WeightedSampleError('loadChains - no chains found for ' + root)
         # From arrays
         else:
-            if len(np.array(files_or_samples.shape)) != 3:
+            if len(np.array(files_or_samples).shape) != 3:
                 files_or_samples = [files_or_samples]
             for i, samples_i in enumerate(files_or_samples):
                 self.chains.append(WeightedSamples(

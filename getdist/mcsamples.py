@@ -129,8 +129,10 @@ def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None,
     names = [p + ("*" if is_derived_param(info_params[p]) else "") for p in info_params]
     labels = [i["latex"] for i in info_params.values()]
     ranges = {p: get_range(info) for p, info in info_params.items()}
-    data = np.array([c.data.as_matrix() for c in collections])
-    return MCSamples(samples=data[:, :, 2:], weights=data[:, :, 0], loglikes=-data[:, :, 1],
+    samples = [c[list(info_params.keys())].values for c in collections]
+    weights = [c["weight"].values for c in collections]
+    loglikes = [-c["minuslogpost"].values for c in collections]
+    return MCSamples(samples=samples, weights=weights, loglikes=loglikes,
                      names=names, labels=labels, ranges=ranges, ignore_rows=ignore_rows,
                      name_tag=name_tag, ini=ini, settings=settings)
 
