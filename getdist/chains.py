@@ -178,6 +178,8 @@ class WeightedSamples(object):
                             slice_or_none(weights, ignore_rows),
                             slice_or_none(loglikes, ignore_rows))
             self.name_tag = name_tag
+            if int(ignore_rows):
+                if print_load_details: print('Removed %s lines as burn in' % ignore_rows)
         self.label = label
         self.needs_update = True
 
