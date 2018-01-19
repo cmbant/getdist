@@ -40,6 +40,17 @@ def slice_or_none(x, start=None, end=None):
     return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
 
 
+def dimension(a):
+    "Dimension, not very safe"
+    d = 0
+    while True:
+        try:
+            a = a[0]
+            d += 1
+        except:
+            return d
+
+
 def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-1, chain_exclude=None):
     """
     Creates a list of file names for samples given a root name and optional filters
@@ -178,7 +189,7 @@ class WeightedSamples(object):
                             slice_or_none(weights, ignore_rows),
                             slice_or_none(loglikes, ignore_rows))
             self.name_tag = name_tag
-            if int(ignore_rows):
+            if samples is not None and int(ignore_rows):
                 if print_load_details: print('Removed %s lines as burn in' % ignore_rows)
         self.label = label
         self.needs_update = True
@@ -1014,7 +1025,7 @@ class Chains(WeightedSamples):
                 raise WeightedSampleError('loadChains - no chains found for ' + root)
         # From arrays
         else:
-            if len(np.array(files_or_samples).shape) != 3:
+            if dimension(files_or_samples) != 3:
                 files_or_samples = [files_or_samples]
             for i, samples_i in enumerate(files_or_samples):
                 self.chains.append(WeightedSamples(
