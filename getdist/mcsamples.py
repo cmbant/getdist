@@ -263,6 +263,7 @@ class MCSamples(Chains):
         if samples is not None:
             self.readChains(samples, weights, loglikes)
 
+
     def setRanges(self, ranges):
         """
         Sets the ranges parameters, e.g. hard priors on positivity etc. If a min or max value is None, then it is assumed to be unbounded.
@@ -443,7 +444,7 @@ class MCSamples(Chains):
         self.deleteFixedParams()
 
         # Make a single array for chains
-        self.makeSingle()
+        if self.chains is not None: self.makeSingle()
 
         self.updateBaseStatistics()
 

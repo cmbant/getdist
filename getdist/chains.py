@@ -40,8 +40,8 @@ def slice_or_none(x, start=None, end=None):
     return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
 
 
-def dimension(a):
-    "Dimension, not very safe"
+def array_dimension(a):
+    "Dimension for numpy or list/tuple arrays, not very safe (does not work if string elements)"
     d = 0
     while True:
         try:
@@ -1001,7 +1001,7 @@ class Chains(WeightedSamples):
         Loads chains from files.
 
         :param root: Root name
-        :param files_or_samples: list of file names or list of arrays of samples
+        :param files_or_samples: list of file names or list of arrays of samples, or single array of samples
         :param weights: if loading from arrays of samples, corresponding list of arrays of weights
         :param loglikes: if loading from arrays of samples, corresponding list of arrays of -2 log(likelihood)
         :param ignore_lines: Amount of lines at the start of the file to ignore, None if should not ignore
@@ -1011,30 +1011,43 @@ class Chains(WeightedSamples):
         self.samples = None
         self.weights = None
         self.loglikes = None
-        WSkwargs = {"ignore_rows": ignore_lines or self.ignore_lines,
+        if ignore_lines is None: ignore_lines = self.ignore_lines
+        WSkwargs = {"ignore_rows": ignore_lines,
                     "min_weight_ratio": self.min_weight_ratio}
-        # From files
-        if isinstance(files_or_samples[0], six.string_types):
+        if isinstance(files_or_samples, six.string_types) or isinstance(files_or_samples[0], six.string_types):
+            # From files
             if weights is not None or loglikes is not None:
                 raise ValueError('weights and loglikes not needed reading from file')
+            if isinstance(files_or_samples, six.string_types): files_or_samples = [files_or_samples]
             self.name_tag = self.name_tag or os.path.basename(root)
             for fname in files_or_samples:
                 if print_load_details: print(fname)
                 self.chains.append(WeightedSamples(fname, **WSkwargs))
-            if len(self.chains) == 0:
+            nchains = len(self.chains)
+            if not nchains:
                 raise WeightedSampleError('loadChains - no chains found for ' + root)
-        # From arrays
         else:
-            if dimension(files_or_samples) != 3:
-                files_or_samples = [files_or_samples]
-            for i, samples_i in enumerate(files_or_samples):
-                self.chains.append(WeightedSamples(
-                    samples=samples_i, loglikes=None if loglikes is None else np.atleast_2d(loglikes)[i],
-                    weights=None if weights is None else np.atleast_2d(weights)[i], **WSkwargs))
-        if self.paramNames is None:
-            self.paramNames = ParamNames(default=self.chains[0].n)
+            # From arrays
+            dim = array_dimension(files_or_samples)
+            if dim in [1, 2]:
+                self.setSamples(slice_or_none(files_or_samples, ignore_lines),
+                                slice_or_none(weights, ignore_lines),
+                                slice_or_none(loglikes, ignore_lines), self.min_weight_ratio)
+                if self.paramNames is None:
+                    self.paramNames = ParamNames(default=self.n)
+                nchains = 1
+            elif dim == 3:
+                for i, samples_i in enumerate(files_or_samples):
+                    self.chains.append(WeightedSamples(
+                        samples=samples_i, loglikes=None if loglikes is None else np.atleast_2d(loglikes)[i],
+                        weights=None if weights is None else np.atleast_2d(weights)[i], **WSkwargs))
+                if self.paramNames is None:
+                    self.paramNames = ParamNames(default=self.chains[0].n)
+                nchains = len(self.chains)
+            else:
+                raise ValueError('samples or files must be array of samples, or a list of arrays or files')
         self._weightsChanged()
-        return len(self.chains) > 0
+        return nchains > 0
 
     def getGelmanRubinEigenvalues(self, nparam=None, chainlist=None):
         """
