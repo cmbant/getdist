@@ -36,6 +36,21 @@ def lastModified(files):
     return max([os.path.getmtime(fname) for fname in files if os.path.exists(fname)])
 
 
+def slice_or_none(x, start=None, end=None):
+    return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
+
+
+def array_dimension(a):
+    "Dimension for numpy or list/tuple arrays, not very safe (does not work if string elements)"
+    d = 0
+    while True:
+        try:
+            a = a[0]
+            d += 1
+        except:
+            return d
+
+
 def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-1, chain_exclude=None):
     """
     Creates a list of file names for samples given a root name and optional filters
@@ -170,8 +185,12 @@ class WeightedSamples(object):
             self.setColData(cols, are_chains=files_are_chains)
             self.name_tag = name_tag or os.path.basename(filename)
         else:
-            self.setSamples(samples, weights, loglikes)
+            self.setSamples(slice_or_none(samples, ignore_rows),
+                            slice_or_none(weights, ignore_rows),
+                            slice_or_none(loglikes, ignore_rows))
             self.name_tag = name_tag
+            if samples is not None and int(ignore_rows):
+                if print_load_details: print('Removed %s lines as burn in' % ignore_rows)
         self.label = label
         self.needs_update = True
 
@@ -976,12 +995,15 @@ class Chains(WeightedSamples):
         self.changeSamples(np.c_[self.samples, paramVec])
         return self.paramNames.addDerived(name, **kwargs)
 
-    def loadChains(self, root, files, ignore_lines=None):
+    def loadChains(self, root, files_or_samples, weights=None, loglikes=None,
+                   ignore_lines=None):
         """
         Loads chains from files.
 
         :param root: Root name
-        :param files: list of file names
+        :param files_or_samples: list of file names or list of arrays of samples, or single array of samples
+        :param weights: if loading from arrays of samples, corresponding list of arrays of weights
+        :param loglikes: if loading from arrays of samples, corresponding list of arrays of -2 log(likelihood)
         :param ignore_lines: Amount of lines at the start of the file to ignore, None if should not ignore
         :return: True if loaded successfully, False if none loaded
         """
@@ -989,17 +1011,43 @@ class Chains(WeightedSamples):
         self.samples = None
         self.weights = None
         self.loglikes = None
-        self.name_tag = self.name_tag or os.path.basename(root)
-        for fname in files:
-            if print_load_details: print(fname)
-            self.chains.append(
-                WeightedSamples(fname, ignore_lines or self.ignore_lines, min_weight_ratio=self.min_weight_ratio))
-        if len(self.chains) == 0:
-            raise WeightedSampleError('loadChains - no chains found for ' + root)
-        if self.paramNames is None:
-            self.paramNames = ParamNames(default=self.chains[0].n)
+        if ignore_lines is None: ignore_lines = self.ignore_lines
+        WSkwargs = {"ignore_rows": ignore_lines,
+                    "min_weight_ratio": self.min_weight_ratio}
+        if isinstance(files_or_samples, six.string_types) or isinstance(files_or_samples[0], six.string_types):
+            # From files
+            if weights is not None or loglikes is not None:
+                raise ValueError('weights and loglikes not needed reading from file')
+            if isinstance(files_or_samples, six.string_types): files_or_samples = [files_or_samples]
+            self.name_tag = self.name_tag or os.path.basename(root)
+            for fname in files_or_samples:
+                if print_load_details: print(fname)
+                self.chains.append(WeightedSamples(fname, **WSkwargs))
+            nchains = len(self.chains)
+            if not nchains:
+                raise WeightedSampleError('loadChains - no chains found for ' + root)
+        else:
+            # From arrays
+            dim = array_dimension(files_or_samples)
+            if dim in [1, 2]:
+                self.setSamples(slice_or_none(files_or_samples, ignore_lines),
+                                slice_or_none(weights, ignore_lines),
+                                slice_or_none(loglikes, ignore_lines), self.min_weight_ratio)
+                if self.paramNames is None:
+                    self.paramNames = ParamNames(default=self.n)
+                nchains = 1
+            elif dim == 3:
+                for i, samples_i in enumerate(files_or_samples):
+                    self.chains.append(WeightedSamples(
+                        samples=samples_i, loglikes=None if loglikes is None else np.atleast_2d(loglikes)[i],
+                        weights=None if weights is None else np.atleast_2d(weights)[i], **WSkwargs))
+                if self.paramNames is None:
+                    self.paramNames = ParamNames(default=self.chains[0].n)
+                nchains = len(self.chains)
+            else:
+                raise ValueError('samples or files must be array of samples, or a list of arrays or files')
         self._weightsChanged()
-        return len(self.chains) > 0
+        return nchains > 0
 
     def getGelmanRubinEigenvalues(self, nparam=None, chainlist=None):
         """
@@ -1049,8 +1097,8 @@ class Chains(WeightedSamples):
         :return: self
         """
         self.chain_offsets = np.cumsum(np.array([0] + [chain.samples.shape[0] for chain in self.chains]))
-        weights = np.hstack((chain.weights for chain in self.chains))
-        loglikes = np.hstack((chain.loglikes for chain in self.chains))
+        weights = None if self.chains[0].weights is None else np.hstack((chain.weights for chain in self.chains))
+        loglikes = None if self.chains[0].loglikes is None else np.hstack((chain.loglikes for chain in self.chains))
         self.setSamples(np.vstack((chain.samples for chain in self.chains)), weights, loglikes, min_weight_ratio=-1)
         self.chains = None
         self.needs_update = True

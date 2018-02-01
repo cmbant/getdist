@@ -4,9 +4,6 @@ import fnmatch
 import six
 import matplotlib
 
-from getdist.yaml_format_tools import load_info_params, is_sampled_param, is_derived_param
-
-
 def escapeLatex(text):
     if text and matplotlib.rcParams['text.usetex']:
         return text.replace('_', '{\\textunderscore}')
@@ -291,11 +288,13 @@ class ParamNames(ParamList):
             with open(fileName) as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
         elif extension.lower() in ('.yaml', '.yml'):
-            info_params = load_info_params(fileName)
+            from getdist.yaml_format_tools import yaml_load_file, get_info_params
+            from getdist.yaml_format_tools import is_sampled_param, is_derived_param
+            info_params = get_info_params(yaml_load_file(fileName))
             # first sampled, then derived
             self.names = [ParamInfo(param + " " + ((info or {}).get("latex", param)))
                           for param, info in info_params.items() if is_sampled_param(info)]
-            self.names += [ParamInfo(param + " " + ((info or {}).get("latex", param)))
+            self.names += [ParamInfo(param + " " + ((info or {}).get("latex", param)), derived=True)
                            for param, info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):
