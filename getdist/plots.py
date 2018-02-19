@@ -108,6 +108,7 @@ class GetDistPlotSettings(object):
         # self.prob_label = 'Probability'
         self.norm_prob_label = 'P'
         self.prob_y_ticks = False
+
         self.lineM = ['-k', '-r', '-b', '-g', '-m', '-c', '-y', '--k', '--r', '--b', '--g',
                       '--m']  # : line styles/colors
         self.plot_args = None
@@ -714,7 +715,11 @@ class GetDistPlotter(object):
         :return: The default line style.
         """
         try:
-            return self.settings.lineM[plotno]
+            res = self.settings.lineM[plotno]
+            i = 0
+            while i < len(res) and res[i] in ['-', '.', ':']:
+                i += 1
+            return res[:i], res[i:]
         except IndexError:
             print('Error adding line ' + str(plotno) + ': Add more default line stype entries to settings.lineM')
             raise
@@ -728,12 +733,12 @@ class GetDistPlotter(object):
         :return: dict with ls, dashes, lw and color set appropriately
         """
         args = self._get_plot_args(plotno, **kwargs)
-        if not 'ls' in args: args['ls'] = self._get_default_ls(plotno)[:-1]
+        if not 'ls' in args: args['ls'] = self._get_default_ls(plotno)[0]
         if not 'dashes' in args:
             dashes = self._get_dashes_for_ls(args['ls'])
             if dashes is not None: args['dashes'] = dashes
         if not 'color' in args:
-            args['color'] = self._get_default_ls(plotno)[-1]
+            args['color'] = self._get_default_ls(plotno)[1]
         if not 'lw' in args: args['lw'] = self.settings.lw1
         return args
 
@@ -923,7 +928,7 @@ class GetDistPlotter(object):
         else:
             proxyIx = -1
 
-        def clean_args(args): #prevent unused argument warnings
+        def clean_args(args):  # prevent unused argument warnings
             cont_args = dict(args)
             if 'color' in cont_args: del cont_args['color']
             if 'ls' in cont_args: del cont_args['ls']
@@ -946,7 +951,8 @@ class GetDistPlotter(object):
                     cols = color
             levels = sorted(np.append([density.P.max() + 1], contour_levels))
             CS = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
-            if proxyIx >= 0: self.contours_added[proxyIx] = (plt.Rectangle((0, 0), 1, 1, fc=CS.tcolors[-1][0]))
+            if proxyIx >= 0: self.contours_added[proxyIx] = (
+                plt.Rectangle((0, 0), 1, 1, fc=matplotlib.colors.to_rgb(CS.tcolors[-1][0])))
             ax.contour(density.x, density.y, density.P, levels[:1], colors=CS.tcolors[-1],
                        linewidths=self.settings.lw_contour, alpha=alpha * self.settings.alpha_factor_contour_lines,
                        **clean_args(kwargs))
@@ -1269,8 +1275,8 @@ class GetDistPlotter(object):
             # if prune is None and hasattr(plt.colors, 'is_color_like'): return  # is_color_like tests for matplotlib 2
             if x: xmin, xmax = axis.get_view_interval()
             if x and (abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000):
-                axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) + 3, prune=prune,
-                                                       steps=np.arange(1, 11)))
+                maxN = int(self.settings.subplot_size_inch / 2) + 3
+                axis.set_major_locator(plt.MaxNLocator(maxN, prune=prune, steps=np.arange(1, 11)))
             else:
                 axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) + 4, prune=prune))
 
