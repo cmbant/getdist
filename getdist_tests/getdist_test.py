@@ -154,16 +154,6 @@ class GetDistTest(unittest.TestCase):
         d2 = samps.get2DDensity('x', 'y')
         self.assertTrue(np.allclose(d.P, d2.P[::-1, ::], atol=1e-5))
 
-    def testLoads(self):
-        # test initiating from multiple chain arrays
-        samps = []
-        for i in range(3):
-            samps.append(Gaussian2D([1.5, -2], np.diagflat([1, 2])).MCSamples(1001 + i * 10, names=['x', 'y']))
-        fromChains = MCSamples(samples=[s.samples for s in samps], names=['x', 'y'])
-        mean = np.sum([s.norm * s.mean('x') for s in samps]) / np.sum([s.norm for s in samps])
-        meanChains = fromChains.mean('x')
-        self.assertAlmostEqual(mean, meanChains)
-
     def testMixtures(self):
         from getdist.gaussian_mixtures import Mixture2D, GaussianND
 
@@ -232,7 +222,7 @@ class GetDistTest(unittest.TestCase):
         g.newPlot()
         g.plots_2d([samples, samples2], 'x', ['z', 'y'])
         g.newPlot()
-        self.assertEqual([name.name for name in samples.paramNames.parsWithNames('x.*')], ['x.yx', 'x.2'])
+        self.assertEquals([name.name for name in samples.paramNames.parsWithNames('x.*')], ['x.yx', 'x.2'])
         g.triangle_plot(samples, 'x.*')
         samples.updateSettings({'contours': '0.68 0.95 0.99'})
         g.settings.num_contours = 3

@@ -4,6 +4,9 @@ import fnmatch
 import six
 import matplotlib
 
+from getdist.yaml_format_tools import load_info_params, is_sampled_param, is_derived_param
+
+
 def escapeLatex(text):
     if text and matplotlib.rcParams['text.usetex']:
         return text.replace('_', '{\\textunderscore}')
@@ -98,7 +101,7 @@ class ParamList(object):
         if default: self.setDefault(default)
         if names is not None: self.setWithNames(names)
         if fileName is not None: self.loadFromFile(fileName)
-        if setParamNameFile is not None: self.setLabelsAndDerivedFromParamNames(setParamNameFile)
+        if setParamNameFile is not None: self.setLabelsFromParamNames(setParamNameFile)
         if labels is not None: self.setLabels(labels)
 
     def setDefault(self, n):
@@ -194,7 +197,10 @@ class ParamList(object):
                     pars.append(par)
         return pars
 
-    def setLabelsAndDerivedFromParamNames(self, fname):
+    def setLabelsFromParamNames(self, fname):
+        self.setLabelsAndDerivedFromParamNames(fname, False)
+
+    def setLabelsAndDerivedFromParamNames(self, fname, set_derived=True):
         if isinstance(fname, ParamNames):
             p = fname
         else:
@@ -203,7 +209,7 @@ class ParamList(object):
             param = self.parWithName(par.name)
             if not param is None:
                 param.label = par.label
-                param.isDerived = par.isDerived
+                if set_derived: param.isDerived = par.isDerived
 
     def fileList(self, fname):
         with open(fname) as f:
@@ -288,13 +294,11 @@ class ParamNames(ParamList):
             with open(fileName) as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
         elif extension.lower() in ('.yaml', '.yml'):
-            from getdist.yaml_format_tools import yaml_load_file, get_info_params
-            from getdist.yaml_format_tools import is_sampled_param, is_derived_param
-            info_params = get_info_params(yaml_load_file(fileName))
+            info_params = load_info_params(fileName)
             # first sampled, then derived
             self.names = [ParamInfo(param + " " + ((info or {}).get("latex", param)))
                           for param, info in info_params.items() if is_sampled_param(info)]
-            self.names += [ParamInfo(param + " " + ((info or {}).get("latex", param)), derived=True)
+            self.names += [ParamInfo(param + " " + ((info or {}).get("latex", param)))
                            for param, info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):
