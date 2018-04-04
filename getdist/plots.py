@@ -1868,7 +1868,7 @@ class GetDistPlotter(object):
     def triangle_plot(self, roots, params=None, legend_labels=None, plot_3d_with_param=None, filled=False, shaded=False,
                       contour_args=None, contour_colors=None, contour_ls=None, contour_lws=None, line_args=None,
                       label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, upper_kwargs={},
-                      param_limits={}, **kwargs):
+                      diag1d_kwargs={}, param_limits={}, **kwargs):
         """
         Make a trianglular array of 1D and 2D plots.
 
@@ -1892,6 +1892,7 @@ class GetDistPlotter(object):
         :param upper_roots: set to fill the upper triangle with subplots using this list of sample root names
                              (TODO: this needs some work to easily work without a lot of tweaking)
         :param upper_kwargs: list of dict for arguments when making upper-triangle 2D plots
+        :param diag1d_kwargs: list of dict for arguments when making 1D plots on grid diagonal
         :param param_limits: a dictionary holding a mapping from parameter names to axis limits for that parameter
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d` or :func:`~GetDistPlotter.plot_3d` (lower triangle only)
 
@@ -1964,7 +1965,7 @@ class GetDistPlotter(object):
             self.plot_1d(roots1d, param, do_xlabel=i == plot_col - 1,
                          no_label_no_numbers=self.settings.no_triangle_axis_labels,
                          label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
-                         lims=param_limits.get(param.name, None))
+                         lims=param_limits.get(param.name, None), **diag1d_kwargs)
             # set no_ylabel=True for now, can't see how to not screw up spacing with right-sided y label
             if self.settings.no_triangle_axis_labels:
                 self._spaceTicks(ax.xaxis, bounds=self._get_param_bounds(roots1d, param.name))
