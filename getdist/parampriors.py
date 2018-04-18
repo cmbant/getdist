@@ -4,6 +4,7 @@ import numpy as np
 
 from getdist.yaml_format_tools import load_info_params, is_sampled_param, is_derived_param
 
+
 class ParamBounds(object):
     """
     Class for holding list of parameter bounds (e.g. for plotting, or hard priors).
@@ -19,8 +20,9 @@ class ParamBounds(object):
         :param fileName: optional file name to read from
         """
         self.names = []
-        self.lower = {}
-        self.upper = {}
+        from collections import OrderedDict
+        self.lower = OrderedDict()
+        self.upper = OrderedDict()
         if fileName is not None: self.loadFromFile(fileName)
 
     def loadFromFile(self, fileName):
@@ -37,7 +39,7 @@ class ParamBounds(object):
             for p, info in info_params.items():
                 # Sampled
                 if is_sampled_param(info):
-                    info_lims = dict([[l,info["prior"].get(l)]
+                    info_lims = dict([[l, info["prior"].get(l)]
                                       for l in ["min", "max", "loc", "scale"]])
                     if info_lims["min"] != None or info_lims["max"] != None:
                         lims = [info["prior"].get("min"), info["prior"].get("max")]
@@ -114,8 +116,8 @@ class ParamBounds(object):
         """
         :return: dictionary of fixed parameter values
         """
-
-        res = {}
+        from collections import OrderedDict
+        res = OrderedDict()
         for name in self.names:
             value = self.fixedValue(name)
             if value is not None:

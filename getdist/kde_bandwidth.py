@@ -58,10 +58,12 @@ _kde_consts_1d = np.array([(1 + 0.5 ** (j + 0.5)) / 3 * np.prod(np.arange(1, 2 *
 
 
 def _bandwidth_fixed_point(h, N, I, logI, a2):
+    if h <= 0: return h - 1
     f = 2 * np.pi ** (2 * _kde_lmax_bandwidth) * np.dot(a2,
                                                         np.exp(_kde_lmax_bandwidth * logI - I * (pisquared * h ** 2)))
     for j, const in zip(range(_kde_lmax_bandwidth - 1, 1, -1), _kde_consts_1d):
         try:
+            if not f: raise Exception()
             t_j = (const / N / f) ** (2 / (3. + 2 * j))
         except:
             print(f, h, N, j)
@@ -190,8 +192,9 @@ class KernelOptimizer2D(object):
             c = cov[2]
         var = 1. / (4 * np.pi * hx * hy * np.sqrt(1 - c ** 2) * self.N)
         bias = 0.25 * (
-            hx ** 4 * self.p[4, 0] + hy ** 4 * self.p[0, 4] + 2 * hx ** 2 * hy ** 2 * self.p[2, 2] * (2 * c ** 2 + 1)
-            + 4 * c * hx * hy * (hx ** 2 * self.p[3, 1] + hy ** 2 * self.p[1, 3]))
+                hx ** 4 * self.p[4, 0] + hy ** 4 * self.p[0, 4] + 2 * hx ** 2 * hy ** 2 * self.p[2, 2] * (
+                2 * c ** 2 + 1)
+                + 4 * c * hx * hy * (hx ** 2 * self.p[3, 1] + hy ** 2 * self.p[1, 3]))
         if bias < 0:
             raise Exception("bias not positive definite")
         return var + bias

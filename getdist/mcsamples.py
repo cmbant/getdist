@@ -86,7 +86,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
                           np.any(np.array(samples.contours) != np.array(cache.contours))
                 cache.updateSettings(ini=ini, settings=settings, doUpdate=changed)
                 return cache
-        except:
+        except Exception as e:
             pass
     if not len(files):
         raise IOError('No chains found: ' + file_root)
@@ -193,6 +193,7 @@ class MCSamples(Chains):
         self.subplot_size_inch3 = 6.0
         self.plot_output = getdist.default_plot_output
         self.out_dir = ""
+        self.no_warning_params = []
 
         self.max_split_tests = 4
         self.force_twotail = False
@@ -231,6 +232,8 @@ class MCSamples(Chains):
         elif isinstance(ranges, dict):
             for key, value in six.iteritems(ranges):
                 self.ranges.setRange(key, value)
+        elif isinstance(ranges, ParamBounds):
+            self.ranges = copy.deepcopy(ranges)
         else:
             raise ValueError('MCSamples ranges parameter must be list or dict')
         self.needs_update = True
@@ -324,6 +327,7 @@ class MCSamples(Chains):
         ini.setAttr('converge_test_limit', self, self.contours[-1])
         ini.setAttr('corr_length_thin', self)
         ini.setAttr('corr_length_steps', self)
+        ini.setAttr('no_warning_params', self, [])
         self.batch_path = ini.string('batch_path', self.batch_path, allowEmpty=False)
 
     def _initLimits(self, ini=None):
@@ -521,7 +525,8 @@ class MCSamples(Chains):
                                      self.weights.shape[0])
         return fraction_indices
 
-    def PCA(self, params, param_map=None, normparam=None, writeDataToFile=False, filename=None, conditional_params=[]):
+    def PCA(self, params, param_map=None, normparam=None, writeDataToFile=False, filename=None,
+            conditional_params=[], n_best_only=None):
         """
         Perform principle component analysis (PCA). In other words,
         get eigenvectors and eigenvalues for normalized variables
@@ -536,6 +541,7 @@ class MCSamples(Chains):
         :param writeDataToFile: True if should write the output to file.
         :param filename: The filename to write, by default root_name.PCA.
         :param conditional_params: optional list of parameters to treat as fixed, i.e. for PCA conditional on fixed values of these parameters
+        :param n_best_only: return just the short summary constraint for the tightest n_best_only constraints
         :return: a string description of the output of the PCA
         """
         logging.info('Doing PCA for %s parameters', len(params))
@@ -652,10 +658,10 @@ class MCSamples(Chains):
 
         PCAtext += '\n'
         PCAtext += 'Principle components\n'
-
+        PCAmodeTexts = []
         for i in range(n):
             isort = isorted[i]
-            PCAtext += 'PC%i (e-value: %f)\n' % (i + 1, evals[isort])
+            summary = 'PC%i (e-value: %f)\n' % (i + 1, evals[isort])
             for j in range(n):
                 label = self.parLabel(indices[j])
                 if param_map[j] in ['L', 'M']:
@@ -664,18 +670,19 @@ class MCSamples(Chains):
                         div = "%f" % (-np.exp(PCmean[j]))
                     else:
                         div = "%f" % (np.exp(PCmean[j]))
-                    PCAtext += '[%f]  (%s/%s)^{%s}\n' % (u[i][j], label, div, expo)
+                    summary += '[%f]  (%s/%s)^{%s}\n' % (u[i][j], label, div, expo)
                 else:
                     expo = "%f" % (sd[j] / u[i][j])
                     if doexp:
-                        PCAtext += '[%f]   exp((%s-%f)/%s)\n' % (u[i][j], label, PCmean[j], expo)
+                        summary += '[%f]   exp((%s-%f)/%s)\n' % (u[i][j], label, PCmean[j], expo)
                     else:
-                        PCAtext += '[%f]   (%s-%f)/%s)\n' % (u[i][j], label, PCmean[j], expo)
-
+                        summary += '[%f]   (%s-%f)/%s)\n' % (u[i][j], label, PCmean[j], expo)
             newmean[i] = self.mean(PCdata[:, i])
             newsd[i] = np.sqrt(self.mean((PCdata[:, i] - newmean[i]) ** 2))
-            PCAtext += '          = %f +- %f\n' % (newmean[i], newsd[i])
-            PCAtext += '\n'
+            summary += '          = %f +- %f\n' % (newmean[i], newsd[i])
+            summary += '\n'
+            PCAmodeTexts += [summary]
+            PCAtext += summary
 
         # Find out how correlated these components are with other parameters
         PCAtext += 'Correlations of principle components\n'
@@ -703,7 +710,12 @@ class MCSamples(Chains):
         if writeDataToFile:
             with open(filename or self.rootdirname + ".PCA", "w") as f:
                 f.write(PCAtext)
-        return PCAtext
+        if n_best_only:
+            if n_best_only == 1:
+                return PCAmodeTexts[0]
+            return PCAmodeTexts[:n_best_only]
+        else:
+            return PCAtext
 
     def getNumSampleSummaryText(self):
         """
@@ -1065,9 +1077,10 @@ class MCSamples(Chains):
         bin_range = max(par.param_max, par.range_max) - min(par.param_min, par.range_min)
         if h is None or h < 0.01 * N_eff ** (-1. / 5) * (par.range_max - par.range_min) / bin_range:
             hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / bin_range
-            logging.warning(
-                'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
-                    par.name, h, N_eff, hnew))
+            if par.name not in self.no_warning_params:
+                logging.warning(
+                    'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
+                        par.name, h, N_eff, hnew))
             h = hnew
 
         par.kde_h = h
@@ -2032,6 +2045,14 @@ class MCSamples(Chains):
             return par.limmin
         return None
 
+    def getBestFit(self):
+        bf_file = self.root + '.minimum'
+        if os.path.exists(bf_file):
+            return types.BestFit(bf_file)
+        else:
+            raise MCSamplesError(
+                'Best fit can only be included if loaded from file and file_root.minimum exists (cannot be calculated from samples)')
+
     def getMargeStats(self, include_bestfit=False):
         """
         Returns a :class:`~.types.MargeStats` object with marginalized 1D parameter constraints
@@ -2045,12 +2066,7 @@ class MCSamples(Chains):
         m.limits = self.contours
         m.names = self.paramNames.names
         if include_bestfit:
-            bf_file = self.root + '.minimum'
-            if os.path.exists(bf_file):
-                return types.BestFit(bf_file)
-            else:
-                raise MCSamplesError(
-                    'Best fit can only be included if loaded from file and file_root.minimum exists (cannot be calculated from samples)')
+            return self.getBestFit()
         return m
 
     def getLikeStats(self):
@@ -2073,7 +2089,7 @@ class MCSamples(Chains):
         """
         return types.ResultTable(columns, [self.getMargeStats(include_bestfit)], **kwargs)
 
-    def getLatex(self, params=None, limit=1):
+    def getLatex(self, params=None, limit=1, err_sig_figs=None):
         """
         Get tex snippet for constraints on a list of parameters
 
@@ -2085,6 +2101,7 @@ class MCSamples(Chains):
         if params is None: params = marge.list()
 
         formatter = types.NoLineTableFormatter()
+        if err_sig_figs: formatter.numberFormatter.err_sf = err_sig_figs
         texs = []
         labels = []
         for par in params:
@@ -2241,9 +2258,19 @@ class MCSamples(Chains):
             self.ranges.setRange(name, range)
         return super(MCSamples, self).addDerived(paramVec, name, label=label, comment=comment)
 
+    def getParamBestFitDict(self):
+        """
+        Gets a dictionary of parameter values for the best fit point, assuming .minimum best fit file exists
+        :return: dictionary of parameter values
+        """
+        res = self.getBestFit().getParamDict()
+        res.update(self.ranges.fixedValueDict())
+        return res
+
     def getParamSampleDict(self, ix):
         """
-        Returns a dictionary of parameter values for sample number ix
+        Gets a dictionary of parameter values for sample number ix
+        :return: dictionary of parameter values
         """
         res = super(MCSamples, self).getParamSampleDict(ix)
         res.update(self.ranges.fixedValueDict())
@@ -2261,7 +2288,7 @@ class MCSamples(Chains):
         if not chain_index:
             self.ranges.saveToFile(root + '.ranges')
 
-    def saveChainsAsText(self, root, make_dirs=False):
+    def saveChainsAsText(self, root, make_dirs=False, properties={}):
         if self.chains is None:
             chains = self.getSeparateChains()
         else:
@@ -2270,6 +2297,14 @@ class MCSamples(Chains):
             chain.saveAsText(root, i, make_dirs)
         self.ranges.saveToFile(root + '.ranges')
         self.paramNames.saveAsText(root + '.paramnames')
+        if properties:
+            ini_name = root + '.properties.ini'
+            if os.path.exists(ini_name):
+                ini = IniFile(ini_name)
+            else:
+                ini = IniFile()
+            ini.params.update(properties)
+            ini.saveFile(ini_name)
 
     # Write functions for GetDist.py
     def writeScriptPlots1D(self, filename, plotparams=None, ext=None):

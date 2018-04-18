@@ -95,11 +95,15 @@ class dataSet(object):
         if name is not None:
             self.names += [name]
             self.tag = "_".join(self.names)
+        return self
 
     def addEnd(self, name, params, dist_settings=None):
         if not dist_settings:
             dist_settings = {}
-        self.add(name, params, overrideExisting=False, dist_settings=dist_settings)
+        return self.add(name, params, overrideExisting=False, dist_settings=dist_settings)
+
+    def copy(self):
+        return copy.deepcopy(self)
 
     def extendForImportance(self, names, params):
         data = copy.deepcopy(self)
@@ -167,6 +171,7 @@ class jobGroup(object):
             self.groupName = name
             self.importanceRuns = importanceRuns
             self.datasets = datasets
+        self.extra_options = {}
 
 
 class importanceSetting(object):
@@ -236,7 +241,7 @@ class jobItem(propertiesItem):
                 if len(impRun) > 2 and not impRun[2].wantImportance(self): continue
                 impRun = importanceSetting(impRun[0], impRun[1])
             if len(set(impRun.names).intersection(self.data_set.names)) > 0:
-                print('importance job duplicating parent data set: %s with %s'%(self.name,impRun.names))
+                print('importance job duplicating parent data set: %s with %s' % (self.name, impRun.names))
                 continue
             data = self.data_set.extendForImportance(impRun.names, impRun.inis)
             job = jobItem(self.batchPath, self.param_set, data, minimize=impRun.want_minimize)
@@ -388,7 +393,7 @@ class jobItem(propertiesItem):
 
     def getDistNeedsUpdate(self):
         return self.chainExists() and (
-            not self.getDistExists() or self.chainFileDate() > os.path.getmtime(self.distRoot + '.margestats'))
+                not self.getDistExists() or self.chainFileDate() > os.path.getmtime(self.distRoot + '.margestats'))
 
     def parentChanged(self):
         return not self.chainExists() or self.chainFileDate() < self.parent.chainFileDate()
@@ -450,6 +455,8 @@ class batchJob(propertiesItem):
                 for param_set in group.params:
                     item = jobItem(self.batchPath, param_set, data_set)
                     if hasattr(group, 'groupName'): item.group = group.groupName
+                    if hasattr(group, 'extra_opts'): item.extra_opts = group.extra_opts
+                    if hasattr(group, 'param_extra_opts'): item.param_extra_opts = group.param_extra_opts
                     if not item.name in self.skip:
                         item.makeImportance(group.importanceRuns)
                         item.makeImportance(allImportance)

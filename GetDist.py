@@ -173,7 +173,7 @@ def main(args):
 
     # Output thinned data if requested
     # Must do this with unsorted output
-    if thin_factor != 0:
+    if thin_factor > 1:
         thin_ix = mc.thin_indices(thin_factor)
         filename = rootdirname + '_thin.txt'
         mc.writeThinData(filename, thin_ix, thin_cool)

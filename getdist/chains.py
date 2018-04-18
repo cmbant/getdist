@@ -76,10 +76,15 @@ def loadNumpyTxt(fname, skiprows=None):
     :param skiprows: The number of rows to skip at the begging of the file
     :return: numpy array of the data values
     """
-    if use_pandas:
-        return pandas.read_csv(fname, delim_whitespace=True, header=None, dtype=np.float64, skiprows=skiprows).values
-    else:
-        return np.loadtxt(fname, skiprows=skiprows)
+    try:
+        if use_pandas:
+            return pandas.read_csv(fname, delim_whitespace=True, header=None, dtype=np.float64,
+                                   skiprows=skiprows).values
+        else:
+            return np.loadtxt(fname, skiprows=skiprows)
+    except ValueError:
+        print('Error reading %s' % fname)
+        raise
 
 
 def getSignalToNoise(C, noise=None, R=None, eigs_only=False):
@@ -472,7 +477,10 @@ class WeightedSamples(object):
         :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
         :return: parameter mean
         """
-        return self.weighted_sum(paramVec, where) / self.get_norm(where)
+        if isinstance(paramVec, (list, tuple)):
+            return np.array([self.weighted_sum(p, where) for p in paramVec]) / self.get_norm(where)
+        else:
+            return self.weighted_sum(paramVec, where) / self.get_norm(where)
 
     def var(self, paramVec, where=None):
         """
@@ -482,6 +490,8 @@ class WeightedSamples(object):
         :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
         :return: parameter variance
         """
+        if isinstance(paramVec, (list, tuple)):
+            return np.array([self.var(p) for p in paramVec])
         if where is not None:
             return np.dot(self.mean_diff(paramVec, where) ** 2, self.weights[where]) / self.get_norm(where)
         else:
@@ -931,7 +941,8 @@ class Chains(WeightedSamples):
         """
         Returns a dictionary of parameter values for sample number ix
         """
-        res = {}
+        from collections import OrderedDict
+        res = OrderedDict()
         for i, name in enumerate(self.paramNames.names):
             res[name.name] = self.samples[ix, i]
         res['weight'] = self.weights[i]
