@@ -1092,6 +1092,8 @@ class GetDistPlotter(object):
         lws = kwargs.get('lws')
         alphas = kwargs.get('alphas')
         ls = kwargs.get('ls')
+        if isinstance(ls, six.string_types):
+            ls = [ls] * nroots
         for i, args in enumerate(line_args):
             c = args.copy()  # careful to copy before modifying any
             line_args[i] = c
@@ -2493,7 +2495,7 @@ class GetDistPlotter(object):
         if fname is None: fname = os.path.basename(sys.argv[0]).replace('.py', '')
         if tag: fname += '_' + tag
         if not '.' in fname: fname += '.' + getdist.default_plot_output
-        if adir is not None and not os.sep in fname: fname = os.path.join(adir, fname)
+        if adir is not None and os.sep not in fname and '/' not in fname: fname = os.path.join(adir, fname)
         adir = os.path.dirname(fname)
         if adir and not os.path.exists(adir): os.makedirs(adir)
         if watermark:

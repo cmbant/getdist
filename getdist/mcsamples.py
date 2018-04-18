@@ -232,6 +232,8 @@ class MCSamples(Chains):
         elif isinstance(ranges, dict):
             for key, value in six.iteritems(ranges):
                 self.ranges.setRange(key, value)
+        elif isinstance(ranges, ParamBounds):
+            self.ranges = copy.deepcopy(ranges)
         else:
             raise ValueError('MCSamples ranges parameter must be list or dict')
         self.needs_update = True
