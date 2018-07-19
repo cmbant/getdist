@@ -37,6 +37,14 @@ def main(args):
     if chain_root and chain_root.endswith('.txt'):
         chain_root = chain_root[:-4]
 
+    if chain_root is not None and ('*' in chain_root or '?' in chain_root):
+        import glob, copy
+        for file in glob.glob(chain_root+'.paramnames'):
+            fileargs = copy.copy(args)
+            fileargs.chain_root= file.replace('.paramnames','')
+            main(fileargs)
+        return
+
     # Input parameters
     ini = IniFile(args.ini_file)
 

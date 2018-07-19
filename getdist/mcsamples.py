@@ -10,7 +10,7 @@ import time
 import numpy as np
 from scipy.stats import norm
 import getdist
-from getdist import chains, types, covmat, ParamInfo, IniFile
+from getdist import chains, types, covmat, ParamInfo, IniFile, ParamNames
 from getdist.densities import Density1D, Density2D, DensityND
 from getdist.densities import getContourLevels as getOtherContourLevels
 from getdist.chains import Chains, chainFiles, lastModified
@@ -194,6 +194,7 @@ class MCSamples(Chains):
         self.plot_output = getdist.default_plot_output
         self.out_dir = ""
         self.no_warning_params = []
+        self.no_warning_chi2_params = True
 
         self.max_split_tests = 4
         self.force_twotail = False
@@ -328,6 +329,7 @@ class MCSamples(Chains):
         ini.setAttr('corr_length_thin', self)
         ini.setAttr('corr_length_steps', self)
         ini.setAttr('no_warning_params', self, [])
+        ini.setAttr('no_warning_chi2_params', self, True)
         self.batch_path = ini.string('batch_path', self.batch_path, allowEmpty=False)
 
     def _initLimits(self, ini=None):
@@ -1077,7 +1079,8 @@ class MCSamples(Chains):
         bin_range = max(par.param_max, par.range_max) - min(par.param_min, par.range_min)
         if h is None or h < 0.01 * N_eff ** (-1. / 5) * (par.range_max - par.range_min) / bin_range:
             hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / bin_range
-            if par.name not in self.no_warning_params:
+            if par.name not in self.no_warning_params \
+                    and (not self.no_warning_chi2_params or 'chi2_' not in par.name):
                 logging.warning(
                     'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
                         par.name, h, N_eff, hnew))
@@ -2030,7 +2033,7 @@ class MCSamples(Chains):
         """
         par = self.paramNames.parWithName(name)
         if par:
-            return par.limmax
+            return getattr(par, 'limmax', None)
         return None
 
     def getLower(self, name):
@@ -2042,7 +2045,7 @@ class MCSamples(Chains):
         """
         par = self.paramNames.parWithName(name)
         if par:
-            return par.limmin
+            return getattr(par, 'limmin', None)
         return None
 
     def getBestFit(self):
@@ -2080,7 +2083,7 @@ class MCSamples(Chains):
 
     def getTable(self, columns=1, include_bestfit=False, **kwargs):
         """
-        Creates and returns a :class:`~.types.ResultTable` instance.
+        Creates and returns a :class:`~.types.ResultTable` instance. See also :func:`~MCSamples.getInlineLatex`.
 
         :param columns: number of columns in the table
         :param include_bestfit: True if should include the bestfit parameter values (assuming set)
@@ -2093,10 +2096,14 @@ class MCSamples(Chains):
         """
         Get tex snippet for constraints on a list of parameters
 
-        :param params: list of parameter names
+        :param params: list of parameter names, or a single parameter name
         :param limit: which limit to get, 1 is the first (default 68%), 2 is the second (limits array specified by self.contours)
-        :return: labels, texs: a list of parameter labels, and a list of tex snippets
+        :param err_sig_figs: significant figures in the error
+        :return: labels, texs: a list of parameter labels, and a list of tex snippets, or for a single parameter, the latex snippet.
         """
+        if isinstance(params, six.string_types):
+            return self.getInlineLatex(params, limit, err_sig_figs)
+
         marge = self.getMargeStats()
         if params is None: params = marge.list()
 
@@ -2115,15 +2122,17 @@ class MCSamples(Chains):
 
         return labels, texs
 
-    def getInlineLatex(self, param, limit=1):
+    def getInlineLatex(self, param, limit=1, err_sig_figs=None):
         r"""
         Get snippet like: A=x\\pm y. Will adjust appropriately for one and two tail limits.
 
         :param param: The name of the parameter
         :param limit: which limit to get, 1 is the first (default 68%), 2 is the second (limits array specified by self.contours)
+        :param err_sig_figs: significant figures in the error
         :return: The tex snippet.
         """
-        labels, texs = self.getLatex([param], limit)
+        labels, texs = self.getLatex([param], limit, err_sig_figs)
+        if texs[0] is None: raise ValueError('parameter %s not found' % param)
         if not texs[0][0] in ['<', '>']:
             return labels[0] + ' = ' + texs[0]
         else:
@@ -2275,6 +2284,37 @@ class MCSamples(Chains):
         res = super(MCSamples, self).getParamSampleDict(ix)
         res.update(self.ranges.fixedValueDict())
         return res
+
+    def getCombinedSamplesWithSamples(self, samps2, sample_weights=[1, 1]):
+        """
+        Make a new  :class:`MCSamples` instance by appending samples from samps2 for parameters which are in common.
+        By default they are weighted so that the probability mass of each set of samples is the same,
+        independent of tha actual sample sizes. The Weights parameter can be adjusted to change the
+        relative weighting.
+        :param samps2:  :class:`MCSamples` instance to merge
+        :param sample_weights: relative weights for combining the samples. Set to None to just directly append samples.
+        :return: a new  :class:`MCSamples` instance with the combined samples
+        """
+
+        params = ParamNames()
+        params.names = [ParamInfo(name=p.name, label=p.label, derived=p.isDerived) for p in samps2.paramNames.names if
+                        p.name in self.paramNames.list()]
+        if self.loglikes is not None and samps2.loglikes is not None:
+            loglikes = np.concatenate([self.loglikes, samps2.loglikes])
+        else:
+            loglikes = None
+        if sample_weights is None:
+            fac = 1
+            sample_weights = [1, 1]
+        else:
+            fac = np.sum(self.weights) / np.sum(samps2.weights)
+        weights = np.concatenate([self.weights * sample_weights[0], samps2.weights * sample_weights[1] * fac])
+        p1 = self.getParams()
+        p2 = samps2.getParams()
+        samples = np.array([np.concatenate([getattr(p1, name), getattr(p2, name)]) for name in params.list()]).T
+        samps = MCSamples(samples=samples, weights=weights, loglikes=loglikes, paramNamesFile=params, ignore_rows=0,
+                          ranges=self.ranges, settings=copy.deepcopy(self.ini.params))
+        return samps
 
     def saveAsText(self, root, chain_index=None, make_dirs=False):
         """

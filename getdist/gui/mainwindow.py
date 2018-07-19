@@ -654,7 +654,7 @@ class MainWindow(QMainWindow):
 
     def settingsChanged(self):
         if self.plotter:
-            self.plotter.sampleAnalyser.reset(self.iniFile)
+            self.plotter.sampleAnalyser.reset(self.iniFile, chain_settings_have_priority = False)
             if self.plotter.fig:
                 self.plotData()
 

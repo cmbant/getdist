@@ -172,6 +172,7 @@ def makeGrid(batchPath, settingName=None, settings=None, readOnly=False, interac
                 for name in settings.covWithoutNameOrder:
                     if name in jobItem.data_set.names:
                         removes[name] = ''
+                        covmat_try += [jobItem.makeNormedName({name: ''})[0]]
                         covmat_try += [jobItem.makeNormedName(removes)[0]]
             covdir2 = os.path.join(batch.basePath, getattr(settings, 'cov_dir_fallback', cov_dir_name))
             for name in covmat_try:

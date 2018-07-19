@@ -14,7 +14,7 @@ try:
     import pandas
     from distutils.version import LooseVersion
 
-    use_pandas = LooseVersion(pandas.version.version) > LooseVersion("0.14.0")
+    use_pandas = LooseVersion(pandas.__version__) > LooseVersion("0.14.0")
 except:
     use_pandas = False
 
