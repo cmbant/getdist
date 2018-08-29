@@ -94,7 +94,7 @@ def loadNumpyTxt(fname, skiprows=None):
     try:
         if use_pandas:
             return pandas.read_csv(fname, delim_whitespace=True, header=None, dtype=np.float64,
-                                   skiprows=skiprows).values
+                                   skiprows=skiprows, comment='#').values
         else:
             return np.loadtxt(fname, skiprows=skiprows)
     except ValueError:
