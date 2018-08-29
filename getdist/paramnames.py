@@ -4,6 +4,21 @@ import fnmatch
 import six
 import matplotlib
 
+
+def makeList(roots):
+    """
+    Checks if the given parameter is a list.
+    If not, Creates a list with the parameter as an item in it.
+
+    :param roots: The parameter to check
+    :return: A list containing the parameter.
+    """
+    if isinstance(roots, (list, tuple)):
+        return roots
+    else:
+        return [roots]
+
+
 def escapeLatex(text):
     if text and matplotlib.rcParams['text.usetex']:
         return text.replace('_', '{\\textunderscore}')
@@ -21,13 +36,15 @@ class ParamInfo(object):
     :ivar isDerived: True if a derived parameter, False otherwise (e.g. for MCMC parameters)
     """
 
-    def __init__(self, line=None, name='', label='', comment='', derived=False, number=None):
+    def __init__(self, line=None, name='', label='', comment='', derived=False,
+                 alias=None, number=None):
         self.setName(name)
         self.isDerived = derived
         self.label = label or name
         self.comment = comment
         self.filenameLoadedFrom = ''
         self.number = number
+        self.alias = makeList(alias or [])
         if line is not None:
             self.setFromString(line)
 
@@ -293,11 +310,14 @@ class ParamNames(ParamList):
         elif extension.lower() in ('.yaml', '.yml'):
             from getdist.yaml_format_tools import yaml_load_file, get_info_params
             from getdist.yaml_format_tools import is_sampled_param, is_derived_param
+            from getdist.yaml_format_tools import _p_label, _p_alias
             info_params = get_info_params(yaml_load_file(fileName))
             # first sampled, then derived
-            self.names = [ParamInfo(param + " " + ((info or {}).get("latex") or param))
+            self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
+                                    alias=(info or {}).get(_p_alias))
                           for param, info in info_params.items() if is_sampled_param(info)]
-            self.names += [ParamInfo(param + " " + ((info or {}).get("latex") or param), derived=True)
+            self.names += [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
+                                     alias=(info or {}).get(_p_alias), derived=True)
                            for param, info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):

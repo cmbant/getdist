@@ -14,26 +14,13 @@ import numpy as np
 from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
-from getdist.paramnames import escapeLatex
+from getdist.paramnames import escapeLatex, makeList
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
 from getdist.gaussian_mixtures import MixtureND
 import logging
 
 """Plotting scripts for GetDist outputs"""
-
-
-def makeList(roots):
-    """
-    Checks if the given parameter is a list, If not, Creates a list with the parameter as an item in it.
-
-    :param roots: The parameter to check
-    :return: A list containing the parameter.
-    """
-    if isinstance(roots, (list, tuple)):
-        return roots
-    else:
-        return [roots]
 
 
 class GetDistPlotError(Exception):
