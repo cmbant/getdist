@@ -3,6 +3,7 @@ import os
 import fnmatch
 import six
 import matplotlib
+import copy
 
 
 def makeList(roots):
@@ -162,8 +163,12 @@ class ParamList(object):
         :param error: if True raise an error if parameter not found, otherwise return None
         :param renames: a dictionary that is used to provide optional name mappings to the stored names
         """
+        if isinstance(name, ParamInfo):
+            renames = {name.name: renames.get(name.name, []) + list(name.renames)}
+            name = name.name
         for par in self.names:
-            if par.name == name or name in par.renames or renames.get(par.name, '') == name:
+            if ((par.name == name or name in par.renames or
+                 name in renames.get(par.name, []) or par.name in renames.get(name, []))):
                 return par
         if error: raise Exception("parameter name not found: " + name)
         return None
@@ -188,6 +193,11 @@ class ParamList(object):
         :param error: if True, raise an error if any name not found, otherwise returns None items
         :param renames: optional dictionary giving mappings of parameter names
         """
+        for i,name in enumerate(names):
+            if isinstance(name, ParamInfo):
+                renames = copy.deepcopy(renames)
+                renames[name.name] = renames.get(name.name, []) + list(name.renames)
+                names[i] = name.name
         res = []
         if isinstance(names, six.string_types):
             names = [names]
