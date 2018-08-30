@@ -37,14 +37,14 @@ class ParamInfo(object):
     """
 
     def __init__(self, line=None, name='', label='', comment='', derived=False,
-                 alias=None, number=None):
+                 renames=None, number=None):
         self.setName(name)
         self.isDerived = derived
         self.label = label or name
         self.comment = comment
         self.filenameLoadedFrom = ''
         self.number = number
-        self.alias = makeList(alias or [])
+        self.renames = makeList(renames or [])
         if line is not None:
             self.setFromString(line)
 
@@ -163,7 +163,7 @@ class ParamList(object):
         :param renames: a dictionary that is used to provide optional name mappings to the stored names
         """
         for par in self.names:
-            if par.name == name or renames.get(par.name, '') == name:
+            if par.name == name or name in par.renames or renames.get(par.name, '') == name:
                 return par
         if error: raise Exception("parameter name not found: " + name)
         return None
@@ -314,10 +314,10 @@ class ParamNames(ParamList):
             info_params = get_info_params(yaml_load_file(fileName))
             # first sampled, then derived
             self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
-                                    alias=(info or {}).get(_p_alias))
+                                    renames=(info or {}).get(_p_alias))
                           for param, info in info_params.items() if is_sampled_param(info)]
             self.names += [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
-                                     alias=(info or {}).get(_p_alias), derived=True)
+                                     renames=(info or {}).get(_p_alias), derived=True)
                            for param, info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):
