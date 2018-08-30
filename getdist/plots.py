@@ -1487,9 +1487,7 @@ class GetDistPlotter(object):
         if params is None or len(params) == 0:
             return names.names
         else:
-            if isinstance(params, six.string_types) or \
-                    not all([isinstance(param, ParamInfo) for param in params]):
-                return names.parsWithNames(params, error=True, renames=renames)
+            return names.parsWithNames(params, error=True, renames=renames)
         return params
 
     def _check_param(self, root, param, renames={}):
@@ -1501,11 +1499,15 @@ class GetDistPlotter(object):
         :param renames: optional dictionary mapping input names and equivalent names used by the samples
         :return: a :class:`~.paramnames.ParamInfo` instance, or None if name not found
         """
-        if not isinstance(param, ParamInfo):
-            return self.paramNamesForRoot(root).parWithName(param, error=True, renames=renames)
-        elif renames:
-            return self.paramNamesForRoot(root).parWithName(param.name, error=False, renames=renames)
-        return param
+        if isinstance(param, ParamInfo):
+            name = param.name
+            if param.renames:
+                renames = {name: makeList(renames.get(name, [])) + list(param.renames)}
+        else:
+            name = param
+        # NB: If a parameter is not found, errors only if param is a ParamInfo instance
+        return self.paramNamesForRoot(root).parWithName(
+            name, error=(name == param), renames=renames)
 
     def param_latex_label(self, root, name, labelParams=None):
         """
