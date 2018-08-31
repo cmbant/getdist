@@ -195,7 +195,7 @@ class ParamList(object):
         """
         for i,name in enumerate(names):
             if isinstance(name, ParamInfo):
-                renames = copy.deepcopy(renames)
+                names, renames = map(copy.deepcopy, [names, renames])
                 renames[name.name] = renames.get(name.name, []) + list(name.renames)
                 names[i] = name.name
         res = []
