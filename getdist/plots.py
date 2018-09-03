@@ -14,7 +14,7 @@ import numpy as np
 from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
-from getdist.paramnames import escapeLatex, makeList
+from getdist.paramnames import escapeLatex, makeList, mergeRenames
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
 from getdist.gaussian_mixtures import MixtureND
@@ -1471,10 +1471,15 @@ class GetDistPlotter(object):
     def get_param_array(self, root, params=None, renames={}):
         """
         Gets an array of :class:`~.paramnames.ParamInfo` for named params
+        in the given `root`.
+
+        If a parameter is not found in `root`, returns the original ParamInfo if ParamInfo
+        was passed, or fails otherwise.
 
         :param root: The root name of the samples to use
         :param params: the parameter names (if not specified, get all)
-        :param renames: optional dictionary mapping input names and equivalent names used by the samples
+        :param renames: optional dictionary mapping input names and equivalent names
+                        used by the samples
         :return: list of :class:`~.paramnames.ParamInfo` instances for the parameters
         """
         if hasattr(root, 'paramNames'):
@@ -1486,17 +1491,32 @@ class GetDistPlotter(object):
 
         if params is None or len(params) == 0:
             return names.names
+        # Fail only for parameters for which a string was passed
+        if isinstance(params, six.string_types):
+            error = True
         else:
-            return names.parsWithNames(params, error=True, renames=renames)
-        return params
+            is_ParamInfo = [isinstance(param, ParamInfo) for param in params]
+            error = [not a for a in is_ParamInfo]
+            # Add renames of given ParamInfo's to the renames dict
+            renames_from_ParamInfo = {param.name:param.renames
+                                      for i,param in enumerate(params) if is_ParamInfo[i]}
+            renames = mergeRenames(renames, renames_from_ParamInfo)
+            params = [getattr(param, "name", param) for param in params]
+        return [new or old for new, old in zip(
+            names.parsWithNames(params, error=error, renames=renames),
+            params)]
 
     def _check_param(self, root, param, renames={}):
         """
         Get :class:`~.paramnames.ParamInfo` for given name for samples with specified root
 
+        If a parameter is not found in `root`, returns the original ParamInfo if ParamInfo
+        was passed, or fails otherwise.
+
         :param root: The root name of the samples
         :param param: The parameter name (or :class:`~.paramnames.ParamInfo`)
-        :param renames: optional dictionary mapping input names and equivalent names used by the samples
+        :param renames: optional dictionary mapping input names and equivalent names
+                        used by the samples
         :return: a :class:`~.paramnames.ParamInfo` instance, or None if name not found
         """
         if isinstance(param, ParamInfo):

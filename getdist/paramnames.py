@@ -3,7 +3,7 @@ import os
 import fnmatch
 import six
 import matplotlib
-import copy
+from itertools import chain
 
 
 def makeList(roots):
@@ -25,6 +25,41 @@ def escapeLatex(text):
         return text.replace('_', '{\\textunderscore}')
     else:
         return text
+
+
+def mergeRenames(*dicts):
+    """
+    Joins several dicts of renames.
+
+    Returns a merged dictionary of renames,
+    whose keys are chosen from the left-most input.
+    """
+    sets = list(chain(*[[set([k]+(makeList(v or [])))
+                         for k,v in dic.items()] for dic in dicts]))
+    # If two sets have elements in common, join them.
+    something_changed = True
+    out = []
+    while something_changed:
+        something_changed = False
+        for i in range(1,len(sets)):
+            if sets[0].intersection(sets[i]):
+                sets[0] = sets[0].union(sets.pop(i))
+                something_changed = True
+                break
+        if not something_changed and sets:
+            out += [sets.pop(0)]
+            if len(sets):
+                something_changed = True
+    merged = {}
+    for params in out:
+        for dic in dicts:
+            p = set(dic).intersection(params)
+            if p and params != p:
+                key = p.pop()
+                params.remove(key)
+                merged[key] = list(params)
+                break
+    return merged
 
 
 class ParamInfo(object):
@@ -161,14 +196,14 @@ class ParamList(object):
 
         :param name: name of the parameter
         :param error: if True raise an error if parameter not found, otherwise return None
-        :param renames: a dictionary that is used to provide optional name mappings to the stored names
+        :param renames: a dictionary that is used to provide optional name mappings
+                        to the stored names
         """
-        if isinstance(name, ParamInfo):
-            renames = {name.name: renames.get(name.name, []) + list(name.renames)}
-            name = name.name
+        given_names = set([name] + makeList(renames.get(name, [])))
         for par in self.names:
-            if ((par.name == name or name in par.renames or
-                 name in renames.get(par.name, []) or par.name in renames.get(name, []))):
+            known_names = set([par.name] + makeList(par.renames) +
+                              makeList(renames.get(par.name, [])))
+            if known_names.intersection(given_names):
                 return par
         if error: raise Exception("parameter name not found: " + name)
         return None
@@ -190,18 +225,17 @@ class ParamList(object):
         Also expands any names that are globs into list with matching parameter names
 
         :param names: list of name strings
-        :param error: if True, raise an error if any name not found, otherwise returns None items
+        :param error: if True, raise an error if any name not found,
+                      otherwise returns None items. Can be a list of length `len(names)`
         :param renames: optional dictionary giving mappings of parameter names
         """
-        for i,name in enumerate(names):
-            if isinstance(name, ParamInfo):
-                names, renames = map(copy.deepcopy, [names, renames])
-                renames[name.name] = renames.get(name.name, []) + list(name.renames)
-                names[i] = name.name
         res = []
         if isinstance(names, six.string_types):
             names = [names]
-        for name in names:
+        errors = makeList(error)
+        if len(errors) < len(names):
+            errors = len(names) * errors
+        for name, error in zip(names, errors):
             if isinstance(name, ParamInfo):
                 res.append(name)
             else:
