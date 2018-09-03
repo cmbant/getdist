@@ -55,6 +55,11 @@ def yaml_load(text_stream, Loader=yaml.Loader, object_pairs_hook=odict, file_nam
             |[-+]?\\.(?:inf|Inf|INF)
             |\\.(?:nan|NaN|NAN))$''', re.X),
             list(u'-+0123456789.'))
+        # Ignore python objects
+        def dummy_object_loader(loader, suffix, node):
+            return None
+        OrderedLoader.add_multi_constructor(
+            u'tag:yaml.org,2002:python/name:', dummy_object_loader)
         try:
             return yaml.load(text_stream, OrderedLoader)
         # Redefining the general exception to give more user-friendly information
