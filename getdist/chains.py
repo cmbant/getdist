@@ -927,6 +927,18 @@ class Chains(WeightedSamples):
         self.index = index
         return self.index
 
+    def getRenames(self):
+        """
+        Updates the renames known to each parameter with the given dictionary of renames.
+        """
+        return self.paramNames.getRenames()
+
+    def updateRenames(self, renames):
+        """
+        Updates the renames known to each parameter with the given dictionary of renames.
+        """
+        self.paramNames.updateRenames(renames)
+
     def setParams(self, obj):
         """
         Adds array variables obj.name1, obj.name2 etc, where

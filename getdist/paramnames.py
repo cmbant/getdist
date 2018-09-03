@@ -27,13 +27,19 @@ def escapeLatex(text):
         return text
 
 
-def mergeRenames(*dicts):
+def mergeRenames(*dicts, **kwargs):
     """
     Joins several dicts of renames.
+
+    If `keep_names_1st=True` (default: `False`), keeps empty entries when possible
+    in order to preserve the parameter names of the fist input dictionary.
 
     Returns a merged dictionary of renames,
     whose keys are chosen from the left-most input.
     """
+    keep_names_1st = kwargs.pop("keep_names_1st", False)
+    if kwargs:
+        raise ValueError("kwargs not recognised: %r" % kwargs)
     sets = list(chain(*[[set([k]+(makeList(v or [])))
                          for k,v in dic.items()] for dic in dicts]))
     # If two sets have elements in common, join them.
@@ -54,7 +60,7 @@ def mergeRenames(*dicts):
     for params in out:
         for dic in dicts:
             p = set(dic).intersection(params)
-            if p and params != p:
+            if p and (params != p or keep_names_1st):
                 key = p.pop()
                 params.remove(key)
                 merged[key] = list(params)
@@ -268,6 +274,24 @@ class ParamList(object):
             if not param is None:
                 param.label = par.label
                 if set_derived: param.isDerived = par.isDerived
+
+    def getRenames(self, keep_empty=False):
+        """
+        Gets dictionary of renames known to each parameter.
+        """
+        return {param.name:param.renames for param in self.names
+                if (param.renames or keep_empty)}
+
+    def updateRenames(self, renames):
+        """
+        Updates the renames known to each parameter with the given dictionary of renames.
+        """
+        merged_renames = mergeRenames(
+            self.getRenames(keep_empty=True), renames, keep_names_1st=True)
+        known_names = self.list()
+        for name, rename in merged_renames.items():
+            if name in known_names:
+                self.parWithName(name).renames = rename
 
     def fileList(self, fname):
         with open(fname) as f:

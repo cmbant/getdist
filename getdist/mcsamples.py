@@ -59,7 +59,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     :param file_root: The root name of the files to read (no extension)
     :param ini: The name of a .ini file with analysis settings to use
     :param jobItem: an optional grid jobItem instance for a CosmoMC grid output
-    :param no_cache: Indicates whether or not we should cached loaded samples in a pickle
+    :param no_cache: Indicates whether or not we should cache loaded samples in a pickle
     :param settings: dictionary of analysis settings to override defaults
     :param dist_settings: (old) alias for settings
     :return: The :class:`MCSamples` instance
