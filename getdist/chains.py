@@ -841,7 +841,7 @@ class Chains(WeightedSamples):
     :ivar paramNames: a :class:`~.paramnames.ParamNames` instance holding the parameter names and labels
     """
 
-    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, **kwargs):
+    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, renames=None, **kwargs):
         """
 
         :param root: optional root name for files
@@ -849,6 +849,7 @@ class Chains(WeightedSamples):
         :param paramNamesFile: optional filename of a .paramnames files that holds parameter names
         :param names: optional list of names for the parameters
         :param labels: optional list of latex labels for the parameters
+        :param renames: optional dictionary of parameter aliases
         :param kwargs: extra options for :class:`~.chains.WeightedSamples`'s constructor
 
         """
@@ -866,6 +867,7 @@ class Chains(WeightedSamples):
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
             self.paramNames.setLabels(labels)
+        self.updateRenames(renames or {})
 
     def setParamNames(self, names=None):
         """

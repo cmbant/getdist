@@ -5,6 +5,10 @@ import six
 import matplotlib
 from itertools import chain
 
+from getdist.yaml_format_tools import yaml_load_file, get_info_params
+from getdist.yaml_format_tools import is_sampled_param, is_derived_param
+from getdist.yaml_format_tools import _p_label, _p_renames
+
 
 def makeList(roots):
     """
@@ -376,9 +380,6 @@ class ParamNames(ParamList):
             with open(fileName) as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
         elif extension.lower() in ('.yaml', '.yml'):
-            from getdist.yaml_format_tools import yaml_load_file, get_info_params
-            from getdist.yaml_format_tools import is_sampled_param, is_derived_param
-            from getdist.yaml_format_tools import _p_label, _p_renames
             info_params = get_info_params(yaml_load_file(fileName))
             # first sampled, then derived
             self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),

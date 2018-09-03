@@ -17,7 +17,8 @@ from getdist.chains import Chains, chainFiles, lastModified, print_load_details
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
-from getdist.yaml_format_tools import _p_label, _weight, _minuslogpost
+from getdist.yaml_format_tools import _p_label, _p_renames, _weight, _minuslogpost
+from getdist.yaml_format_tools import get_info_params, get_range, is_derived_param
 import six
 
 pickle_version = 21
@@ -96,7 +97,8 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     return samples
 
 
-def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None, settings={}):
+def loadCobayaSamples(info, collections, name_tag=None,
+                      ignore_rows=0, ini=None, settings={}):
     """
     Loads a set of samples from Cobaya's output.
     Parameter names, ranges and labels are taken from the "info" dictionary
@@ -105,8 +107,9 @@ def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None,
     For a description of the various analysis settings and default values see
     `analysis_defaults.ini <http://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
 
-    :param info: info dictionary, common to all collections (use "updated" one)
     :param collections: collection(s) of samples from Cobaya
+    :param info: info dictionary, common to all collections
+                 (use the "updated" one, returned by `cobaya.run`)
     :param name_tag: name for this sample to be shown in the plots' legend
     :param ignore_rows: initial samples to skip, number (`int>=1`) or fraction (`float<1`)
     :param ini: The name of a .ini file with analysis settings to use
@@ -122,8 +125,6 @@ def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None,
     columns = list(collections[0].data)
     if not all([list(c.data) == columns for c in collections[1:]]):
         raise ValueError("The given collections don't have the same columns.")
-    from getdist.yaml_format_tools import get_info_params, get_range
-    from getdist.yaml_format_tools import is_derived_param, is_fixed_param
     # Check consistency with info
     info_params = get_info_params(info)
     assert set(columns[2:]) == set(info_params.keys()), (
@@ -137,12 +138,14 @@ def loadCobayaSamples(info, collections, name_tag=None, ignore_rows=0, ini=None,
              for p in columns[2:]]
     labels = [(info_params[p] or {}).get(_p_label, p) for p in columns[2:]]
     ranges = {p: get_range(info_params[p]) for p in columns[2:]}
+    renames = {p:info_params[p].get(_p_renames, []) for p in columns[2:]}
     samples = [c[c.data.columns[2:]].values for c in collections]
     weights = [c[_weight].values for c in collections]
     loglikes = [-c[_minuslogpost].values for c in collections]
     return MCSamples(samples=samples, weights=weights, loglikes=loglikes,
-                     names=names, labels=labels, ranges=ranges, ignore_rows=ignore_rows,
-                     name_tag=name_tag, ini=ini, settings=settings)
+                     names=names, labels=labels, ranges=ranges, renames=renames,
+                     ignore_rows=ignore_rows, name_tag=name_tag, ini=ini,
+                     settings=settings)
 
 
 class Kernel1D(object):
@@ -185,7 +188,8 @@ class MCSamples(Chains):
                                or list of arrays if more than one chain
                - **names**: list of names for the parameters,
                             or list of arrays if more than one chain
-               - **labels**:  list of latex labels for the parameters
+               - **labels**: list of latex labels for the parameters
+               - **renames**: dictionary of parameter aliases
                - **ignore_rows**:
 
                      - if int >=1: The number of rows to skip at the file in the beginning of the file
@@ -275,10 +279,10 @@ class MCSamples(Chains):
         if samples is not None:
             self.readChains(samples, weights, loglikes)
 
-
     def setRanges(self, ranges):
         """
-        Sets the ranges parameters, e.g. hard priors on positivity etc. If a min or max value is None, then it is assumed to be unbounded.
+        Sets the ranges parameters, e.g. hard priors on positivity etc.
+        If a min or max value is None, then it is assumed to be unbounded.
 
         :param ranges: A list or a tuple of [min,max] values for each parameter,
                        or a dictionary giving [min,max] values for specific parameter names
@@ -438,7 +442,7 @@ class MCSamples(Chains):
         if ini: self.initParameters(ini)
         if doUpdate and self.samples is not None: self.updateBaseStatistics()
 
-    def readChains(self, files_or_samples=None, weights=None, loglikes=None):
+    def readChains(self, files_or_samples, weights=None, loglikes=None):
         """
         Loads samples from a list of files or array(s), removing burn in,
         deleting fixed parameters, and combining into one self.samples array
