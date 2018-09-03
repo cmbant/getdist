@@ -378,14 +378,14 @@ class ParamNames(ParamList):
         elif extension.lower() in ('.yaml', '.yml'):
             from getdist.yaml_format_tools import yaml_load_file, get_info_params
             from getdist.yaml_format_tools import is_sampled_param, is_derived_param
-            from getdist.yaml_format_tools import _p_label, _p_alias
+            from getdist.yaml_format_tools import _p_label, _p_renames
             info_params = get_info_params(yaml_load_file(fileName))
             # first sampled, then derived
             self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
-                                    renames=(info or {}).get(_p_alias))
+                                    renames=(info or {}).get(_p_renames))
                           for param, info in info_params.items() if is_sampled_param(info)]
             self.names += [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
-                                     renames=(info or {}).get(_p_alias), derived=True)
+                                     renames=(info or {}).get(_p_renames), derived=True)
                            for param, info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):
