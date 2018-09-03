@@ -138,7 +138,7 @@ def loadCobayaSamples(info, collections, name_tag=None,
              for p in columns[2:]]
     labels = [(info_params[p] or {}).get(_p_label, p) for p in columns[2:]]
     ranges = {p: get_range(info_params[p]) for p in columns[2:]}
-    renames = {p:info_params[p].get(_p_renames, []) for p in columns[2:]}
+    renames = {p:info_params.get(p, {}).get(_p_renames, []) for p in columns[2:]}
     samples = [c[c.data.columns[2:]].values for c in collections]
     weights = [c[_weight].values for c in collections]
     loglikes = [-c[_minuslogpost].values for c in collections]
