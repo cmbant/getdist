@@ -1502,9 +1502,10 @@ class GetDistPlotter(object):
                                       for i,param in enumerate(params) if is_ParamInfo[i]}
             renames = mergeRenames(renames, renames_from_ParamInfo)
             params = [getattr(param, "name", param) for param in params]
+        old = [(old if isinstance(old, ParamInfo) else ParamInfo(old)) for old in params]
         return [new or old for new, old in zip(
             names.parsWithNames(params, error=error, renames=renames),
-            params)]
+            old)]
 
     def _check_param(self, root, param, renames={}):
         """
