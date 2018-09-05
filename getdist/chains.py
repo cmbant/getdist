@@ -867,7 +867,8 @@ class Chains(WeightedSamples):
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
             self.paramNames.setLabels(labels)
-        self.updateRenames(renames or {})
+        if renames is not None:
+            self.updateRenames(renames)
 
     def setParamNames(self, names=None):
         """
