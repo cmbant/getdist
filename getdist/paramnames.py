@@ -32,7 +32,7 @@ def mergeRenames(*dicts, **kwargs):
     Joins several dicts of renames.
 
     If `keep_names_1st=True` (default: `False`), keeps empty entries when possible
-    in order to preserve the parameter names of the fist input dictionary.
+    in order to preserve the parameter names of the first input dictionary.
 
     Returns a merged dictionary of renames,
     whose keys are chosen from the left-most input.
