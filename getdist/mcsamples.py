@@ -13,12 +13,10 @@ import getdist
 from getdist import chains, types, covmat, ParamInfo, IniFile, ParamNames
 from getdist.densities import Density1D, Density2D, DensityND
 from getdist.densities import getContourLevels as getOtherContourLevels
-from getdist.chains import Chains, chainFiles, lastModified, print_load_details
+from getdist.chains import Chains, chainFiles, lastModified
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
-from getdist.yaml_format_tools import _p_label, _p_renames, _weight, _minuslogpost
-from getdist.yaml_format_tools import get_info_params, get_range, is_derived_param
 import six
 
 pickle_version = 21
@@ -125,20 +123,22 @@ def loadCobayaSamples(info, collections, name_tag=None,
     columns = list(collections[0].data)
     if not all([list(c.data) == columns for c in collections[1:]]):
         raise ValueError("The given collections don't have the same columns.")
+    from getdist.yaml_format_tools import _p_label, _p_renames, _weight, _minuslogpost
+    from getdist.yaml_format_tools import get_info_params, get_range, is_derived_param
     # Check consistency with info
     info_params = get_info_params(info)
     assert set(columns[2:]) == set(info_params.keys()), (
-        "Info and collection(s) are not compatible, because their parameters differ: "
-        "the collection(s) have %r and the info has %r. "%(
-            columns[2:], list(info_params.keys())) +
-        "Are you sure that you are using an *updated* info dictionary "
-        "(i.e. the output of `cobaya.run`)?")
+            "Info and collection(s) are not compatible, because their parameters differ: "
+            "the collection(s) have %r and the info has %r. " % (
+                columns[2:], list(info_params.keys())) +
+            "Are you sure that you are using an *updated* info dictionary "
+            "(i.e. the output of `cobaya.run`)?")
     # We need to use *collection* sorting, not info sorting!
     names = [p + ("*" if is_derived_param(info_params[p]) else "")
              for p in columns[2:]]
     labels = [(info_params[p] or {}).get(_p_label, p) for p in columns[2:]]
     ranges = {p: get_range(info_params[p]) for p in columns[2:]}
-    renames = {p:info_params.get(p, {}).get(_p_renames, []) for p in columns[2:]}
+    renames = {p: info_params.get(p, {}).get(_p_renames, []) for p in columns[2:]}
     samples = [c[c.data.columns[2:]].values for c in collections]
     weights = [c[_weight].values for c in collections]
     loglikes = [-c[_minuslogpost].values for c in collections]
@@ -178,14 +178,14 @@ class MCSamples(Chains):
         :param ini: a .ini file to use for custom analysis settings
         :param settings: a dictionary of custom analysis settings
         :param ranges: a dictionary giving any additional hard prior bounds for parameters, eg. {'x':[0, 1], 'y':[None,2]}
+        :param samples: if not loading from file, array of parameter values for each sample, passed to :meth:`setSamples`,
+                        or list of arrays if more than one chain
+        :param weights: array of weights for samples, or list of arrays if more than one chain
+        :param loglikes: array of -log(Likelihood) for samples, or list of arrays if more than one chain
+
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from sample arrays in memory:
 
                - **paramNamesFile**: optional name of .paramnames file with parameter names
-               - **samples**: array of parameter values for each sample, passed to
-                              :meth:`setSamples`, or list of arrays if more than one chain.
-               - **weights**: array of weights for samples
-               - **loglikes**: array of -log(Likelihood) for samples,
-                               or list of arrays if more than one chain
                - **names**: list of names for the parameters,
                             or list of arrays if more than one chain
                - **labels**: list of latex labels for the parameters
@@ -447,7 +447,7 @@ class MCSamples(Chains):
         Loads samples from a list of files or array(s), removing burn in,
         deleting fixed parameters, and combining into one self.samples array
 
-        :param files_or_samples: The list of file names to read
+        :param files_or_samples: The list of file names to read, samples or list of samples
         :param weights: array of weights if setting from arrays
         :param loglikes: array of -2 log(likelihood) if setting from arrays
         :return: self.
@@ -457,9 +457,9 @@ class MCSamples(Chains):
         if self.ignore_frac and (
                 not self.jobItem or (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
-            if print_load_details: print('Removed %s as burn in' % self.ignore_frac)
+            if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
         elif not int(self.ignore_rows):
-            if print_load_details: print('Removed no burn in')
+            if chains.print_load_details: print('Removed no burn in')
 
         self.deleteFixedParams()
 
@@ -1825,7 +1825,7 @@ class MCSamples(Chains):
             raise ValueError("parv and prior_mask or different sizes!")
 
         # create a slice object iterating over everything
-        mskSlices = [slice(None) for i in range(ndim)]
+        mskSlices = [slice(None) for _ in range(ndim)]
 
         for i in range(ndim):
             if vrap[i].has_limits_bot:
@@ -1849,7 +1849,7 @@ class MCSamples(Chains):
     def _unflattenValues(self, q, xsizes):
         ndim = len(xsizes)
 
-        ixs = list([np.array(q) for i in range(ndim)])
+        ixs = list([np.array(q) for _ in range(ndim)])
 
         if ndim == 1:
             ixs[0] = q
@@ -1992,10 +1992,10 @@ class MCSamples(Chains):
         if writeDataToFile:
             # note store things in confusing transpose form
 
-            postfile = self.rootname + "_posterior" + "_%sD.dat" % (ndim)
-            contfile = self.rootname + "_posterior" + "_%sD_cont.dat" % (ndim)
+            postfile = self.rootname + "_posterior" + "_%sD.dat" % ndim
+            contfile = self.rootname + "_posterior" + "_%sD_cont.dat" % ndim
 
-            allND = [np.array(binsND) for i in range(ndim + 1)]
+            allND = [np.array(binsND) for _ in range(ndim + 1)]
             allND[0] = np.ravel(binsND, order='C')
             for i in range(ndim):
                 # [index[::-1] for column-major order
@@ -2009,13 +2009,13 @@ class MCSamples(Chains):
 
             if meanlikes:
                 allND[0] = np.ravel(binNDlikes, order='C')
-                likefile = self.rootname + "_meanlike" + "_%sD.dat" % (ndim)
+                likefile = self.rootname + "_meanlike" + "_%sD.dat" % ndim
                 filename = os.path.join(self.plot_data_dir, likefile)
                 np.savetxt(filename, np.transpose(allND), "%16.7E")
 
             if maxlikes:
                 allND[0] = np.ravel(binNDmaxlikes, order='C')
-                likefile = self.rootname + "_maxlike" + "_%sD.dat" % (ndim)
+                likefile = self.rootname + "_maxlike" + "_%sD.dat" % ndim
                 filename = os.path.join(self.plot_data_dir, likefile)
                 np.savetxt(filename, np.transpose(allND), "%16.7E")
 

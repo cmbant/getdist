@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 import getdist.plots as plots
 import matplotlib.pyplot as plt
@@ -31,9 +30,11 @@ def compareSimPlot(g, samples, density, par='x'):
     density.normalize('max')
     plt.plot(density.x, density.P, color='r')
 
+
 def plot1DSim(g, prob, nsamp=default_nsamp, settings={}):
     samps = prob.MCSamples(nsamp, settings=settings)
     compareSimPlot(g, samps, prob.density1D())
+
 
 def plot2DSim(g, prob, nsamp=default_nsamp, settings={}):
     samps = prob.MCSamples(nsamp, settings=settings)
@@ -53,6 +54,7 @@ def compare1D(g, probs, nsamp=default_nsamp, settings={}):
         g.add_text_left(prob.label, y=0.95)
     plt.subplots_adjust()
 
+
 def compare2D(g, probs, nsamp=default_nsamp, settings={}):
     samples = []
     for i, prob in enumerate(probs):
@@ -66,8 +68,8 @@ def compare2D(g, probs, nsamp=default_nsamp, settings={}):
         g.add_text_left(prob.label, y=0.95)
     plt.subplots_adjust()
 
-def get2DMises(prob, nsamp=default_nsamp, nsim=20, scales=np.arange(0.6, 1.5, 0.1), settings={}):
 
+def get2DMises(prob, nsamp=default_nsamp, nsim=20, scales=np.arange(0.6, 1.5, 0.1), settings={}):
     Mises = np.zeros(np.asarray(scales).size)
     for _ in range(nsim):
         samps = prob.MCSamples(nsamp, settings=settings)
@@ -98,9 +100,9 @@ def get1DMises(prob, nsamp=default_nsamp, nsim=50, scales=[0.6, 1.5, 0.1], setti
     Mises /= (nsim - 1)
     return scales, Mises
 
+
 class Test1DDistributions(object):
     def __init__(self):
-
         self.gauss = Gaussian1D(0, 0.5, label='Gaussian')
         self.skew = Mixture1D([0, 1], [1, 0.4], [0.6, 0.4], label='skew')
         self.tailed = Mixture1D([0, 0], [1, 3], [0.8, 0.2], label='tailed')
@@ -125,12 +127,13 @@ class Test1DDistributions(object):
 
 class Test2DDistributions(object):
     def __init__(self):
-
         self.gauss = Gaussian2D([0, 0], (0.7, 1, 0.3), label='Gaussian')
 
-        self.bending = Mixture2D([[0, 0], [2, 1.8]], [(np.sqrt(0.5), 1, 0.9), (1, 1, 0.8)], [0.6, 0.4], xmin=-1, label='bending')
+        self.bending = Mixture2D([[0, 0], [2, 1.8]], [(np.sqrt(0.5), 1, 0.9), (1, 1, 0.8)], [0.6, 0.4], xmin=-1,
+                                 label='bending')
 
-        self.hammer = Mixture2D([[0, 0], [1, 1.8]], [(np.sqrt(0.5), 1, 0.9), (0.3, 1, -0.7)], [0.5, 0.5], label='hammer')
+        self.hammer = Mixture2D([[0, 0], [1, 1.8]], [(np.sqrt(0.5), 1, 0.9), (0.3, 1, -0.7)], [0.5, 0.5],
+                                label='hammer')
 
         cov = make_2D_Cov(np.sqrt(0.5), 1, 0.1)
         self.skew = Mixture2D([[0, 0], [0, 1.2]], [cov, cov / 4], [0.5, 0.5], label='skew')
@@ -138,7 +141,8 @@ class Test2DDistributions(object):
         cov = make_2D_Cov(np.sqrt(0.5), 1, 0.1)
         self.broadtail = Mixture2D([[0, 0], [0, 0.2]], [cov, cov * 8], [0.9, 0.1], label='broad tail')
 
-        self.tensorlike = Mixture2D([[0, 0.03], [0, 0.03]], [(0.03, 0.03, 0.1), (0.03, 0.06, 0.1)], [0.85, 0.15], ymin=0, label='tensor like')
+        self.tensorlike = Mixture2D([[0, 0.03], [0, 0.03]], [(0.03, 0.03, 0.1), (0.03, 0.06, 0.1)], [0.85, 0.15],
+                                    ymin=0, label='tensor like')
 
         self.rotating = Mixture2D([[0, 0], [0, 0.2]], [(1, 1, 0.5), (2, 2, -0.5)], [0.6, 0.4], label='rotating')
 
@@ -153,24 +157,31 @@ class Test2DDistributions(object):
 
         # these examples are from Wand and Jones 93
         self.bimodal = []
-        self.bimodal.append(Mixture2D([[-1, 0], [1, 0]], [(2. / 3, 2. / 3, 0), (2. / 3, 2. / 3, 0)], label='bimodal WJ1'))
-        self.bimodal.append(Mixture2D([[-3. / 2, 0], [3. / 2, 0]], [(1. / 4, 1, 0), (1. / 4, 1, 0)], label='bimodal WJ2'))
-        self.bimodal.append(Mixture2D([[-1, 1], [1, -1]], [(2. / 3, 2. / 3, 3. / 5), (2. / 3, 2. / 3, 3. / 5)], label='bimodal WJ3'))
-        self.bimodal.append(Mixture2D([[1, -1], [-1, 1]], [(2. / 3, 2. / 3, 7. / 10), (2. / 3, 2. / 3, 0)], label='bimodal WJ4'))
+        self.bimodal.append(
+            Mixture2D([[-1, 0], [1, 0]], [(2. / 3, 2. / 3, 0), (2. / 3, 2. / 3, 0)], label='bimodal WJ1'))
+        self.bimodal.append(
+            Mixture2D([[-3. / 2, 0], [3. / 2, 0]], [(1. / 4, 1, 0), (1. / 4, 1, 0)], label='bimodal WJ2'))
+        self.bimodal.append(
+            Mixture2D([[-1, 1], [1, -1]], [(2. / 3, 2. / 3, 3. / 5), (2. / 3, 2. / 3, 3. / 5)], label='bimodal WJ3'))
+        self.bimodal.append(
+            Mixture2D([[1, -1], [-1, 1]], [(2. / 3, 2. / 3, 7. / 10), (2. / 3, 2. / 3, 0)], label='bimodal WJ4'))
 
         self.trimodal = []
         self.trimodal.append(Mixture2D([[-6. / 5, 6. / 5], [6. / 5, -6. / 5], [0, 0]],
-                                   [(3. / 5, 3. / 5, 3. / 10), (3. / 5, 3. / 5, -3. / 5), (0.25, 0.25, 0.2)], weights=[9, 9, 2], label='trimodal WJ1'))
+                                       [(3. / 5, 3. / 5, 3. / 10), (3. / 5, 3. / 5, -3. / 5), (0.25, 0.25, 0.2)],
+                                       weights=[9, 9, 2], label='trimodal WJ1'))
         self.trimodal.append(Mixture2D([[-6. / 5, 0], [6. / 5, 0], [0, 0]],
-                                   [(3. / 5, 3. / 5, 0.7), (3. / 5, 3. / 5, 0.7), (0.25, 0.25, -0.7)], label='trimodal WJ2'))
+                                       [(3. / 5, 3. / 5, 0.7), (3. / 5, 3. / 5, 0.7), (0.25, 0.25, -0.7)],
+                                       label='trimodal WJ2'))
         self.trimodal.append(Mixture2D([[-1, 0], [1, 2 * np.sqrt(3) / 3], [1, -2 * np.sqrt(3) / 3]],
-                                   [(0.6, 0.7, 0.6), (0.6, 0.7, 0), (0.4, 0.7, 0)], weights=[3, 3, 1], label='trimodal WJ3'))
+                                       [(0.6, 0.7, 0.6), (0.6, 0.7, 0), (0.4, 0.7, 0)], weights=[3, 3, 1],
+                                       label='trimodal WJ3'))
 
         self.quadrimodal = []
         self.quadrimodal.append(Mixture2D([[-1, 1], [-1, -1], [1, -1], [1, 1]],
-                [(2. / 3, 2. / 3, 2. / 5), (2. / 3, 2. / 3, 3. / 5), (2. / 3, 2. / 3, -0.7), (2. / 3, 2. / 3, -0.5)],
-                weights=[1, 3, 1, 3], label='quadrimodal'))
-
+                                          [(2. / 3, 2. / 3, 2. / 5), (2. / 3, 2. / 3, 3. / 5), (2. / 3, 2. / 3, -0.7),
+                                           (2. / 3, 2. / 3, -0.5)],
+                                          weights=[1, 3, 1, 3], label='quadrimodal'))
 
         self.all = self.shape_set + self.bimodal + self.trimodal + self.quadrimodal + self.cut_gaussians
 
@@ -180,8 +191,9 @@ class Test2DDistributions(object):
     def distributions(self):
         return self.all
 
+
 def plot_compare_method(ax, prob, colors=['k'], sims=100, nsamp=default_nsamp,
-                       scalings=[0.3, 0.5, 0.7, 0.9, 1, 1.1, 1.3, 1.5], test_settings=[None], linestyles=['-']):
+                        scalings=[0.3, 0.5, 0.7, 0.9, 1, 1.1, 1.3, 1.5], test_settings=[None], linestyles=['-']):
     # compare Parzen estimator with higher order
     print(prob.label, ', size = ', nsamp)
     if len(colors) == 1: colors = colors * len(scalings)
@@ -198,6 +210,8 @@ def plot_compare_method(ax, prob, colors=['k'], sims=100, nsamp=default_nsamp,
         print(scale, miselist[i, :])
     ax.set_yscale('log')
     ax.set_xlim([scalings[0], scalings[-1]])
+
+
 #    ax.set_yticks(ax.get_yticks()[1:-1])
 
 def plot_compare_probs_methods(ax, probs, colors=['b', 'r', 'k', 'm', 'c'], **kwargs):
@@ -211,9 +225,10 @@ def compare_method_nsims(g, probs, sizes=[1000, 10000], **kwargs):
         ax = g._subplot_number(i)
         plot_compare_probs_methods(ax, probs, nsmap=size, **kwargs)
 
+
 def compare_method(probs, nx=2, fname='', **kwargs):
     ny = (len(probs) - 1) // nx + 1
-    fig, axs = plt.subplots(ny, nx, sharex=True, sharey=True, squeeze=False , figsize=(nx * 3, ny * 3))
+    fig, axs = plt.subplots(ny, nx, sharex=True, sharey=True, squeeze=False, figsize=(nx * 3, ny * 3))
     for i, prob in enumerate(probs):
         ax = axs.reshape(-1)[i]
         plot_compare_method(ax, prob, **kwargs)
@@ -242,7 +257,7 @@ def join_subplots(ax_array):
     plt.tight_layout(0, 0, 0)
 
 
-def testProgram():
+def run_test_program():
     import time
     import argparse
 
@@ -257,29 +272,30 @@ def testProgram():
 
     test1D = Test1DDistributions()
     test2D = Test2DDistributions()
-    test_settings = {'mult_bias_correction_order':args.mbc, 'boundary_correction_order':args.bco, 'smooth_scale_1D':-1, 'smooth_scale_2D':-1}
+    test_settings = {'mult_bias_correction_order': args.mbc, 'boundary_correction_order': args.bco,
+                     'smooth_scale_1D': -1, 'smooth_scale_2D': -1}
     g = plots.getSubplotPlotter(subplot_size=2)
 
     if 'ISE_1D' in args.plots:
         compare_method(test1D.distributions(), nx=3,
-                      test_settings=[ {'mult_bias_correction_order':1, 'boundary_correction_order':1},
-                         {'mult_bias_correction_order':2, 'boundary_correction_order':1},
-                         {'mult_bias_correction_order':0, 'boundary_correction_order':0},
-                         {'mult_bias_correction_order':0, 'boundary_correction_order':1},
-                         {'mult_bias_correction_order':0, 'boundary_correction_order':2},
-                         ], colors=['k', 'b', 'r', 'm', 'c', 'g'], linestyles=['-', '-', ':', '-.', '--'],
-                      fname='compare_method_1d_N%s.pdf' % args.nsamp,
+                       test_settings=[{'mult_bias_correction_order': 1, 'boundary_correction_order': 1},
+                                      {'mult_bias_correction_order': 2, 'boundary_correction_order': 1},
+                                      {'mult_bias_correction_order': 0, 'boundary_correction_order': 0},
+                                      {'mult_bias_correction_order': 0, 'boundary_correction_order': 1},
+                                      {'mult_bias_correction_order': 0, 'boundary_correction_order': 2},
+                                      ], colors=['k', 'b', 'r', 'm', 'c', 'g'], linestyles=['-', '-', ':', '-.', '--'],
+                       fname='compare_method_1d_N%s.pdf' % args.nsamp,
                        sims=args.sims, nsamp=args.nsamp
                        )
 
     if 'ISE_2D' in args.plots:
         compare_method(test2D.distributions(), nx=4,
-                      test_settings=[ {'mult_bias_correction_order':1, 'boundary_correction_order':1},
-                         {'mult_bias_correction_order':2, 'boundary_correction_order':1},
-                         {'mult_bias_correction_order':0, 'boundary_correction_order':0},
-                         {'mult_bias_correction_order':0, 'boundary_correction_order':1},
-                         ], colors=['k', 'b', 'r', 'm', 'c', 'g'], linestyles=['-', '-', ':', '-.', '--'],
-                      fname='compare_method_2d_N%s.pdf' % args.nsamp,
+                       test_settings=[{'mult_bias_correction_order': 1, 'boundary_correction_order': 1},
+                                      {'mult_bias_correction_order': 2, 'boundary_correction_order': 1},
+                                      {'mult_bias_correction_order': 0, 'boundary_correction_order': 0},
+                                      {'mult_bias_correction_order': 0, 'boundary_correction_order': 1},
+                                      ], colors=['k', 'b', 'r', 'm', 'c', 'g'], linestyles=['-', '-', ':', '-.', '--'],
+                       fname='compare_method_2d_N%s.pdf' % args.nsamp,
                        sims=args.sims, nsamp=args.nsamp
                        )
 
@@ -312,4 +328,4 @@ def testProgram():
 
 
 if __name__ == "__main__":
-    testProgram()
+    run_test_program()

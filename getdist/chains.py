@@ -40,17 +40,6 @@ def slice_or_none(x, start=None, end=None):
     return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
 
 
-def array_dimension(a):
-    "Dimension for numpy or list/tuple arrays, not very safe (does not work if string elements)"
-    d = 0
-    while True:
-        try:
-            a = a[0]
-            d += 1
-        except:
-            return d
-
-
 def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-1, chain_exclude=None):
     """
     Creates a list of file names for samples given a root name and optional filters
@@ -188,7 +177,7 @@ class WeightedSamples(object):
         if filename:
             cols = loadNumpyTxt(filename, skiprows=ignore_rows)
             if not len(cols):
-                raise WeightedSampleError('Empty chain: %s'%filename)
+                raise WeightedSampleError('Empty chain: %s' % filename)
             self.setColData(cols, are_chains=files_are_chains)
             self.name_tag = name_tag or os.path.basename(filename)
         else:
@@ -981,8 +970,8 @@ class Chains(WeightedSamples):
         res = OrderedDict()
         for i, name in enumerate(self.paramNames.names):
             res[name.name] = self.samples[ix, i]
-        res['weight'] = self.weights[i]
-        res['loglike'] = self.loglikes[i]
+        res['weight'] = self.weights
+        res['loglike'] = self.loglikes
         return res
 
     def _makeParamvec(self, par):
@@ -1060,6 +1049,16 @@ class Chains(WeightedSamples):
                 raise WeightedSampleError('loadChains - no chains found for ' + root)
         else:
             # From arrays
+            def array_dimension(a):
+                "Dimension for numpy or list/tuple arrays, not very safe (does not work if string elements)"
+                d = 0
+                while True:
+                    try:
+                        a = a[0]
+                        d += 1
+                    except:
+                        return d
+
             dim = array_dimension(files_or_samples)
             if dim in [1, 2]:
                 self.setSamples(slice_or_none(files_or_samples, ignore_lines),

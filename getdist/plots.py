@@ -408,6 +408,7 @@ class MCSampleAnalysis(object):
 
         :param settings: Either an :class:`~.inifile.IniFile` instance,
                the name of an .ini file, or a dict holding sample analysis settings.
+        :param chain_settings_have_priority: whether to prioritize settings saved with the chain
         """
         self.analysis_settings = {}
         if isinstance(settings, IniFile):
@@ -436,6 +437,7 @@ class MCSampleAnalysis(object):
         :param root: The root name (without path, e.g. my_chains)
         :param file_root: optional full root path, by default searches in self.chain_dirs
         :param cache: if True, return cached object if already loaded
+        :param settings: optional dictionary of settings to use
         :return: :class:`~.mcsamples.MCSamples` for the given root name
         """
         if isinstance(root, MCSamples): return root
@@ -1498,8 +1500,8 @@ class GetDistPlotter(object):
             is_ParamInfo = [isinstance(param, ParamInfo) for param in params]
             error = [not a for a in is_ParamInfo]
             # Add renames of given ParamInfo's to the renames dict
-            renames_from_ParamInfo = {param.name:param.renames
-                                      for i,param in enumerate(params) if is_ParamInfo[i]}
+            renames_from_ParamInfo = {param.name: param.renames
+                                      for i, param in enumerate(params) if is_ParamInfo[i]}
             renames = mergeRenames(renames, renames_from_ParamInfo)
             params = [getattr(param, "name", param) for param in params]
         old = [(old if isinstance(old, ParamInfo) else ParamInfo(old)) for old in params]
@@ -2247,8 +2249,8 @@ class GetDistPlotter(object):
         Low-level function to adds a 2D sample scatter plot to the current axes (or ax if specified).
 
         :param root: The root name of the samples to use
-        :param param1: name of x parameter
-        :param param2: name of y parameter
+        :param x: name of x parameter
+        :param y: name of y parameter
         :param color: color to plot the samples
         :param alpha: The alpha to use.
         :param extra_thin: thin the weight one samples by this additional factor before plotting

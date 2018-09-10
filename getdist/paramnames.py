@@ -5,10 +5,6 @@ import six
 import matplotlib
 from itertools import chain
 
-from getdist.yaml_format_tools import yaml_load_file, get_info_params
-from getdist.yaml_format_tools import is_sampled_param, is_derived_param
-from getdist.yaml_format_tools import _p_label, _p_renames
-
 
 def makeList(roots):
     """
@@ -44,14 +40,14 @@ def mergeRenames(*dicts, **kwargs):
     keep_names_1st = kwargs.pop("keep_names_1st", False)
     if kwargs:
         raise ValueError("kwargs not recognised: %r" % kwargs)
-    sets = list(chain(*[[set([k]+(makeList(v or [])))
-                         for k,v in dic.items()] for dic in dicts]))
+    sets = list(chain(*[[set([k] + (makeList(v or [])))
+                         for k, v in dic.items()] for dic in dicts]))
     # If two sets have elements in common, join them.
     something_changed = True
     out = []
     while something_changed:
         something_changed = False
-        for i in range(1,len(sets)):
+        for i in range(1, len(sets)):
             if sets[0].intersection(sets[i]):
                 sets[0] = sets[0].union(sets.pop(i))
                 something_changed = True
@@ -283,7 +279,7 @@ class ParamList(object):
         """
         Gets dictionary of renames known to each parameter.
         """
-        return {param.name:param.renames for param in self.names
+        return {param.name: param.renames for param in self.names
                 if (param.renames or keep_empty)}
 
     def updateRenames(self, renames):
@@ -380,6 +376,10 @@ class ParamNames(ParamList):
             with open(fileName) as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
         elif extension.lower() in ('.yaml', '.yml'):
+            from getdist.yaml_format_tools import yaml_load_file, get_info_params
+            from getdist.yaml_format_tools import is_sampled_param, is_derived_param
+            from getdist.yaml_format_tools import _p_label, _p_renames
+
             info_params = get_info_params(yaml_load_file(fileName))
             # first sampled, then derived
             self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
