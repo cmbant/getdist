@@ -207,7 +207,7 @@ class ParamList(object):
         """
         given_names = set([name] + makeList(renames.get(name, [])))
         for par in self.names:
-            known_names = set([par.name] + makeList(par.renames) +
+            known_names = set([par.name] + makeList(getattr(par, 'renames', [])) +
                               makeList(renames.get(par.name, [])))
             if known_names.intersection(given_names):
                 return par
@@ -279,8 +279,8 @@ class ParamList(object):
         """
         Gets dictionary of renames known to each parameter.
         """
-        return {param.name: param.renames for param in self.names
-                if (param.renames or keep_empty)}
+        return {param.name: getattr(param, 'renames', []) for param in self.names
+                if (hasattr(param, 'renames') and param.renames or keep_empty)}
 
     def updateRenames(self, renames):
         """

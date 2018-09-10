@@ -1501,7 +1501,8 @@ class GetDistPlotter(object):
             error = [not a for a in is_ParamInfo]
             # Add renames of given ParamInfo's to the renames dict
             renames_from_ParamInfo = {param.name: param.renames
-                                      for i, param in enumerate(params) if is_ParamInfo[i]}
+                                      for i, param in enumerate(params) if
+                                      (is_ParamInfo[i] and hasattr(param, 'renames'))}
             renames = mergeRenames(renames, renames_from_ParamInfo)
             params = [getattr(param, "name", param) for param in params]
         old = [(old if isinstance(old, ParamInfo) else ParamInfo(old)) for old in params]
@@ -1524,7 +1525,7 @@ class GetDistPlotter(object):
         """
         if isinstance(param, ParamInfo):
             name = param.name
-            if param.renames:
+            if getattr(param,'renames'):
                 renames = {name: makeList(renames.get(name, [])) + list(param.renames)}
         else:
             name = param
