@@ -8,6 +8,8 @@ from getdist import paramnames
 import six
 import tempfile
 
+_sci_tolerance = 4
+
 
 class TextFile(object):
     def __init__(self, lines=None):
@@ -38,13 +40,18 @@ def float_to_decimal(f):
     return result
 
 
-def numberFigs(number, sigfig):
+def numberFigs(number, sigfig, sci=False):
     # http://stackoverflow.com/questions/2663612/nicely-representing-a-floating-point-number-in-python/2663623#2663623
     assert (sigfig > 0)
     try:
         d = decimal.Decimal(number)
     except TypeError:
         d = float_to_decimal(float(number))
+    exponent = d.adjusted()
+    if abs(exponent) > _sci_tolerance and sci:
+        d = decimal.getcontext().multiply(d, float_to_decimal(10.**-exponent))
+    elif sci:
+        exponent = 0
     sign, digits = d.as_tuple()[0:2]
     if len(digits) < sigfig:
         digits = list(digits)
@@ -71,6 +78,8 @@ def numberFigs(number, sigfig):
         result = ['0.'] + ['0'] * (-shift - 1) + result
     if sign:
         result.insert(0, '-')
+    if sci:
+        return ''.join(result), exponent
     return ''.join(result)
 
 
@@ -84,15 +93,21 @@ class NumberFormatter(object):
         frac = limplus / (abs(value) + limplus)
         err_sf = self.err_sf
         if value >= 20 and frac > 0.1 and limplus >= 2: err_sf = 1
-
-        plus_str = self.formatNumber(limplus, err_sf, wantSign)
-        minus_str = self.formatNumber(limminus, err_sf, wantSign)
+        # First, call without knowning sig figs, to get the exponent
+        res, exponent = self.formatNumber(value, sci=True)
+        if exponent:
+            limplus, limminus = [
+                (lambda x: decimal.getcontext().multiply(
+                    float_to_decimal(x), float_to_decimal(10.**-exponent)))(lim)
+                for lim in [limplus, limminus]]
+        plus_str = self.formatNumber(limplus, err_sf, wantSign, sci=False)
+        minus_str = self.formatNumber(limminus, err_sf, wantSign, sci=False)
         sf = self.sig_figs
         if frac > 0.1 and 100 > value >= 20:
             sf = 2
         elif frac > 0.01 and value < 1000:
             sf = 3
-        res = self.formatNumber(value, sf)
+        res, exponent = self.formatNumber(value, sf, sci=True)
         maxdp = max(self.decimal_places(plus_str), self.decimal_places(minus_str))
         # while abs(value) < 1 and maxdp < self.decimal_places(res):
         while maxdp < self.decimal_places(res):
@@ -102,23 +117,30 @@ class NumberFormatter(object):
                 if float(res) == 0.0: res = ('%.' + str(maxdp) + 'f') % 0
                 break
             else:
-                res = self.formatNumber(value, sf)
+                res, exponent_2 = self.formatNumber(value, sf, sci=True)
+                assert exponent == exponent_2
 
         while self.decimal_places(plus_str) > self.decimal_places(res):
             sf += 1
-            res = self.formatNumber(value, sf)
-        return res, plus_str, minus_str
+            res, exponent_2 = self.formatNumber(value, sf, sci=True)
+            assert exponent == exponent_2
+        return res, plus_str, minus_str, exponent
 
-    def formatNumber(self, value, sig_figs=None, wantSign=False):
+    def formatNumber(self, value, sig_figs=None, wantSign=False, sci=False):
         if sig_figs is None:
             sf = self.sig_figs
         else:
             sf = sig_figs
-        s = numberFigs(value, sf)
+        s = numberFigs(value, sf, sci=sci)
+        if sci:
+            s, exponent = s
         if wantSign:
             if s[0] != '-' and float(s) < 0: s = '-' + s
             if float(s) > 0: s = '+' + s
-        return s
+        if sci:
+            return s, exponent
+        else:
+            return s
 
     def decimal_places(self, s):
         i = s.find('.')
@@ -715,29 +737,36 @@ class MargeStats(ParamResults):
             lim = param.limits[limit - 1]
             sf = 3
             if 'chi2_' in param.name:
+# TODO: ADD EXPONENT!!!!
                 # Chi2 for low dof are very skewed, always want mean and sigma or limit
-                res, sigma, _ = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err, wantSign=False)
+                res, sigma, _, exponent = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err, wantSign=False)
                 if limit == 1:
                     res += r'\pm ' + sigma
                 else:
                     # in this case give mean and effective dof
                     res += r'\,({\nu\rm{:}\,%.1f})' % (param.err ** 2 / 2)
-                    # res, plus_str, minus_str = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean, lim.lower)
+                    # res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean, lim.lower)
                     # res += '^{' + plus_str + '}_{>' + minus_str + '}'
             elif lim.twotail:
                 if not formatter.numberFormatter.plusMinusLimit(limit, lim.upper - param.mean, lim.lower - param.mean):
-                    res, plus_str, _ = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err,
+                    res, plus_str, _, exponent = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err,
                                                                              wantSign=False)
                     res += r'\pm ' + plus_str
                 else:
-                    res, plus_str, minus_str = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean,
+                    res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean,
                                                                                      lim.lower - param.mean)
+                    print("imprimiendo dif lims", res, plus_str, minus_str, exponent)
                     res += '^{' + plus_str + '}_{' + minus_str + '}'
+                if exponent:
+                    res = r'\left(\,%s\,\right)\cdot 10^{%d}' % (res, exponent)
             elif lim.onetail_upper:
+# TODO: ADD EXPONENT!!!!
                 res = '< ' + formatter.numberFormatter.formatNumber(lim.upper, sf)
             elif lim.onetail_lower:
+# TODO: ADD EXPONENT!!!!
                 res = '> ' + formatter.numberFormatter.formatNumber(lim.lower, sf)
             else:
+# TODO: ADD EXPONENT!!!!
                 res = formatter.noConstraint
             if refResults is not None and res != formatter.noConstraint:
                 refVal = refResults.parWithName(param.name)
