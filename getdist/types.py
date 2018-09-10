@@ -755,7 +755,6 @@ class MargeStats(ParamResults):
                 else:
                     res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean,
                                                                                      lim.lower - param.mean)
-                    print("imprimiendo dif lims", res, plus_str, minus_str, exponent)
                     res += '^{' + plus_str + '}_{' + minus_str + '}'
                 if exponent:
                     res = r'\left(\,%s\,\right)\cdot 10^{%d}' % (res, exponent)
