@@ -4,6 +4,7 @@ import fnmatch
 import six
 import matplotlib
 from itertools import chain
+from collections import OrderedDict
 
 
 def makeList(roots):
@@ -279,8 +280,9 @@ class ParamList(object):
         """
         Gets dictionary of renames known to each parameter.
         """
-        return {param.name: getattr(param, 'renames', []) for param in self.names
-                if (hasattr(param, 'renames') and param.renames or keep_empty)}
+        return OrderedDict([[param.name, getattr(param, "renames", [])]
+                            for param in self.names
+                            if (getattr(param, "renames", False) or keep_empty)])
 
     def updateRenames(self, renames):
         """
