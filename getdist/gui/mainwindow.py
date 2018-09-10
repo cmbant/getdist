@@ -1092,6 +1092,12 @@ class MainWindow(QMainWindow):
         return [self.paramNamesTags[tag]
                 for tag in self.getCheckedParams(self.listParametersY)]
 
+    def getNXParams(self):
+        return len(self.getCheckedParams(self.listParametersX))
+
+    def getNYParams(self):
+        return len(self.getCheckedParams(self.listParametersY))
+
     def statusSelectAllX(self):
         """
         Slot function called when selectAllX is modified.
@@ -1120,12 +1126,14 @@ class MainWindow(QMainWindow):
         self.comboBoxColor.setEnabled(self.toggleColor.isChecked())
 
     def statusTriangle(self, checked):
-        self.checkInsideLegend.setVisible(not checked and len(self.getXParams()) == 1 and len(self.getYParams()) == 1)
+        self.checkInsideLegend.setVisible(
+            not checked and self.getNXParams() == 1 and self.getNYParams() == 1)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
     def itemCheckChange(self, item):
-        self.checkInsideLegend.setVisible(len(self.getXParams()) == 1 and len(
-            self.getYParams()) == 1 and self.trianglePlot.checkState() != Qt.Checked)
+        self.checkInsideLegend.setVisible(
+            self.getNXParams() == 1 and self.getNYParams() == 1 and
+            self.trianglePlot.checkState() != Qt.Checked)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
     def _updateComboBoxColor(self, listOfParams):
