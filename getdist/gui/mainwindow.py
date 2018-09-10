@@ -618,10 +618,21 @@ class MainWindow(QMainWindow):
         try:
             samples = self.getSamples(rootname)
             pars = self.getXParams()
+            ignore_unknown = False
             if len(pars) < 1:
                 pars = self.getXParams(fulllist=True)
+                # If no parameters selected, it shouldn't fail if some sample is missing
+                # parameters present in the first one
+                ignore_unknown = True
             if len(pars) < 1:
                 raise GuiSelectionError('Select one or more parameters first')
+            # Add renames to match parameter across samples
+            renames = self.paramNames.getRenames(keep_empty=True)
+            pars = [getattr(samples.paramNames.parWithName(
+                        p, error=not ignore_unknown, renames=renames), "name", None)
+                    for p in pars]
+            while None in pars:
+                pars.remove(None)
             self.showMessage("Generating table....")
             cols = len(pars) // 20 + 1
             tables = [samples.getTable(columns=cols, limit=lim + 1, paramList=pars) for lim in
