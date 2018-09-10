@@ -11,9 +11,12 @@ import sys
 import signal
 from io import BytesIO
 import six
+from packaging.version import Version
 
 matplotlib.use('Qt4Agg')
-matplotlib.rcParams['backend.qt4'] = 'PySide'
+
+if Version(matplotlib.__version__) < Version("2.2.0"):
+    matplotlib.rcParams['backend.qt4'] = 'PySide'
 
 from getdist.gui import SyntaxHighlight
 from getdist import plots, IniFile
@@ -654,7 +657,7 @@ class MainWindow(QMainWindow):
 
     def settingsChanged(self):
         if self.plotter:
-            self.plotter.sampleAnalyser.reset(self.iniFile, chain_settings_have_priority = False)
+            self.plotter.sampleAnalyser.reset(self.iniFile, chain_settings_have_priority=False)
             if self.plotter.fig:
                 self.plotData()
 
@@ -921,7 +924,7 @@ class MainWindow(QMainWindow):
         self.listRoots.show()
         self.pushButtonRemove.show()
         baseRoots = [(os.path.basename(root) if not root.endswith("/")
-                      else os.path.basename(root[:-1])+"/")
+                      else os.path.basename(root[:-1]) + "/")
                      for root in listOfRoots]
         self.comboBoxRootname.addItems(baseRoots)
         if len(baseRoots) > 1:
