@@ -882,9 +882,9 @@ class MainWindow(QMainWindow):
         # Update old selection to new names
         def find_new_name(old_names):
             for old_name in old_names:
-                new_name = self.paramNames.parWithName(old_name).name
+                new_name = self.paramNames.parWithName(old_name)
                 if new_name:
-                    return new_name
+                    return new_name.name
             return None
         for x_ in old_selection:
             old_selection[x_] = [
