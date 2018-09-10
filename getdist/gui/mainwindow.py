@@ -1071,9 +1071,12 @@ class MainWindow(QMainWindow):
         if items_old:
             for item in items_old:
                 # Inverse dict search in new name tags
-                itemtag = next(tag for tag,name in self.paramNamesTags.items()
-                               if name == item)
-                match_items = listParameters.findItems(itemtag, Qt.MatchExactly)
+                try:
+                    itemtag = next(tag for tag,name in self.paramNamesTags.items()
+                                   if name == item)
+                    match_items = listParameters.findItems(itemtag, Qt.MatchExactly)
+                except StopIteration:
+                    match_items = None
                 if match_items:
                     match_items[0].setCheckState(Qt.Checked)
 
