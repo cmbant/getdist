@@ -12,6 +12,7 @@ import signal
 from io import BytesIO
 import six
 from packaging.version import Version
+from collections import OrderedDict
 
 matplotlib.use('Qt4Agg')
 
@@ -864,11 +865,40 @@ class MainWindow(QMainWindow):
         roots = self.checkedRootNames()
         if not len(roots):
             return
-        paramNames = self.getSamples(roots[0]).paramNames.list()
-
-        self._updateListParameters(paramNames, self.listParametersX, self.getXParams())
-        self._updateListParameters(paramNames, self.listParametersY, self.getYParams())
-        self._updateComboBoxColor(paramNames)
+        # Get previuos selection (with its renames) before we overwrite the list of tags
+        old_selection = OrderedDict([["x", []], ["y", []]])
+        for x_, getter in zip(old_selection, [self.getXParams, self.getYParams]):
+            if not hasattr(self, "paramNames"):
+                break
+            old_selection[x_] = [
+                [name] + list(self.paramNames.getRenames().get(name, []))
+                for name in getter()]
+        # Copy paramNames (we don't want to change the original info)
+        self.paramNames = (
+            lambda x: x.filteredCopy(x))(self.getSamples(roots[0]).paramNames)
+        # Add renames from all roots
+        for r in roots[1:]:
+            self.paramNames.updateRenames(self.getSamples(r).getRenames())
+        # Update old selection to new names
+        def find_new_name(old_names):
+            for old_name in old_names:
+                new_name = self.paramNames.parWithName(old_name)
+                if new_name:
+                    return new_name.name
+            return None
+        for x_ in old_selection:
+            old_selection[x_] = [
+                find_new_name(p) for p in old_selection[x_]]
+        # Create tags for list widget
+        renames = self.paramNames.getRenames(keep_empty=True)
+        renames_list_func = lambda x: (" (" + ",".join(x) + ")") if x else ""
+        self.paramNamesTags = OrderedDict([
+            [p+renames_list_func(r), p] for p,r in renames.items()])
+        self._updateListParameters(list(self.paramNamesTags), self.listParametersX,
+                                   items_old=old_selection["x"])
+        self._updateListParameters(list(self.paramNamesTags), self.listParametersY,
+                                   items_old=old_selection["y"])
+        self._updateComboBoxColor(list(self.paramNamesTags))
 
     def _resetPlotData(self):
         # Script
@@ -1029,7 +1059,10 @@ class MainWindow(QMainWindow):
 
         if items_old:
             for item in items_old:
-                match_items = listParameters.findItems(item, Qt.MatchExactly)
+                # Inverse dict search in new name tags
+                itemtag = next(tag for tag,name in self.paramNamesTags.items()
+                               if name == item)
+                match_items = listParameters.findItems(itemtag, Qt.MatchExactly)
                 if match_items:
                     match_items[0].setCheckState(Qt.Checked)
 
@@ -1038,10 +1071,12 @@ class MainWindow(QMainWindow):
                 fulllist or checklist.item(i).checkState() == Qt.Checked]
 
     def getXParams(self, fulllist=False):
-        return self.getCheckedParams(self.listParametersX, fulllist)
+        return [self.paramNamesTags[tag]
+                for tag in self.getCheckedParams(self.listParametersX, fulllist)]
 
     def getYParams(self):
-        return self.getCheckedParams(self.listParametersY)
+        return [self.paramNamesTags[tag]
+                for tag in self.getCheckedParams(self.listParametersY)]
 
     def statusSelectAllX(self):
         """
@@ -1211,7 +1246,7 @@ class MainWindow(QMainWindow):
             shaded = not filled and self.checkShade.isChecked()
             line = self.toggleLine.isChecked()
             color = self.toggleColor.isChecked()
-            color_param = str(self.comboBoxColor.currentText())
+            color_param = self.paramNamesTags[str(self.comboBoxColor.currentText())]
 
             # Check type of plot
             if self.trianglePlot.isChecked():
