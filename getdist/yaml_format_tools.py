@@ -111,7 +111,7 @@ def get_info_params(info):
     info_params_full[_minuslogprior] = {_p_label: r"-\log\pi"}
     for prior in [_prior_1d_name] + list(info.get(_prior, [])):
         info_params_full[_minuslogprior+_separator+prior] = {
-            _p_label: r"-\pi_\mathrm{" + prior.replace("_", "\ ") + r"}"}
+            _p_label: r"-\log\pi_\mathrm{" + prior.replace("_", "\ ") + r"}"}
     info_params_full[_chi2] = {_p_label: r"\chi^2"}
     for lik in info.get(_likelihood):
         info_params_full[_chi2+_separator+lik] = {
