@@ -912,7 +912,7 @@ class MainWindow(QMainWindow):
         self._updateListParametersSelection(old_selection["x"], self.listParametersX)
         self._updateListParametersSelection(old_selection["y"], self.listParametersY)
 
-        self._updateComboBoxColor(list(self.paramNamesTags))
+        self._updateComboBoxColor(self.paramNames.list())
 
     def _resetPlotData(self):
         # Script
@@ -1146,9 +1146,11 @@ class MainWindow(QMainWindow):
     def _updateComboBoxColor(self, listOfParams):
         if self.rootdirname and os.path.isdir(self.rootdirname):
             param_old = str(self.comboBoxColor.currentText())
+            param_old_new_name = getattr(
+                self.paramNames.parWithName(param_old), "name", None)
             self.comboBoxColor.clear()
             self.comboBoxColor.addItems(listOfParams)
-            idx = self.comboBoxColor.findText(param_old, Qt.MatchExactly)
+            idx = self.comboBoxColor.findText(param_old_new_name, Qt.MatchExactly)
             if idx != -1:
                 self.comboBoxColor.setCurrentIndex(idx)
 
@@ -1275,7 +1277,7 @@ class MainWindow(QMainWindow):
             shaded = not filled and self.checkShade.isChecked()
             line = self.toggleLine.isChecked()
             color = self.toggleColor.isChecked()
-            color_param = self.paramNamesTags[str(self.comboBoxColor.currentText())]
+            color_param = str(self.comboBoxColor.currentText())
 
             # Check type of plot
             if self.trianglePlot.isChecked():
