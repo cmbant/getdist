@@ -51,11 +51,12 @@ def numberFigs(number, sigfig, sci=False):
         d = decimal.Decimal(number)
     except TypeError:
         d = float_to_decimal(float(number))
-    exponent = d.adjusted()
-    if abs(exponent) > _sci_tolerance and sci:
-        d = decimal.getcontext().multiply(d, float_to_decimal(10.**-exponent))
-    elif sci:
-        exponent = 0
+    if sci:
+        exponent = d.adjusted()
+        if abs(exponent) > _sci_tolerance:
+            d = decimal.getcontext().multiply(d, float_to_decimal(10. ** -exponent))
+        else:
+            exponent = 0
     sign, digits = d.as_tuple()[0:2]
     if len(digits) < sigfig:
         digits = list(digits)
@@ -95,29 +96,27 @@ class NumberFormatter(object):
 
     def namesigFigs(self, value, limplus, limminus, wantSign=True, sci=False):
         frac = limplus / (abs(value) + limplus)
-        err_sf = self.err_sf
-        if value >= 20 and frac > 0.1 and limplus >= 2: err_sf = 1
-        # First, call without knowning sig figs, to get the exponent
-        res = self.formatNumber(value, sci=sci)
-        if sci:
-            res, exponent = res
-        if sci and exponent:
-            limplus, limminus = [
-                (lambda x: decimal.getcontext().multiply(
-                    float_to_decimal(x), float_to_decimal(10.**-exponent)))(lim)
-                for lim in [limplus, limminus]]
-        plus_str = self.formatNumber(limplus, err_sf, wantSign, sci=False)
-        minus_str = self.formatNumber(limminus, err_sf, wantSign, sci=False)
         sf = self.sig_figs
         if frac > 0.1 and 100 > value >= 20:
             sf = 2
         elif frac > 0.01 and value < 1000:
             sf = 3
-        res = self.formatNumber(value, sf, sci=sci)
+        err_sf = self.err_sf
+        if value >= 20 and frac > 0.1 and limplus >= 2: err_sf = 1
         if sci:
-            res, exponent = res
+            # First, call without knowning sig figs, to get the exponent
+            exponent = self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]
+            if exponent:
+                value, limplus, limminus = [
+                    (lambda x: decimal.getcontext().multiply(
+                        float_to_decimal(x), float_to_decimal(10. ** -exponent)))(lim)
+                    for lim in [value, limplus, limminus]]
+        else:
+            exponent = 0
+        plus_str = self.formatNumber(limplus, err_sf, wantSign)
+        minus_str = self.formatNumber(limminus, err_sf, wantSign)
+        res = self.formatNumber(value, sf)
         maxdp = max(self.decimal_places(plus_str), self.decimal_places(minus_str))
-        # while abs(value) < 1 and maxdp < self.decimal_places(res):
         while maxdp < self.decimal_places(res):
             sf -= 1
             if sf == 0:
@@ -125,20 +124,15 @@ class NumberFormatter(object):
                 if float(res) == 0.0: res = ('%.' + str(maxdp) + 'f') % 0
                 break
             else:
-                res = self.formatNumber(value, sf, sci=sci)
-                if sci:
-                    res, exponent_2 = res
-                    assert exponent == exponent_2
+                res = self.formatNumber(value, sf)
 
         while self.decimal_places(plus_str) > self.decimal_places(res):
             sf += 1
-            res = self.formatNumber(value, sf, sci=sci)
-            if sci:
-                res, exponent_2 = res
-                assert exponent == exponent_2
+            res = self.formatNumber(value, sf)
         if sci:
             return res, plus_str, minus_str, exponent
-        return res, plus_str, minus_str
+        else:
+            return res, plus_str, minus_str
 
     def formatNumber(self, value, sig_figs=None, wantSign=False, sci=False):
         if sig_figs is None:
@@ -752,7 +746,8 @@ class MargeStats(ParamResults):
             sf = 3
             if param.name.startswith('chi2'):
                 # Chi2 for low dof are very skewed, always want mean and sigma or limit
-                res, sigma, _ = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err, wantSign=False, sci=False)
+                res, sigma, _ = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err, wantSign=False,
+                                                                      sci=False)
                 if limit == 1:
                     res += r'\pm ' + sigma
                 else:
@@ -766,8 +761,10 @@ class MargeStats(ParamResults):
                                                                                        wantSign=False, sci=True)
                     res += r'\pm ' + plus_str
                 else:
-                    res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean,
-                                                                                               lim.lower - param.mean, sci=True)
+                    res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean,
+                                                                                               lim.upper - param.mean,
+                                                                                               lim.lower - param.mean,
+                                                                                               sci=True)
                     res += '^{' + plus_str + '}_{' + minus_str + '}'
                 if exponent:
                     res = r'\left(\,%s\,\right)' % res + times_ten_power(exponent)
@@ -802,7 +799,8 @@ class MargeStats(ParamResults):
                         res += '\quad(%+.1f \\sigma)' % (delta / refVal.err)
             if self.hasBestFit:  # add best fit too
                 rangew = (lim.upper - lim.lower) / 10
-                bestfit, _, _, exponent = formatter.numberFormatter.namesigFigs(param.best_fit, rangew, -rangew, sci=True)
+                bestfit, _, _, exponent = formatter.numberFormatter.namesigFigs(param.best_fit, rangew, -rangew,
+                                                                                sci=True)
                 if exponent:
                     bestfit += times_ten_power(exponent)
                 return [res, bestfit]
