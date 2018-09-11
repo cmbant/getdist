@@ -2132,7 +2132,7 @@ class MCSamples(Chains):
         m.limits = self.contours
         m.names = self.paramNames.names
         if include_bestfit:
-            return self.getBestFit()
+            m.addBestFit(self.getBestFit())
         return m
 
     def getLikeStats(self):
