@@ -802,7 +802,9 @@ class MargeStats(ParamResults):
                         res += '\quad(%+.1f \\sigma)' % (delta / refVal.err)
             if self.hasBestFit:  # add best fit too
                 rangew = (lim.upper - lim.lower) / 10
-                bestfit = formatter.numberFormatter.namesigFigs(param.best_fit, rangew, -rangew)[0]
+                bestfit, _, _, exponent = formatter.numberFormatter.namesigFigs(param.best_fit, rangew, -rangew, sci=True)
+                if exponent:
+                    bestfit += times_ten_power(exponent)
                 return [res, bestfit]
             return [res]
         else:
