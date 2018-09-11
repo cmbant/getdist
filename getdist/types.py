@@ -26,6 +26,10 @@ def texEscapeText(string):
     return string.replace('_', '{\\textunderscore}')
 
 
+def times_ten_power(exponent):
+    return '\cdot 10^{%d}' % exponent
+
+
 def float_to_decimal(f):
     # http://docs.python.org/library/decimal.html#decimal-faq
     """Convert a floating point number to a Decimal with no loss of information"""
@@ -89,13 +93,15 @@ class NumberFormatter(object):
         self.separate_limit_tol = separate_limit_tol
         self.err_sf = err_sf
 
-    def namesigFigs(self, value, limplus, limminus, wantSign=True):
+    def namesigFigs(self, value, limplus, limminus, wantSign=True, sci=False):
         frac = limplus / (abs(value) + limplus)
         err_sf = self.err_sf
         if value >= 20 and frac > 0.1 and limplus >= 2: err_sf = 1
         # First, call without knowning sig figs, to get the exponent
-        res, exponent = self.formatNumber(value, sci=True)
-        if exponent:
+        res = self.formatNumber(value, sci=sci)
+        if sci:
+            res, exponent = res
+        if sci and exponent:
             limplus, limminus = [
                 (lambda x: decimal.getcontext().multiply(
                     float_to_decimal(x), float_to_decimal(10.**-exponent)))(lim)
@@ -107,7 +113,9 @@ class NumberFormatter(object):
             sf = 2
         elif frac > 0.01 and value < 1000:
             sf = 3
-        res, exponent = self.formatNumber(value, sf, sci=True)
+        res = self.formatNumber(value, sf, sci=sci)
+        if sci:
+            res, exponent = res
         maxdp = max(self.decimal_places(plus_str), self.decimal_places(minus_str))
         # while abs(value) < 1 and maxdp < self.decimal_places(res):
         while maxdp < self.decimal_places(res):
@@ -117,14 +125,20 @@ class NumberFormatter(object):
                 if float(res) == 0.0: res = ('%.' + str(maxdp) + 'f') % 0
                 break
             else:
-                res, exponent_2 = self.formatNumber(value, sf, sci=True)
-                assert exponent == exponent_2
+                res = self.formatNumber(value, sf, sci=sci)
+                if sci:
+                    res, exponent_2 = res
+                    assert exponent == exponent_2
 
         while self.decimal_places(plus_str) > self.decimal_places(res):
             sf += 1
-            res, exponent_2 = self.formatNumber(value, sf, sci=True)
-            assert exponent == exponent_2
-        return res, plus_str, minus_str, exponent
+            res = self.formatNumber(value, sf, sci=sci)
+            if sci:
+                res, exponent_2 = res
+                assert exponent == exponent_2
+        if sci:
+            return res, plus_str, minus_str, exponent
+        return res, plus_str, minus_str
 
     def formatNumber(self, value, sig_figs=None, wantSign=False, sci=False):
         if sig_figs is None:
@@ -736,36 +750,38 @@ class MargeStats(ParamResults):
         if not param is None:
             lim = param.limits[limit - 1]
             sf = 3
-            if 'chi2_' in param.name:
-# TODO: ADD EXPONENT!!!!
+            if param.name.startswith('chi2'):
                 # Chi2 for low dof are very skewed, always want mean and sigma or limit
-                res, sigma, _, exponent = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err, wantSign=False)
+                res, sigma, _ = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err, wantSign=False, sci=False)
                 if limit == 1:
                     res += r'\pm ' + sigma
                 else:
                     # in this case give mean and effective dof
                     res += r'\,({\nu\rm{:}\,%.1f})' % (param.err ** 2 / 2)
-                    # res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean, lim.lower)
+                    # res, plus_str, minus_str = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean, lim.lower, sci=False)
                     # res += '^{' + plus_str + '}_{>' + minus_str + '}'
             elif lim.twotail:
                 if not formatter.numberFormatter.plusMinusLimit(limit, lim.upper - param.mean, lim.lower - param.mean):
                     res, plus_str, _, exponent = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err,
-                                                                             wantSign=False)
+                                                                                       wantSign=False, sci=True)
                     res += r'\pm ' + plus_str
                 else:
                     res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean,
-                                                                                     lim.lower - param.mean)
+                                                                                               lim.lower - param.mean, sci=True)
                     res += '^{' + plus_str + '}_{' + minus_str + '}'
                 if exponent:
-                    res = r'\left(\,%s\,\right)\cdot 10^{%d}' % (res, exponent)
+                    res = r'\left(\,%s\,\right)' % res + times_ten_power(exponent)
             elif lim.onetail_upper:
-# TODO: ADD EXPONENT!!!!
-                res = '< ' + formatter.numberFormatter.formatNumber(lim.upper, sf)
+                res, exponent = formatter.numberFormatter.formatNumber(lim.upper, sf, sci=True)
+                res = '< ' + res
+                if exponent:
+                    res += times_ten_power(exponent)
             elif lim.onetail_lower:
-# TODO: ADD EXPONENT!!!!
-                res = '> ' + formatter.numberFormatter.formatNumber(lim.lower, sf)
+                res, exponent = formatter.numberFormatter.formatNumber(lim.lower, sf, sci=True)
+                res = '> ' + res
+                if exponent:
+                    res += times_ten_power(exponent)
             else:
-# TODO: ADD EXPONENT!!!!
                 res = formatter.noConstraint
             if refResults is not None and res != formatter.noConstraint:
                 refVal = refResults.parWithName(param.name)
