@@ -11,13 +11,17 @@ import sys
 import signal
 from io import BytesIO
 import six
-from packaging.version import Version
 from collections import OrderedDict
 
 matplotlib.use('Qt4Agg')
 
-if Version(matplotlib.__version__) < Version("2.2.0"):
-    matplotlib.rcParams['backend.qt4'] = 'PySide'
+try:
+    from packaging.version import Version
+
+    if Version(matplotlib.__version__) < Version("2.2.0"):
+        matplotlib.rcParams['backend.qt4'] = 'PySide'
+except ImportError:
+    pass
 
 from getdist.gui import SyntaxHighlight
 from getdist import plots, IniFile
@@ -629,8 +633,8 @@ class MainWindow(QMainWindow):
             # Add renames to match parameter across samples
             renames = self.paramNames.getRenames(keep_empty=True)
             pars = [getattr(samples.paramNames.parWithName(
-                        p, error=not ignore_unknown, renames=renames), "name", None)
-                    for p in pars]
+                p, error=not ignore_unknown, renames=renames), "name", None)
+                for p in pars]
             while None in pars:
                 pars.remove(None)
             self.showMessage("Generating table....")
@@ -890,6 +894,7 @@ class MainWindow(QMainWindow):
         # Add renames from all roots
         for r in roots[1:]:
             self.paramNames.updateRenames(self.getSamples(r).getRenames())
+
         # Update old selection to new names
         def find_new_name(old_names):
             for old_name in old_names:
@@ -897,6 +902,7 @@ class MainWindow(QMainWindow):
                 if new_name:
                     return new_name.name
             return None
+
         for x_ in old_selection:
             old_selection[x_] = [
                 find_new_name(p) for p in old_selection[x_]]
@@ -904,7 +910,7 @@ class MainWindow(QMainWindow):
         renames = self.paramNames.getRenames(keep_empty=True)
         renames_list_func = lambda x: (" (" + ", ".join(x) + ")") if x else ""
         self.paramNamesTags = OrderedDict([
-            [p+renames_list_func(r), p] for p,r in renames.items()])
+            [p + renames_list_func(r), p] for p, r in renames.items()])
         self._updateListParameters(list(self.paramNamesTags), self.listParametersX)
         self._updateListParameters(list(self.paramNamesTags), self.listParametersY)
         # Update selection in both boxes (needs to be done after *both* boxes have been
@@ -1077,7 +1083,7 @@ class MainWindow(QMainWindow):
         for item in oldItems:
             try:
                 # Inverse dict search in new name tags
-                itemtag = next(tag for tag,name in self.paramNamesTags.items()
+                itemtag = next(tag for tag, name in self.paramNamesTags.items()
                                if name == item)
                 match_items = listParameters.findItems(itemtag, Qt.MatchExactly)
             except StopIteration:
@@ -1267,7 +1273,6 @@ class MainWindow(QMainWindow):
 
             def setSizeQT(sz):
                 self.plotter.settings.setWithSubplotSize(max(1.5, sz / 80.))
-                if sz < 2: self.plotter.settings.l
 
             def setSizeForN(n):
                 setSizeQT(min(height, width) / max(n, 2))

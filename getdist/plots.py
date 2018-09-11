@@ -1524,7 +1524,7 @@ class GetDistPlotter(object):
         """
         if isinstance(param, ParamInfo):
             name = param.name
-            if getattr(param,'renames'):
+            if getattr(param, 'renames'):
                 renames = {name: makeList(renames.get(name, [])) + list(param.renames)}
         else:
             name = param
@@ -2299,12 +2299,12 @@ class GetDistPlotter(object):
             from matplotlib.colors import Normalize, to_rgb
             max_weight = weights.max()
             dup_fac = 4
-            filter = weights > max_weight / (100 * dup_fac)
-            x = samples[0][filter]
-            y = samples[1][filter]
-            z = samples[2][filter]
+            filt = weights > max_weight / (100 * dup_fac)
+            x = samples[0][filt]
+            y = samples[1][filt]
+            z = samples[2][filt]
             # split up high-weighted samples into multiple copies
-            weights = weights[filter] / max_weight * dup_fac
+            weights = weights[filt] / max_weight * dup_fac
             intweights = np.ceil(weights)
             thin_ix = mcsamples.thin_indices(1, intweights)
             x = x[thin_ix]
@@ -2312,14 +2312,14 @@ class GetDistPlotter(object):
             z = z[thin_ix]
             weights /= intweights
             weights = weights[thin_ix]
-            map = ScalarMappable(Normalize(z.min(), z.max()), self.settings.colormap_scatter)
-            map.set_array(z)
-            cols = map.to_rgba(z)
+            mappable = ScalarMappable(Normalize(z.min(), z.max()), self.settings.colormap_scatter)
+            mappable.set_array(z)
+            cols = mappable.to_rgba(z)
             if fixed_color:
                 cols[:, :3] = to_rgb(fixed_color)
             cols[:, 3] = weights / dup_fac * alpha
             alpha = None
-            self.last_scatter = map
+            self.last_scatter = mappable
             scat = (ax or plt.gca()).scatter(x, y, edgecolors='none',
                                              s=scatter_size or self.settings.scatter_size,
                                              c=cols, alpha=alpha)

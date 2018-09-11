@@ -1050,7 +1050,7 @@ class Chains(WeightedSamples):
         else:
             # From arrays
             def array_dimension(a):
-                "Dimension for numpy or list/tuple arrays, not very safe (does not work if string elements)"
+                # Dimension for numpy or list/tuple arrays, not very safe (does not work if string elements)
                 d = 0
                 while True:
                     try:

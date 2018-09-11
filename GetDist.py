@@ -39,9 +39,9 @@ def main(args):
 
     if chain_root is not None and ('*' in chain_root or '?' in chain_root):
         import glob, copy
-        for file in glob.glob(chain_root + '.paramnames'):
+        for f in glob.glob(chain_root + '.paramnames'):
             fileargs = copy.copy(args)
-            fileargs.chain_root = file.replace('.paramnames', '')
+            fileargs.chain_root = f.replace('.paramnames', '')
             main(fileargs)
         return
 

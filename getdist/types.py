@@ -111,8 +111,6 @@ class NumberFormatter(object):
                     (lambda x: decimal.getcontext().multiply(
                         float_to_decimal(x), float_to_decimal(10. ** -exponent)))(lim)
                     for lim in [value, limplus, limminus]]
-        else:
-            exponent = 0
         plus_str = self.formatNumber(limplus, err_sf, wantSign)
         minus_str = self.formatNumber(limminus, err_sf, wantSign)
         res = self.formatNumber(value, sf)
@@ -389,9 +387,7 @@ class ResultTable(object):
         """
 
         if document:
-            lines = []
-            lines.append(r'\documentclass{article}')
-            lines.append(r'\pagestyle{empty}')
+            lines = [r'\documentclass{article}', r'\pagestyle{empty}']
             for package in packages:
                 lines.append(r'\usepackage{%s}' % package)
             lines.append('\\renewcommand{\\arraystretch}{1.5}')
@@ -574,7 +570,7 @@ class ParamLimit(object):
     :ivar upper: upper limit
     :ivar twotail: True if a two-tail limit, False if one-tail
     :ivar onetail_upper: True if one-tail upper limit
-    :ivar ontail_lower: True if one-tail lower limit
+    :ivar onetail_lower: True if one-tail lower limit
     """
 
     def __init__(self, minmax, tag='two'):
