@@ -905,10 +905,13 @@ class MainWindow(QMainWindow):
         renames_list_func = lambda x: (" (" + ", ".join(x) + ")") if x else ""
         self.paramNamesTags = OrderedDict([
             [p+renames_list_func(r), p] for p,r in renames.items()])
-        self._updateListParameters(list(self.paramNamesTags), self.listParametersX,
-                                   items_old=old_selection["x"])
-        self._updateListParameters(list(self.paramNamesTags), self.listParametersY,
-                                   items_old=old_selection["y"])
+        self._updateListParameters(list(self.paramNamesTags), self.listParametersX)
+        self._updateListParameters(list(self.paramNamesTags), self.listParametersY)
+        # Update selection in both boxes (needs to be done after *both* boxes have been
+        # updated because of some internal checks
+        self._updateListParametersSelection(old_selection["x"], self.listParametersX)
+        self._updateListParametersSelection(old_selection["y"], self.listParametersY)
+
         self._updateComboBoxColor(list(self.paramNamesTags))
 
     def _resetPlotData(self):
@@ -1059,7 +1062,7 @@ class MainWindow(QMainWindow):
         logging.debug("Data: %s" % strDataTag)
         self.newRootItem(self.paramTag + '_' + self.dataTag)
 
-    def _updateListParameters(self, items, listParameters, items_old=None):
+    def _updateListParameters(self, items, listParameters):
         listParameters.clear()
         for item in items:
             listItem = QListWidgetItem()
@@ -1068,35 +1071,39 @@ class MainWindow(QMainWindow):
             listItem.setCheckState(Qt.Unchecked)
             listParameters.addItem(listItem)
 
-        if items_old:
-            for item in items_old:
+    def _updateListParametersSelection(self, oldItems, listParameters):
+        if not oldItems:
+            return
+        for item in oldItems:
+            try:
                 # Inverse dict search in new name tags
-                try:
-                    itemtag = next(tag for tag,name in self.paramNamesTags.items()
-                                   if name == item)
-                    match_items = listParameters.findItems(itemtag, Qt.MatchExactly)
-                except StopIteration:
-                    match_items = None
-                if match_items:
-                    match_items[0].setCheckState(Qt.Checked)
+                itemtag = next(tag for tag,name in self.paramNamesTags.items()
+                               if name == item)
+                match_items = listParameters.findItems(itemtag, Qt.MatchExactly)
+            except StopIteration:
+                match_items = None
+            if match_items:
+                match_items[0].setCheckState(Qt.Checked)
 
     def getCheckedParams(self, checklist, fulllist=False):
         return [checklist.item(i).text() for i in range(checklist.count()) if
                 fulllist or checklist.item(i).checkState() == Qt.Checked]
 
-    def getXParams(self, fulllist=False):
+    def getXParams(self, fulllist=False, error=True):
+        """
+        Returns a list of selected parameter names (not tags) in the X-axis box.
+
+        If `fulllist=True` (default: `False`), returns all of them.
+        """
         return [self.paramNamesTags[tag]
                 for tag in self.getCheckedParams(self.listParametersX, fulllist)]
 
     def getYParams(self):
+        """
+        Returns a list of selected parameter names (not tags) in the X-axis box.
+        """
         return [self.paramNamesTags[tag]
                 for tag in self.getCheckedParams(self.listParametersY)]
-
-    def getNXParams(self):
-        return len(self.getCheckedParams(self.listParametersX))
-
-    def getNYParams(self):
-        return len(self.getCheckedParams(self.listParametersY))
 
     def statusSelectAllX(self):
         """
@@ -1127,12 +1134,12 @@ class MainWindow(QMainWindow):
 
     def statusTriangle(self, checked):
         self.checkInsideLegend.setVisible(
-            not checked and self.getNXParams() == 1 and self.getNYParams() == 1)
+            not checked and len(self.getXParams()) == 1 and len(self.getYParams()) == 1)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
     def itemCheckChange(self, item):
         self.checkInsideLegend.setVisible(
-            self.getNXParams() == 1 and self.getNYParams() == 1 and
+            len(self.getXParams()) == 1 and len(self.getYParams()) == 1 and
             self.trianglePlot.checkState() != Qt.Checked)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
