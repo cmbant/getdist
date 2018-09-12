@@ -1287,8 +1287,15 @@ class GetDistPlotter(object):
         :param x: True if x axis, False for y axis
         :param prune: Parameter for MaxNLocator constructor, ,  ['lower' | 'upper' | 'both' | None]
         """
-        formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
-        axis.set_major_formatter(formatter)
+        sFormatter = matplotlib.ticker.ScalarFormatter(useOffset=False, useMathText=True)
+        sFormatter.set_powerlimits((-3,3))
+        if isinstance(axis, matplotlib.axis.XAxis):
+            axis.set_major_formatter(sFormatter)
+        else:
+            # from https://stackoverflow.com/questions/25750170
+            sci_func = (lambda x, pos:
+                        "${}$".format(sFormatter._formatSciNotation('%.10g' % x)))
+            axis.set_major_formatter(matplotlib.ticker.FuncFormatter(sci_func))
         plt.tick_params(axis='both', which='major', labelsize=self.settings.axes_fontsize)
         if x and self.settings.x_label_rotation != 0: plt.setp(plt.xticks()[1], rotation=self.settings.x_label_rotation)
         self._set_locator(axis, x, prune=prune)
