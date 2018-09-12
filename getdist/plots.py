@@ -1287,7 +1287,8 @@ class GetDistPlotter(object):
         :param x: True if x axis, False for y axis
         :param prune: Parameter for MaxNLocator constructor, ,  ['lower' | 'upper' | 'both' | None]
         """
-        formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
+        formatter = matplotlib.ticker.ScalarFormatter(useOffset=False, useMathText=True)
+        formatter.set_powerlimits((-3,3))
         axis.set_major_formatter(formatter)
         plt.tick_params(axis='both', which='major', labelsize=self.settings.axes_fontsize)
         if x and self.settings.x_label_rotation != 0: plt.setp(plt.xticks()[1], rotation=self.settings.x_label_rotation)
