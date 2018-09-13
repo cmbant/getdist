@@ -1,8 +1,4 @@
-from importlib import import_module
 import os
-import numpy as np
-
-from getdist.yaml_format_tools import load_info_params, is_sampled_param, is_derived_param
 
 
 class ParamBounds(object):
@@ -35,25 +31,12 @@ class ParamBounds(object):
                     if len(strings) == 3:
                         self.setRange(strings[0], strings[1:])
         elif extension in ('.yaml', '.yml'):
-            info_params = load_info_params(fileName)
+            from getdist.yaml_format_tools import yaml_load_file, get_info_params
+            from getdist.yaml_format_tools import get_range, is_fixed_param
+            info_params = get_info_params(yaml_load_file(fileName))
             for p, info in info_params.items():
-                # Sampled
-                if is_sampled_param(info):
-                    info_lims = dict([[l, info["prior"].get(l)]
-                                      for l in ["min", "max", "loc", "scale"]])
-                    if info_lims["min"] != None or info_lims["max"] != None:
-                        lims = [info["prior"].get("min"), info["prior"].get("max")]
-                    elif info_lims["loc"] != None or info_lims["scale"] != None:
-                        dist = info["prior"].pop("dist", "uniform")
-                        pdf_dist = getattr(import_module("scipy.stats", dist), dist)
-                        lims = pdf_dist.interval(1, **info["prior"])
-                # Derived
-                elif is_derived_param(info):
-                    lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(info or {})
-                # Fixed
-                else:
-                    continue
-                self.setRange(p, lims)
+                if not is_fixed_param(info):
+                    self.setRange(p, get_range(info))
 
     def __str__(self):
         s = ''

@@ -3,8 +3,22 @@ import os
 import fnmatch
 import six
 import matplotlib
+from itertools import chain
+from collections import OrderedDict
 
-from getdist.yaml_format_tools import load_info_params, is_sampled_param, is_derived_param
+
+def makeList(roots):
+    """
+    Checks if the given parameter is a list.
+    If not, Creates a list with the parameter as an item in it.
+
+    :param roots: The parameter to check
+    :return: A list containing the parameter.
+    """
+    if isinstance(roots, (list, tuple)):
+        return roots
+    else:
+        return [roots]
 
 
 def escapeLatex(text):
@@ -12,6 +26,47 @@ def escapeLatex(text):
         return text.replace('_', '{\\textunderscore}')
     else:
         return text
+
+
+def mergeRenames(*dicts, **kwargs):
+    """
+    Joins several dicts of renames.
+
+    If `keep_names_1st=True` (default: `False`), keeps empty entries when possible
+    in order to preserve the parameter names of the first input dictionary.
+
+    Returns a merged dictionary of renames,
+    whose keys are chosen from the left-most input.
+    """
+    keep_names_1st = kwargs.pop("keep_names_1st", False)
+    if kwargs:
+        raise ValueError("kwargs not recognised: %r" % kwargs)
+    sets = list(chain(*[[set([k] + (makeList(v or [])))
+                         for k, v in dic.items()] for dic in dicts]))
+    # If two sets have elements in common, join them.
+    something_changed = True
+    out = []
+    while something_changed:
+        something_changed = False
+        for i in range(1, len(sets)):
+            if sets[0].intersection(sets[i]):
+                sets[0] = sets[0].union(sets.pop(i))
+                something_changed = True
+                break
+        if not something_changed and sets:
+            out += [sets.pop(0)]
+            if len(sets):
+                something_changed = True
+    merged = {}
+    for params in out:
+        for dic in dicts:
+            p = set(dic).intersection(params)
+            if p and (params != p or keep_names_1st):
+                key = p.pop()
+                params.remove(key)
+                merged[key] = list(params)
+                break
+    return merged
 
 
 class ParamInfo(object):
@@ -24,13 +79,15 @@ class ParamInfo(object):
     :ivar isDerived: True if a derived parameter, False otherwise (e.g. for MCMC parameters)
     """
 
-    def __init__(self, line=None, name='', label='', comment='', derived=False, number=None):
+    def __init__(self, line=None, name='', label='', comment='', derived=False,
+                 renames=None, number=None):
         self.setName(name)
         self.isDerived = derived
         self.label = label or name
         self.comment = comment
         self.filenameLoadedFrom = ''
         self.number = number
+        self.renames = makeList(renames or [])
         if line is not None:
             self.setFromString(line)
 
@@ -146,10 +203,14 @@ class ParamList(object):
 
         :param name: name of the parameter
         :param error: if True raise an error if parameter not found, otherwise return None
-        :param renames: a dictionary that is used to provide optional name mappings to the stored names
+        :param renames: a dictionary that is used to provide optional name mappings
+                        to the stored names
         """
+        given_names = set([name] + makeList(renames.get(name, [])))
         for par in self.names:
-            if par.name == name or renames.get(par.name, '') == name:
+            known_names = set([par.name] + makeList(getattr(par, 'renames', [])) +
+                              makeList(renames.get(par.name, [])))
+            if known_names.intersection(given_names):
                 return par
         if error: raise Exception("parameter name not found: " + name)
         return None
@@ -171,13 +232,17 @@ class ParamList(object):
         Also expands any names that are globs into list with matching parameter names
 
         :param names: list of name strings
-        :param error: if True, raise an error if any name not found, otherwise returns None items
+        :param error: if True, raise an error if any name not found,
+                      otherwise returns None items. Can be a list of length `len(names)`
         :param renames: optional dictionary giving mappings of parameter names
         """
         res = []
         if isinstance(names, six.string_types):
             names = [names]
-        for name in names:
+        errors = makeList(error)
+        if len(errors) < len(names):
+            errors = len(names) * errors
+        for name, error in zip(names, errors):
             if isinstance(name, ParamInfo):
                 res.append(name)
             else:
@@ -210,6 +275,25 @@ class ParamList(object):
             if not param is None:
                 param.label = par.label
                 if set_derived: param.isDerived = par.isDerived
+
+    def getRenames(self, keep_empty=False):
+        """
+        Gets dictionary of renames known to each parameter.
+        """
+        return OrderedDict([[param.name, getattr(param, "renames", [])]
+                            for param in self.names
+                            if (getattr(param, "renames", False) or keep_empty)])
+
+    def updateRenames(self, renames):
+        """
+        Updates the renames known to each parameter with the given dictionary of renames.
+        """
+        merged_renames = mergeRenames(
+            self.getRenames(keep_empty=True), renames, keep_names_1st=True)
+        known_names = self.list()
+        for name, rename in merged_renames.items():
+            if name in known_names:
+                self.parWithName(name).renames = rename
 
     def fileList(self, fname):
         with open(fname) as f:
@@ -294,11 +378,17 @@ class ParamNames(ParamList):
             with open(fileName) as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
         elif extension.lower() in ('.yaml', '.yml'):
-            info_params = load_info_params(fileName)
+            from getdist.yaml_format_tools import yaml_load_file, get_info_params
+            from getdist.yaml_format_tools import is_sampled_param, is_derived_param
+            from getdist.yaml_format_tools import _p_label, _p_renames
+
+            info_params = get_info_params(yaml_load_file(fileName))
             # first sampled, then derived
-            self.names = [ParamInfo(param + " " + ((info or {}).get("latex", param)))
+            self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
+                                    renames=(info or {}).get(_p_renames))
                           for param, info in info_params.items() if is_sampled_param(info)]
-            self.names += [ParamInfo(param + " " + ((info or {}).get("latex", param)))
+            self.names += [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
+                                     renames=(info or {}).get(_p_renames), derived=True)
                            for param, info in info_params.items() if is_derived_param(info)]
 
     def loadFromKeyWords(self, keywordProvider):

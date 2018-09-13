@@ -269,12 +269,6 @@ class MixtureND(object):
                                               - cov[np.ix_(fixed_params, keep_params)].dot(
                     np.linalg.inv(cov[np.ix_(keep_params, keep_params)]).dot(
                         cov[np.ix_(keep_params, fixed_params)]))))
-                w = np.exp(
-                    -invcov[np.ix_(fixed_params, fixed_params)].dot(deltas).dot(deltas) / 2) / \
-                    np.sqrt(np.linalg.det(cov[np.ix_(fixed_params, fixed_params)]
-                                          - cov[np.ix_(fixed_params, keep_params)].dot(
-                        np.linalg.inv(cov[np.ix_(keep_params, keep_params)]).dot(
-                            cov[np.ix_(keep_params, fixed_params)]))))
             new_weights.append(logw)
             new_means.append(new_mean)
             new_covs.append(new_cov)

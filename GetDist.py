@@ -39,9 +39,9 @@ def main(args):
 
     if chain_root is not None and ('*' in chain_root or '?' in chain_root):
         import glob, copy
-        for file in glob.glob(chain_root+'.paramnames'):
+        for f in glob.glob(chain_root + '.paramnames'):
             fileargs = copy.copy(args)
-            fileargs.chain_root= file.replace('.paramnames','')
+            fileargs.chain_root = f.replace('.paramnames', '')
             main(fileargs)
         return
 
@@ -312,7 +312,7 @@ def main(args):
         if mc.loglikes is not None: mc.getLikeStats().saveAsText(rootdirname + '.likestats')
 
     if dumpNDbins:
-        num_bins_ND = ini.int('num_bins_ND', 10)
+        mc.num_bins_ND = ini.int('num_bins_ND', 10)
         line = ini.string('ND_params', '')
 
         if line not in ["", '0']:

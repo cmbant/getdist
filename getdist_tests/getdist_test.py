@@ -93,7 +93,7 @@ class GetDistFileTest(unittest.TestCase):
 
         ini.params['plot_data_dir'] = 'plot_data/'
         ini.saveFile(fname)
-        res = callGetDist([fname, self.root])
+        callGetDist([fname, self.root])
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
         checkRun()
         shutil.rmtree(os.path.join(self.tempdir, 'plot_data'))
@@ -153,6 +153,16 @@ class GetDistTest(unittest.TestCase):
         samps = MCSamples(samples=samps.samples, names=['x', 'y'], ranges={'x': [-1, 2], 'y': [-3, 0]})
         d2 = samps.get2DDensity('x', 'y')
         self.assertTrue(np.allclose(d.P, d2.P[::-1, ::], atol=1e-5))
+
+    def testLoads(self):
+        # test initiating from multiple chain arrays
+        samps = []
+        for i in range(3):
+            samps.append(Gaussian2D([1.5, -2], np.diagflat([1, 2])).MCSamples(1001 + i * 10, names=['x', 'y']))
+        fromChains = MCSamples(samples=[s.samples for s in samps], names=['x', 'y'])
+        mean = np.sum([s.norm * s.mean('x') for s in samps]) / np.sum([s.norm for s in samps])
+        meanChains = fromChains.mean('x')
+        self.assertAlmostEqual(mean, meanChains)
 
     def testMixtures(self):
         from getdist.gaussian_mixtures import Mixture2D, GaussianND

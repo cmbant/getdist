@@ -12,13 +12,13 @@ defaultContours = [0.68, 0.95]
 def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge=True):
     """
      Get contour levels enclosing "contours" fraction of the probability, for any dimension bins array
-     
-     :param inbins: binned density. 
+
+     :param inbins: binned density.
      :param contours: list of confidence contours to calculate, default [0.68, 0.95]
-     :param missing_norm: accounts of any points not included in inbins (e.g. points in far tails that are not in inbins) 
+     :param missing_norm: accounts of any points not included in inbins (e.g. points in far tails that are not in inbins)
      :param half_edge: If True, edge bins are only half integrated over in each direction.
      :return: list of density levels
-     
+
     """
     contour_levels = np.zeros(len(contours))
     if half_edge:
@@ -51,7 +51,7 @@ def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge
 class GridDensity(object):
     """
     Base class for probability density grids (normalized or not)
-    
+
     :ivar P: array of density values
     """
 
@@ -96,7 +96,7 @@ class GridDensity(object):
     def bounds(self):
         """
          Get bounds in order x, y, z..
-        
+
          :return: list of (min,max) values
         """
         if self.view_ranges is not None:
@@ -149,7 +149,7 @@ class Density1D(GridDensity):
     def Prob(self, x, derivative=0):
         """
         Calculate density at position x by interpolation in the density grid
-        
+
         :param x: x value
         :param derivative: optional order of derivative to calculate (default: no derivative)
         :return: P(x) density value
@@ -189,13 +189,13 @@ class Density1D(GridDensity):
 
     def getLimits(self, p, interpGrid=None, accuracy_factor=None):
         """
-        Get parameter equal-density confidence limits (a credible interval). 
+        Get parameter equal-density confidence limits (a credible interval).
         If the density is bounded, may only have a one-tail limit.
-        
+
         :param p: list of limits to calculate, e.g. [0.68, 0.95]
         :param interpGrid: optional pre-computed cache
         :param accuracy_factor: parameter to boost default accuracy for fine sampling
-        :return: list of (min, max, has_min, has_top) values 
+        :return: list of (min, max, has_min, has_top) values
                 where has_min and has_top are True or False depending on whether lower and upper limit exists
         """
         g = interpGrid or self.initLimitGrids(accuracy_factor)
@@ -278,7 +278,7 @@ class DensityND(GridDensity, LinearNDInterpolator):
 
     def __init__(self, xs, P=None, view_ranges=None):
         """
-        :param xs: list of arrays of x values        
+        :param xs: list of arrays of x values
         :param P: ND array of density values at xs
         :param view_ranges: optional ranges for viewing density
         """
@@ -286,9 +286,9 @@ class DensityND(GridDensity, LinearNDInterpolator):
 
         # for compat and tests
         self.x = xs[0]
-        if (self.dim >= 2):
+        if self.dim >= 2:
             self.y = xs[1]
-        if (self.dim >= 3):
+        if self.dim >= 3:
             self.z = xs[2]
 
         self.xs = xs

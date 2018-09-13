@@ -6,7 +6,7 @@ import io
 class CovMat(object):
     """
     Class holding a covariance matrix for some named parameters
-    
+
     :ivar matrix: the covariance matrix  (square numpy array)
     :ivar paramNames: list of parameter name strings
     """
@@ -41,7 +41,7 @@ class CovMat(object):
     def saveToFile(self, filename):
         """
         Save the covariance matrix to a text file, with comment header listing the parameter names
-        
+
         :param filename: name of file to save to (.covmat)
         """
         with io.open(filename, 'wb') as fout:
@@ -51,9 +51,9 @@ class CovMat(object):
     def rescaleParameter(self, name, scale):
         """
         Used to rescale a covariance if a parameter is renormalized
-        
+
         :param name: parameter name to rescale
-        :scale scale: value to rescale by 
+        :param scale: value to rescale by
         """
         if name in self.paramNames:
             i = self.paramNames.index(name)
@@ -93,7 +93,7 @@ class CovMat(object):
     def correlation(self):
         """
         Get the correlation matrix
-        
+
         :return: numpy array giving the correlation matrix
         """
         m = self.matrix.copy()

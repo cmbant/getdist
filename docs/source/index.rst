@@ -17,13 +17,13 @@ High-level modules for analysing samples and plotting:
 
    mcsamples
    plots
-   
+
 See also:
 
 .. toctree::
 
-	analysis_settings
-   
+   analysis_settings
+
 Other main modules:
 
 .. toctree::

@@ -11,9 +11,17 @@ import sys
 import signal
 from io import BytesIO
 import six
+from collections import OrderedDict
 
 matplotlib.use('Qt4Agg')
-matplotlib.rcParams['backend.qt4'] = 'PySide'
+
+try:
+    from packaging.version import Version
+
+    if Version(matplotlib.__version__) < Version("2.2.0"):
+        matplotlib.rcParams['backend.qt4'] = 'PySide'
+except ImportError:
+    pass
 
 from getdist.gui import SyntaxHighlight
 from getdist import plots, IniFile
@@ -614,10 +622,21 @@ class MainWindow(QMainWindow):
         try:
             samples = self.getSamples(rootname)
             pars = self.getXParams()
+            ignore_unknown = False
             if len(pars) < 1:
                 pars = self.getXParams(fulllist=True)
+                # If no parameters selected, it shouldn't fail if some sample is missing
+                # parameters present in the first one
+                ignore_unknown = True
             if len(pars) < 1:
                 raise GuiSelectionError('Select one or more parameters first')
+            # Add renames to match parameter across samples
+            renames = self.paramNames.getRenames(keep_empty=True)
+            pars = [getattr(samples.paramNames.parWithName(
+                p, error=not ignore_unknown, renames=renames), "name", None)
+                for p in pars]
+            while None in pars:
+                pars.remove(None)
             self.showMessage("Generating table....")
             cols = len(pars) // 20 + 1
             tables = [samples.getTable(columns=cols, limit=lim + 1, paramList=pars) for lim in
@@ -654,7 +673,7 @@ class MainWindow(QMainWindow):
 
     def settingsChanged(self):
         if self.plotter:
-            self.plotter.sampleAnalyser.reset(self.iniFile, chain_settings_have_priority = False)
+            self.plotter.sampleAnalyser.reset(self.iniFile, chain_settings_have_priority=False)
             if self.plotter.fig:
                 self.plotData()
 
@@ -861,11 +880,45 @@ class MainWindow(QMainWindow):
         roots = self.checkedRootNames()
         if not len(roots):
             return
-        paramNames = self.getSamples(roots[0]).paramNames.list()
+        # Get previuos selection (with its renames) before we overwrite the list of tags
+        old_selection = OrderedDict([["x", []], ["y", []]])
+        for x_, getter in zip(old_selection, [self.getXParams, self.getYParams]):
+            if not hasattr(self, "paramNames"):
+                break
+            old_selection[x_] = [
+                [name] + list(self.paramNames.getRenames().get(name, []))
+                for name in getter()]
+        # Copy paramNames (we don't want to change the original info)
+        self.paramNames = (
+            lambda x: x.filteredCopy(x))(self.getSamples(roots[0]).paramNames)
+        # Add renames from all roots
+        for r in roots[1:]:
+            self.paramNames.updateRenames(self.getSamples(r).getRenames())
 
-        self._updateListParameters(paramNames, self.listParametersX, self.getXParams())
-        self._updateListParameters(paramNames, self.listParametersY, self.getYParams())
-        self._updateComboBoxColor(paramNames)
+        # Update old selection to new names
+        def find_new_name(old_names):
+            for old_name in old_names:
+                new_name = self.paramNames.parWithName(old_name)
+                if new_name:
+                    return new_name.name
+            return None
+
+        for x_ in old_selection:
+            old_selection[x_] = [
+                find_new_name(p) for p in old_selection[x_]]
+        # Create tags for list widget
+        renames = self.paramNames.getRenames(keep_empty=True)
+        renames_list_func = lambda x: (" (" + ", ".join(x) + ")") if x else ""
+        self.paramNamesTags = OrderedDict([
+            [p + renames_list_func(r), p] for p, r in renames.items()])
+        self._updateListParameters(list(self.paramNamesTags), self.listParametersX)
+        self._updateListParameters(list(self.paramNamesTags), self.listParametersY)
+        # Update selection in both boxes (needs to be done after *both* boxes have been
+        # updated because of some internal checks
+        self._updateListParametersSelection(old_selection["x"], self.listParametersX)
+        self._updateListParametersSelection(old_selection["y"], self.listParametersY)
+
+        self._updateComboBoxColor(self.paramNames.list())
 
     def _resetPlotData(self):
         # Script
@@ -921,7 +974,7 @@ class MainWindow(QMainWindow):
         self.listRoots.show()
         self.pushButtonRemove.show()
         baseRoots = [(os.path.basename(root) if not root.endswith("/")
-                      else os.path.basename(root[:-1])+"/")
+                      else os.path.basename(root[:-1]) + "/")
                      for root in listOfRoots]
         self.comboBoxRootname.addItems(baseRoots)
         if len(baseRoots) > 1:
@@ -1015,7 +1068,7 @@ class MainWindow(QMainWindow):
         logging.debug("Data: %s" % strDataTag)
         self.newRootItem(self.paramTag + '_' + self.dataTag)
 
-    def _updateListParameters(self, items, listParameters, items_old=None):
+    def _updateListParameters(self, items, listParameters):
         listParameters.clear()
         for item in items:
             listItem = QListWidgetItem()
@@ -1024,21 +1077,39 @@ class MainWindow(QMainWindow):
             listItem.setCheckState(Qt.Unchecked)
             listParameters.addItem(listItem)
 
-        if items_old:
-            for item in items_old:
-                match_items = listParameters.findItems(item, Qt.MatchExactly)
-                if match_items:
-                    match_items[0].setCheckState(Qt.Checked)
+    def _updateListParametersSelection(self, oldItems, listParameters):
+        if not oldItems:
+            return
+        for item in oldItems:
+            try:
+                # Inverse dict search in new name tags
+                itemtag = next(tag for tag, name in self.paramNamesTags.items()
+                               if name == item)
+                match_items = listParameters.findItems(itemtag, Qt.MatchExactly)
+            except StopIteration:
+                match_items = None
+            if match_items:
+                match_items[0].setCheckState(Qt.Checked)
 
     def getCheckedParams(self, checklist, fulllist=False):
         return [checklist.item(i).text() for i in range(checklist.count()) if
                 fulllist or checklist.item(i).checkState() == Qt.Checked]
 
-    def getXParams(self, fulllist=False):
-        return self.getCheckedParams(self.listParametersX, fulllist)
+    def getXParams(self, fulllist=False, error=True):
+        """
+        Returns a list of selected parameter names (not tags) in the X-axis box.
+
+        If `fulllist=True` (default: `False`), returns all of them.
+        """
+        return [self.paramNamesTags[tag]
+                for tag in self.getCheckedParams(self.listParametersX, fulllist)]
 
     def getYParams(self):
-        return self.getCheckedParams(self.listParametersY)
+        """
+        Returns a list of selected parameter names (not tags) in the X-axis box.
+        """
+        return [self.paramNamesTags[tag]
+                for tag in self.getCheckedParams(self.listParametersY)]
 
     def statusSelectAllX(self):
         """
@@ -1068,20 +1139,24 @@ class MainWindow(QMainWindow):
         self.comboBoxColor.setEnabled(self.toggleColor.isChecked())
 
     def statusTriangle(self, checked):
-        self.checkInsideLegend.setVisible(not checked and len(self.getXParams()) == 1 and len(self.getYParams()) == 1)
+        self.checkInsideLegend.setVisible(
+            not checked and len(self.getXParams()) == 1 and len(self.getYParams()) == 1)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
     def itemCheckChange(self, item):
-        self.checkInsideLegend.setVisible(len(self.getXParams()) == 1 and len(
-            self.getYParams()) == 1 and self.trianglePlot.checkState() != Qt.Checked)
+        self.checkInsideLegend.setVisible(
+            len(self.getXParams()) == 1 and len(self.getYParams()) == 1 and
+            self.trianglePlot.checkState() != Qt.Checked)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
     def _updateComboBoxColor(self, listOfParams):
         if self.rootdirname and os.path.isdir(self.rootdirname):
             param_old = str(self.comboBoxColor.currentText())
+            param_old_new_name = getattr(
+                self.paramNames.parWithName(param_old), "name", None)
             self.comboBoxColor.clear()
             self.comboBoxColor.addItems(listOfParams)
-            idx = self.comboBoxColor.findText(param_old, Qt.MatchExactly)
+            idx = self.comboBoxColor.findText(param_old_new_name, Qt.MatchExactly)
             if idx != -1:
                 self.comboBoxColor.setCurrentIndex(idx)
 
@@ -1198,7 +1273,6 @@ class MainWindow(QMainWindow):
 
             def setSizeQT(sz):
                 self.plotter.settings.setWithSubplotSize(max(1.5, sz / 80.))
-                if sz < 2: self.plotter.settings.l
 
             def setSizeForN(n):
                 setSizeQT(min(height, width) / max(n, 2))
