@@ -1524,7 +1524,7 @@ class GetDistPlotter(object):
         """
         if isinstance(param, ParamInfo):
             name = param.name
-            if getattr(param, 'renames'):
+            if hasattr(param, 'renames'):
                 renames = {name: makeList(renames.get(name, [])) + list(param.renames)}
         else:
             name = param
