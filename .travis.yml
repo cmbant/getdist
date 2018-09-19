@@ -19,7 +19,7 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.70-dev" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.7-dev" ]]; then
      conda create -q -n test-environment -c conda-forge atlas numpy scipy cython matplotlib PyYAML; 
     else
      conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION atlas numpy scipy cython matplotlib PyYAML;
