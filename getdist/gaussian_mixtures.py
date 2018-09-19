@@ -178,7 +178,7 @@ class MixtureND(object):
         :param params: list of two parameter names or indices to use. If already 2D, can be None.
         :param num_points: number of grid points for evaluation
         :param xmin: optional lower value for first parameter
-        :param xmax: optioanl upper value for first parameter
+        :param xmax: optional upper value for first parameter
         :param ymin: optional lower value for second parameter
         :param ymax: optional upper value for second parameter
         :param sigma_max: maximum number of standard deviations away from mean to include in calculated range

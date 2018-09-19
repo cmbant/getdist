@@ -40,7 +40,7 @@ def mergeRenames(*dicts, **kwargs):
     """
     keep_names_1st = kwargs.pop("keep_names_1st", False)
     if kwargs:
-        raise ValueError("kwargs not recognised: %r" % kwargs)
+        raise ValueError("kwargs not recognized: %r" % kwargs)
     sets = list(chain(*[[set([k] + (makeList(v or [])))
                          for k, v in dic.items()] for dic in dicts]))
     # If two sets have elements in common, join them.

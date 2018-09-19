@@ -104,7 +104,7 @@ class NumberFormatter(object):
         err_sf = self.err_sf
         if value >= 20 and frac > 0.1 and limplus >= 2: err_sf = 1
         if sci:
-            # First, call without knowning sig figs, to get the exponent
+            # First, call without knowing sig figs, to get the exponent
             exponent = self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]
             if exponent:
                 value, limplus, limminus = [
