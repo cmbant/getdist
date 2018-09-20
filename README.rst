@@ -28,7 +28,7 @@ from Markov Chain Monte Carlo (MCMC).
 * **LaTeX tables** for marginalized 1D constraints
 
 See the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_
-(`run online <https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb>`_) 
+(`run online <https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb>`_)
 and `GetDist Documentation <http://getdist.readthedocs.org/en/latest/index.html>`_.
 
 
@@ -60,7 +60,7 @@ Dependencies
 * Working LaTeX installation (for some plotting/table functions)
 
 Python distributions like Anaconda have most of what you need (except for LaTeX). To install binary backages on Linux-like systems
-install pacakages *py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*. 
+install pacakages *py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.
 For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/install.php>`_::
 
    sudo port install python27
@@ -85,7 +85,7 @@ Samples file format
 
 The GetDist GUI (and getdist.loadMCSamples function) read parameter sample/chain files in plain text format.
 In general there are a set of plain text files of the form::
-  
+
   xxx_1.txt
   xxx_2.txt
   ...
@@ -127,14 +127,14 @@ To load an MCSamples object from text files do::
 
 Here *settings* gives optional parameter settings for the analysis. *ignore_rows* is useful for MCMC chains where you want to
 discard some fraction from the start of each chain as burn in (use a number >1 to discard a fixed number of sample lines rather than a fraction).
-The MCSamples object can be passed to plot functions, or used to get many results. For example, to plot marginalized parameter densities 
+The MCSamples object can be passed to plot functions, or used to get many results. For example, to plot marginalized parameter densities
 for parameter names *x1* and *x2*::
 
     from getdist import plots
     g = plots.getSinglePlotter()
     g.plot_2d(samples, ['x1', 'x2'])
 
-When you have many different chain files in the same directory, 
+When you have many different chain files in the same directory,
 plotting can work directly with the root file names. For example to compare *x* and *y* constraints
 from two chains with root names *xxx* and *yyy*::
 
@@ -151,14 +151,14 @@ GetDist script
 If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the GetDist.py script:
 
 	usage: GetDist.py [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
-	
+
 	GetDist sample analyser
-	
+
 	positional arguments:
 	  *ini_file*              .ini file with analysis settings (optional, if omitted uses defaults
-	                       
+
 	  *chain_root*            Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file
-	
+
 	optional arguments:
 	  -h, --help            show this help message and exit
 	  --ignore_rows IGNORE_ROWS
@@ -182,7 +182,7 @@ If no *ini_file* is given, default settings are used. The *ignore_rows* option a
 To customize settings you can run::
 
    GetDist.py --make_param_file distparams.ini
-	
+
 to produce the setting file distparams.ini, edit it, then run with your custom settings.
 
 GetDist GUI
@@ -193,11 +193,12 @@ It allows you to open a folder of chain files, then easily select, open, plot an
 See the `GUI Readme <http://getdist.readthedocs.org/en/latest/gui.html>`_.
 
 
-Using with CosmoMC
-===================
+Using with CosmoMC and Cobaya
+=============================
 
-This GetDist package is general, but is mainly developed for analysing chains from the CosmoMC sampling program.
-No need to install this package separately if you have a full CosmoMC installation.
+This GetDist package is general, but is mainly developed for analysing chains from the `CosmoMC <https://cosmologist.info/cosmomc>`_
+and `Cobaya <https://cobaya.readthedocs.io/>`_ sampling programs.
+No need to install this package separately if you have a full CosmoMC installation; the Cobaya installation will also install GetDist as a dependency.
 Detailed help is available for plotting Planck chains
 and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmomc/readme_python.html>`_.
 
@@ -207,4 +208,4 @@ and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmom
 
     <a href="http://www.sussex.ac.uk/astronomy/"><img src="https://cdn.cosmologist.info/antony/Sussex.png" height="170px"></a>
     <a href="http://erc.europa.eu/"><img src="https://erc.europa.eu/sites/default/files/content/erc_banner-vertical.jpg" height="200px"></a>
-    
+
