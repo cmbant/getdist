@@ -104,6 +104,11 @@ class MainWindow(QMainWindow):
 
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowTitle("GetDist GUI")
+        self.setWindowIcon(QIcon(':/images/Icon.png'))
+        if os.name == 'nt':
+            # This is needed to display the app icon on the taskbar on Windows 7
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('GetDist.Gui.1.0.0')
 
         # Allow to shutdown the GUI with Ctrl+C
         signal.signal(signal.SIGINT, signal.SIG_DFL)
