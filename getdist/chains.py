@@ -1061,6 +1061,7 @@ class Chains(WeightedSamples):
 
             dim = array_dimension(files_or_samples)
             if dim in [1, 2]:
+                self.chains = None
                 self.setSamples(slice_or_none(files_or_samples, ignore_lines),
                                 slice_or_none(weights, ignore_lines),
                                 slice_or_none(loglikes, ignore_lines), self.min_weight_ratio)
