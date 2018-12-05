@@ -1,7 +1,12 @@
 from __future__ import absolute_import
+import six
 
-from PySide.QtCore import QRegExp
-from PySide.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+if six.PY3:
+    from PySide2.QtCore import QRegExp
+    from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+else:
+    from PySide.QtCore import QRegExp
+    from PySide.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
 
 def txformat(color, style=''):
