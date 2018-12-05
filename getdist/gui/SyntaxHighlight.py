@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-import six
+from .qt_import import pyside_version
 
-if six.PY3:
+if pyside_version == 2:
     from PySide2.QtCore import QRegExp
     from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 else:
@@ -23,6 +23,7 @@ def txformat(color, style=''):
         _format.setFontItalic(True)
 
     return _format
+
 
 # Syntax styles that can be shared by all languages
 STYLES = {

@@ -12,27 +12,9 @@ import signal
 from io import BytesIO
 import six
 from collections import OrderedDict
+from .qt_import import pyside_version
 
-if six.PY3:
-    pyside_version = 2
-else:
-    pyside_version = 1
-
-if pyside_version == 1:
-    matplotlib.use('Qt4Agg')
-
-    try:
-        from packaging.version import Version
-
-        if Version(matplotlib.__version__) < Version("2.2.0"):
-            matplotlib.rcParams['backend.qt4'] = 'PySide'
-
-    except ImportError:
-        pass
-
-else:
-    matplotlib.use('Qt5Agg')
-    matplotlib.rcParams['backend.qt5'] = 'PySide2'
+from getdist.gui.SyntaxHighlight import PythonHighlighter
 
 import getdist
 from getdist import plots, IniFile
@@ -67,8 +49,6 @@ try:
             QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption
 
         os.environ['QT_API'] = 'pyside'
-
-    from getdist.gui.SyntaxHighlight import PythonHighlighter
 
     try:
         if pyside_version == 2:
@@ -1533,7 +1513,7 @@ class MainWindow(QMainWindow):
 
             globaldic = {}
             localdic = {}
-            exec(script_exec, globaldic, localdic)
+            exec (script_exec, globaldic, localdic)
 
             for v in six.itervalues(localdic):
                 if isinstance(v, plots.GetDistPlotter):
