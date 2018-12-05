@@ -49,6 +49,7 @@ else:
 
 try:
     if pyside_version == 2:
+        import PySide2 as PySide
         from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
         from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
         from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
@@ -58,6 +59,7 @@ try:
 
         os.environ['QT_API'] = 'pyside2'
     else:
+        import PySide
         from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
         from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
             QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
