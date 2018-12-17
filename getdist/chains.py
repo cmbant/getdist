@@ -4,7 +4,6 @@ import random
 import numpy as np
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
-from getdist.yaml_format_tools import get_sampler_type
 import pickle
 import six
 
@@ -872,6 +871,7 @@ class Chains(WeightedSamples):
                 raise ValueError("Unknown sampler type %s" % sampler)
             self.sampler = sampler.lower()
         elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
+            from getdist.yaml_format_tools import get_sampler_type
             self.sampler = get_sampler_type(paramNamesFile)
         else:
             self.sampler = "mcmc"
