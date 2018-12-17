@@ -418,7 +418,9 @@ class WeightedSamples(object):
         For bias-corrected KDE only need very rough estimate to use in rule of thumb for bandwidth.
 
         In the limit h-> 0 (but still >0) answer should be correct (then just includes MCMC rejection duplicates).
-        In reality correct result for practical h should depends on shape of the correlation function
+        In reality correct result for practical h should depends on shape of the correlation function.
+
+        If self.sampler is 'nested' or 'uncorrelated' return result for uncorrelated samples
 
         :param paramVec: parameter array, or int index of parameter to use
         :param h: fiducial assumed kernel scale.
@@ -427,6 +429,8 @@ class WeightedSamples(object):
         :param min_corr: ignore correlations smaller than this auto-correlation
         :return: A very rough effective sample number for leading term for the MISE of a Gaussian KDE.
         """
+        if self.sampler in ["nested", "uncorrelated"]:
+            return self.get_norm() ** 2 / np.dot(self.weights, self.weights)
         d = self._makeParamvec(paramVec)
         # Result does depend on kernel width, but hopefully not strongly around typical values ~ sigma/4
         kernel_std = (scale or self.std(d)) * h
@@ -831,7 +835,8 @@ class Chains(WeightedSamples):
     :ivar paramNames: a :class:`~.paramnames.ParamNames` instance holding the parameter names and labels
     """
 
-    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, renames=None, sampler=None, **kwargs):
+    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, renames=None,
+                 sampler=None, **kwargs):
         """
 
         :param root: optional root name for files
@@ -840,6 +845,8 @@ class Chains(WeightedSamples):
         :param names: optional list of names for the parameters
         :param labels: optional list of latex labels for the parameters
         :param renames: optional dictionary of parameter aliases
+        :param sampler: string describing the type of samples (default :mcmc); if "nested" or "uncorrelated"
+              the effective number of samples is calculated using uncorrelated approximation
         :param kwargs: extra options for :class:`~.chains.WeightedSamples`'s constructor
 
         """
@@ -860,7 +867,9 @@ class Chains(WeightedSamples):
         if renames is not None:
             self.updateRenames(renames)
         # Sampler that generated the chain -- assume "mcmc"
-        if isinstance(sampler, six.string_types) and sampler.lower() in ["mcmc", "nested", "uncorrelated"]:
+        if isinstance(sampler, six.string_types):
+            if sampler.lower() not in ["mcmc", "nested", "uncorrelated"]:
+                raise ValueError("Unknown sampler type %s" % sampler)
             self.sampler = sampler.lower()
         elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
             self.sampler = get_sampler_type(paramNamesFile)
