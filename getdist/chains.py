@@ -862,7 +862,7 @@ class Chains(WeightedSamples):
         # Sampler that generated the chain -- assume "mcmc"
         if isinstance(sampler, six.string_types) and sampler.lower() in ["mcmc", "nested", "uncorrelated"]:
             self.sampler = sampler.lower()
-        elif isinstance(ParamNamesFile, six.string_types) and ParamNamesFile.endswith("yaml"):
+        elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
             self.sampler = get_sampler_type(paramNamesFile)
         else:
             self.sampler = "mcmc"
