@@ -429,7 +429,7 @@ class WeightedSamples(object):
         :param min_corr: ignore correlations smaller than this auto-correlation
         :return: A very rough effective sample number for leading term for the MISE of a Gaussian KDE.
         """
-        if self.sampler in ["nested", "uncorrelated"]:
+        if getattr(self, "sampler", "") in ["nested", "uncorrelated"]:
             return self.get_norm() ** 2 / np.dot(self.weights, self.weights)
         d = self._makeParamvec(paramVec)
         # Result does depend on kernel width, but hopefully not strongly around typical values ~ sigma/4
