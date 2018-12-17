@@ -4,6 +4,7 @@ import random
 import numpy as np
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
+from getdist.yaml_format_tools import get_sampler_type
 import pickle
 import six
 
@@ -830,7 +831,7 @@ class Chains(WeightedSamples):
     :ivar paramNames: a :class:`~.paramnames.ParamNames` instance holding the parameter names and labels
     """
 
-    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, renames=None, **kwargs):
+    def __init__(self, root=None, jobItem=None, paramNamesFile=None, names=None, labels=None, renames=None, sampler=None, **kwargs):
         """
 
         :param root: optional root name for files
@@ -858,6 +859,13 @@ class Chains(WeightedSamples):
             self.paramNames.setLabels(labels)
         if renames is not None:
             self.updateRenames(renames)
+        # Sampler that generated the chain -- assume "mcmc"
+        if isinstance(sampler, six.string_types) and sampler.lower() in ["mcmc", "nested", "uncorrelated"]:
+            self.sampler = sampler.lower()
+        elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
+            self.sampler = get_sampler_type(paramNamesFile)
+        else:
+            self.sampler = "mcmc"
 
     def setParamNames(self, names=None):
         """
