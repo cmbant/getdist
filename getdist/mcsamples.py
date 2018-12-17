@@ -125,6 +125,7 @@ def loadCobayaSamples(info, collections, name_tag=None,
         raise ValueError("The given collections don't have the same columns.")
     from getdist.yaml_format_tools import _p_label, _p_renames, _weight, _minuslogpost
     from getdist.yaml_format_tools import get_info_params, get_range, is_derived_param
+    from getdist.yaml_format_tools import get_sampler_type
     # Check consistency with info
     info_params = get_info_params(info)
     assert set(columns[2:]) == set(info_params.keys()), (
@@ -142,7 +143,8 @@ def loadCobayaSamples(info, collections, name_tag=None,
     samples = [c[c.data.columns[2:]].values for c in collections]
     weights = [c[_weight].values for c in collections]
     loglikes = [-c[_minuslogpost].values for c in collections]
-    return MCSamples(samples=samples, weights=weights, loglikes=loglikes,
+    sampler = get_sampler_type(info)
+    return MCSamples(samples=samples, weights=weights, loglikes=loglikes, sampler=sampler,
                      names=names, labels=labels, ranges=ranges, renames=renames,
                      ignore_rows=ignore_rows, name_tag=name_tag, ini=ini,
                      settings=settings)
@@ -246,6 +248,9 @@ class MCSamples(Chains):
             if settings is None: settings = {}
             settings['ignore_rows'] = kwargs['ignore_rows']
         self.ignore_rows = float(kwargs.get('ignore_rows', 0))
+        # Do not remove burn-in for nested sampler samples
+        if self.sampler == "nested" and not np.isclose(self.ignore_rows, 0):
+            raise ValueError("Should not remove burn-in from Nested Sampler samples.")
         self.subplot_size_inch = 4.0
         self.subplot_size_inch2 = self.subplot_size_inch
         self.subplot_size_inch3 = 6.0

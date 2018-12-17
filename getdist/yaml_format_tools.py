@@ -14,6 +14,7 @@ _prior = "prior"
 _theory = "theory"
 _params = "params"
 _likelihood = "likelihood"
+_sampler = "sampler"
 _p_label = "latex"
 _p_dist = "dist"
 _p_value = "value"
@@ -182,3 +183,11 @@ def expand_info_param(info_param):
     if isinstance(value, string_types) or callable(value):
         info_param[_p_derived] = info_param.get(_p_derived, True)
     return info_param
+
+
+def get_sampler_type(filename_or_info):
+    if isinstance(filename_or_info, string_types):
+        filename_or_info = yaml_load_file(filename_or_info)
+    default_sampler_for_chain_type = "mcmc"
+    sampler = list(filename_or_info.get(_sampler, [default_sampler_for_chain_type]))[0]
+    return {"mcmc": "mcmc", "polychord": "nested"}[sampler]
