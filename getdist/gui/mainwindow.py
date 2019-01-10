@@ -46,7 +46,7 @@ try:
         from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
             QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
             QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-            QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption
+            QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption, QImage, QPixmap
 
         os.environ['QT_API'] = 'pyside'
 
@@ -1513,7 +1513,7 @@ class MainWindow(QMainWindow):
 
             globaldic = {}
             localdic = {}
-            exec (script_exec, globaldic, localdic)
+            exec(script_exec, globaldic, localdic)
 
             for v in six.itervalues(localdic):
                 if isinstance(v, plots.GetDistPlotter):
