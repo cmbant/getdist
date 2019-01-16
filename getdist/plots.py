@@ -43,8 +43,8 @@ class GetDistPlotSettings(object):
     :ivar colorbar_label_pad: padding for the colorbar labels
     :ivar colorbar_label_rotation: angle to rotate colorbar label (set to zero if -90 default gives layout problem)
     :ivar colorbar_rotation: angle to rotate colorbar tick labels
-    :ivar colormap: a `Matplotlib color map <http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for shading
-    :ivar colormap_scatter: a `Matplotlib color map <http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for 3D plots
+    :ivar colormap: a `Matplotlib color map <https://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for shading
+    :ivar colormap_scatter: a `Matplotlib color map <https://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for 3D plots
     :ivar default_dash_styles: dict mapping line styles to detailed dash styles, default:  {'--': (3, 2), '-.': (4, 1, 1, 1)}
     :ivar fig_width_inch: The width of the figure in inches
     :ivar figure_legend_frame: draw box around figure legend

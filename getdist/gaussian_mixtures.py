@@ -392,7 +392,7 @@ class GaussianND(MixtureND):
         """
         :param mean: array specifying means of parameters
         :param cov: covariance matrix (or filename of text file with covariance matrix)
-        :param is_inv_covP set True if cov is actually an inverse covariance
+        :param is_inv_cov: set True if cov is actually an inverse covariance
         :param kwargs: arguments passed to :class:`MixtureND`
         """
         if isinstance(mean, six.string_types): mean = np.loadtxt(mean)
