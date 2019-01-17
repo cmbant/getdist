@@ -1104,7 +1104,7 @@ class Chains(WeightedSamples):
         c.f. Brooks and Gelman 1997.
 
         :param nparam: The number of parameters (starting at first), by default uses all of them
-        :param chainlist: list of :class:`WeightedSamples`, the samples to use. Defaults to all the separate chains in this instance.
+        :param chainlist: list of :class:`~.chains.WeightedSamples`, the samples to use. Defaults to all the separate chains in this instance.
         :return: array of  var(mean)/mean(var) for orthogonalized parameters
         """
         if chainlist is None:
@@ -1133,7 +1133,7 @@ class Chains(WeightedSamples):
         c.f. Brooks and Gelman 1997.
 
         :param nparam: The number of parameters, by default uses all
-        :param chainlist: list of :class:`WeightedSamples`, the samples to use. Defaults to all the separate chains in this instance.
+        :param chainlist: list of :class:`~.chains.WeightedSamples`, the samples to use. Defaults to all the separate chains in this instance.
         :return: The worst var(mean)/mean(var) for orthogonalized parameters. Should be <<1 for good convergence.
         """
         return np.max(self.getGelmanRubinEigenvalues(nparam, chainlist))

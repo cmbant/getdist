@@ -455,8 +455,8 @@ class ResultTable(object):
 
 class ParamResults(paramnames.ParamList):
     """
-    Base class for a set of parameter results, inheriting from :class:`.~paramnames.ParamList`,
-    so that self.names is a list of :class:`.~paramnames.ParamInfo` instances for each parameter, which
+    Base class for a set of parameter results, inheriting from :class:`~.paramnames.ParamList`,
+    so that self.names is a list of :class:`~.paramnames.ParamInfo` instances for each parameter, which
     have attribute holding results for the different parameters.
     """
     pass

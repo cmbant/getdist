@@ -20,6 +20,19 @@ autoclass_content = 'both'
 
 nitpicky = True
 
+
+# Prevent spurious errors for every field ivar (not sure why..)
+def on_missing_reference(app, env, node, contnode):
+    if node['reftype'] == 'obj':
+        return contnode
+    else:
+        return None
+
+
+def setup(app):
+    app.connect('missing-reference', on_missing_reference)
+
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.

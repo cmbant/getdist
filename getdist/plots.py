@@ -1026,7 +1026,7 @@ class GetDistPlotter(object):
         :param yvals: optional array of y values to evaluate at
         :param def_width: if evaluation array not specified, width to use in units of standard deviation
         :param samples_per_std: if evaluation array not specified, number of grid points per standard deviation
-        :param kwargs: keyword arguments for :func:`~GetDistPlotter.add_2D_contours`
+        :param kwargs: keyword arguments for :func:`~.plots.GetDistPlotter.add_2D_contours`
         """
 
         cov = np.asarray(cov)

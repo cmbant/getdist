@@ -1362,7 +1362,7 @@ class MCSamples(Chains):
         :param j: a name or index of the parameter
         :param writeDataToFile: True if should write to text file.
         :param get_density: return a :class:`~.densities.Density1D` instance only, does not write out or calculate mean likelihoods for plots
-        :param paramConfid: optional cached :class:`ParamConfidenceData` instance
+        :param paramConfid: optional cached :class:`~.chains.ParamConfidenceData` instance
         :param meanlikes: include mean likelihoods
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
 
@@ -1892,7 +1892,7 @@ class MCSamples(Chains):
         Returns a :class:`~.densities.DensityND` instance with marginalized ND density.
 
         :param xs: indices or names of x_i parameters
-        :param kwargs: keyword arguments for the :func:`getNDDensityGridData` function
+        :param kwargs: keyword arguments for the :meth:`~.mcsamples.MCSamples.getNDDensityGridData` function
         :param normalized: if False, is normalized so the maximum is 1, if True, density is normalized
         :return: :class:`~.densities.DensityND` instance
         """
