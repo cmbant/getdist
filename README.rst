@@ -72,13 +72,13 @@ For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/i
    sudo port install texlive-fonts-recommended
    sudo port install dvipng
 
-If you don't want to install dependencies locally, you can also use a pre-configured `virtual environment <http://cosmologist.info/CosmoBox/>`_.
+If you don't want to install dependencies locally, you can also use a pre-configured `virtual environment <https://cosmologist.info/CosmoBox/>`_.
 
 Algorithm details
 ==================
 
 Details of kernel density estimation (KDE) algorithms and references are give in the
-`GetDist Notes <http://cosmologist.info/notes/GetDist.pdf>`_.
+`GetDist Notes <https://cosmologist.info/notes/GetDist.pdf>`_.
 
 Samples file format
 ===================
@@ -200,7 +200,7 @@ This GetDist package is general, but is mainly developed for analysing chains fr
 and `Cobaya <https://cobaya.readthedocs.io/>`_ sampling programs.
 No need to install this package separately if you have a full CosmoMC installation; the Cobaya installation will also install GetDist as a dependency.
 Detailed help is available for plotting Planck chains
-and using CosmoMC parameter grids in the `Readme <http://cosmologist.info/cosmomc/readme_python.html>`_.
+and using CosmoMC parameter grids in the `Readme <https://cosmologist.info/cosmomc/readme_python.html>`_.
 
 ===================
 

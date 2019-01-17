@@ -16,7 +16,6 @@ You can also use glob patterns to match specific subsets of parameters (e.g. *x\
 .. autosummary::
    :toctree: _summaries
    :nosignatures:
-   :noindex:
 
    getSinglePlotter
    getSubplotPlotter

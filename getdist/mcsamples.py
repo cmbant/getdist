@@ -1131,7 +1131,7 @@ class MCSamples(Chains):
         """
         Get optimized kernel density bandwidth (in units of the range of the bins)
         Based on optimal Improved Sheather-Jones bandwidth for basic Parzen kernel, then scaled if higher-order method being used.
-        For details see the `notes <http://cosmologist.info/notes/GetDist.pdf>`_.
+        For details see the `notes <https://cosmologist.info/notes/GetDist.pdf>`_.
 
         :param bins: numpy array of binned weights for the samples
         :param par: A :class:`~.paramnames.ParamInfo` instance for the parameter to analyse
@@ -1173,7 +1173,7 @@ class MCSamples(Chains):
                            mult_bias_correction_order=None, min_corr=0.2, N_eff=None):
         """
         Get optimized kernel density bandwidth matrix in parameter units, using Improved Sheather Jones method in sheared parameters.
-        For details see the `notes <http://cosmologist.info/notes/GetDist.pdf>`_.
+        For details see the `notes <https://cosmologist.info/notes/GetDist.pdf>`_.
 
         :param bins: 2D numpy array of binned weights
         :param parx: A :class:`~.paramnames.ParamInfo` instance for the x parameter
@@ -1892,7 +1892,7 @@ class MCSamples(Chains):
         Returns a :class:`~.densities.DensityND` instance with marginalized ND density.
 
         :param xs: indices or names of x_i parameters
-        :param kwargs: keyword arguments for the :meth:`~.mcsamples.MCSamples.getNDDensityGridData` function
+        :param kwargs: keyword arguments for the :meth:`~.mcsamples.MCSamples.getRawNDDensityGridData` function
         :param normalized: if False, is normalized so the maximum is 1, if True, density is normalized
         :return: :class:`~.densities.DensityND` instance
         """
