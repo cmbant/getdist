@@ -1021,7 +1021,7 @@ class Chains(WeightedSamples):
 
         :param paramVec: The vector of parameter values to add.
         :param name: The name for the new parameter
-        :param kwargs: arguments for paramnames' :func:`~.paramnames.ParamList.addDerived`
+        :param kwargs: arguments for paramnames' :func:`.paramnames.ParamList.addDerived`
         :return: The added parameter's :class:`~.paramnames.ParamInfo` object
         """
         if self.paramNames.parWithName(name):
