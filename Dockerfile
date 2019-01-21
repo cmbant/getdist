@@ -1,5 +1,4 @@
-#Dockerfile for running pycamb notebooks with binder
-#https://mybinder.org/v2/gh/cmbant/camb/master?filepath=pycamb%2Fdocs%2FCAMBdemo.ipynb
+#Dockerfile for running getdist notebooks with binder
 
 FROM cmbant/cosmobox:python3
 
