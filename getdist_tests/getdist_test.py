@@ -232,7 +232,7 @@ class GetDistTest(unittest.TestCase):
         g.newPlot()
         g.plots_2d([samples, samples2], 'x', ['z', 'y'])
         g.newPlot()
-        self.assertEquals([name.name for name in samples.paramNames.parsWithNames('x.*')], ['x.yx', 'x.2'])
+        self.assertEqual([name.name for name in samples.paramNames.parsWithNames('x.*')], ['x.yx', 'x.2'])
         g.triangle_plot(samples, 'x.*')
         samples.updateSettings({'contours': '0.68 0.95 0.99'})
         g.settings.num_contours = 3
