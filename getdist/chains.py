@@ -1146,9 +1146,9 @@ class Chains(WeightedSamples):
         :return: self
         """
         self.chain_offsets = np.cumsum(np.array([0] + [chain.samples.shape[0] for chain in self.chains]))
-        weights = None if self.chains[0].weights is None else np.hstack((chain.weights for chain in self.chains))
-        loglikes = None if self.chains[0].loglikes is None else np.hstack((chain.loglikes for chain in self.chains))
-        self.setSamples(np.vstack((chain.samples for chain in self.chains)), weights, loglikes, min_weight_ratio=-1)
+        weights = None if self.chains[0].weights is None else np.hstack([chain.weights for chain in self.chains])
+        loglikes = None if self.chains[0].loglikes is None else np.hstack([chain.loglikes for chain in self.chains])
+        self.setSamples(np.vstack([chain.samples for chain in self.chains]), weights, loglikes, min_weight_ratio=-1)
         self.chains = None
         self.needs_update = True
         return self
