@@ -14,11 +14,10 @@ import six
 from collections import OrderedDict
 from .qt_import import pyside_version
 
-from getdist.gui.SyntaxHighlight import PythonHighlighter
-
 import getdist
 from getdist import plots, IniFile
 from getdist.mcsamples import GetChainRootFiles, SettingError, ParamError
+from getdist.gui.SyntaxHighlight import PythonHighlighter
 
 import matplotlib.pyplot as plt
 
