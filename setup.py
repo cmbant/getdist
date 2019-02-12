@@ -38,6 +38,7 @@ setup(name='GetDist',
       test_suite='getdist_tests',
       package_data={'getdist': ['analysis_defaults.ini', 'distparam_template.ini']},
       install_requires=[
+          'packaging',
           'numpy',
           'matplotlib',
           'six',
