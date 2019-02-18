@@ -77,6 +77,7 @@ class GetDistPlotSettings(object):
     :ivar tick_prune: None, 'upper' or 'lower' to prune ticks
     :ivar tight_gap_fraction: fraction of plot width for closest tick to the edge
     :ivar tight_layout: use tight_layout to lay out and remove white space
+    :ivar title_limit_fontsize: font size to use for limits in plot titles
     :ivar x_label_rotation: The rotation for the x label in degrees.
     """
 
@@ -147,6 +148,8 @@ class GetDistPlotSettings(object):
 
         self.auto_ticks = False
         self.thin_long_subplot_ticks = True
+
+        self.title_limit_fontsize = None
 
     def setWithSubplotSize(self, size_inch=3.5, size_mm=None):
         """
@@ -831,7 +834,7 @@ class GetDistPlotter(object):
             xmin, xmax = self._check_param_ranges(root, name, xmin, xmax)
         return xmin, xmax
 
-    def add_1d(self, root, param, plotno=0, normalized=False, ax=None, **kwargs):
+    def add_1d(self, root, param, plotno=0, normalized=False, ax=None, title_limit=None, **kwargs):
         """
         Low-level function to add a 1D marginalized density line to a plot
 
@@ -840,6 +843,7 @@ class GetDistPlotter(object):
         :param plotno: The index of the line being added to the plot
         :param normalized: True if areas under lines should match, False if normalized to unit maximum
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
+        :param title_limit:if not None, a maginalized limit (1,2..) to print as the title of the plot
         :param kwargs: arguments for :func:`~matplotlib:matplotlib.pyplot.plot`
         :return: min, max for the plotted density
         """
@@ -861,6 +865,13 @@ class GetDistPlotter(object):
         if self.settings.plot_meanlikes:
             kwargs['lw'] = self.settings.lw_likes
             ax.plot(density.x, density.likes, **kwargs)
+        if title_limit:
+            if isinstance(root, MixtureND):
+                raise ValueError('limit_title not currently supported for MixtureND')
+            samples = self.sampleAnalyser.samplesForRoot(root)
+            _, texs = samples.getLatex([param], title_limit)
+            ax.set_title('$' + texs[0] + '$',
+                         fontsize=self.settings.title_limit_fontsiz)
 
         return density.bounds()
 
@@ -1357,7 +1368,7 @@ class GetDistPlotter(object):
         ax = ax or plt.gca()
         ax.set_ylabel(param.latexLabel(), fontsize=self.settings.lab_fontsize)
 
-    def plot_1d(self, roots, param, marker=None, marker_color=None, label_right=False,
+    def plot_1d(self, roots, param, marker=None, marker_color=None, label_right=False, title_limit=None,
                 no_ylabel=False, no_ytick=False, no_zero=False, normalized=False, param_renames={}, **kwargs):
         """
         Make a single 1D plot with marginalized density lines.
@@ -1367,6 +1378,7 @@ class GetDistPlotter(object):
         :param marker: If set, places a marker at given coordinate.
         :param marker_color: If set, sets the marker color.
         :param label_right: If True, label the y axis on the right rather than the left
+        :param title_limit:if not None, a maginalized limit (1,2..) of the first root to print as the title of the plot
         :param no_ylabel: If True excludes the label on the y axis
         :param no_ytick: If True show no y ticks
         :param no_zero: If true does not show tick label at zero on y axis
@@ -1408,7 +1420,8 @@ class GetDistPlotter(object):
         for i, root in enumerate(roots):
             root_param = self._check_param(root, param, param_renames)
             if not root_param: continue
-            bounds = self.add_1d(root, root_param, i, normalized=normalized, **line_args[i])
+            bounds = self.add_1d(root, root_param, i, normalized=normalized, title_limit=title_limit and not i,
+                                 **line_args[i])
             xmin, xmax = self._updateLimit(bounds, (xmin, xmax))
             if bounds is not None and not plotparam:
                 plotparam = root_param
@@ -1694,8 +1707,8 @@ class GetDistPlotter(object):
             return legend_labels
 
     def plots_1d(self, roots, params=None, legend_labels=None, legend_ncol=None, label_order=None, nx=None,
-                 paramList=None, roots_per_param=False, share_y=None, markers=None, xlims=None, param_renames={},
-                 **kwargs):
+                 paramList=None, roots_per_param=False, share_y=None, markers=None, title_limit=None,
+                 xlims=None, param_renames={}, **kwargs):
         """
         Make an array of 1D marginalized density subplots
 
@@ -1711,6 +1724,7 @@ class GetDistPlotter(object):
                       This is useful for example for  plotting one-parameter extensions of a baseline model, each with various data combinations.
         :param share_y: True for subplots to share a common y axis with no horizontal space between subplots
         :param markers: optional dict giving vertical markers index by parameter, or a list of marker values for each parameter plotted
+        :param title_limit:if not None, a maginalized limit (1,2..) of the first root to print as the title of the plots
         :param xlims: list of [min,max] limits for the range of each parameter plot
         :param param_renames: optional dictionary holding mapping between input names and equivalent names used in the samples.
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_1d`
@@ -1749,7 +1763,7 @@ class GetDistPlotter(object):
                 elif i < len(markers):
                     marker = markers[i]
             self.plot_1d(plot_roots, param, no_ylabel=share_y and i % self.plot_col > 0, marker=marker,
-                         param_renames=param_renames, **kwargs)
+                         param_renames=param_renames, title_limit=title_limit, **kwargs)
             if xlims is not None: ax.set_xlim(xlims[i][0], xlims[i][1])
             if share_y: self._spaceTicks(ax.xaxis, expand=xlims is None,
                                          bounds=self._get_param_bounds(plot_roots, param.name))
@@ -1904,8 +1918,8 @@ class GetDistPlotter(object):
 
     def triangle_plot(self, roots, params=None, legend_labels=None, plot_3d_with_param=None, filled=False, shaded=False,
                       contour_args=None, contour_colors=None, contour_ls=None, contour_lws=None, line_args=None,
-                      label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, upper_kwargs={},
-                      diag1d_kwargs={}, param_limits={}, **kwargs):
+                      label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, title_limit=None,
+                      upper_kwargs={}, diag1d_kwargs={}, param_limits={}, **kwargs):
         """
         Make a trianglular array of 1D and 2D plots.
 
@@ -1927,6 +1941,7 @@ class GetDistPlotter(object):
         :param legend_ncol: The number of columns for the legend
         :param legend_loc: The location for the legend
         :param upper_roots: set to fill the upper triangle with subplots using this list of sample root names
+        :param title_limit:if not None, a maginalized limit (1,2..) to print as the title of the first root on the diagonal 1D plots
         :param upper_kwargs: dict for same-named arguments for use when making upper-triangle 2D plots (contour_colors, etc). Set show_1d=False to not add to the diagonal.
         :param diag1d_kwargs: list of dict for arguments when making 1D plots on grid diagonal
         :param param_limits: a dictionary holding a mapping from parameter names to axis limits for that parameter
@@ -2010,7 +2025,7 @@ class GetDistPlotter(object):
             ax = self._subplot(i, i)
             self._inner_ticks(ax, False)
             self.plot_1d(roots1d, param, do_xlabel=i == plot_col - 1,
-                         no_label_no_numbers=self.settings.no_triangle_axis_labels,
+                         no_label_no_numbers=self.settings.no_triangle_axis_labels, title_limit=title_limit,
                          label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
                          lims=param_limits.get(param.name, None), **diag1d_kwargs)
             if self.settings.no_triangle_axis_labels:

@@ -2183,7 +2183,7 @@ class MCSamples(Chains):
             tex = marge.texValues(formatter, par, limit=limit)
             if tex is not None:
                 texs.append(tex[0])
-                labels.append(marge.parWithName(par).getLabel())
+                labels.append((par if isinstance(par, ParamInfo) else marge.parWithName(par)).getLabel())
             else:
                 texs.append(None)
                 labels.append(None)

@@ -302,9 +302,12 @@ class MainWindow(QMainWindow):
                      SIGNAL("activated(const QString&)"),
                      self.openDirectory)
 
-        self.pushButtonSelect = QPushButton(QIcon(":/images/file_add.png"),
-                                            "", self.selectWidget)
-        self.pushButtonSelect.setToolTip("Choose root directory")
+        if pyside_version == 1:
+            self.pushButtonSelect = QPushButton(QIcon(":/images/file_add.png"), "", self.selectWidget)
+        else:
+            self.pushButtonSelect = QPushButton(u"\uff0b", self.selectWidget)
+
+        self.pushButtonSelect.setToolTip("Open chain file root directory")
         self.connect(self.pushButtonSelect, SIGNAL("clicked()"),
                      self.selectRootDirName)
         shortcut = QShortcut(QKeySequence(self.tr("Ctrl+O")), self)
@@ -316,8 +319,11 @@ class MainWindow(QMainWindow):
                      SIGNAL("itemChanged(QListWidgetItem *)"),
                      self.updateListRoots)
 
-        self.pushButtonRemove = QPushButton(QIcon(":/images/file_remove.png"),
-                                            "", self.selectWidget)
+        if pyside_version == 1:
+            self.pushButtonRemove = QPushButton(QIcon(":/images/file_remove.png"), "", self.selectWidget)
+        else:
+            self.pushButtonRemove = QPushButton(u"\u00d7", self.selectWidget)
+
         self.pushButtonRemove.setToolTip("Remove a chain root")
         self.connect(self.pushButtonRemove, SIGNAL("clicked()"),
                      self.removeRoot)
