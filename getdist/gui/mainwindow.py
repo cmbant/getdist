@@ -722,7 +722,7 @@ class MainWindow(QMainWindow):
                 'legend_frame', 'figure_legend_frame', 'figure_legend_ncol', 'legend_rect_border',
                 'legend_frac_subplot_margin', 'legend_frac_subplot_line', 'num_plot_contours',
                 'solid_contour_palefactor', 'alpha_filled_add', 'alpha_factor_contour_lines', 'axis_marker_color',
-                'axis_marker_ls', 'axis_marker_lw', 'auto_ticks', 'thin_long_subplot_ticks']
+                'axis_marker_ls', 'axis_marker_lw', 'auto_ticks', 'thin_long_subplot_ticks', 'title_limit']
         pars.sort()
         ini = IniFile()
         for par in pars:

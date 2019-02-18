@@ -15,19 +15,6 @@ from getdist.mcsamples import MCSamples
 class GetDistFileTest(unittest.TestCase):
     """test reading files, convergence routines and GetDist.py script"""
 
-    def testA(self):
-        from getdist.gaussian_mixtures import Mixture2D, GaussianND
-        cov1 = [[0.001 ** 2, 0.0006 * 0.05], [0.0006 * 0.05, 0.05 ** 2]]
-        mean1 = [0.02, 0.2]
-        mixture = Mixture2D([mean1], [cov1], names=['zobs', 't'], labels=[r'z_{\rm obs}', 't'],
-                            label='Model')
-        samples = mixture.MCSamples(5000, label='Samples')
-        g = plots.getSubplotPlotter()
-        g.triangle_plot([samples, mixture], filled=False, title_limit=1)
-        g.export('z:\\test.pdf')
-        xx
-        import sys
-
     def setUp(self):
         np.random.seed(10)
 

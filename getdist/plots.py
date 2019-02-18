@@ -871,7 +871,7 @@ class GetDistPlotter(object):
             samples = self.sampleAnalyser.samplesForRoot(root)
             _, texs = samples.getLatex([param], title_limit)
             ax.set_title('$' + texs[0] + '$',
-                         fontsize=self.settings.title_limit_fontsiz)
+                         fontsize=self.settings.title_limit_fontsize)
 
         return density.bounds()
 
