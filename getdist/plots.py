@@ -1723,7 +1723,7 @@ class GetDistPlotter(object):
                       plots param[i] using roots[i] (where roots[i] is the list of sample root names to use for plotting parameter i).
                       This is useful for example for  plotting one-parameter extensions of a baseline model, each with various data combinations.
         :param share_y: True for subplots to share a common y axis with no horizontal space between subplots
-        :param markers: optional dict giving vertical markers index by parameter, or a list of marker values for each parameter plotted
+        :param markers: optional dict giving vertical marker values indexed by parameter, or a list of marker values for each parameter plotted
         :param title_limit:if not None, a maginalized limit (1,2..) of the first root to print as the title of the plots
         :param xlims: list of [min,max] limits for the range of each parameter plot
         :param param_renames: optional dictionary holding mapping between input names and equivalent names used in the samples.
@@ -1944,7 +1944,7 @@ class GetDistPlotter(object):
         :param title_limit:if not None, a maginalized limit (1,2..) to print as the title of the first root on the diagonal 1D plots
         :param upper_kwargs: dict for same-named arguments for use when making upper-triangle 2D plots (contour_colors, etc). Set show_1d=False to not add to the diagonal.
         :param diag1d_kwargs: list of dict for arguments when making 1D plots on grid diagonal
-        :param markers: list of markers for the x and y axes
+        :param markers: optional dict giving marker values indexed by parameter, or a list of marker values for each parameter plotted  
         :param param_limits: a dictionary holding a mapping from parameter names to axis limits for that parameter
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d` or :func:`~GetDistPlotter.plot_3d` (lower triangle only)
 
@@ -2023,21 +2023,38 @@ class GetDistPlotter(object):
                     line_args.append(arg)
 
         for i, param in enumerate(params):
+            marker = None
+            if markers is not None:
+                if isinstance(markers, dict):
+                    marker = markers.get(param.name, None)
+                elif i < len(markers):
+                    marker = markers[i]
             ax = self._subplot(i, i)
             self._inner_ticks(ax, False)
-            self.plot_1d(roots1d, param, do_xlabel=i == plot_col - 1,
+            self.plot_1d(roots1d, param, marker=marker, do_xlabel=i == plot_col - 1,
                          no_label_no_numbers=self.settings.no_triangle_axis_labels, title_limit=title_limit,
                          label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
                          lims=param_limits.get(param.name, None), **diag1d_kwargs)
-            if markers is not None and markers[i] is not None: self.add_x_marker(markers[i], **marker_args)
             if self.settings.no_triangle_axis_labels:
                 self._spaceTicks(ax.xaxis, bounds=self._get_param_bounds(roots1d, param.name))
             lims[i] = ax.get_xlim()
             ticks[i] = ax.get_xticks()
         for i, param in enumerate(params):
+            marker = None
+            if markers is not None:
+                if isinstance(markers, dict):
+                    marker = markers.get(param.name, None)
+                elif i < len(markers):
+                    marker = markers[i]
             for i2 in range(i + 1, len(params)):
                 param2 = params[i2]
                 pair = [param, param2]
+                marker2 = None
+                if markers is not None:
+                    if isinstance(markers, dict):
+                        marker2 = markers.get(param2.name, None)
+                    elif i2 < len(markers):
+                        marker2 = markers[i2]
                 ax = self._subplot(i, i2, pars=[param, param2])
                 if plot_3d_with_param is not None:
                     self.plot_3d(roots, pair + [col_param], color_bar=False, line_offset=1, add_legend_proxy=False,
@@ -2047,8 +2064,8 @@ class GetDistPlotter(object):
                     self.plot_2d(roots, param_pair=pair, do_xlabel=i2 == plot_col - 1, do_ylabel=i == 0,
                                  no_label_no_numbers=self.settings.no_triangle_axis_labels, shaded=shaded,
                                  add_legend_proxy=i == 0 and i2 == 1, contour_args=contour_args, **kwargs)
-                if markers is not None and markers[i] is not None: self.add_x_marker(markers[i], **marker_args)
-                if markers is not None and markers[i2] is not None: self.add_y_marker(markers[i2], **marker_args)
+                if marker is not None: self.add_x_marker(marker, **marker_args)
+                if marker2 is not None: self.add_y_marker(marker2, **marker_args)
                 ax.set_xticks(ticks[i])
                 ax.set_yticks(ticks[i2])
                 ax.set_xlim(lims[i])
@@ -2069,8 +2086,8 @@ class GetDistPlotter(object):
                                      add_legend_proxy=i == 0 and i2 == 1,
                                      proxy_root_exclude=[root for root in upper_roots if root in roots],
                                      contour_args=upper_contour_args)
-                    if markers is not None and markers[i] is not None: self.add_y_marker(markers[i], **marker_args)
-                    if markers is not None and markers[i2] is not None: self.add_x_marker(markers[i2], **marker_args)
+                    if marker is not None: self.add_y_marker(marker, **marker_args)
+                    if marker2 is not None: self.add_x_marker(marker2, **marker_args)
                     ax.set_xticks(ticks[i2])
                     ax.set_yticks(ticks[i])
                     ax.set_xlim(lims[i2])
@@ -2127,8 +2144,8 @@ class GetDistPlotter(object):
                 Uses the same set of roots for every plot in the rectangle; set either roots or yroots.
         :param plot_roots: Allows you to specify (via list of list of list of roots) the set of roots for each individual subplot
         :param plot_texts: a 2D array (or list of lists) of a text label to put in each subplot (use a None entry to skip one)
-        :param xmarkers: list of markers for the x axis
-        :param ymarkers: list of markers for the y axis
+        :param xmarkers: optional dict giving vertical marker values indexed by parameter, or a list of marker values for each x parameter plotted
+        :param ymarkers: optional dict giving horizontal marker values indexed by parameter, or a list of marker values for each y parameter plotted
         :param marker_args: arguments for :func:`~GetDistPlotter.add_x_marker` and :func:`~GetDistPlotter.add_y_marker`
         :param param_limits: a dictionary holding a mapping from parameter names to axis limits for that parameter
         :param legend_labels: list of labels for the legend
@@ -2162,16 +2179,30 @@ class GetDistPlotter(object):
             elif roots:
                 yroots = [roots for _ in yparams]
             axarray = []
+            xmarker = None
+            if xmarkers is not None:
+                if isinstance(xmarkers, dict):
+                    xmarker = xmarkers.get(xparam, None)
+                elif i < len(markers):
+                    xmarker = xmarkers[x]
+
             for y, (yparam, subplot_roots) in enumerate(zip(yparams, yroots)):
                 if x > 0: sharey = yshares[y]
                 ax = self._subplot(x, y, pars=[xparam, yparam], sharex=sharex, sharey=sharey)
                 if y == 0:
                     sharex = ax
                     xshares.append(ax)
+                ymarker = None
+                if ymarkers is not None:
+                    if isinstance(ymarkers, dict):
+                        ymarker = ymarkers.get(yparam, None)
+                    elif i < len(markers):
+                        ymarker = ymarkers[y]
+
                 res = self.plot_2d(subplot_roots, param_pair=[xparam, yparam], do_xlabel=y == len(yparams) - 1,
                                    do_ylabel=x == 0, add_legend_proxy=x == 0 and y == 0, **kwargs)
-                if ymarkers is not None and ymarkers[y] is not None: self.add_y_marker(ymarkers[y], **marker_args)
-                if xmarkers is not None and xmarkers[x] is not None: self.add_x_marker(xmarkers[x], **marker_args)
+                if xmarker is not None: self.add_x_marker(xmarker, **marker_args)
+                if ymarker is not None: self.add_y_marker(ymarker, **marker_args)
                 limits[xparam], limits[yparam] = self._updateLimits(res, limits.get(xparam), limits.get(yparam))
                 if y != len(yparams) - 1: plt.setp(ax.get_xticklabels(), visible=False)
                 if x != 0: plt.setp(ax.get_yticklabels(), visible=False)
