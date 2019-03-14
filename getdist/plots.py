@@ -1919,7 +1919,7 @@ class GetDistPlotter(object):
     def triangle_plot(self, roots, params=None, legend_labels=None, plot_3d_with_param=None, filled=False, shaded=False,
                       contour_args=None, contour_colors=None, contour_ls=None, contour_lws=None, line_args=None,
                       label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, title_limit=None,
-                      upper_kwargs={}, diag1d_kwargs={}, param_limits={}, **kwargs):
+                      upper_kwargs={}, diag1d_kwargs={}, markers=None, marker_args={}, param_limits={}, **kwargs):
         """
         Make a trianglular array of 1D and 2D plots.
 
@@ -1944,6 +1944,7 @@ class GetDistPlotter(object):
         :param title_limit:if not None, a maginalized limit (1,2..) to print as the title of the first root on the diagonal 1D plots
         :param upper_kwargs: dict for same-named arguments for use when making upper-triangle 2D plots (contour_colors, etc). Set show_1d=False to not add to the diagonal.
         :param diag1d_kwargs: list of dict for arguments when making 1D plots on grid diagonal
+        :param markers: list of markers for the x and y axes
         :param param_limits: a dictionary holding a mapping from parameter names to axis limits for that parameter
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d` or :func:`~GetDistPlotter.plot_3d` (lower triangle only)
 
@@ -2028,6 +2029,7 @@ class GetDistPlotter(object):
                          no_label_no_numbers=self.settings.no_triangle_axis_labels, title_limit=title_limit,
                          label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
                          lims=param_limits.get(param.name, None), **diag1d_kwargs)
+            if markers is not None and markers[i] is not None: self.add_x_marker(markers[i], **marker_args)
             if self.settings.no_triangle_axis_labels:
                 self._spaceTicks(ax.xaxis, bounds=self._get_param_bounds(roots1d, param.name))
             lims[i] = ax.get_xlim()
@@ -2045,6 +2047,8 @@ class GetDistPlotter(object):
                     self.plot_2d(roots, param_pair=pair, do_xlabel=i2 == plot_col - 1, do_ylabel=i == 0,
                                  no_label_no_numbers=self.settings.no_triangle_axis_labels, shaded=shaded,
                                  add_legend_proxy=i == 0 and i2 == 1, contour_args=contour_args, **kwargs)
+                if markers is not None and markers[i] is not None: self.add_x_marker(markers[i], **marker_args)
+                if markers is not None and markers[i2] is not None: self.add_y_marker(markers[i2], **marker_args)
                 ax.set_xticks(ticks[i])
                 ax.set_yticks(ticks[i2])
                 ax.set_xlim(lims[i])
@@ -2065,6 +2069,8 @@ class GetDistPlotter(object):
                                      add_legend_proxy=i == 0 and i2 == 1,
                                      proxy_root_exclude=[root for root in upper_roots if root in roots],
                                      contour_args=upper_contour_args)
+                    if markers is not None and markers[i] is not None: self.add_y_marker(markers[i], **marker_args)
+                    if markers is not None and markers[i2] is not None: self.add_x_marker(markers[i2], **marker_args)
                     ax.set_xticks(ticks[i2])
                     ax.set_yticks(ticks[i])
                     ax.set_xlim(lims[i2])
