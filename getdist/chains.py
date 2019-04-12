@@ -938,7 +938,7 @@ class Chains(WeightedSamples):
 
     def getRenames(self):
         """
-        Updates the renames known to each parameter with the given dictionary of renames.
+        Gets dictionary of renames known to each parameter.
         """
         return self.paramNames.getRenames()
 
