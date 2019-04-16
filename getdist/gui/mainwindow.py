@@ -305,7 +305,7 @@ class MainWindow(QMainWindow):
         if pyside_version == 1:
             self.pushButtonSelect = QPushButton(QIcon(":/images/file_add.png"), "", self.selectWidget)
         else:
-            self.pushButtonSelect = QPushButton(u"\uff0b", self.selectWidget)
+            self.pushButtonSelect = QPushButton(u"+", self.selectWidget)
 
         self.pushButtonSelect.setToolTip("Open chain file root directory")
         self.connect(self.pushButtonSelect, SIGNAL("clicked()"),
