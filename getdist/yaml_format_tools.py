@@ -26,7 +26,7 @@ _prior_1d_name = "0"
 _chi2 = "chi2"
 _weight = "weight"
 _minuslogpost = "minuslogpost"
-
+_post = "post"
 
 # Exceptions
 class InputSyntaxError(Exception):
@@ -118,9 +118,11 @@ def get_info_params(info):
         info_params_full[_minuslogprior + _separator + prior] = {
             _p_label: r"-\log\pi_\mathrm{" + prior.replace("_", "\ ") + r"}"}
     info_params_full[_chi2] = {_p_label: r"\chi^2"}
-    for lik in info.get(_likelihood):
-        info_params_full[_chi2 + _separator + lik] = {
-            _p_label: r"\chi^2_\mathrm{" + lik.replace("_", "\ ") + r"}"}
+    likes = (list(info.get(_likelihood)) +
+             list(info.get(_post, {}).get("add", {}).get(_likelihood, {})))
+    for like in likes:
+        info_params_full[_chi2 + _separator + like] = {
+            _p_label: r"\chi^2_\mathrm{" + like.replace("_", "\ ") + r"}"}
     return info_params_full
 
 
