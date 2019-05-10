@@ -113,13 +113,21 @@ def get_info_params(info):
             continue
         info_params_full[p] = info_params[p]
     # Add prior and likelihoods
+    priors = [_prior_1d_name] + list(info.get(_prior, []))
+    likes = list(info.get(_likelihood))
+    add = info.get(_post, {}).get("add", {})
+    likes += list(add.get(_likelihood, []))
+    priors += list(add.get(_prior, []))
+    remove = info.get(_post, {}).get("remove", {})
+    for like in remove.get(_likelihood, []):
+        likes.remove(like)
+    for prior in remove.get(_prior, []):
+        priors.remove(prior)
     info_params_full[_minuslogprior] = {_p_label: r"-\log\pi"}
-    for prior in [_prior_1d_name] + list(info.get(_prior, [])):
+    for prior in priors:
         info_params_full[_minuslogprior + _separator + prior] = {
             _p_label: r"-\log\pi_\mathrm{" + prior.replace("_", "\ ") + r"}"}
     info_params_full[_chi2] = {_p_label: r"\chi^2"}
-    likes = (list(info.get(_likelihood)) +
-             list(info.get(_post, {}).get("add", {}).get(_likelihood, {})))
     for like in likes:
         info_params_full[_chi2 + _separator + like] = {
             _p_label: r"\chi^2_\mathrm{" + like.replace("_", "\ ") + r"}"}
