@@ -115,14 +115,20 @@ def get_info_params(info):
     # Add prior and likelihoods
     priors = [_prior_1d_name] + list(info.get(_prior, []))
     likes = list(info.get(_likelihood))
-    add = info.get(_post, {}).get("add", {})
-    likes += list(add.get(_likelihood, []))
-    priors += list(add.get(_prior, []))
+    # Account for post
     remove = info.get(_post, {}).get("remove", {})
+    for param in remove.get(_params, []):
+        info_params.pop(param, None)
     for like in remove.get(_likelihood, []):
         likes.remove(like)
     for prior in remove.get(_prior, []):
         priors.remove(prior)
+    add = info.get(_post, {}).get("add", {})
+    for param, pinfo in add.get(_params, {}).items():
+        info_params[param] = pinfo
+    likes += list(add.get(_likelihood, []))
+    priors += list(add.get(_prior, []))
+    # Add the prior and the likelihood as derived parameters
     info_params_full[_minuslogprior] = {_p_label: r"-\log\pi"}
     for prior in priors:
         info_params_full[_minuslogprior + _separator + prior] = {
