@@ -91,8 +91,10 @@ class ParamListWidget(QListWidget):
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.owner = owner
-        list_model = self.model()
-        list_model.layoutChanged.connect(owner._updateParameters)
+
+    def dropEvent(self, event):
+        super(ParamListWidget, self).dropEvent(event)
+        self.owner._updateParameters()
 
 
 class MainWindow(QMainWindow):
