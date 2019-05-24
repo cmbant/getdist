@@ -118,25 +118,28 @@ def get_info_params(info):
     # Account for post
     remove = info.get(_post, {}).get("remove", {})
     for param in remove.get(_params, []):
-        info_params.pop(param, None)
+        info_params_full.pop(param, None)
     for like in remove.get(_likelihood, []):
         likes.remove(like)
     for prior in remove.get(_prior, []):
         priors.remove(prior)
     add = info.get(_post, {}).get("add", {})
+    # Adding derived params and updating 1d priors
     for param, pinfo in add.get(_params, {}).items():
-        info_params[param] = pinfo
+        pinfo_old = info_params_full.get(param, {})
+        pinfo_old.update(pinfo)
+        info_params_full[param] = pinfo_old
     likes += list(add.get(_likelihood, []))
     priors += list(add.get(_prior, []))
     # Add the prior and the likelihood as derived parameters
     info_params_full[_minuslogprior] = {_p_label: r"-\log\pi"}
     for prior in priors:
         info_params_full[_minuslogprior + _separator + prior] = {
-            _p_label: r"-\log\pi_\mathrm{" + prior.replace("_", "\ ") + r"}"}
+            _p_label: r"-\log\pi_\mathrm{" + prior.replace("_", r"\ ") + r"}"}
     info_params_full[_chi2] = {_p_label: r"\chi^2"}
     for like in likes:
         info_params_full[_chi2 + _separator + like] = {
-            _p_label: r"\chi^2_\mathrm{" + like.replace("_", "\ ") + r"}"}
+            _p_label: r"\chi^2_\mathrm{" + like.replace("_", r"\ ") + r"}"}
     return info_params_full
 
 
