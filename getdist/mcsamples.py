@@ -125,9 +125,22 @@ def loadCobayaSamples(info, collections, name_tag=None,
         raise ValueError("The given collections don't have the same columns.")
     from getdist.yaml_format_tools import _p_label, _p_renames, _weight, _minuslogpost
     from getdist.yaml_format_tools import get_info_params, get_range, is_derived_param
-    from getdist.yaml_format_tools import get_sampler_type
+    from getdist.yaml_format_tools import get_sampler_type, _post
     # Check consistency with info
     info_params = get_info_params(info)
+    # ####################################################################################
+    # TODO! What to do with slip/ignore_rows and thin?
+    # This are skip and thin that *has already been done*
+    skip = info.get(_post, {}).get("skip", 0)
+    thin = info.get(_post, {}).get("thin", 1)
+    # Maybe warn if trying to ignore rows twice?
+    if ignore_rows != 0 and skip != 0:
+        logging.warn("You are asking for rows to be ignored (%r), but some (%r) were "
+                     "already ignored in the original chain.", ignore_rows, skip)
+    # Should we warn about thin too?
+    # Most importantly: do we want to save somewhere the fact that we have *already*
+    #                   thinned/skipped?
+    ######################################################################################
     assert set(columns[2:]) == set(info_params.keys()), (
             "Info and collection(s) are not compatible, because their parameters differ: "
             "the collection(s) have %r and the info has %r. " % (

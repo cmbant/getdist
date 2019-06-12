@@ -117,11 +117,11 @@ def get_info_params(info):
     likes = list(info.get(_likelihood))
     # Account for post
     remove = info.get(_post, {}).get("remove", {})
-    for param in remove.get(_params, []):
+    for param in remove.get(_params, []) or []:
         info_params_full.pop(param, None)
-    for like in remove.get(_likelihood, []):
+    for like in remove.get(_likelihood, []) or []:
         likes.remove(like)
-    for prior in remove.get(_prior, []):
+    for prior in remove.get(_prior, []) or []:
         priors.remove(prior)
     add = info.get(_post, {}).get("add", {})
     # Adding derived params and updating 1d priors
