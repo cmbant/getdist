@@ -120,7 +120,11 @@ def loadCobayaSamples(info, collections, name_tag=None,
     if hasattr(collections, "data"):
         collections = [collections]
     # Check consistency between collections
-    columns = list(collections[0].data)
+    try:
+        columns = list(collections[0].data)
+    except AttributeError:
+        raise TypeError(
+            "The second argument does not appear to be a (list of) samples `Collection`.")
     if not all([list(c.data) == columns for c in collections[1:]]):
         raise ValueError("The given collections don't have the same columns.")
     from getdist.yaml_format_tools import _p_label, _p_renames, _weight, _minuslogpost
