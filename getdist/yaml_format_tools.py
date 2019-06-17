@@ -28,6 +28,7 @@ _weight = "weight"
 _minuslogpost = "minuslogpost"
 _post = "post"
 
+
 # Exceptions
 class InputSyntaxError(Exception):
     """Syntax error in YAML input."""
