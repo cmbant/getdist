@@ -1088,8 +1088,8 @@ class Chains(WeightedSamples):
             elif dim == 3:
                 for i, samples_i in enumerate(files_or_samples):
                     self.chains.append(WeightedSamples(
-                        samples=samples_i, loglikes=None if loglikes is None else np.atleast_2d(loglikes)[i],
-                        weights=None if weights is None else np.atleast_2d(weights)[i], **WSkwargs))
+                        samples=samples_i, loglikes=None if loglikes is None else loglikes[i],
+                        weights=None if weights is None else weights[i], **WSkwargs))
                 if self.paramNames is None:
                     self.paramNames = ParamNames(default=self.chains[0].n)
                 nchains = len(self.chains)
