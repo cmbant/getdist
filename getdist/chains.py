@@ -40,7 +40,8 @@ def slice_or_none(x, start=None, end=None):
     return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
 
 
-def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-1, chain_exclude=None):
+def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
+               first_chain=0, last_chain=-1, chain_exclude=None):
     """
     Creates a list of file names for samples given a root name and optional filters
 
@@ -60,7 +61,7 @@ def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-
         if index > 0:
             # deal with just-folder prefix
             if not root.endswith("/"):
-                fname += '_'
+                fname += separator
             fname += str(index)
         if not fname.endswith(ext): fname += ext
         if index > first_chain and not os.path.exists(fname) or 0 < last_chain < index: break

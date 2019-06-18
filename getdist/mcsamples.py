@@ -66,6 +66,8 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     if settings and dist_settings: raise ValueError('Use settings or dist_settings')
     if dist_settings: settings = dist_settings
     files = chainFiles(file_root)
+    if not files:  # try new Cobaya format
+        files = chainFiles(file_root, separator='.', ext='.sample')
     path, name = os.path.split(file_root)
     path = getdist.cache_dir or path
     if not os.path.exists(path): os.mkdir(path)
@@ -73,9 +75,13 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     samples = MCSamples(file_root, jobItem=jobItem, ini=ini, settings=settings)
     if os.path.isfile(file_root + '.paramnames'):
         allfiles = files + [file_root + '.ranges', file_root + '.paramnames', file_root + '.properties.ini']
-    else:  # new format (txt+yaml)
-        mid = "" if file_root.endswith("/") else "__"
-        allfiles = files + [file_root + mid + ending for ending in ['input.yaml', 'full.yaml']]
+    else:  # Cobaya
+        folder = os.path.dirname(file_root)
+        prefix = os.path.basename(file_root)
+        allfiles = files + [
+            os.path.join(folder, f) for f in os.listdir(folder) if (
+                f.startswith(prefix) and
+                any([f.lower().endswith(end) for end in ['updated.yaml', 'full.yaml']]))]
     if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
         try:
             with open(cachefile, 'rb') as inp:
