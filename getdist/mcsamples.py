@@ -67,7 +67,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     if dist_settings: settings = dist_settings
     files = chainFiles(file_root)
     if not files:  # try new Cobaya format
-        files = chainFiles(file_root, separator='.', ext='.sample')
+        files = chainFiles(file_root, separator='.')
     path, name = os.path.split(file_root)
     path = getdist.cache_dir or path
     if not os.path.exists(path): os.mkdir(path)
