@@ -21,6 +21,7 @@ _p_value = "value"
 _p_derived = "derived"
 _p_renames = "renames"
 _separator = "__"
+_separator_files = "."
 _minuslogprior = "minuslogprior"
 _prior_1d_name = "0"
 _chi2 = "chi2"
@@ -210,4 +211,4 @@ def get_sampler_type(filename_or_info):
         filename_or_info = yaml_load_file(filename_or_info)
     default_sampler_for_chain_type = "mcmc"
     sampler = list(filename_or_info.get(_sampler, [default_sampler_for_chain_type]))[0]
-    return {"mcmc": "mcmc", "polychord": "nested"}[sampler]
+    return {"mcmc": "mcmc", "polychord": "nested", "minimize": "minimize"}[sampler]

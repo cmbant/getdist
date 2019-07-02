@@ -4,6 +4,7 @@ import random
 import numpy as np
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
+from getdist.yaml_format_tools import get_sampler_type, _separator_files
 import pickle
 import six
 
@@ -856,11 +857,14 @@ class Chains(WeightedSamples):
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
         self.root = root
         if not paramNamesFile and root:
-            mid = ('' if root.endswith("/") else "__")
-            if os.path.exists(root + '.paramnames'):
-                paramNamesFile = root + '.paramnames'
-            elif os.path.exists(root + mid + 'full.yaml'):
-                paramNamesFile = root + mid + 'full.yaml'
+            mid = not root.endswith("/")
+            endings = ['.paramnames', ('__' if mid else '') + 'full.yaml',
+                       (_separator_files if mid else '') + 'updated.yaml']
+            try:
+                paramNamesFile = next(
+                    root + ending for ending in endings if os.path.exists(root + ending))
+            except StopIteration:
+                paramNamesFile = None
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
             self.paramNames.setLabels(labels)
@@ -872,7 +876,6 @@ class Chains(WeightedSamples):
                 raise ValueError("Unknown sampler type %s" % sampler)
             self.sampler = sampler.lower()
         elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
-            from getdist.yaml_format_tools import get_sampler_type
             self.sampler = get_sampler_type(paramNamesFile)
         else:
             self.sampler = "mcmc"
