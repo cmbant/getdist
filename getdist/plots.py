@@ -14,10 +14,12 @@ import numpy as np
 from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
+from getdist.chains import chainFiles
 from getdist.paramnames import escapeLatex, makeList, mergeRenames
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
 from getdist.gaussian_mixtures import MixtureND
+from getdist.yaml_format_tools import _separator_files
 import logging
 
 """Plotting scripts for GetDist outputs"""
@@ -468,7 +470,8 @@ class MCSampleAnalysis(object):
                         break
                 else:
                     name = os.path.join(chain_dir, root)
-                    if os.path.exists(name + '_1.txt') or os.path.exists(name + '.txt'):
+                    if any([chainFiles(name, separator=sep)
+                            for sep in ['_', _separator_files]]):
                         file_root = name
                         break
         if not file_root:
