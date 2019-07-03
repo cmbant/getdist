@@ -1,4 +1,5 @@
 import os
+from getdist.cobaya_interface import get_range, is_fixed_param, get_info_params
 
 
 class ParamBounds(object):
@@ -31,8 +32,7 @@ class ParamBounds(object):
                     if len(strings) == 3:
                         self.setRange(strings[0], strings[1:])
         elif extension in ('.yaml', '.yml'):
-            from getdist.yaml_format_tools import yaml_load_file, get_info_params
-            from getdist.yaml_format_tools import get_range, is_fixed_param
+            from getdist.yaml_tools import yaml_load_file
             info_params = get_info_params(yaml_load_file(fileName))
             for p, info in info_params.items():
                 if not is_fixed_param(info):

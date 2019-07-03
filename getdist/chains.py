@@ -4,7 +4,7 @@ import random
 import numpy as np
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
-from getdist.yaml_format_tools import get_sampler_type, _separator_files
+from getdist.cobaya_interface import get_sampler_type, _separator_files
 import pickle
 import six
 

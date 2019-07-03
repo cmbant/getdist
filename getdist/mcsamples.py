@@ -17,9 +17,9 @@ from getdist.chains import Chains, chainFiles, lastModified
 from getdist.convolve import convolve1D, convolve2D
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
-from getdist.yaml_format_tools import _p_label, _p_renames, _weight, _minuslogpost
-from getdist.yaml_format_tools import get_info_params, get_range, is_derived_param
-from getdist.yaml_format_tools import get_sampler_type, _post, _separator_files
+from getdist.cobaya_interface import _p_label, _p_renames, _weight, _minuslogpost
+from getdist.cobaya_interface import get_info_params, get_range, is_derived_param
+from getdist.cobaya_interface import get_sampler_type, _post, _separator_files
 import six
 
 pickle_version = 21

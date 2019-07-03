@@ -19,7 +19,7 @@ from getdist.paramnames import escapeLatex, makeList, mergeRenames
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
 from getdist.gaussian_mixtures import MixtureND
-from getdist.yaml_format_tools import _separator_files
+from getdist.cobaya_interface import _separator_files
 import logging
 
 """Plotting scripts for GetDist outputs"""
