@@ -194,7 +194,8 @@ class MCSamples(Chains):
     """
     The main high-level class for a collection of parameter samples.
 
-    Derives from :class:`.chains.Chains`, adding high-level functions including Kernel Density estimates, parameter ranges and custom settings.
+    Derives from :class:`.chains.Chains`, adding high-level functions including
+    Kernel Density estimates, parameter ranges and custom settings.
     """
 
     def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None,
