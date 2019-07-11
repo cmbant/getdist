@@ -139,6 +139,7 @@ if not six.PY3:
 
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
+
 align = Image.align
 import sphinx
 
@@ -151,28 +152,36 @@ sphinx_version = tuple([int(re.split('[^0-9]', x)[0])
 try:
     # Sphinx depends on either Jinja or Jinja2
     import jinja2
+
+
     def format_template(template, **kw):
         return jinja2.Template(template).render(**kw)
 except ImportError:
     import jinja
+
+
     def format_template(template, **kw):
         return jinja.from_string(template, **kw)
 
 import matplotlib
 import matplotlib.cbook as cbook
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import _pylab_helpers
 
 __version__ = 2
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Registration hook
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 def plot_directive(name, arguments, options, content, lineno,
                    content_offset, block_text, state, state_machine):
     return run(arguments, content, options, state_machine, state, lineno)
+
+
 plot_directive.__doc__ = __doc__
 
 
@@ -268,9 +277,10 @@ def setup(app):
 
     app.connect(str('doctree-read'), mark_plot_labels)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Doctest handling
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 def contains_doctest(text):
     try:
@@ -317,7 +327,7 @@ def split_code_at_show(text):
     part = []
     for line in text.split("\n"):
         if (not is_doctest and line.strip() == 'plt.show()') or \
-               (is_doctest and line.strip() == '>>> plt.show()'):
+                (is_doctest and line.strip() == '>>> plt.show()'):
             part.append(line)
             parts.append("\n".join(part))
             part = []
@@ -335,9 +345,10 @@ def remove_coding(text):
     return re.sub(
         "^#\s*-\*-\s*coding:\s*.*-\*-$", "", text, flags=re.MULTILINE)
 
-#------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
 # Template
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 
 TEMPLATE = """
@@ -412,6 +423,7 @@ Exception occurred rendering plot.
 # :context: option
 plot_context = dict()
 
+
 class ImageFile(object):
     def __init__(self, basename, dirname):
         self.basename = basename
@@ -458,12 +470,12 @@ def run_code(code, code_path, ns=None, function_name=None):
             os.chdir(setup.config.plot_working_directory)
         except OSError as err:
             raise OSError(str(err) + '\n`plot_working_directory` option in'
-                          'Sphinx configuration file must be a valid '
-                          'directory path')
+                                     'Sphinx configuration file must be a valid '
+                                     'directory path')
         except TypeError as err:
             raise TypeError(str(err) + '\n`plot_working_directory` option in '
-                            'Sphinx configuration file must be a string or '
-                            'None')
+                                       'Sphinx configuration file must be a string or '
+                                       'None')
         sys.path.insert(0, setup.config.plot_working_directory)
     elif code_path is not None:
         dirname = os.path.abspath(os.path.dirname(code_path))
@@ -495,7 +507,7 @@ def run_code(code, code_path, ns=None, function_name=None):
             if not ns:
                 if setup.config.plot_pre_code is None:
                     six.exec_(six.text_type("import numpy as np\n" +
-                    "from matplotlib import pyplot as plt\n"), ns)
+                                            "from matplotlib import pyplot as plt\n"), ns)
                 else:
                     six.exec_(six.text_type(setup.config.plot_pre_code), ns)
             ns['print'] = _dummy_print
@@ -736,7 +748,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         reporter = state.memo.reporter
         sm = reporter.system_message(
             2, "Exception occurred in plotting %s\n from %s:\n%s" % (output_base,
-                                                source_file_name, err),
+                                                                     source_file_name, err),
             line=lineno)
         results = [(code, [])]
         errors = [sm]

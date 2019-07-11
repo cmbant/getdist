@@ -12,7 +12,7 @@ import signal
 from io import BytesIO
 import six
 from collections import OrderedDict
-from .qt_import import pyside_version
+from getdist.gui.qt_import import pyside_version
 
 import getdist
 from getdist import plots, IniFile

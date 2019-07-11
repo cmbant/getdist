@@ -107,8 +107,9 @@ class jobSettings(object):
         self.omp = self.coresPerNode / (self.chainsPerNode * self.runsPerJob)
         if self.omp != np.floor(self.omp): raise Exception('Chains must each have equal number of cores')
         if msg:
-            print('Job parameters: %i cosmomc runs of %i chains on %i nodes, each node with %i MPI chains, each chain using %i OpenMP cores (%i cores per node)' % (
-                self.runsPerJob, self.nchains, self.nodes, self.chainsPerNode, self.omp, self.coresPerNode))
+            print(
+                'Job parameters: %i cosmomc runs of %i chains on %i nodes, each node with %i MPI chains, each chain using %i OpenMP cores (%i cores per node)' % (
+                    self.runsPerJob, self.nchains, self.nodes, self.chainsPerNode, self.omp, self.coresPerNode))
 
         self.mem_per_node = getDefaulted('mem_per_node', 63900, tp=int, template=template, **kwargs)
         self.walltime = getDefaulted('walltime', '24:00:00', template=template, **kwargs)
@@ -226,7 +227,7 @@ def deleteJobs(batchPath, jobIds=None, rootNames=None, jobNames=None, jobId_minm
             else:
                 jobId = int(parts[1])
             if (jobId_minmax is not None and (jobId_minmax[0] <= jobId <= jobId_minmax[1]) or
-                            jobId_min is not None and jobId >= jobId_min) and not jobIdStr in jobIds:
+                jobId_min is not None and jobId >= jobId_min) and not jobIdStr in jobIds:
                 jobIds.append(jobIdStr)
 
     validIds = queue_job_details(batchPath, running=not queued, queued=not running)[0]
@@ -279,7 +280,7 @@ def submitJob(jobName, paramFiles, sequential=False, msg=False, **kwargs):
     vals['ONERUN'] = j.onerun
     vals['PROGRAM'] = j.program
     vals['QUEUE'] = j.queue
-    if hasattr(j,'jobclass'):
+    if hasattr(j, 'jobclass'):
         vals['JOBCLASS'] = j.jobclass
 
     j.names = [os.path.basename(param) for param in paramFiles]
@@ -371,4 +372,3 @@ def queue_job_names(batchPath=None, running=False, queued=True):
     for nameset in lists:
         names += nameset
     return names
-
