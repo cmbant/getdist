@@ -40,7 +40,8 @@ def slice_or_none(x, start=None, end=None):
     return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
 
 
-def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-1, chain_exclude=None):
+def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
+               first_chain=0, last_chain=-1, chain_exclude=None):
     """
     Creates a list of file names for samples given a root name and optional filters
 
@@ -59,8 +60,8 @@ def chainFiles(root, chain_indices=None, ext='.txt', first_chain=0, last_chain=-
         fname = root
         if index > 0:
             # deal with just-folder prefix
-            if not root.endswith("/"):
-                fname += '_'
+            if not root.endswith((os.sep, "/")):
+                fname += separator
             fname += str(index)
         if not fname.endswith(ext): fname += ext
         if index > first_chain and not os.path.exists(fname) or 0 < last_chain < index: break
@@ -849,17 +850,22 @@ class Chains(WeightedSamples):
         :param kwargs: extra options for :class:`~.chains.WeightedSamples`'s constructor
 
         """
+        from getdist.cobaya_interface import get_sampler_type, _separator_files
+
         self.chains = None
         WeightedSamples.__init__(self, **kwargs)
         self.jobItem = jobItem
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
         self.root = root
         if not paramNamesFile and root:
-            mid = ('' if root.endswith("/") else "__")
-            if os.path.exists(root + '.paramnames'):
-                paramNamesFile = root + '.paramnames'
-            elif os.path.exists(root + mid + 'full.yaml'):
-                paramNamesFile = root + mid + 'full.yaml'
+            mid = not root.endswith((os.sep, "/"))
+            endings = ['.paramnames', ('__' if mid else '') + 'full.yaml',
+                       (_separator_files if mid else '') + 'updated.yaml']
+            try:
+                paramNamesFile = next(
+                    root + ending for ending in endings if os.path.exists(root + ending))
+            except StopIteration:
+                paramNamesFile = None
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
             self.paramNames.setLabels(labels)
@@ -871,7 +877,6 @@ class Chains(WeightedSamples):
                 raise ValueError("Unknown sampler type %s" % sampler)
             self.sampler = sampler.lower()
         elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
-            from getdist.yaml_format_tools import get_sampler_type
             self.sampler = get_sampler_type(paramNamesFile)
         else:
             self.sampler = "mcmc"

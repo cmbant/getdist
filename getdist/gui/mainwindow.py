@@ -1006,8 +1006,8 @@ class MainWindow(QMainWindow):
         self.comboBoxRootname.clear()
         self.listRoots.show()
         self.pushButtonRemove.show()
-        baseRoots = [(os.path.basename(root) if not root.endswith("/")
-                      else os.path.basename(root[:-1]) + "/")
+        baseRoots = [(os.path.basename(root) if not root.endswith((os.sep, "/"))
+                      else os.path.basename(root[:-1]) + os.sep)
                      for root in listOfRoots]
         self.comboBoxRootname.addItems(baseRoots)
         if len(baseRoots) > 1:
@@ -1039,8 +1039,8 @@ class MainWindow(QMainWindow):
             else:
                 path = self.rootdirname
             # new style, if the prefix is just a folder
-            if root[-1] == "/":
-                path = "/".join(path.split("/")[:-1])
+            if root[-1] in (os.sep, "/"):
+                path = os.sep.join(path.replace("/", os.sep).split(os.sep)[:-1])
             info = plots.RootInfo(root, path, self.batch)
             plotter.sampleAnalyser.addRoot(info)
 

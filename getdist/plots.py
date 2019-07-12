@@ -14,6 +14,7 @@ import numpy as np
 from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
+from getdist.chains import chainFiles
 from getdist.paramnames import escapeLatex, makeList, mergeRenames
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
@@ -446,8 +447,8 @@ class MCSampleAnalysis(object):
         if isinstance(root, MCSamples): return root
         if os.path.isabs(root):
             # deal with just-folder prefix
-            if root.endswith("/"):
-                root = os.path.basename(root[:-1]) + "/"
+            if root.endswith((os.sep, "/")):
+                root = os.path.basename(root[:-1]) + os.sep
             else:
                 root = os.path.basename(root)
         if root in self.mcsamples and cache: return self.mcsamples[root]
@@ -457,6 +458,7 @@ class MCSampleAnalysis(object):
         else:
             dist_settings = {}
         if not file_root:
+            from getdist.cobaya_interface import _separator_files
             for chain_dir in self.chain_dirs:
                 if hasattr(chain_dir, "resolveRoot"):
                     jobItem = chain_dir.resolveRoot(root)
@@ -468,7 +470,8 @@ class MCSampleAnalysis(object):
                         break
                 else:
                     name = os.path.join(chain_dir, root)
-                    if os.path.exists(name + '_1.txt') or os.path.exists(name + '.txt'):
+                    if any([chainFiles(name, separator=sep)
+                            for sep in ['_', _separator_files]]):
                         file_root = name
                         break
         if not file_root:
@@ -1944,7 +1947,7 @@ class GetDistPlotter(object):
         :param title_limit:if not None, a maginalized limit (1,2..) to print as the title of the first root on the diagonal 1D plots
         :param upper_kwargs: dict for same-named arguments for use when making upper-triangle 2D plots (contour_colors, etc). Set show_1d=False to not add to the diagonal.
         :param diag1d_kwargs: list of dict for arguments when making 1D plots on grid diagonal
-        :param markers: optional dict giving marker values indexed by parameter, or a list of marker values for each parameter plotted  
+        :param markers: optional dict giving marker values indexed by parameter, or a list of marker values for each parameter plotted
         :param param_limits: a dictionary holding a mapping from parameter names to axis limits for that parameter
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d` or :func:`~GetDistPlotter.plot_3d` (lower triangle only)
 
