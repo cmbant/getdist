@@ -48,6 +48,7 @@ def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
     :param root: Root name for files (no extension)
     :param chain_indices: If True, only indexes inside the list included, If False, includes all indexes.
     :param ext: extension for files
+    :param separator: separator character used to indicate chain number (usually _ or .)
     :param first_chain: The first index to include.
     :param last_chain: The last index to include.
     :param chain_exclude: A list of indexes to exclude, None to include all

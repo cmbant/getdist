@@ -1948,6 +1948,7 @@ class GetDistPlotter(object):
         :param upper_kwargs: dict for same-named arguments for use when making upper-triangle 2D plots (contour_colors, etc). Set show_1d=False to not add to the diagonal.
         :param diag1d_kwargs: list of dict for arguments when making 1D plots on grid diagonal
         :param markers: optional dict giving marker values indexed by parameter, or a list of marker values for each parameter plotted
+        :param marker_args: dictionary of optional arguments for adding markers (passed to axvline and/or axhline)
         :param param_limits: a dictionary holding a mapping from parameter names to axis limits for that parameter
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d` or :func:`~GetDistPlotter.plot_3d` (lower triangle only)
 
@@ -2186,7 +2187,7 @@ class GetDistPlotter(object):
             if xmarkers is not None:
                 if isinstance(xmarkers, dict):
                     xmarker = xmarkers.get(xparam, None)
-                elif i < len(markers):
+                elif x < len(xmarkers):
                     xmarker = xmarkers[x]
 
             for y, (yparam, subplot_roots) in enumerate(zip(yparams, yroots)):
@@ -2199,7 +2200,7 @@ class GetDistPlotter(object):
                 if ymarkers is not None:
                     if isinstance(ymarkers, dict):
                         ymarker = ymarkers.get(yparam, None)
-                    elif i < len(markers):
+                    elif y < len(ymarkers):
                         ymarker = ymarkers[y]
 
                 res = self.plot_2d(subplot_roots, param_pair=[xparam, yparam], do_xlabel=y == len(yparams) - 1,
