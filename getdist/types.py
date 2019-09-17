@@ -737,7 +737,7 @@ class MargeStats(ParamResults):
             param = self.parWithName(p)
         else:
             param = self.parWithName(p.name)
-        if not param is None:
+        if param is not None:
             lim = param.limits[limit - 1]
             sf = 3
             if param.name.startswith('chi2'):

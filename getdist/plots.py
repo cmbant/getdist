@@ -1423,7 +1423,7 @@ class GetDistPlotter(object):
         for i, root in enumerate(roots):
             root_param = self._check_param(root, param, param_renames)
             if not root_param: continue
-            bounds = self.add_1d(root, root_param, i, normalized=normalized, title_limit=title_limit and not i,
+            bounds = self.add_1d(root, root_param, i, normalized=normalized, title_limit=title_limit if not i else 0,
                                  **line_args[i])
             xmin, xmax = self._updateLimit(bounds, (xmin, xmax))
             if bounds is not None and not plotparam:
