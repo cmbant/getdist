@@ -280,7 +280,7 @@ class SampleAnalysisGetDist(object):
         return result
 
     def load_single_samples(self, root):
-        if not root in self.single_samples: self.single_samples[root] = np.loadtxt(
+        if root not in self.single_samples: self.single_samples[root] = np.loadtxt(
             self.plot_data_file(root) + '_single.txt')[:, 2:]
         return self.single_samples[root]
 
@@ -317,7 +317,7 @@ class SampleAnalysisGetDist(object):
     def load_1d(self, root, param, ext='.dat'):
         fname = self.plot_data_file_1D(root, param.name) + ext
         if not hasattr(param, 'plot_data'): param.plot_data = dict()
-        if not fname in param.plot_data:
+        if fname not in param.plot_data:
             if not os.path.exists(fname):
                 param.plot_data[fname] = None
             else:
@@ -579,7 +579,7 @@ class MCSampleAnalysis(object):
         :param root: The root name to use.
         :return: array of unit weight samples
         """
-        if not root in self.single_samples:
+        if root not in self.single_samples:
             self.single_samples[root] = self.samplesForRoot(root).makeSingleSamples()
         return self.single_samples[root]
 
@@ -735,13 +735,13 @@ class GetDistPlotter(object):
         :return: dict with ls, dashes, lw and color set appropriately
         """
         args = self._get_plot_args(plotno, **kwargs)
-        if not 'ls' in args: args['ls'] = self._get_default_ls(plotno)[0]
-        if not 'dashes' in args:
+        if 'ls' not in args: args['ls'] = self._get_default_ls(plotno)[0]
+        if 'dashes' not in args:
             dashes = self._get_dashes_for_ls(args['ls'])
             if dashes is not None: args['dashes'] = dashes
-        if not 'color' in args:
+        if 'color' not in args:
             args['color'] = self._get_default_ls(plotno)[1]
-        if not 'lw' in args: args['lw'] = self.settings.lw1
+        if 'lw' not in args: args['lw'] = self.settings.lw1
         return args
 
     def _get_color(self, plotno, **kwargs):
@@ -787,7 +787,7 @@ class GetDistPlotter(object):
         :param root: The root name of the samples.
         :return: :class:`~.paramnames.ParamNames` instance
         """
-        if not root in self.param_name_sets: self.param_name_sets[root] = self.sampleAnalyser.paramsForRoot(root,
+        if root not in self.param_name_sets: self.param_name_sets[root] = self.sampleAnalyser.paramsForRoot(root,
                                                                                                             labelParams=self.settings.param_names_for_labels)
         return self.param_name_sets[root]
 
@@ -798,7 +798,7 @@ class GetDistPlotter(object):
         :param root: The root name to be used
         :return: object with getUpper() and getLower() bounds functions
         """
-        if not root in self.param_bounds_sets: self.param_bounds_sets[root] = self.sampleAnalyser.boundsForRoot(root)
+        if root not in self.param_bounds_sets: self.param_bounds_sets[root] = self.sampleAnalyser.boundsForRoot(root)
         return self.param_bounds_sets[root]
 
     def _check_param_ranges(self, root, name, xmin, xmax):
@@ -1181,7 +1181,7 @@ class GetDistPlotter(object):
                                            **contour_args[i])
             xbounds, ybounds = self._updateLimits(res, xbounds, ybounds)
         if xbounds is None: return
-        if not 'lims' in kwargs:
+        if 'lims' not in kwargs:
             lim1 = self._check_param_ranges(roots[0], param_pair[0].name, xbounds[0], xbounds[1])
             lim2 = self._check_param_ranges(roots[0], param_pair[1].name, ybounds[0], ybounds[1])
             kwargs['lims'] = [lim1[0], lim1[1], lim2[0], lim2[1]]
@@ -1759,12 +1759,7 @@ class GetDistPlotter(object):
         for i, param in enumerate(params):
             ax = self._subplot_number(i)
             if roots_per_param: plot_roots = roots[i]
-            marker = None
-            if markers is not None:
-                if isinstance(markers, dict):
-                    marker = markers.get(param.name, None)
-                elif i < len(markers):
-                    marker = markers[i]
+            marker = self._get_marker(markers, i, param.name)
             self.plot_1d(plot_roots, param, no_ylabel=share_y and i % self.plot_col > 0, marker=marker,
                          param_renames=param_renames, title_limit=title_limit, **kwargs)
             if xlims is not None: ax.set_xlim(xlims[i][0], xlims[i][1])
@@ -1919,6 +1914,14 @@ class GetDistPlotter(object):
         for ax in [ax.get_xaxis(), ax.get_yaxis()]:
             ax.set_tick_params(which='both', direction='in', right=top_and_left, top=top_and_left)
 
+    def _get_marker(self, markers, index, name):
+        if markers is not None:
+            if isinstance(markers, dict):
+                return markers.get(name, None)
+            elif index < len(markers):
+                return markers[index]
+        return None
+
     def triangle_plot(self, roots, params=None, legend_labels=None, plot_3d_with_param=None, filled=False, shaded=False,
                       contour_args=None, contour_colors=None, contour_ls=None, contour_lws=None, line_args=None,
                       label_order=None, legend_ncol=None, legend_loc=None, upper_roots=None, title_limit=None,
@@ -2027,12 +2030,7 @@ class GetDistPlotter(object):
                     line_args.append(arg)
 
         for i, param in enumerate(params):
-            marker = None
-            if markers is not None:
-                if isinstance(markers, dict):
-                    marker = markers.get(param.name, None)
-                elif i < len(markers):
-                    marker = markers[i]
+            marker = self._get_marker(markers, i, param.name)
             ax = self._subplot(i, i)
             self._inner_ticks(ax, False)
             self.plot_1d(roots1d, param, marker=marker, do_xlabel=i == plot_col - 1,
@@ -2044,21 +2042,11 @@ class GetDistPlotter(object):
             lims[i] = ax.get_xlim()
             ticks[i] = ax.get_xticks()
         for i, param in enumerate(params):
-            marker = None
-            if markers is not None:
-                if isinstance(markers, dict):
-                    marker = markers.get(param.name, None)
-                elif i < len(markers):
-                    marker = markers[i]
+            marker = self._get_marker(markers, i, param.name)
             for i2 in range(i + 1, len(params)):
                 param2 = params[i2]
                 pair = [param, param2]
-                marker2 = None
-                if markers is not None:
-                    if isinstance(markers, dict):
-                        marker2 = markers.get(param2.name, None)
-                    elif i2 < len(markers):
-                        marker2 = markers[i2]
+                marker2 = self._get_marker(markers, i2, param2.name)
                 ax = self._subplot(i, i2, pars=[param, param2])
                 if plot_3d_with_param is not None:
                     self.plot_3d(roots, pair + [col_param], color_bar=False, line_offset=1, add_legend_proxy=False,
@@ -2183,12 +2171,7 @@ class GetDistPlotter(object):
             elif roots:
                 yroots = [roots for _ in yparams]
             axarray = []
-            xmarker = None
-            if xmarkers is not None:
-                if isinstance(xmarkers, dict):
-                    xmarker = xmarkers.get(xparam, None)
-                elif x < len(xmarkers):
-                    xmarker = xmarkers[x]
+            xmarker = self._get_marker(xmarkers, x, xparam)
 
             for y, (yparam, subplot_roots) in enumerate(zip(yparams, yroots)):
                 if x > 0: sharey = yshares[y]
@@ -2196,12 +2179,7 @@ class GetDistPlotter(object):
                 if y == 0:
                     sharex = ax
                     xshares.append(ax)
-                ymarker = None
-                if ymarkers is not None:
-                    if isinstance(ymarkers, dict):
-                        ymarker = ymarkers.get(yparam, None)
-                    elif y < len(ymarkers):
-                        ymarker = ymarkers[y]
+                ymarker = self._get_marker(ymarkers, y, yparam)
 
                 res = self.plot_2d(subplot_roots, param_pair=[xparam, yparam], do_xlabel=y == len(yparams) - 1,
                                    do_ylabel=x == 0, add_legend_proxy=x == 0 and y == 0, **kwargs)
@@ -2486,7 +2464,7 @@ class GetDistPlotter(object):
             res = self.add_2d_contours(root, params[0], params[1], i + line_offset, add_legend_proxy=add_legend_proxy,
                                        zorder=i + 1, **contour_args[i])
             xlims, ylims = self._updateLimits(res, xlims, ylims)
-        if not 'lims' in kwargs:
+        if 'lims' not in kwargs:
             params = params_for_plots[0]
             lim1 = self._check_param_ranges(roots[0], params[0].name, xlims[0], xlims[1])
             lim2 = self._check_param_ranges(roots[0], params[1].name, ylims[0], ylims[1])
@@ -2589,7 +2567,7 @@ class GetDistPlotter(object):
         """
         if fname is None: fname = os.path.basename(sys.argv[0]).replace('.py', '')
         if tag: fname += '_' + tag
-        if not '.' in fname: fname += '.' + getdist.default_plot_output
+        if '.' not in fname: fname += '.' + getdist.default_plot_output
         if adir is not None and os.sep not in fname and '/' not in fname: fname = os.path.join(adir, fname)
         adir = os.path.dirname(fname)
         if adir and not os.path.exists(adir): os.makedirs(adir)
