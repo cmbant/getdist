@@ -1,8 +1,19 @@
+from __future__ import absolute_import
 from __future__ import print_function
-import getdist.plots as plots
+
+try:
+    from getdist.plots import getSubplotPlotter
+except ImportError:
+    import sys, os
+
+    sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
+    from getdist.plots import getSubplotPlotter
 import matplotlib.pyplot as plt
 import numpy as np
 from getdist.gaussian_mixtures import Mixture2D, Mixture1D, Gaussian1D, Gaussian2D, make_2D_Cov
+from getdist import chains
+from getdist.mcsamples import BandwidthError
+import logging
 
 default_nsamp = 10000
 
@@ -20,15 +31,16 @@ def compareSimPlot2D(g, samples, density, pars=['x', 'y']):
     g.plot_2d(samples, pars)
     density.normalize('max')
     levels = density.getContourLevels(contours=[0.68, 0.95])
-    g.add_2d_density_contours(density, filled=False, color='red', contour_levels=levels)
+    g.add_2d_density_contours(density, filled=False, color='C0', contour_levels=levels)
     levels = density.getContourLevels(contours=[0.2, 0.4, 0.6, 0.8])
-    g.add_2d_density_contours(density, filled=False, color='magenta', alpha=0.5, contour_levels=levels)
+    g.add_2d_density_contours(density, filled=False, color='C3', alpha=0.5, contour_levels=levels)
 
 
-def compareSimPlot(g, samples, density, par='x'):
-    g.plot_1d(samples, par)
-    density.normalize('max')
-    plt.plot(density.x, density.P, color='r')
+def compareSimPlot(g, samples, density, par='x', normalized=True):
+    g.plot_1d(samples, par, colors=['C0'], normalized=normalized)
+    density.normalize('integral' if normalized else 'max')
+    plt.plot(density.x, density.P, color='C3')
+    if normalized: plt.ylim(0, plt.gca().get_ylim()[1] * 1.1)
 
 
 def plot1DSim(g, prob, nsamp=default_nsamp, settings={}):
@@ -51,7 +63,7 @@ def compare1D(g, probs, nsamp=default_nsamp, settings={}):
     for i, (samps, prob) in enumerate(zip(samples, probs)):
         g._subplot_number(i)
         compareSimPlot(g, samps, prob.density1D())
-        g.add_text_left(prob.label, y=0.95)
+        g.add_text_left(prob.label, y=0.98, fontsize=8, verticalalignment='top')
     plt.subplots_adjust()
 
 
@@ -65,11 +77,12 @@ def compare2D(g, probs, nsamp=default_nsamp, settings={}):
     for i, (samps, prob) in enumerate(zip(samples, probs)):
         g._subplot_number(i)
         compareSimPlot2D(g, samps, prob.density2D())
-        g.add_text_left(prob.label, y=0.95)
+        g.add_text_left(prob.label, y=0.96, fontsize=8, verticalalignment='top')
     plt.subplots_adjust()
 
 
 def get2DMises(prob, nsamp=default_nsamp, nsim=20, scales=np.arange(0.6, 1.5, 0.1), settings={}):
+    # Get 2D MISE (mean integrated square error) as function of bandwidth scaling
     Mises = np.zeros(np.asarray(scales).size)
     for _ in range(nsim):
         samps = prob.MCSamples(nsamp, settings=settings)
@@ -86,18 +99,26 @@ def get2DMises(prob, nsamp=default_nsamp, nsim=20, scales=np.arange(0.6, 1.5, 0.
 
 
 def get1DMises(prob, nsamp=default_nsamp, nsim=50, scales=[0.6, 1.5, 0.1], settings={}):
+    # Get 1D MISE (mean integrated square error) as function of bandwidth scaling
     Mises = np.zeros(np.asarray(scales).size)
+    failures = 0
     for _ in range(nsim):
         samps = prob.MCSamples(nsamp, settings=settings)
-        for i, scale in enumerate(scales):
-            density = samps.get1DDensity('x', smooth_scale_1D=-scale)
-            density.normalize()
-            if i == 0:
-                mean = prob.pdf(density.x)
-                if prob.lims is not None:
-                    mean /= density.integrate(mean)
-            Mises[i] += np.sum((mean - density.P) ** 2) / np.sum(mean ** 2)
-    Mises /= (nsim - 1)
+        samps.raise_on_bandwidth_errors = False
+        try:
+            for i, scale in enumerate(scales):
+                density = samps.get1DDensity('x', smooth_scale_1D=-scale)
+                density.normalize()
+                if i == 0:
+                    mean = prob.pdf(density.x)
+                    if prob.lims is not None:
+                        mean /= density.integrate(mean)
+                Mises[i] += np.sum((mean - density.P) ** 2) / np.sum(mean ** 2)
+        except BandwidthError:
+            failures += 1
+    Mises /= (nsim - failures - 1)
+    if failures:
+        logging.warning('%s failures for 1D bandwidth with %s' % (failures, prob.label))
     return scales, Mises
 
 
@@ -107,6 +128,7 @@ class Test1DDistributions(object):
         self.skew = Mixture1D([0, 1], [1, 0.4], [0.6, 0.4], label='skew')
         self.tailed = Mixture1D([0, 0], [1, 3], [0.8, 0.2], label='tailed')
         self.flat = Gaussian1D(0, 3, xmin=-1, xmax=2, label='flat')
+
         self.broad = Mixture1D([0, 0.3], [1, 2], [0.6, 0.4], label='broad')
         self.flat_top = Mixture1D([0, 1.5, 3], [1, 1, 1], [0.4, 0.2, 0.4], label='flat top')
         self.bimodal = []
@@ -141,17 +163,16 @@ class Test2DDistributions(object):
         cov = make_2D_Cov(np.sqrt(0.5), 1, 0.1)
         self.broadtail = Mixture2D([[0, 0], [0, 0.2]], [cov, cov * 8], [0.9, 0.1], label='broad tail')
 
-        self.tensorlike = Mixture2D([[0, 0.03], [0, 0.03]], [(0.03, 0.03, 0.1), (0.03, 0.06, 0.1)], [0.85, 0.15],
-                                    ymin=0, label='tensor like')
-
         self.rotating = Mixture2D([[0, 0], [0, 0.2]], [(1, 1, 0.5), (2, 2, -0.5)], [0.6, 0.4], label='rotating')
 
         self.tight = Mixture2D([[0, 0], [2.5, 3.5]], [(1, 1, 0.99), (1, 1.5, 0.98)], [0.6, 0.4], label='tight')
 
         self.cut_correlated = Gaussian2D([0, 0], (0.7, 1, 0.95), ymin=0.3, xmax=1.2, label='cut correlated')
 
+        self.flat = Gaussian2D([0, 0], (1, 2, 0), ymin=-1, ymax=2.1, xmin=-1, xmax=0.2, label='flat')
+
         self.shape_set = [self.gauss, self.bending, self.hammer, self.skew, self.broadtail, self.rotating, self.tight,
-                          self.cut_correlated, self.tensorlike]
+                          self.cut_correlated, self.flat]
 
         self.cut_gaussians = self.cutGaussians((0.7, 1, 0.3))
 
@@ -193,7 +214,7 @@ class Test2DDistributions(object):
 
 
 def plot_compare_method(ax, prob, colors=['k'], sims=100, nsamp=default_nsamp,
-                        scalings=[0.3, 0.5, 0.7, 0.9, 1, 1.1, 1.3, 1.5], test_settings=[None], linestyles=['-']):
+                        scalings=[0.3, 0.5, 0.7, 0.9, 1, 1.1, 1.3, 1.5, 1.7], test_settings=[None], linestyles=['-']):
     # compare Parzen estimator with higher order
     print(prob.label, ', size = ', nsamp)
     if len(colors) == 1: colors = colors * len(scalings)
@@ -212,9 +233,7 @@ def plot_compare_method(ax, prob, colors=['k'], sims=100, nsamp=default_nsamp,
     ax.set_xlim([scalings[0], scalings[-1]])
 
 
-#    ax.set_yticks(ax.get_yticks()[1:-1])
-
-def plot_compare_probs_methods(ax, probs, colors=['b', 'r', 'k', 'm', 'c'], **kwargs):
+def plot_compare_probs_methods(ax, probs, colors=plt.rcParams["axes.prop_cycle"].by_key()["color"], **kwargs):
     for prob, col in zip(probs, colors):
         plot_compare_method(ax, prob, col, **kwargs)
 
@@ -232,7 +251,8 @@ def compare_method(probs, nx=2, fname='', **kwargs):
     for i, prob in enumerate(probs):
         ax = axs.reshape(-1)[i]
         plot_compare_method(ax, prob, **kwargs)
-        ax.text(0.05, 0.06, prob.label, transform=ax.transAxes, horizontalalignment='left')
+        ax.text(0.05, 0.06, prob.label, transform=ax.transAxes,
+                horizontalalignment='left', bbox=dict(facecolor='floralwhite', alpha=0.9))
         ax.axvline(1, color='gray', ls='--', alpha=0.5)
         if prob.dim == 2:
             if kwargs.get('nsamp') > 15000:
@@ -244,8 +264,7 @@ def compare_method(probs, nx=2, fname='', **kwargs):
                 ax.set_ylim(6e-6, 8e-4)
             elif kwargs.get('nsamp') > 5000:
                 ax.set_ylim(4e-5, 6e-3)
-    plt.subplots_adjust()
-    plt.tight_layout(0, 0, 0)
+    plt.subplots_adjust(wspace=0, hspace=0)
     if fname: fig.savefig(fname, bbox_inches='tight')
 
 
@@ -254,68 +273,65 @@ def join_subplots(ax_array):
         if ax is not None:
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
-    plt.tight_layout(0, 0, 0)
+    plt.subplots_adjust(wspace=0, hspace=0)
 
 
-def run_test_program():
+def run_test_program(plots=['dists_2D', 'dists_1D', 'ISE_1D', 'ISE_2D'], sims=100, nsamp=default_nsamp, mbc=1, bco=1):
     import time
-    import argparse
 
-    parser = argparse.ArgumentParser(description='make getdist test plots from test Gaussian mixture distributions')
-    parser.add_argument('--sims', type=int, default=100, help='Number of simulations per case')
-    parser.add_argument('--nsamp', type=int, default=10000, help='Number of (independent) samples per simulation')
-    parser.add_argument('--plots', nargs='*', default=['dists_1D', 'dists_2D'], help='names of plots to make')
-    parser.add_argument('--mbc', type=int, default=1, help='mult_bias_correction_order')
-    parser.add_argument('--bco', type=int, default=1, help='boundary_correction_order')
-
-    args = parser.parse_args()
+    chains.print_load_details = False
+    plt.rc("ytick", direction="in")
+    plt.rc("xtick", direction="in")
 
     test1D = Test1DDistributions()
     test2D = Test2DDistributions()
-    test_settings = {'mult_bias_correction_order': args.mbc, 'boundary_correction_order': args.bco,
+    test_settings = {'mult_bias_correction_order': mbc, 'boundary_correction_order': bco,
                      'smooth_scale_1D': -1, 'smooth_scale_2D': -1}
-    g = plots.getSubplotPlotter(subplot_size=2)
+    g = getSubplotPlotter(subplot_size=2)
 
-    if 'ISE_1D' in args.plots:
+    colors = ['k', 'C0', 'C1', 'C2', 'C3', 'C4']
+
+    if 'ISE_1D' in plots:
         compare_method(test1D.distributions(), nx=3,
                        test_settings=[{'mult_bias_correction_order': 1, 'boundary_correction_order': 1},
                                       {'mult_bias_correction_order': 2, 'boundary_correction_order': 1},
                                       {'mult_bias_correction_order': 0, 'boundary_correction_order': 0},
                                       {'mult_bias_correction_order': 0, 'boundary_correction_order': 1},
                                       {'mult_bias_correction_order': 0, 'boundary_correction_order': 2},
-                                      ], colors=['k', 'b', 'r', 'm', 'c', 'g'], linestyles=['-', '-', ':', '-.', '--'],
-                       fname='compare_method_1d_N%s.pdf' % args.nsamp,
-                       sims=args.sims, nsamp=args.nsamp
+                                      ], colors=colors, linestyles=['-', '-', ':', '-.', '--'],
+                       fname='compare_method_1d_N%s.pdf' % nsamp,
+                       sims=sims, nsamp=nsamp
                        )
 
-    if 'ISE_2D' in args.plots:
+    if 'ISE_2D' in plots:
         compare_method(test2D.distributions(), nx=4,
                        test_settings=[{'mult_bias_correction_order': 1, 'boundary_correction_order': 1},
                                       {'mult_bias_correction_order': 2, 'boundary_correction_order': 1},
                                       {'mult_bias_correction_order': 0, 'boundary_correction_order': 0},
                                       {'mult_bias_correction_order': 0, 'boundary_correction_order': 1},
-                                      ], colors=['k', 'b', 'r', 'm', 'c', 'g'], linestyles=['-', '-', ':', '-.', '--'],
-                       fname='compare_method_2d_N%s.pdf' % args.nsamp,
-                       sims=args.sims, nsamp=args.nsamp
+                                      ], colors=colors, linestyles=['-', '-', ':', '-.', '--'],
+                       fname='compare_method_2d_N%s.pdf' % nsamp,
+                       sims=sims, nsamp=nsamp
                        )
 
-    if args.plots is None or 'dists_1D' in args.plots:
+    if plots is None or 'dists_1D' in plots:
         g.newPlot()
         start = time.time()
-        compare1D(g, test1D.distributions(), nsamp=args.nsamp, settings=test_settings)
+        compare1D(g, test1D.distributions(), nsamp=nsamp, settings=test_settings)
         print('1D timing:', time.time() - start)
         join_subplots(g.subplots)
-        plt.savefig('test_dists_1D_mbc%s_bco%s_N%s.pdf' % (args.mbc, args.bco, args.nsamp), bbox_inches='tight')
+        plt.savefig('test_dists_1D_mbc%s_bco%s_N%s.pdf' % (mbc, bco, nsamp), bbox_inches='tight')
 
-    if args.plots is None or 'dists_2D' in args.plots:
+    if plots is None or 'dists_2D' in plots:
         g.newPlot()
         start = time.time()
-        compare2D(g, test2D.distributions(), nsamp=args.nsamp, settings=test_settings)
+        compare2D(g, test2D.distributions(), nsamp=nsamp, settings=test_settings)
         print('2D timing:', time.time() - start)
         join_subplots(g.subplots)
-        plt.savefig('test_dists_2D_mbc%s_bco%s_N%s.pdf' % (args.mbc, args.bco, args.nsamp), bbox_inches='tight')
+        plt.savefig('test_dists_2D_mbc%s_bco%s_N%s.pdf' % (mbc, bco, nsamp), bbox_inches='tight')
 
-    plt.show()
+    if plt.get_backend() != 'agg':
+        plt.show()
     if False:
         print('testing 1D gaussian MISE...')
         scales, MISEs = get1DMises(test1D.gauss)
@@ -328,4 +344,17 @@ def run_test_program():
 
 
 if __name__ == "__main__":
-    run_test_program()
+    # program to make the 1D and 2D plots in the getdist notes comparison method accuracies
+    # To get all four plots use python test_distributions.py --plots ISE_1D ISE_2D dists_1D dists_2D
+
+    # run_test_program(sims=10, nsamp=default_nsamp)
+    import argparse
+
+    parser = argparse.ArgumentParser(description='make getdist test plots from test Gaussian mixture distributions')
+    parser.add_argument('--sims', type=int, default=100, help='Number of simulations per case')
+    parser.add_argument('--nsamp', type=int, default=10000, help='Number of (independent) samples per simulation')
+    parser.add_argument('--plots', nargs='*', default=['dists_1D', 'dists_2D'], help='names of plots to make')
+    parser.add_argument('--mbc', type=int, default=1, help='mult_bias_correction_order')
+    parser.add_argument('--bco', type=int, default=1, help='boundary_correction_order')
+    args = parser.parse_args()
+    run_test_program(**vars(args))

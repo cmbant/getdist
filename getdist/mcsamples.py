@@ -43,6 +43,13 @@ class ParamError(MCSamplesError):
     pass
 
 
+class BandwidthError(MCSamplesError):
+    """
+    An Exception that indicate KDE bandwidth failure.
+    """
+    pass
+
+
 def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}, dist_settings={}):
     """
     Loads a set of samples from a file or files.
@@ -1180,14 +1187,16 @@ class MCSamples(Chains):
             hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / bin_range
             if par.name not in self.no_warning_params \
                     and (not self.no_warning_chi2_params or 'chi2_' not in par.name):
-                logging.warning(
-                    'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
-                        par.name, h, N_eff, hnew))
+                msg = 'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
+                    par.name, h, N_eff, hnew)
+                if getattr(self, 'raise_on_bandwidth_errors', False):
+                    raise BandwidthError(msg)
+                else:
+                    logging.warning(msg)
             h = hnew
 
         par.kde_h = h
-        m = mult_bias_correction_order
-        if m is None: m = self.mult_bias_correction_order
+        m = self.mult_bias_correction_order if mult_bias_correction_order is None else mult_bias_correction_order
         if kernel_order > 1: m = max(m, 1)
         if m:
             # higher order method
@@ -1226,9 +1235,12 @@ class MCSamples(Chains):
         has_limits = parx.has_limits or pary.has_limits
         do_correlated = not parx.has_limits or not pary.has_limits
 
-        def fallback_widths():
-            logging.warning('2D kernel density bandwidth optimizer failed for %s, %s. Using fallback width.' % (
-                parx.name, pary.name))
+        def fallback_widths(e):
+            msg = '2D kernel density bandwidth optimizer failed for %s, %s. Using fallback width: %s' % (
+                parx.name, pary.name, e)
+            if getattr(self, 'raise_on_bandwidth_errors', False):
+                raise BandwidthError(msg)
+            logging.warning(msg)
             c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
             hx = parx.sigma_range / N_eff ** (1. / 6)
             hy = pary.sigma_range / N_eff ** (1. / 6)
@@ -1272,20 +1284,22 @@ class MCSamples(Chains):
                 if pary.has_limits:
                     hx, hy = hy, hx
                     # print 'derotated pars', hx, hy, c
-            except ValueError:
-                hx, hy, c = fallback_widths()
+            except ValueError as e:
+                hx, hy, c = fallback_widths(e)
         elif abs(corr) > self.max_corr_2D or not do_correlated and corr > 0.8:
             c = max(min(corr, self.max_corr_2D), -self.max_corr_2D)
             hx = parx.sigma_range / N_eff ** (1. / 6)
             hy = pary.sigma_range / N_eff ** (1. / 6)
         else:
             try:
-                opt = kde.KernelOptimizer2D(bins, N_eff, corr, do_correlation=not has_limits)
+                opt = kde.KernelOptimizer2D(bins, N_eff, corr, do_correlation=not has_limits,
+                                            fallback_t=(min(pary.sigma_range / rangey,
+                                                            parx.sigma_range / rangex) / N_eff ** (1. / 6)) ** 2)
                 hx, hy, c = opt.get_h()
                 hx *= rangex
                 hy *= rangey
-            except ValueError:
-                hx, hy, c = fallback_widths()
+            except ValueError as e:
+                hx, hy, c = fallback_widths(e)
 
         if mult_bias_correction_order is None: mult_bias_correction_order = self.mult_bias_correction_order
         logging.debug('hx/sig, hy/sig, corr =%s, %s, %s', hx / parx.err, hy / pary.err, c)
@@ -1449,10 +1463,10 @@ class MCSamples(Chains):
                       smooth_1D)
 
         winw = min(int(round(2.5 * smooth_1D)), fine_bins // 2 - 2)
-        Kernel = Kernel1D(winw, smooth_1D)
+        kernel = Kernel1D(winw, smooth_1D)
 
         cache = {}
-        conv = convolve1D(bins, Kernel.Win, 'same', cache=cache)
+        conv = convolve1D(bins, kernel.Win, 'same', cache=cache)
         fine_x = np.linspace(binmin, binmax, fine_bins)
         density1D = Density1D(fine_x, P=conv, view_ranges=[par.range_min, par.range_max])
 
@@ -1467,7 +1481,7 @@ class MCSamples(Chains):
             if par.has_limits_top:
                 prior_mask[-(winw + 1)] = 0.5
                 prior_mask[-winw:] = 0
-            a0 = convolve1D(prior_mask, Kernel.Win, 'valid', cache=cache)
+            a0 = convolve1D(prior_mask, kernel.Win, 'valid', cache=cache)
             ix = np.nonzero(a0 * density1D.P)
             a0 = a0[ix]
             normed = density1D.P[ix] / a0
@@ -1477,17 +1491,17 @@ class MCSamples(Chains):
                 # linear boundary kernel, e.g. Jones 1993, Jones and Foster 1996
                 # www3.stat.sinica.edu.tw/statistica/oldpdf/A6n414.pdf after Eq 1b, expressed for general prior mask
                 # cf arXiv:1411.5528
-                xWin = Kernel.Win * Kernel.x
+                xWin = kernel.Win * kernel.x
                 a1 = convolve1D(prior_mask, xWin, 'valid', cache=cache)[ix]
-                a2 = convolve1D(prior_mask, xWin * Kernel.x, 'valid', cache=cache, cache_args=[1])[ix]
+                a2 = convolve1D(prior_mask, xWin * kernel.x, 'valid', cache=cache, cache_args=[1])[ix]
                 xP = convolve1D(bins, xWin, 'same', cache=cache)[ix]
                 if boundary_correction_order == 1:
                     corrected = (density1D.P[ix] * a2 - xP * a1) / (a0 * a2 - a1 ** 2)
                 else:
                     # quadratic correction
-                    a3 = convolve1D(prior_mask, xWin * Kernel.x ** 2, 'valid', cache=cache, cache_args=[1])[ix]
-                    a4 = convolve1D(prior_mask, xWin * Kernel.x ** 3, 'valid', cache=cache, cache_args=[1])[ix]
-                    x2P = convolve1D(bins, xWin * Kernel.x, 'same', cache=cache, cache_args=[1])[ix]
+                    a3 = convolve1D(prior_mask, xWin * kernel.x ** 2, 'valid', cache=cache, cache_args=[1])[ix]
+                    a4 = convolve1D(prior_mask, xWin * kernel.x ** 3, 'valid', cache=cache, cache_args=[1])[ix]
+                    x2P = convolve1D(bins, xWin * kernel.x, 'same', cache=cache, cache_args=[1])[ix]
                     denom = a4 * a2 * a0 - a4 * a1 ** 2 - a2 ** 3 - a3 ** 2 * a0 + 2 * a1 * a2 * a3
                     A = a4 * a2 - a3 ** 2
                     B = a2 * a3 - a4 * a1
@@ -1499,10 +1513,10 @@ class MCSamples(Chains):
         elif boundary_correction_order == 2:
             # higher order kernel
             # eg. see http://www.jstor.org/stable/2965571
-            xWin2 = Kernel.Win * Kernel.x ** 2
+            xWin2 = kernel.Win * kernel.x ** 2
             x2P = convolve1D(bins, xWin2, 'same', cache=cache)
             a2 = np.sum(xWin2)
-            a4 = np.dot(xWin2, Kernel.x ** 2)
+            a4 = np.dot(xWin2, kernel.x ** 2)
             corrected = (density1D.P * a4 - a2 * x2P) / (a4 - a2 ** 2)
             ix = density1D.P > 0
             density1D.P[ix] *= np.exp(np.minimum(corrected[ix] / density1D.P[ix], 2) - 1)
@@ -1513,14 +1527,14 @@ class MCSamples(Chains):
                 prior_mask[0] *= 0.5
             if par.has_limits_top:
                 prior_mask[-1] *= 0.5
-            a0 = convolve1D(prior_mask, Kernel.Win, 'same', cache=cache, cache_args=[2])
+            a0 = convolve1D(prior_mask, kernel.Win, 'same', cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
                 # estimate using flattened samples to remove second order biases
                 # mostly good performance, see http://www.jstor.org/stable/2965571 method 3,1 for first order
                 prob1 = density1D.P.copy()
                 prob1[prob1 == 0] = 1
                 fine = bins / prob1
-                conv = convolve1D(fine, Kernel.Win, 'same', cache=cache, cache_args=[2])
+                conv = convolve1D(fine, kernel.Win, 'same', cache=cache, cache_args=[2])
                 density1D.setP(density1D.P * conv)
                 density1D.P /= a0
 
@@ -1532,7 +1546,7 @@ class MCSamples(Chains):
         if meanlikes:
             ix = density1D.P > 0
             finebinlikes[ix] /= density1D.P[ix]
-            binlikes = convolve1D(finebinlikes, Kernel.Win, 'same', cache=cache, cache_args=[2])
+            binlikes = convolve1D(finebinlikes, kernel.Win, 'same', cache=cache, cache_args=[2])
             binlikes[ix] *= density1D.P[ix] / rawbins[ix]
             if self.shade_likes_is_mean_loglikes:
                 maxbin = np.min(binlikes)

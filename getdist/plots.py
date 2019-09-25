@@ -1910,7 +1910,8 @@ class GetDistPlotter(object):
             else:
                 axis.set_ticks(tick)
 
-    def _inner_ticks(self, ax, top_and_left=True):
+    @staticmethod
+    def _inner_ticks(ax, top_and_left=True):
         for ax in [ax.get_xaxis(), ax.get_yaxis()]:
             ax.set_tick_params(which='both', direction='in', right=top_and_left, top=top_and_left)
 
