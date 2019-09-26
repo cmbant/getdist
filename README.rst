@@ -53,14 +53,21 @@ use the GUI program GetDistGUI.py.
 
 Dependencies
 =============
-* Python 2.7+ or 3.4+
+* Python 2.7+ or 3.6+
 * matplotlib
 * scipy
-* PySide (optional, only needed for GUI)
-* Working LaTeX installation (for some plotting/table functions)
+* PySide (Python 2) or PySide2 (Python 3) - optional, only needed for GUI
+* Working LaTeX installation (not essential, only for some plotting/table functions)
 
-Python distributions like Anaconda have most of what you need (except for LaTeX). To install binary backages on Linux-like systems
-install pacakages *py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.
+Python distributions like Anaconda have most of what you need (except for LaTeX).
+
+To use the GUI, installing PySide2 in Python 3 can be tricky. Try using `Anaconda <https://www.anaconda.com/distribution/>`_,
+making a consistent new environment from conda-forge (which includes PySide2) using::
+
+  conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib packaging PySide2
+
+To install binary backages on Linux-like systems install pacakages
+*py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.
 For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/install.php>`_::
 
    sudo port install python27

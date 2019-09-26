@@ -4,7 +4,13 @@ from __future__ import absolute_import
 from __future__ import print_function
 import sys
 import logging
-import getdist
+
+try:
+    import getdist
+except ImportError:
+    import os
+    sys.path.insert(0, os.path.realpath(os.path.dirname(__file__)))
+    import getdist
 
 try:
     import argparse
@@ -12,11 +18,7 @@ except ImportError:
     print('use "module load" to load python 2.7+ or 3.6+, or see docs/readme_python.html for how to install')
     sys.exit()
 
-try:
-    from getdist.gui.mainwindow import MainWindow, QApplication
-except ImportError:
-    print("Could not find getdist.gui.mainwindow: configure your PYTHONPATH as described in the readme!")
-    raise
+from getdist.gui.mainwindow import MainWindow, QApplication
 
 parser = argparse.ArgumentParser(description='GetDist GUI')
 parser.add_argument('-v', '--verbose', help='verbose', action="store_true")

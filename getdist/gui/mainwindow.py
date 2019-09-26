@@ -28,47 +28,33 @@ else:
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
+if pyside_version == 2:
+    import PySide2 as PySide
+    from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
+    from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
+    from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
+        QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
+        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
+        QLabel, QTableWidget, QListWidgetItem, QTextEdit
+
+    os.environ['QT_API'] = 'pyside2'
+else:
+    import PySide
+    from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
+    from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
+        QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
+        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
+        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption, QImage, QPixmap
+
+    os.environ['QT_API'] = 'pyside'
+
 try:
     if pyside_version == 2:
-        import PySide2 as PySide
-        from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
-        from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
-        from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
-            QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
-            QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-            QLabel, QTableWidget, QListWidgetItem, QTextEdit
-
-        os.environ['QT_API'] = 'pyside2'
+        import getdist.gui.Resources_pyside2
     else:
-        import PySide
-        from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
-        from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
-            QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
-            QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-            QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption, QImage, QPixmap
-
-        os.environ['QT_API'] = 'pyside'
-
-    try:
-        if pyside_version == 2:
-            import getdist.gui.Resources_pyside2
-        else:
-            import getdist.gui.Resources_pyside
-    except ImportError:
-        print("Missing Resources_pyside.py: Run script update_resources.sh")
+        import getdist.gui.Resources_pyside
 except ImportError:
-    if six.PY3:
-        print(
-            "Can't import PySide modules, for python 3 you need to install Pyside using 'conda install -c conda-forge pyside2'")
-    else:
-        print("Can't import PySide modules, install PySide")
-        if 'conda' in sys.version:
-            print("To install use 'conda install pyside' or 'conda install -c conda-forge pyside'")
-        else:
-            print(
-                "Use 'pip install PySide', or to avoid compile errors install pre-build package using apt get install.")
-            print("Alternatively switch to using Anaconda python distribution and get it with that.")
-    sys.exit()
+    print("Missing Resources_pyside.py: Run script update_resources.sh")
 
 from paramgrid import batchjob, gridconfig
 

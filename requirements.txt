@@ -2,3 +2,4 @@ numpy
 matplotlib>=2.0.0
 six
 scipy>=0.11.0
+packaging
