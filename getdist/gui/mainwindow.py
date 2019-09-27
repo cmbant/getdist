@@ -9,6 +9,7 @@ import numpy as np
 import scipy
 import sys
 import signal
+import warnings
 from io import BytesIO
 import six
 from collections import OrderedDict
@@ -51,10 +52,14 @@ else:
 try:
     if pyside_version == 2:
         import getdist.gui.Resources_pyside2
+
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)  # DPI support
+        QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
     else:
         import getdist.gui.Resources_pyside
 except ImportError:
     print("Missing Resources_pyside.py: Run script update_resources.sh")
+    sys.exit(-1)
 
 from paramgrid import batchjob, gridconfig
 
@@ -168,8 +173,7 @@ class MainWindow(QMainWindow):
                                  statusTip="Re-scan directory",
                                  triggered=self.reLoad)
 
-        self.exitAct = QAction(QIcon(":/images/application_exit.png"),
-                               "E&xit", self,
+        self.exitAct = QAction("E&xit", self,
                                shortcut="Ctrl+Q",
                                statusTip="Exit application",
                                triggered=self.close)
@@ -273,6 +277,8 @@ class MainWindow(QMainWindow):
         """
         Create widgets.
         """
+        self.setStyleSheet("* {font-size:8pt;} QComboBox,QPushButton {height:1.3em} ")
+
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
         self.tabWidget.setTabPosition(QTabWidget.South)
@@ -497,11 +503,20 @@ class MainWindow(QMainWindow):
 
     def readSettings(self):
         settings = self.getSettings()
-        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5., 700)
-        size = QSize(min(QApplication.desktop().screenGeometry().width() * 4 / 5., 900), h)
+        screen = QApplication.desktop().screenGeometry()
+        h = min(screen.height() * 4 / 5., 700)
+        size = QSize(min(screen.width() * 4 / 5., 900), h)
         pos = settings.value("pos", QPoint(100, 100))
-        size = settings.value("size", size)
-        self.resize(size)
+        savesize = settings.value("size", size)
+        if savesize.width() > screen.width():
+            savesize.setWidth(size.width())
+        if savesize.height() > screen.height():
+            savesize.setHeight(size.height())
+        self.resize(savesize)
+        if pos.x() + savesize.width() > screen.width():
+            pos.setX(screen.width() - savesize.width())
+        if pos.y() + savesize.height() > screen.height():
+            pos.setY(screen.height() - savesize.height())
         self.move(pos)
         self.plot_module = settings.value("plot_module", self.plot_module)
         self.script_plot_module = settings.value("script_plot_module", self.script_plot_module)
@@ -794,7 +809,10 @@ class MainWindow(QMainWindow):
             "\nSciPy: " + scipy.__version__ +
             "\nNumpy: " + np.__version__ +
             "\nPySide: " + PySide.__version__ +
-            "\nQt (PySide): " + PySide.QtCore.__version__)
+            "\nQt (PySide): " + PySide.QtCore.__version__ +
+            ("" if pyside_version == 1 else
+             "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
+                 self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY())))
 
     def getDirectories(self):
         return [self.listDirectories.itemText(i) for i in range(self.listDirectories.count())]
@@ -1491,12 +1509,18 @@ class MainWindow(QMainWindow):
         """
         Slot function called when pushButtonPlot2 is pressed.
         """
+
+        def set_rc(opts):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                matplotlib.rcParams.clear()
+                matplotlib.rcParams.update(opts)
+
         self.script_edit = self.textWidget.toPlainText()
         oldset = plots.defaultSettings
         oldrc = matplotlib.rcParams.copy()
         plots.defaultSettings = plots.GetDistPlotSettings()
-        matplotlib.rcParams.clear()
-        matplotlib.rcParams.update(self.orig_rc)
+        set_rc(self.orig_rc)
         self.showMessage("Rendering plot....")
         try:
             script_exec = self.script_edit
@@ -1516,8 +1540,7 @@ class MainWindow(QMainWindow):
             self.errorReport(e, caption="Plot script")
         finally:
             plots.defaultSettings = oldset
-            matplotlib.rcParams.clear()
-            matplotlib.rcParams.update(oldrc)
+            set_rc(oldrc)
             self.showMessage()
 
     def updateScriptPreview(self, plotter):
@@ -1543,7 +1566,7 @@ class MainWindow(QMainWindow):
             format='png',
             edgecolor='w',
             facecolor='w',
-            dpi=100,
+            dpi=96 if pyside_version == 1 else self.logicalDpiX() * self.devicePixelRatio(),
             bbox_extra_artists=plotter.extra_artists,
             bbox_inches='tight')
         buf.seek(0)
@@ -1551,13 +1574,14 @@ class MainWindow(QMainWindow):
         image = QImage.fromData(buf.getvalue())
 
         pixmap = QPixmap.fromImage(image)
+        if pyside_version > 1:
+            pixmap.setDevicePixelRatio(self.devicePixelRatio())
         label = QLabel(self.scrollArea)
         label.setPixmap(pixmap)
 
         self.scrollArea = QScrollArea(self.plotWidget2)
         self.scrollArea.setWidget(label)
         self.scrollArea.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        # self.scrollArea.setStyleSheet("background-color: rgb(255,255,255)")
 
         self.plotWidget2.layout().addWidget(self.scrollArea)
         self.plotWidget2.layout()
@@ -1749,8 +1773,10 @@ class DialogParamTables(DialogTextOutput):
     def tabChanged(self, index):
         if not self.generated[index]:
             viewWidget = QWidget(self.tabs[index])
-            buf = self.tables[index].tablePNG(bytesIO=True)
+            dpi = None if pyside_version == 1 else self.logicalDpiX() * self.devicePixelRatio()
+            buf = self.tables[index].tablePNG(bytesIO=True, dpi=dpi)
             pixmap = QPixmap.fromImage(QImage.fromData(buf.getvalue()))
+            if pyside_version > 1: pixmap.setDevicePixelRatio(self.devicePixelRatio())
             label = QLabel(viewWidget)
             label.setPixmap(pixmap)
             layout = QGridLayout()
