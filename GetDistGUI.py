@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import
-from __future__ import print_function
 import sys
-import logging
 
 try:
     import getdist
@@ -13,30 +11,18 @@ except ImportError:
     sys.path.insert(0, os.path.realpath(os.path.dirname(__file__)))
     import getdist
 
-try:
-    import argparse
-except ImportError:
-    print('use "module load" to load python 2.7+ or 3.6+, or see docs/readme_python.html for how to install')
-    sys.exit()
+from getdist.gui.mainwindow import run_gui
 
-from getdist.gui.mainwindow import MainWindow, QApplication
+if sys.platform == "darwin":
+    # On Mac need to run .app with pList to get menu name right (and avoid menu bugs)
+    import subprocess
+    import os
 
-parser = argparse.ArgumentParser(description='GetDist GUI')
-parser.add_argument('-v', '--verbose', help='verbose', action="store_true")
-parser.add_argument('--ini', help='Path to .ini file', default=None)
-parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
-args = parser.parse_args()
-
-# Configure the logging
-level = logging.INFO
-if args.verbose:
-    level = logging.DEBUG
-FORMAT = '%(asctime).19s [%(levelname)s]\t[%(filename)s:%(lineno)d]\t\t%(message)s'
-logging.basicConfig(level=level, format=FORMAT)
-
-# GUI application
-app = QApplication(sys.argv)
-mainWin = MainWindow(app, ini=args.ini)
-mainWin.show()
-mainWin.raise_()
-sys.exit(app.exec_())
+    path = os.path.join(os.path.dirname(getdist.gui.__file__), 'GetDistGUI.app')
+    if os.path.exists(path):
+        subprocess.call(["/usr/bin/open", "-a", path], env=os.environ)
+    else:
+        print('GetDistGUI.app not found; package not installed or no valid PySide/PySide2')
+        run_gui()
+else:
+    run_gui()

@@ -19,17 +19,14 @@ import getdist
 from getdist import plots, IniFile
 from getdist.mcsamples import GetChainRootFiles, SettingError, ParamError
 from getdist.gui.SyntaxHighlight import PythonHighlighter
+from paramgrid import batchjob, gridconfig
 
 import matplotlib.pyplot as plt
 
 if pyside_version == 2:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-else:
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+    from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as QNavigationToolbar
 
-if pyside_version == 2:
     import PySide2 as PySide
     from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
     from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
@@ -39,7 +36,16 @@ if pyside_version == 2:
         QLabel, QTableWidget, QListWidgetItem, QTextEdit
 
     os.environ['QT_API'] = 'pyside2'
+
+
+    class NavigationToolbar(QNavigationToolbar):
+        def sizeHint(self):
+            return QToolBar.sizeHint(self)
+
 else:
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+
     import PySide
     from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
     from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
@@ -60,8 +66,6 @@ try:
 except ImportError:
     print("Missing Resources_pyside.py: Run script update_resources.sh")
     sys.exit(-1)
-
-from paramgrid import batchjob, gridconfig
 
 
 # ==============================================================================
@@ -95,6 +99,9 @@ class MainWindow(QMainWindow):
         """
         super(MainWindow, self).__init__()
 
+        self.setWindowTitle("GetDist GUI")
+        self.setWindowIcon(QIcon(':/images/Icon.png'))
+
         if base_dir is None: base_dir = batchjob.getCodeRootPath()
         os.chdir(base_dir)
         self.updating = False
@@ -116,8 +123,6 @@ class MainWindow(QMainWindow):
         self.custom_plot_settings = {}
 
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.setWindowTitle("GetDist GUI")
-        self.setWindowIcon(QIcon(':/images/Icon.png'))
         if os.name == 'nt':
             # This is needed to display the app icon on the taskbar on Windows 7
             import ctypes
@@ -159,13 +164,11 @@ class MainWindow(QMainWindow):
         """
         Create Qt actions used in GUI.
         """
-        self.exportAct = QAction(QIcon(":/images/file_export.png"),
-                                 "&Export as PDF/Image", self,
+        self.exportAct = QAction("&Export as PDF/Image", self,
                                  statusTip="Export image as PDF, PNG, JPG",
                                  triggered=self.export)
 
-        self.scriptAct = QAction(QIcon(":/images/file_save.png"),
-                                 "Save script", self,
+        self.scriptAct = QAction("Save script", self,
                                  statusTip="Export commands to script",
                                  triggered=self.saveScript)
 
@@ -173,61 +176,52 @@ class MainWindow(QMainWindow):
                                  statusTip="Re-scan directory",
                                  triggered=self.reLoad)
 
-        self.exitAct = QAction("E&xit", self,
+        self.exitAct = QAction("Exit", self,
                                shortcut="Ctrl+Q",
                                statusTip="Exit application",
                                triggered=self.close)
 
-        self.statsAct = QAction(QIcon(":/images/view_text.png"),
-                                "Marge Stats", self,
+        self.statsAct = QAction("Marge Stats", self,
                                 shortcut="",
                                 statusTip="Show Marge Stats",
                                 triggered=self.showMargeStats)
 
-        self.likeStatsAct = QAction(QIcon(":/images/view_text.png"),
-                                    "Like Stats", self,
+        self.likeStatsAct = QAction("Like Stats", self,
                                     shortcut="",
                                     statusTip="Show Likelihood (N-D) Stats",
                                     triggered=self.showLikeStats)
 
-        self.convergeAct = QAction(QIcon(":/images/view_text.png"),
-                                   "Converge Stats", self,
+        self.convergeAct = QAction("Converge Stats", self,
                                    shortcut="",
                                    statusTip="Show Convergence Stats",
                                    triggered=self.showConvergeStats)
 
-        self.PCAAct = QAction(QIcon(":/images/view_text.png"),
-                              "Parameter PCA", self,
+        self.PCAAct = QAction("Parameter PCA", self,
                               shortcut="",
                               statusTip="Do PCA of selected parameters",
                               triggered=self.showPCA)
 
-        self.paramTableAct = QAction(QIcon(""),
-                                     "Parameter table (latex)", self,
+        self.paramTableAct = QAction("Parameter table (latex)", self,
                                      shortcut="",
                                      statusTip="View parameter table",
                                      triggered=self.showParamTable)
 
-        self.optionsAct = QAction(QIcon(""),
-                                  "Analysis settings", self,
+        self.optionsAct = QAction("Analysis settings", self,
                                   shortcut="",
                                   statusTip="Show settings for getdist and plot densities",
                                   triggered=self.showSettings)
 
-        self.plotOptionsAct = QAction(QIcon(""),
-                                      "Plot settings", self,
+        self.plotOptionsAct = QAction("Plot settings", self,
                                       shortcut="",
                                       statusTip="Show settings for plot display",
                                       triggered=self.showPlotSettings)
 
-        self.configOptionsAct = QAction(QIcon(""),
-                                        "Plot module config ", self,
+        self.configOptionsAct = QAction("Plot module config ", self,
                                         shortcut="",
                                         statusTip="Configure plot module",
                                         triggered=self.showConfigSettings)
 
-        self.aboutAct = QAction(QIcon(":/images/help_about.png"),
-                                "&About", self,
+        self.aboutAct = QAction("About", self,
                                 statusTip="Show About box",
                                 triggered=self.about)
 
@@ -235,15 +229,17 @@ class MainWindow(QMainWindow):
         """
         Create Qt menus.
         """
-        self.fileMenu = self.menuBar().addMenu("&File")
+        menu = self.menuBar()
+        self.menu = menu
+        self.fileMenu = menu.addMenu("&File")
         self.fileMenu.addAction(self.exportAct)
         self.fileMenu.addAction(self.scriptAct)
         self.separatorAct = self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.reLoadAct)
         self.fileMenu.addAction(self.exitAct)
 
-        self.menuBar().addSeparator()
-        self.dataMenu = self.menuBar().addMenu("&Data")
+        menu.addSeparator()
+        self.dataMenu = menu.addMenu("&Data")
         self.dataMenu.addAction(self.statsAct)
         self.dataMenu.addAction(self.likeStatsAct)
         self.dataMenu.addAction(self.convergeAct)
@@ -251,21 +247,22 @@ class MainWindow(QMainWindow):
         self.dataMenu.addAction(self.PCAAct)
         self.dataMenu.addAction(self.paramTableAct)
 
-        self.menuBar().addSeparator()
-        self.optionMenu = self.menuBar().addMenu("&Options")
+        menu.addSeparator()
+        self.optionMenu = menu.addMenu("&Options")
         self.optionMenu.addAction(self.optionsAct)
         self.optionMenu.addAction(self.plotOptionsAct)
         self.optionMenu.addAction(self.configOptionsAct)
 
-        self.menuBar().addSeparator()
+        menu.addSeparator()
 
-        self.helpMenu = self.menuBar().addMenu("&Help")
+        self.helpMenu = menu.addMenu("&Help")
         self.helpMenu.addAction(self.aboutAct)
 
     def createStatusBar(self):
         """
         Create Qt status bar.
         """
+        self.statusBar().setStyleSheet("height:1em")
         self.statusBar().showMessage("Ready", 2000)
 
     def showMessage(self, msg=''):
@@ -277,7 +274,7 @@ class MainWindow(QMainWindow):
         """
         Create widgets.
         """
-        self.setStyleSheet("* {font-size:8pt;} QComboBox,QPushButton {height:1.3em} ")
+        self.setStyleSheet("* {font-size:8pt} QComboBox,QPushButton {height:1.3em} QToolButton {}")
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
@@ -300,6 +297,7 @@ class MainWindow(QMainWindow):
             self.pushButtonSelect = QPushButton(QIcon(":/images/file_add.png"), "", self.selectWidget)
         else:
             self.pushButtonSelect = QPushButton(u"+", self.selectWidget)
+            self.pushButtonSelect.setStyleSheet("font-size:10pt; font-weight:bold")
 
         self.pushButtonSelect.setToolTip("Open chain file root directory")
         self.connect(self.pushButtonSelect, SIGNAL("clicked()"),
@@ -317,6 +315,7 @@ class MainWindow(QMainWindow):
             self.pushButtonRemove = QPushButton(QIcon(":/images/file_remove.png"), "", self.selectWidget)
         else:
             self.pushButtonRemove = QPushButton(u"\u00d7", self.selectWidget)
+            self.pushButtonRemove.setStyleSheet("font-size:10pt; font-weight:bold")
 
         self.pushButtonRemove.setToolTip("Remove a chain root")
         self.connect(self.pushButtonRemove, SIGNAL("clicked()"),
@@ -432,6 +431,7 @@ class MainWindow(QMainWindow):
 
         hbox = QHBoxLayout()
         hbox.addWidget(splitter)
+        hbox.setContentsMargins(0, 0, 0, 0)
         self.firstWidget.setLayout(hbox)
 
         # Second tab: Script
@@ -443,15 +443,20 @@ class MainWindow(QMainWindow):
         self.plotter_script = None
 
         self.toolBar = QToolBar()
-        openAct = QAction(QIcon(":/images/file_open.png"),
+        self.toolBar.setIconSize(QSize(20, 20))
+
+        def icon(name):
+            return QIcon(":/images/%s.png" % name)
+
+        openAct = QAction(icon("file_open"),
                           "open script", self.toolBar,
                           statusTip="Open script",
                           triggered=self.openScript)
-        saveAct = QAction(QIcon(":/images/file_save.png"),
+        saveAct = QAction(icon("file_save"),
                           "Save script", self.toolBar,
                           statusTip="Save script",
                           triggered=self.saveScript)
-        clearAct = QAction(QIcon(":/images/view_clear.png"),
+        clearAct = QAction(icon("view_clear"),
                            "Clear", self.toolBar,
                            statusTip="Clear",
                            triggered=self.clearScript)
@@ -473,13 +478,16 @@ class MainWindow(QMainWindow):
         layoutEdit.addWidget(self.toolBar)
         layoutEdit.addWidget(self.textWidget)
         layoutEdit.addWidget(self.pushButtonPlot2)
+        layoutEdit.setContentsMargins(0, 0, 0, 0)
+        layoutEdit.setSpacing(0)
         self.editWidget.setLayout(layoutEdit)
 
         self.plotWidget2 = QWidget(self.secondWidget)
         layout2 = QVBoxLayout(self.plotWidget2)
+        layout2.setContentsMargins(0, 0, 0, 0)
         self.plotWidget2.setLayout(layout2)
         self.scrollArea = QScrollArea(self.plotWidget2)
-        self.plotWidget2.layout().addWidget(self.scrollArea)
+        layout2.addWidget(self.scrollArea)
 
         splitter2 = QSplitter(self.secondWidget)
         splitter2.addWidget(self.editWidget)
@@ -489,6 +497,8 @@ class MainWindow(QMainWindow):
 
         hbox2 = QHBoxLayout()
         hbox2.addWidget(splitter2)
+        hbox2.setContentsMargins(0, 0, 0, 0)
+
         self.secondWidget.setLayout(hbox2)
 
         self.canvas = None
@@ -803,7 +813,9 @@ class MainWindow(QMainWindow):
         """
         QMessageBox.about(
             self, "About GetDist GUI",
-            "GetDist GUI v " + getdist.__version__ + "\nhttps://github.com/cmbant/getdist/\n" +
+            "GetDist GUI v " + getdist.__version__ +
+            "\nAntony Lewis (University of Sussex) and contributors" +
+            "\nhttps://github.com/cmbant/getdist/\n" +
             "\nPython: " + sys.version +
             "\nMatplotlib: " + matplotlib.__version__ +
             "\nSciPy: " + scipy.__version__ +
@@ -1458,8 +1470,8 @@ class MainWindow(QMainWindow):
             if hasattr(self, "canvas"): del self.canvas
             if hasattr(self, "toolbar"): del self.toolbar
             self.canvas = FigureCanvas(self.plotter.fig)
-            if sys.platform != "darwin":
-                # for some reason the toolbar crashes out on a Mac; just don't show it
+            if pyside_version > 1 or sys.platform != "darwin":
+                # for some reason the toolbar used to crash on a Mac
                 self.toolbar = NavigationToolbar(self.canvas, self)
                 self.plotWidget.layout().addWidget(self.toolbar)
             self.plotWidget.layout().addWidget(self.canvas)
@@ -1474,10 +1486,12 @@ class MainWindow(QMainWindow):
         Update script text editor when entering 'gui' tab.
         """
 
-        # Enable menu options for edition only
+        # Enable menu options for main tab only
         self.reLoadAct.setEnabled(index == 0)
         self.dataMenu.setEnabled(index == 0)
+        self.dataMenu.menuAction().setVisible(index == 0)
         self.optionMenu.setEnabled(index == 0)
+        self.optionMenu.menuAction().setVisible(index == 0)
 
         if index == 1 and self.script:
             self.script_edit = self.textWidget.toPlainText()
@@ -1490,6 +1504,8 @@ class MainWindow(QMainWindow):
 
             self.script_edit = self.script
             self.textWidget.setPlainText(self.script_edit)
+        if index == 1:
+            self.textWidget.setFocus()
 
     def openScript(self):
         filename, _ = QFileDialog.getOpenFileName(
@@ -1885,10 +1901,30 @@ class DialogConfigSettings(DialogSettings):
         self.parent().configSettingsChanged(self.getDict())
 
 
-if __name__ == "__main__":
+def run_gui():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='GetDist GUI')
+    parser.add_argument('-v', '--verbose', help='verbose', action="store_true")
+    parser.add_argument('--ini', help='Path to .ini file', default=None)
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
+    args = parser.parse_args()
+
+    # Configure the logging
+    level = logging.INFO
+    if args.verbose:
+        level = logging.DEBUG
+    form = '%(asctime).19s [%(levelname)s]\t[%(filename)s:%(lineno)d]\t\t%(message)s'
+    logging.basicConfig(level=level, format=form)
+
+    sys.argv[0] = 'GetDist GUI'
     app = QApplication(sys.argv)
-    mainWin = MainWindow(app)
+    app.setApplicationName("GetDist GUI")
+    mainWin = MainWindow(app, ini=args.ini)
     mainWin.show()
+    mainWin.raise_()
     sys.exit(app.exec_())
 
-# ==============================================================================
+
+if __name__ == "__main__":
+    run_gui()
