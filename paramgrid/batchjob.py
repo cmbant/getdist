@@ -30,10 +30,13 @@ def readobject(directory=None):
     try:
         config_dir = os.path.abspath(directory) + os.sep + 'config'
         if os.path.exists(config_dir):
-            # set path in case using functions defined and hene imported from in settings file
+            # set path in case using functions defined and hence imported from in settings file
             sys.path.insert(0, config_dir)
         with open(fname, 'rb') as inp:
-            return pickle.load(inp)
+            grid = pickle.load(inp)
+        if not os.path.exists(grid.basePath):
+            raise FileNotFoundError('Directory not found %s' % grid.basePath)
+        return grid
     except Exception as e:
         print('Error lading cached batch object: %s', e)
         resetGrid(directory)

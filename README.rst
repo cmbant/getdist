@@ -61,25 +61,8 @@ Dependencies
 
 Python distributions like Anaconda have most of what you need (except for LaTeX).
 
-To use the GUI, installing PySide2 in Python 3 can be tricky. Try using `Anaconda <https://www.anaconda.com/distribution/>`_,
-making a consistent new environment from conda-forge (which includes PySide2) using::
-
-  conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib packaging PySide2
-
-To install binary backages on Linux-like systems install pacakages
-*py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.
-For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/install.php>`_::
-
-   sudo port install python27
-   sudo port select --set python python27
-   sudo port install py-matplotlib
-   sudo port install py-scipy
-   sudo port install py-pyside
-   sudo port install texlive-latex-extra
-   sudo port install texlive-fonts-recommended
-   sudo port install dvipng
-
-If you don't want to install dependencies locally, you can also use a pre-configured `virtual environment <https://cosmologist.info/CosmoBox/>`_.
+To use the `GUI <https://getdist.readthedocs.io/en/latest/gui.html>` you need PySide or PySide2.
+See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installation>` for suggestions on how to install.
 
 Algorithm details
 ==================

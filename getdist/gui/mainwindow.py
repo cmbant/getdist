@@ -37,6 +37,9 @@ if pyside_version == 2:
 
     os.environ['QT_API'] = 'pyside2'
 
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)  # DPI support
+    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
 
     class NavigationToolbar(QNavigationToolbar):
         def sizeHint(self):
@@ -55,20 +58,6 @@ else:
 
     os.environ['QT_API'] = 'pyside'
 
-try:
-    if pyside_version == 2:
-        import getdist.gui.Resources_pyside2
-
-        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)  # DPI support
-        QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
-    else:
-        import getdist.gui.Resources_pyside
-except ImportError:
-    print("Missing Resources_pyside.py: Run script update_resources.sh")
-    sys.exit(-1)
-
-
-# ==============================================================================
 
 class GuiSelectionError(Exception):
     pass
@@ -100,7 +89,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
 
         self.setWindowTitle("GetDist GUI")
-        self.setWindowIcon(QIcon(':/images/Icon.png'))
+        self.setWindowIcon(self._icon('Icon'))
 
         if base_dir is None: base_dir = batchjob.getCodeRootPath()
         os.chdir(base_dir)
@@ -164,11 +153,16 @@ class MainWindow(QMainWindow):
         """
         Create Qt actions used in GUI.
         """
-        self.exportAct = QAction("&Export as PDF/Image", self,
+        self.openChainsAct = QAction("&Open folder...", self,
+                                     statusTip="Open a directory containing chain (sample files) to use",
+                                     triggered=self.selectRootDirName)
+
+        self.exportAct = QAction("&Export as PDF/Image...", self,
                                  statusTip="Export image as PDF, PNG, JPG",
                                  triggered=self.export)
+        self.exportAct.setEnabled(False)
 
-        self.scriptAct = QAction("Save script", self,
+        self.scriptAct = QAction("Save script...", self,
                                  statusTip="Export commands to script",
                                  triggered=self.saveScript)
 
@@ -221,6 +215,13 @@ class MainWindow(QMainWindow):
                                         statusTip="Configure plot module",
                                         triggered=self.showConfigSettings)
 
+        self.helpAct = QAction("GetDist documentation", self,
+                               statusTip="Show getdist readthedocs",
+                               triggered=self.openHelpDocs)
+
+        self.githubAct = QAction("GetDist on GitHub", self,
+                                 statusTip="Show getdist source",
+                                 triggered=self.openGitHub)
         self.aboutAct = QAction("About", self,
                                 statusTip="Show About box",
                                 triggered=self.about)
@@ -232,6 +233,7 @@ class MainWindow(QMainWindow):
         menu = self.menuBar()
         self.menu = menu
         self.fileMenu = menu.addMenu("&File")
+        self.fileMenu.addAction(self.openChainsAct)
         self.fileMenu.addAction(self.exportAct)
         self.fileMenu.addAction(self.scriptAct)
         self.separatorAct = self.fileMenu.addSeparator()
@@ -256,6 +258,10 @@ class MainWindow(QMainWindow):
         menu.addSeparator()
 
         self.helpMenu = menu.addMenu("&Help")
+        self.helpMenu.addAction(self.helpAct)
+        self.helpMenu.addAction(self.githubAct)
+
+        self.helpMenu.addSeparator()
         self.helpMenu.addAction(self.aboutAct)
 
     def createStatusBar(self):
@@ -270,11 +276,15 @@ class MainWindow(QMainWindow):
         if msg:
             QCoreApplication.processEvents()
 
+    def _icon(self, name):
+        pm = QPixmap(os.path.join(os.path.dirname(__file__), 'images', '%s.png' % name))
+        return QIcon(pm)
+
     def _createWidgets(self):
         """
         Create widgets.
         """
-        self.setStyleSheet("* {font-size:8pt} QComboBox,QPushButton {height:1.3em} QToolButton {}")
+        self.setStyleSheet("* {font-size:8pt} QComboBox,QPushButton {height:1.3em}")
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
@@ -293,12 +303,10 @@ class MainWindow(QMainWindow):
                      SIGNAL("activated(const QString&)"),
                      self.openDirectory)
 
-        if pyside_version == 1:
-            self.pushButtonSelect = QPushButton(QIcon(":/images/file_add.png"), "", self.selectWidget)
-        else:
-            self.pushButtonSelect = QPushButton(u"+", self.selectWidget)
-            self.pushButtonSelect.setStyleSheet("font-size:10pt; font-weight:bold")
+        self.pushButtonSelect = QPushButton(u"+", self.selectWidget)
+        self.pushButtonSelect.setStyleSheet("font-size:10pt; font-weight:bold")
 
+        self.pushButtonSelect.setMaximumWidth(30)
         self.pushButtonSelect.setToolTip("Open chain file root directory")
         self.connect(self.pushButtonSelect, SIGNAL("clicked()"),
                      self.selectRootDirName)
@@ -311,55 +319,44 @@ class MainWindow(QMainWindow):
                      SIGNAL("itemChanged(QListWidgetItem *)"),
                      self.updateListRoots)
 
-        if pyside_version == 1:
-            self.pushButtonRemove = QPushButton(QIcon(":/images/file_remove.png"), "", self.selectWidget)
-        else:
-            self.pushButtonRemove = QPushButton(u"\u00d7", self.selectWidget)
-            self.pushButtonRemove.setStyleSheet("font-size:10pt; font-weight:bold")
-
+        self.pushButtonRemove = QPushButton(u"\u00d7", self.selectWidget)
+        self.pushButtonRemove.setStyleSheet("font-size:10pt; font-weight:bold; color:maroon")
         self.pushButtonRemove.setToolTip("Remove a chain root")
-        self.connect(self.pushButtonRemove, SIGNAL("clicked()"),
-                     self.removeRoot)
+        self.pushButtonRemove.setMaximumWidth(30)
+
+        self.connect(self.pushButtonRemove, SIGNAL("clicked()"), self.removeRoot)
 
         self.comboBoxParamTag = QComboBox(self.selectWidget)
         self.comboBoxParamTag.clear()
-        self.connect(self.comboBoxParamTag,
-                     SIGNAL("activated(const QString&)"), self.setParamTag)
+        self.connect(self.comboBoxParamTag, SIGNAL("activated(const QString&)"), self.setParamTag)
 
         self.comboBoxDataTag = QComboBox(self.selectWidget)
         self.comboBoxDataTag.clear()
-        self.connect(self.comboBoxDataTag,
-                     SIGNAL("activated(const QString&)"), self.setDataTag)
+        self.connect(self.comboBoxDataTag, SIGNAL("activated(const QString&)"), self.setDataTag)
 
         self.comboBoxRootname = QComboBox(self.selectWidget)
         self.comboBoxRootname.clear()
-        self.connect(self.comboBoxRootname,
-                     SIGNAL("activated(const QString&)"), self.setRootname)
+        self.connect(self.comboBoxRootname, SIGNAL("activated(const QString&)"), self.setRootname)
 
         self.listParametersX = QListWidget(self.selectWidget)
         self.listParametersX.clear()
-        self.connect(self.listParametersX, SIGNAL("itemChanged(QListWidgetItem *)"),
-                     self.itemCheckChange)
+        self.connect(self.listParametersX, SIGNAL("itemChanged(QListWidgetItem *)"), self.itemCheckChange)
 
         self.listParametersY = QListWidget(self.selectWidget)
         self.listParametersY.clear()
-        self.connect(self.listParametersY, SIGNAL("itemChanged(QListWidgetItem *)"),
-                     self.itemCheckChange)
+        self.connect(self.listParametersY, SIGNAL("itemChanged(QListWidgetItem *)"), self.itemCheckChange)
 
         self.selectAllX = QCheckBox("Select All", self.selectWidget)
         self.selectAllX.setCheckState(Qt.Unchecked)
-        self.connect(self.selectAllX, SIGNAL("clicked()"),
-                     self.statusSelectAllX)
+        self.connect(self.selectAllX, SIGNAL("clicked()"), self.statusSelectAllX)
 
         self.selectAllY = QCheckBox("Select All", self.selectWidget)
         self.selectAllY.setCheckState(Qt.Unchecked)
-        self.connect(self.selectAllY, SIGNAL("clicked()"),
-                     self.statusSelectAllY)
+        self.connect(self.selectAllY, SIGNAL("clicked()"), self.statusSelectAllY)
 
         self.toggleFilled = QRadioButton("Filled")
         self.toggleLine = QRadioButton("Line")
-        self.connect(self.toggleLine, SIGNAL("toggled(bool)"),
-                     self.statusPlotType)
+        self.connect(self.toggleLine, SIGNAL("toggled(bool)"), self.statusPlotType)
 
         self.checkShade = QCheckBox("Shaded", self.selectWidget)
         self.checkShade.setEnabled(False)
@@ -369,8 +366,7 @@ class MainWindow(QMainWindow):
         self.checkInsideLegend.setVisible(False)
 
         self.toggleColor = QRadioButton("Color by:")
-        self.connect(self.toggleColor, SIGNAL("toggled(bool)"),
-                     self.statusPlotType)
+        self.connect(self.toggleColor, SIGNAL("toggled(bool)"), self.statusPlotType)
 
         self.comboBoxColor = QComboBox(self)
         self.comboBoxColor.clear()
@@ -380,38 +376,44 @@ class MainWindow(QMainWindow):
 
         self.trianglePlot = QCheckBox("Triangle Plot", self.selectWidget)
         self.trianglePlot.setCheckState(Qt.Unchecked)
-        self.connect(self.trianglePlot, SIGNAL("toggled(bool)"),
-                     self.statusTriangle)
+        self.connect(self.trianglePlot, SIGNAL("toggled(bool)"), self.statusTriangle)
 
         self.pushButtonPlot = QPushButton("Make plot", self.selectWidget)
         self.connect(self.pushButtonPlot, SIGNAL("clicked()"), self.plotData)
 
+        def h_stack(*items):
+            widget = QWidget(self.selectWidget)
+            lay = QHBoxLayout(widget)
+            lay.setContentsMargins(0, 0, 0, 0)
+            for item in items:
+                lay.addWidget(item)
+            widget.setLayout(lay)
+            lay.setAlignment(items[1], Qt.AlignTop)
+            return widget
+
         # Graphic Layout
-        layoutTop = QGridLayout()
-        layoutTop.setSpacing(5)
-        layoutTop.addWidget(self.listDirectories, 0, 0, 1, 3)
-        layoutTop.addWidget(self.pushButtonSelect, 0, 3, 1, 1)
+        leftLayout = QGridLayout()
+        leftLayout.setSpacing(5)
+        leftLayout.addWidget(h_stack(self.listDirectories, self.pushButtonSelect), 0, 0, 1, 4)
 
-        layoutTop.addWidget(self.comboBoxRootname, 1, 0, 1, 3)
-        layoutTop.addWidget(self.comboBoxParamTag, 1, 0, 1, 4)
-        layoutTop.addWidget(self.comboBoxDataTag, 2, 0, 1, 4)
-        layoutTop.addWidget(self.listRoots, 3, 0, 2, 3)
-        layoutTop.addWidget(self.pushButtonRemove, 3, 3, 1, 1)
+        leftLayout.addWidget(self.comboBoxRootname, 1, 0, 1, 3)
+        leftLayout.addWidget(self.comboBoxParamTag, 1, 0, 1, 4)
+        leftLayout.addWidget(self.comboBoxDataTag, 2, 0, 1, 4)
+        leftLayout.addWidget(h_stack(self.listRoots, self.pushButtonRemove), 3, 0, 2, 4)
 
-        layoutTop.addWidget(self.selectAllX, 5, 0, 1, 2)
-        layoutTop.addWidget(self.selectAllY, 5, 2, 1, 2)
-        layoutTop.addWidget(self.listParametersX, 6, 0, 5, 2)
-        layoutTop.addWidget(self.listParametersY, 6, 2, 1, 2)
-        layoutTop.addWidget(self.toggleFilled, 7, 2, 1, 1)
-        layoutTop.addWidget(self.checkInsideLegend, 7, 3, 1, 2)
-        layoutTop.addWidget(self.toggleLine, 8, 2, 1, 1)
-        layoutTop.addWidget(self.checkShade, 8, 3, 1, 1)
-
-        layoutTop.addWidget(self.toggleColor, 9, 2, 1, 1)
-        layoutTop.addWidget(self.comboBoxColor, 9, 3, 1, 1)
-        layoutTop.addWidget(self.trianglePlot, 10, 2, 1, 2)
-        layoutTop.addWidget(self.pushButtonPlot, 12, 0, 1, 4)
-        self.selectWidget.setLayout(layoutTop)
+        leftLayout.addWidget(self.selectAllX, 5, 0, 1, 2)
+        leftLayout.addWidget(self.selectAllY, 5, 2, 1, 2)
+        leftLayout.addWidget(self.listParametersX, 6, 0, 5, 2)
+        leftLayout.addWidget(self.listParametersY, 6, 2, 1, 2)
+        leftLayout.addWidget(self.toggleFilled, 7, 2, 1, 1)
+        leftLayout.addWidget(self.checkInsideLegend, 7, 3, 1, 1)
+        leftLayout.addWidget(self.toggleLine, 8, 2, 1, 1)
+        leftLayout.addWidget(self.checkShade, 8, 3, 1, 1)
+        leftLayout.addWidget(self.toggleColor, 9, 2, 1, 1)
+        leftLayout.addWidget(self.comboBoxColor, 9, 3, 1, 1)
+        leftLayout.addWidget(self.trianglePlot, 10, 2, 1, 2)
+        leftLayout.addWidget(self.pushButtonPlot, 12, 0, 1, 4)
+        self.selectWidget.setLayout(leftLayout)
 
         self.listRoots.hide()
         self.pushButtonRemove.hide()
@@ -428,7 +430,7 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.plotWidget)
         w = self.width()
         splitter.setSizes([w / 4., 3 * w / 4.])
-
+        self.splitter = splitter
         hbox = QHBoxLayout()
         hbox.addWidget(splitter)
         hbox.setContentsMargins(0, 0, 0, 0)
@@ -445,18 +447,15 @@ class MainWindow(QMainWindow):
         self.toolBar = QToolBar()
         self.toolBar.setIconSize(QSize(20, 20))
 
-        def icon(name):
-            return QIcon(":/images/%s.png" % name)
-
-        openAct = QAction(icon("file_open"),
+        openAct = QAction(self._icon("file_open"),
                           "open script", self.toolBar,
                           statusTip="Open script",
                           triggered=self.openScript)
-        saveAct = QAction(icon("file_save"),
+        saveAct = QAction(self._icon("file_save"),
                           "Save script", self.toolBar,
                           statusTip="Save script",
                           triggered=self.saveScript)
-        clearAct = QAction(icon("view_clear"),
+        clearAct = QAction(self._icon("view_clear"),
                            "Clear", self.toolBar,
                            statusTip="Clear",
                            triggered=self.clearScript)
@@ -529,6 +528,9 @@ class MainWindow(QMainWindow):
             self.move(pos)
         self.plot_module = settings.value("plot_module", self.plot_module)
         self.script_plot_module = settings.value("script_plot_module", self.script_plot_module)
+        splitter_settings = settings.value("splitter_settings")
+        if splitter_settings:
+            self.splitter.restoreState(splitter_settings)
 
     def writeSettings(self):
         settings = self.getSettings()
@@ -536,6 +538,9 @@ class MainWindow(QMainWindow):
         settings.setValue("size", self.size())
         settings.setValue('plot_module', self.plot_module)
         settings.setValue('script_plot_module', self.script_plot_module)
+        splitter_settings = self.splitter.saveState()
+        if splitter_settings:
+            settings.setValue("splitter_settings", splitter_settings)
 
     def export(self):
         """
@@ -806,24 +811,32 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 self.errorReport(e, "plot_module")
 
+    def openHelpDocs(self):
+        import webbrowser
+        webbrowser.open("https://getdist.readthedocs.org/")
+
+    def openGitHub(self):
+        import webbrowser
+        webbrowser.open("https://github.com/cmbant/getdist/")
+
     def about(self):
         """
         Callback for action 'About'.
         """
-        QMessageBox.about(
-            self, "About GetDist GUI",
-            "GetDist GUI v " + getdist.__version__ +
-            "\nAntony Lewis (University of Sussex) and contributors" +
-            "\nhttps://github.com/cmbant/getdist/\n" +
-            "\nPython: " + sys.version +
-            "\nMatplotlib: " + matplotlib.__version__ +
-            "\nSciPy: " + scipy.__version__ +
-            "\nNumpy: " + np.__version__ +
-            "\nPySide: " + PySide.__version__ +
-            "\nQt (PySide): " + PySide.QtCore.__version__ +
-            ("" if pyside_version == 1 else
-             "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
-                 self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY())))
+        QMessageBox.about(self, "About GetDist GUI",
+                          "GetDist GUI v " + getdist.__version__ +
+                          "\nAntony Lewis (University of Sussex) and contributors" +
+                          "\nhttps://github.com/cmbant/getdist/\n" +
+                          "\nPython: " + sys.version +
+                          "\nMatplotlib: " + matplotlib.__version__ +
+                          "\nSciPy: " + scipy.__version__ +
+                          "\nNumpy: " + np.__version__ +
+                          "\nPySide: " + PySide.__version__ +
+                          "\nQt (PySide): " + PySide.QtCore.__version__ +
+                          ("" if pyside_version == 1 else
+                           "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
+                               self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY())) +
+                          '\nUsing getdist at: %s' % os.path.dirname(getdist.__file__))
 
     def getDirectories(self):
         return [self.listDirectories.itemText(i) for i in range(self.listDirectories.count())]
@@ -980,13 +993,10 @@ class MainWindow(QMainWindow):
         self.paramTag = ""
         self.dataTag = ""
         self.data2chains = {}
-        # self.listRoots.clear()
-        # self.listParametersX.clear()
-        # self.listParametersY.clear()
 
     def _readGridChains(self, batchPath):
         """
-        Setup of a grid chain.
+        Setup of a grid of chain results.
         """
         # Reset data
         self._resetPlotData()
@@ -1452,6 +1462,7 @@ class MainWindow(QMainWindow):
 
             script += "g.export()\n"
             self.script = script
+            self.exportAct.setEnabled(True)
         except Exception as e:
             self.errorReport(e, caption=actionText)
         finally:
@@ -1487,6 +1498,7 @@ class MainWindow(QMainWindow):
 
         # Enable menu options for main tab only
         self.reLoadAct.setEnabled(index == 0)
+        self.openChainsAct.setEnabled(index == 0)
         self.dataMenu.setEnabled(index == 0)
         self.dataMenu.menuAction().setVisible(index == 0)
         self.optionMenu.setEnabled(index == 0)
@@ -1551,6 +1563,8 @@ class MainWindow(QMainWindow):
                 if isinstance(v, plots.GetDistPlotter):
                     self.updateScriptPreview(v)
                     break
+
+            self.exportAct.setEnabled(True)
         except Exception as e:
             self.errorReport(e, caption="Plot script")
         finally:

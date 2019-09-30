@@ -31,7 +31,8 @@ def get_long_description():
 
 cmd_class = {}
 install_msg = None
-package_data = {'getdist': ['analysis_defaults.ini', 'distparam_template.ini']}
+package_data = {'getdist': ['analysis_defaults.ini', 'distparam_template.ini'],
+                'getdist.gui': ['images/*.png']}
 
 if sys.platform == "darwin":
     # Mac wrapper .app bundle
@@ -44,9 +45,9 @@ if sys.platform == "darwin":
 
         sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-        package_data['getdist.gui'] = ['GetDistGUI.app/Contents/Info.plist',
-                                       'GetDistGUI.app/Contents/MacOS/*',
-                                       'GetDistGUI.app/Contents/Resources/*']
+        package_data['getdist.gui'] += ['GetDist GUI.app/Contents/Info.plist',
+                                        'GetDist GUI.app/Contents/MacOS/*',
+                                        'GetDist GUI.app/Contents/Resources/*']
         from setuptools.command.develop import develop
         from setuptools.command.install import install
         from setuptools.command.build_py import build_py
@@ -59,8 +60,8 @@ if sys.platform == "darwin":
         def make_app():
             # Put python command into app script so it can be run from spotlight etc.
             dir_util.copy_tree(os.path.join(file_dir, 'mac_app'),
-                               os.path.join(file_dir, 'GetDistGUI.app'))
-            fname = os.path.join(file_dir, 'GetDistGUI.app/Contents/MacOS/GetDistGUI')
+                               os.path.join(file_dir, 'GetDist GUI.app'))
+            fname = os.path.join(file_dir, 'GetDist GUI.app/Contents/MacOS/GetDistGUI')
             out = []
             with io.open(fname, 'r') as f:
                 for line in f.readlines():
@@ -71,7 +72,7 @@ if sys.platform == "darwin":
             with io.open(fname, 'w') as f:
                 f.write("\n".join(out))
             subprocess.call('chmod +x "%s"' % fname, shell=True)
-            fname = os.path.join(file_dir, 'GetDistGUI.app/Contents/Info.plist')
+            fname = os.path.join(file_dir, 'GetDist GUI.app/Contents/Info.plist')
             with io.open(fname, 'r') as f:
                 plist = f.read().replace('1.0.0', find_version())
             with io.open(fname, 'w') as f:
@@ -108,8 +109,8 @@ if sys.platform == "darwin":
             'install': InstallCommand,
             'build_py': BuildCommand
         }
-    except ImportError:
-        print("Cannot load PySide or PySide2 - skipping GetDistGUI.app")
+    except ImportError as e:
+        print("Cannot load PySide or PySide2 - skipping GetDistGUI.app %s" % e)
 
 setup(name='GetDist',
       version=find_version(),
