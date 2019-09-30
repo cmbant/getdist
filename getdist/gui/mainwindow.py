@@ -516,18 +516,17 @@ class MainWindow(QMainWindow):
         screen = QApplication.desktop().screenGeometry()
         h = min(screen.height() * 4 / 5., 700)
         size = QSize(min(screen.width() * 4 / 5., 900), h)
-        pos = settings.value("pos", QPoint(100, 100))
+        pos = settings.value("pos", None)
         savesize = settings.value("size", size)
         if savesize.width() > screen.width():
             savesize.setWidth(size.width())
         if savesize.height() > screen.height():
             savesize.setHeight(size.height())
         self.resize(savesize)
-        if pos.x() + savesize.width() > screen.width():
-            pos.setX(screen.width() - savesize.width())
-        if pos.y() + savesize.height() > screen.height():
-            pos.setY(screen.height() - savesize.height())
-        self.move(pos)
+        if pos is None or pos.x() + savesize.width() > screen.width() or pos.y() + savesize.height() > screen.height():
+            self.move(screen.center() - self.rect().center())
+        else:
+            self.move(pos)
         self.plot_module = settings.value("plot_module", self.plot_module)
         self.script_plot_module = settings.value("script_plot_module", self.script_plot_module)
 
