@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 script_dir=$(dirname "$(dirname "$0")")
-python="//anaconda3/envs/py37forge/bin/python"
-$python $script_dir/../../mainwindow.py $@
+python=python
+""$python"" "$script_dir/../../mainwindow.py" $@
