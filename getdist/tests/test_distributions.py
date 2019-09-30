@@ -353,7 +353,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='make getdist test plots from test Gaussian mixture distributions')
     parser.add_argument('--sims', type=int, default=100, help='Number of simulations per case')
     parser.add_argument('--nsamp', type=int, default=10000, help='Number of (independent) samples per simulation')
-    parser.add_argument('--plots', nargs='*', default=['dists_1D', 'dists_2D','ISE_1D', 'ISE_2D'], help='names of plots to make')
+    parser.add_argument('--plots', nargs='*', default=['dists_1D', 'dists_2D', 'ISE_1D', 'ISE_2D'],
+                        help='names of plots to make')
     parser.add_argument('--mbc', type=int, default=1, help='mult_bias_correction_order')
     parser.add_argument('--bco', type=int, default=1, help='boundary_correction_order')
     args = parser.parse_args()

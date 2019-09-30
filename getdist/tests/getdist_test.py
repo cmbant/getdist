@@ -8,7 +8,7 @@ import unittest
 import subprocess
 import shutil
 from getdist import loadMCSamples, plots, IniFile
-from getdist_tests.test_distributions import Test2DDistributions, Gaussian1D, Gaussian2D
+from getdist.tests.test_distributions import Test2DDistributions, Gaussian1D, Gaussian2D
 from getdist.mcsamples import MCSamples
 
 

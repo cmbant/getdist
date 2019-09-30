@@ -136,7 +136,6 @@ setup(name='GetDist',
       # PySide or pyside2 is needed for the GUI
       #  optional (for faster file read)
       # 'pandas (>=0.14.0)'
-      tests_require=['nose'],
       cmdclass=cmd_class,
       classifiers=[
           'Development Status :: 5 - Production/Stable',
