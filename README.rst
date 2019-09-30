@@ -61,8 +61,8 @@ Dependencies
 
 Python distributions like Anaconda have most of what you need (except for LaTeX).
 
-To use the `GUI <https://getdist.readthedocs.io/en/latest/gui.html>` you need PySide or PySide2.
-See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installation>` for suggestions on how to install.
+To use the `GUI <https://getdist.readthedocs.io/en/latest/gui.html>`_ you need PySide or PySide2.
+See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installation>`_ for suggestions on how to install.
 
 Algorithm details
 ==================

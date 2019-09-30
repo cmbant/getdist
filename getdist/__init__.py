@@ -1,16 +1,14 @@
 __author__ = 'Antony Lewis'
-__version__ = "0.3.4"
+__version__ = "1.0.0"
 
 from getdist.inifile import IniFile
 from getdist.paramnames import ParamInfo, ParamNames
 from getdist.chains import WeightedSamples
 from getdist.mcsamples import MCSamples, loadMCSamples
-import numpy as np
+import os
 
 
 def get_defaults_file(name='analysis_defaults.ini'):
-    import os
-
     return os.path.join(os.path.dirname(__file__), name)
 
 
@@ -21,7 +19,6 @@ def set_logging(log):
 
 
 def get_config():
-    import os
 
     config_file = os.environ.get('GETDIST_CONFIG', None)
     if not config_file:
@@ -41,4 +38,5 @@ distparam_template = config_ini.string('distparam_template', get_defaults_file('
 use_plot_data = config_ini.bool('use_plot_data', False)
 default_plot_output = config_ini.string('default_plot_output', 'pdf')
 loglevel = config_ini.string('logging', '')
-if loglevel: set_logging(loglevel)
+if loglevel:
+    set_logging(loglevel)

@@ -1,14 +1,16 @@
 GetDist GUI
 ===================
 
-Run the *getdist-gui script to run the graphical user interface. This requires PySide or PySide2 to be installed, but will run on Windows, Linux and Mac.
+Run the *getdist-gui* script to run the graphical user interface. This requires PySide or `PySide2 <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
 
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
 .. image:: https://cosmologist.info/cosmomc/pics/planck2015/gui_planck.png
 
 It can open chain files in a selected directry (and also `paramgrid <https://cosmologist.info/cosmomc/readme_grids.html>`_ directories as show above).
-See the `intro` for a description of chain file formats.
+See the `intro <https://getdist.readthedocs.io/en/latest/intro.html>`_ for a description of chain file formats.  A grid of sample chains files can be
+downloaded `here <http://pla.esac.esa.int/pla/aio/product-action?COSMOLOGY.FILE_ID=COM_CosmoParams_base-plikHM-TTTEEE-lowl-lowE_R3.00.zip>`_, after
+unzipping just open the main directory in the GUI.
 
 After opening a directory, you can select each chain root name you want to plot. It is then added to the list box below.
 The selected chains can be dragged and dropped to change the order if needed.  Then select the parameter names to plot in the checkboxes below that,
@@ -59,7 +61,7 @@ making a consistent new environment from conda-forge (which includes PySide2) us
 (note that PySide2 is currently not included in the default Anaconda packages).
 
 Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
-On a Mac the installation will also make a GetDist GUI Mac app, which you cna find using Spotlight.
+On a Mac the installation will also make a GetDist GUI Mac app, which you can find using Spotlight.
 
 To install binary backages on Linux-like systems install packages
 *py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.

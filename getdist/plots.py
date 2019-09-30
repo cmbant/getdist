@@ -256,7 +256,8 @@ def getSubplotPlotter(subplot_size=2, width_inch=None, **kwargs):
 
 
 class SampleAnalysisGetDist(object):
-    # Old class to support pre-computed GetDist plot_data output
+
+    # Deprecated old class to support pre-computed GetDist plot_data output
     def __init__(self, plot_data):
         self.plot_data = plot_data
         self.newPlot()
