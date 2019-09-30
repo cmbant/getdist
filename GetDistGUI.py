@@ -2,7 +2,6 @@
 
 # Once installed this is not used, same as getdist-gui script
 
-from __future__ import absolute_import
 import sys
 import os
 

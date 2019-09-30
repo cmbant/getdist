@@ -9,8 +9,7 @@ It allows you to open a folder of chain files, then easily select, open, plot an
 
 It can open chain files in a selected directry (and also `paramgrid <https://cosmologist.info/cosmomc/readme_grids.html>`_ directories as show above).
 See the `intro <https://getdist.readthedocs.io/en/latest/intro.html>`_ for a description of chain file formats.  A grid of sample chains files can be
-downloaded `here <http://pla.esac.esa.int/pla/aio/product-action?COSMOLOGY.FILE_ID=COM_CosmoParams_base-plikHM-TTTEEE-lowl-lowE_R3.00.zip>`_, after
-unzipping just open the main directory in the GUI.
+downloaded `here <http://pla.esac.esa.int/pla/#cosmology`_, after downloading a file just unzip and open the main directory in the GUI.
 
 After opening a directory, you can select each chain root name you want to plot. It is then added to the list box below.
 The selected chains can be dragged and dropped to change the order if needed.  Then select the parameter names to plot in the checkboxes below that,
