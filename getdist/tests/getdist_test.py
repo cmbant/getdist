@@ -53,18 +53,12 @@ class GetDistFileTest(unittest.TestCase):
     def testGetDist(self):
         from getdist.command_line import getdist_command
 
-        def callGetDist(args):
-            if os.getenv('TRAVIS', None):
-                return str(subprocess.check_output(['getdist'] + args, env={'PATH': os.getenv('PATH')}))
-            else:
-                return getdist_command(args)
-
         os.chdir(self.tempdir)
-        res = callGetDist([self.root])
+        res = getdist_command([self.root])
         # Note this can fail if your local analysis defaults changes the default ignore_rows
         self.assertTrue('-Ln(mean like)  = 2.30' in res)
         fname = 'testchain_pars.ini'
-        callGetDist(['--make_param_file', fname])
+        getdist_command(['--make_param_file', fname])
         ini = IniFile(fname)
         ini.params['no_plots'] = False
         ini.params['plot_2D_num'] = 1
@@ -75,7 +69,7 @@ class GetDistFileTest(unittest.TestCase):
         ini.params['triangle_params'] = '*[xy]*'
 
         ini.saveFile(fname)
-        res = callGetDist([fname, self.root])
+        res = getdist_command([fname, self.root])
         self.assertTrue('-Ln(mean like)  = 2.30' in res)
         self.assertFalse(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
 
@@ -93,7 +87,7 @@ class GetDistFileTest(unittest.TestCase):
 
         ini.params['plot_data_dir'] = 'plot_data/'
         ini.saveFile(fname)
-        callGetDist([fname, self.root])
+        getdist_command([fname, self.root])
         self.assertTrue(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
         checkRun()
         shutil.rmtree(os.path.join(self.tempdir, 'plot_data'))
