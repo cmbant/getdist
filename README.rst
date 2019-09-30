@@ -48,7 +48,7 @@ You can test if things are working using the unit test by running::
     $ python setup.py test
 
 Check the dependencies listed in the next section are installed. You can then use the getdist module from your scripts, or
-use the GUI program GetDistGUI.py.
+use the GetDist GUI (*getdist-gui* command).
 
 
 Dependencies
@@ -138,9 +138,9 @@ MCSamples objects can also be constructed directly from numpy arrays in memory, 
 GetDist script
 ===================
 
-If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the GetDist.py script:
+If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the *getdist* script:
 
-	usage: GetDist.py [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
+	usage: getdist [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
 
 	GetDist sample analyser
 
@@ -163,7 +163,7 @@ If you have chain files on on disk, you can also quickly calculate convergence a
 where *ini_file* is optionally a .ini file listing *key=value* parameter option values, and chain_root is the root file name of the chains.
 For example::
 
-   GetDist.py distparams.ini chains/test_chain
+   getdist distparams.ini chains/test_chain
 
 This produces a set of files containing parameter means and limits (.margestats), N-D likelihood contour boundaries and best-fit sample (.likestats),
 convergence diagnostics (.converge), parameter covariance and correlation (.covmat and .corr), and optionally various simple plotting scripts.
@@ -171,14 +171,14 @@ If no *ini_file* is given, default settings are used. The *ignore_rows* option a
 
 To customize settings you can run::
 
-   GetDist.py --make_param_file distparams.ini
+   getdist --make_param_file distparams.ini
 
 to produce the setting file distparams.ini, edit it, then run with your custom settings.
 
 GetDist GUI
 ===================
 
-Run the GetDistGUI.py script to run the graphical user interface. This requires PySide, but will run on Windows, Linux and Mac.
+Run *getdist-gui* to run the graphical user interface. This requires PySide, but will run on Windows, Linux and Mac.
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 See the `GUI Readme <http://getdist.readthedocs.org/en/latest/gui.html>`_.
 

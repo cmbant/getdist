@@ -2464,10 +2464,10 @@ class MCSamples(Chains):
             ini.params.update(properties)
             ini.saveFile(ini_name)
 
-    # Write functions for GetDist.py
+    # Write functions for console script
     def writeScriptPlots1D(self, filename, plotparams=None, ext=None):
         """
-        Write a script that generates a 1D plot. Only intended for use by GetDist.py script.
+        Write a script that generates a 1D plot. Only intended for use by getdist script.
 
         :param filename: The filename to write to.
         :param plotparams: The list of parameters to plot (default: all)
@@ -2483,7 +2483,7 @@ class MCSamples(Chains):
     def writeScriptPlots2D(self, filename, plot_2D_param=None, cust2DPlots=[], writeDataToFile=False, ext=None,
                            shade_meanlikes=False):
         """
-        Write script that generates a 2 dimensional plot. Only intended for use by GetDist.py script.
+        Write script that generates a 2 dimensional plot. Only intended for use by getdist script.
 
         :param filename: The filename to write to.
         :param plot_2D_param: parameter to plot other variables against
@@ -2524,7 +2524,7 @@ class MCSamples(Chains):
 
     def writeScriptPlotsTri(self, filename, triangle_params, ext=None):
         """
-        Write a script that generates a triangle plot. Only intended for use by GetDist.py script.
+        Write a script that generates a triangle plot. Only intended for use by getdist script.
 
         :param filename: The filename to write to.
         :param triangle_params: list of parameter names to plot
@@ -2535,7 +2535,7 @@ class MCSamples(Chains):
 
     def writeScriptPlots3D(self, filename, plot_3D, ext=None):
         """
-        Writes a script that generates a 3D (coloured-scatter) plot. Only intended for use by GetDist.py script.
+        Writes a script that generates a 3D (coloured-scatter) plot. Only intended for use by getdist script.
 
         :param filename: The filename to write to
         :param plot_3D: list of [x,y,z] parameters for the 3 Dimensional plots

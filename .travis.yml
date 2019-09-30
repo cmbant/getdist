@@ -34,7 +34,7 @@ install:
   - conda create -q -n test-environment -c $CHANNEL python=$TRAVIS_PYTHON_VERSION scipy matplotlib PyYAML;
   - source activate test-environment
   - python setup.py install
-  - GetDist.py --help
+  - getdist --help
 
 script:
     - python setup.py test

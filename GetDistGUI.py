@@ -1,28 +1,13 @@
 #!/usr/bin/env python
 
+# Once installed this is not used, same as getdist-gui script
+
 from __future__ import absolute_import
 import sys
+import os
 
-try:
-    import getdist
-except ImportError:
-    import os
+sys.path.append(os.path.realpath(os.path.dirname(__file__)))
 
-    sys.path.insert(0, os.path.realpath(os.path.dirname(__file__)))
-    import getdist
+from getdist.command_line import getdist_gui
 
-from getdist.gui.mainwindow import run_gui
-
-if sys.platform == "darwin":
-    # On Mac need to run .app with pList to get menu name right (and avoid menu bugs)
-    import subprocess
-    import os
-
-    path = os.path.join(os.path.dirname(getdist.gui.__file__), 'GetDistGUI.app')
-    if os.path.exists(path):
-        subprocess.call(["/usr/bin/open", "-a", path], env=os.environ)
-    else:
-        print('GetDistGUI.app not found; package not installed or no valid PySide/PySide2')
-        run_gui()
-else:
-    run_gui()
+getdist_gui()

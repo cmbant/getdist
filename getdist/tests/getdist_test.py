@@ -13,7 +13,7 @@ from getdist.mcsamples import MCSamples
 
 
 class GetDistFileTest(unittest.TestCase):
-    """test reading files, convergence routines and GetDist.py script"""
+    """test reading files, convergence routines and getdist script"""
 
     def setUp(self):
         np.random.seed(10)
@@ -51,13 +51,13 @@ class GetDistFileTest(unittest.TestCase):
         g.plot_2d('testchain', ['x', 'y'])
 
     def testGetDist(self):
+        from getdist.command_line import getdist_command
 
         def callGetDist(args):
             if os.getenv('TRAVIS', None):
-                return str(subprocess.check_output(['GetDist.py'] + args, env={'PATH': os.getenv('PATH')}))
+                return str(subprocess.check_output(['getdist'] + args, env={'PATH': os.getenv('PATH')}))
             else:
-                return str(subprocess.check_output(
-                    ['python', os.path.join(os.path.dirname(__file__), '..' + os.sep, 'GetDist.py')] + args))
+                return getdist_command(args)
 
         os.chdir(self.tempdir)
         res = callGetDist([self.root])

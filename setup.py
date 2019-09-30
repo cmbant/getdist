@@ -81,7 +81,7 @@ if sys.platform == "darwin":
 
         def clean():
             import shutil
-            shutil.rmtree(os.path.join(file_dir, 'GetDistGUI.app'), ignore_errors=True)
+            shutil.rmtree(os.path.join(file_dir, 'GetDist GUI.app'), ignore_errors=True)
 
 
         class DevelopCommand(develop):
@@ -110,7 +110,7 @@ if sys.platform == "darwin":
             'build_py': BuildCommand
         }
     except ImportError as e:
-        print("Cannot load PySide or PySide2 - skipping GetDistGUI.app %s" % e)
+        print("Cannot load PySide or PySide2 - skipping MacOS GetDist GUI app %s" % e)
 
 setup(name='GetDist',
       version=find_version(),
@@ -119,9 +119,13 @@ setup(name='GetDist',
       author='Antony Lewis',
       url="https://github.com/cmbant/getdist",
       zip_safe=False,
-      packages=['getdist', 'getdist.gui', 'paramgrid', 'getdist_tests'],
-      scripts=['GetDist.py', 'GetDistGUI.py'],
-      test_suite='getdist_tests',
+      packages=['getdist', 'getdist.gui', 'paramgrid', 'getdist.tests'],
+      entry_points={
+          'console_scripts': [
+              'getdist=getdist.command_line:getdist_command',
+              'getdist-gui=getdist.command_line:getdist_gui',
+          ]},
+      test_suite='getdist.tests',
       package_data=package_data,
       install_requires=[
           'packaging',
@@ -132,6 +136,7 @@ setup(name='GetDist',
       # PySide or pyside2 is needed for the GUI
       #  optional (for faster file read)
       # 'pandas (>=0.14.0)'
+      tests_require=['nose'],
       cmdclass=cmd_class,
       classifiers=[
           'Development Status :: 5 - Production/Stable',

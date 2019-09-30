@@ -1,7 +1,7 @@
 GetDist GUI
 ===================
 
-Run the GetDistGUI.py script to run the graphical user interface. This requires PySide or PySide2 to be installed, but will run on Windows, Linux and Mac.
+Run the *getdist-gui script to run the graphical user interface. This requires PySide or PySide2 to be installed, but will run on Windows, Linux and Mac.
 
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
@@ -58,8 +58,8 @@ making a consistent new environment from conda-forge (which includes PySide2) us
 
 (note that PySide2 is currently not included in the default Anaconda packages).
 
-Once PySide is set up, (re)install getdist and you should then be able to use the GetDistGUI.py script on your path.
-On a Mac the installation will also make a GetDistGUI Mac app, which you cna find using Spotlight.
+Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
+On a Mac the installation will also make a GetDist GUI Mac app, which you cna find using Spotlight.
 
 To install binary backages on Linux-like systems install packages
 *py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.

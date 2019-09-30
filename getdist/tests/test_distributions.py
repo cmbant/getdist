@@ -6,7 +6,7 @@ try:
 except ImportError:
     import sys, os
 
-    sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
+    sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '..')))
     from getdist.plots import getSubplotPlotter
 import matplotlib.pyplot as plt
 import numpy as np
@@ -276,7 +276,7 @@ def join_subplots(ax_array):
     plt.subplots_adjust(wspace=0, hspace=0)
 
 
-def run_test_program(plots=['dists_2D', 'dists_1D', 'ISE_1D', 'ISE_2D'], sims=100, nsamp=default_nsamp, mbc=1, bco=1):
+def run_test_program(plots=['dists_2D', 'dists_1D'], sims=100, nsamp=default_nsamp, mbc=1, bco=1):
     import time
 
     chains.print_load_details = False
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='make getdist test plots from test Gaussian mixture distributions')
     parser.add_argument('--sims', type=int, default=100, help='Number of simulations per case')
     parser.add_argument('--nsamp', type=int, default=10000, help='Number of (independent) samples per simulation')
-    parser.add_argument('--plots', nargs='*', default=['dists_1D', 'dists_2D'], help='names of plots to make')
+    parser.add_argument('--plots', nargs='*', default=['dists_1D', 'dists_2D','ISE_1D', 'ISE_2D'], help='names of plots to make')
     parser.add_argument('--mbc', type=int, default=1, help='mult_bias_correction_order')
     parser.add_argument('--bco', type=int, default=1, help='boundary_correction_order')
     args = parser.parse_args()
