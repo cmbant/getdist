@@ -752,7 +752,7 @@ class MainWindow(QMainWindow):
                 'legend_frame', 'figure_legend_frame', 'figure_legend_ncol', 'legend_rect_border',
                 'legend_frac_subplot_margin', 'legend_frac_subplot_line', 'num_plot_contours',
                 'solid_contour_palefactor', 'alpha_filled_add', 'alpha_factor_contour_lines', 'axis_marker_color',
-                'axis_marker_ls', 'axis_marker_lw', 'auto_ticks', 'thin_long_subplot_ticks', 'title_limit']
+                'axis_marker_ls', 'axis_marker_lw', 'auto_ticks', 'thin_long_subplot_ticks', 'title_limit_fontsize']
         pars.sort()
         ini = IniFile()
         for par in pars:
@@ -761,7 +761,7 @@ class MainWindow(QMainWindow):
         self.plotSettingIni = ini
 
         self.plotSettingDlg = self.plotSettingDlg or DialogPlotSettings(self, ini, pars, title='Plot Settings',
-                                                                        width=450)
+                                                                        width=420)
         self.plotSettingDlg.show()
         self.plotSettingDlg.activateWindow()
 
@@ -1369,16 +1369,18 @@ class MainWindow(QMainWindow):
                     script += "params = %s\n" % str(params)
                     if color:
                         param_3d = color_param
-                        script += "param_3d = '%s'\n" % str(color_param)
                     else:
                         param_3d = None
-                        script += "param_3d = None\n"
                     setSizeForN(len(params))
                     self.plotter.triangle_plot(roots, params, plot_3d_with_param=param_3d, filled=filled,
                                                shaded=shaded)
                     self.updatePlot()
-                    script += "g.triangle_plot(roots, params, plot_3d_with_param=param_3d, filled=%s, shaded=%s)\n" % (
-                        filled, shaded)
+                    script += "g.triangle_plot(roots, params, filled=%s" % filled
+                    if shaded:
+                        script += ", shaded=True"
+                    if param_3d:
+                        script += ", plot_3d_with_param='%s'" % color_param
+                    script += ")\n"
                 else:
                     raise GuiSelectionError("Select more than 1 x parameter for triangle plot")
 
@@ -1902,13 +1904,18 @@ class DialogSettings(QDialog):
             self.table.setItem(irow, 0, item)
             item = QTableWidgetItem(str(""))
             self.table.setItem(irow, 1, item)
-        self.table.resizeRowsToContents()
-        self.table.resizeColumnsToContents()
+
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setEditTriggers(QAbstractItemView.AllEditTriggers)
 
-        h = self.table.verticalHeader().length() + 40
-        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, h)
+        self.table.resizeColumnsToContents()
+        maxh = QApplication.desktop().screenGeometry().height() * 4 / 5
+        self.resize(width, maxh)
+        self.table.setColumnWidth(1, self.table.width() - self.table.columnWidth(0))
+        self.table.resizeRowsToContents()
+
+        h = self.table.verticalHeader().length() + self.table.horizontalHeader().height() * 4
+        h = min(maxh, h)
         self.resize(width, h)
 
     def getDict(self):

@@ -38,7 +38,7 @@ def readobject(directory=None):
             raise FileNotFoundError('Directory not found %s' % grid.basePath)
         return grid
     except Exception as e:
-        print('Error lading cached batch object: %s', e)
+        print('Error loading cached batch object: ', e)
         resetGrid(directory)
         if gridconfig.pathIsGrid(directory):
             return gridconfig.makeGrid(directory, readOnly=True, interactive=False)
