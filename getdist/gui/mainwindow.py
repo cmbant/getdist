@@ -29,7 +29,7 @@ if pyside_version == 2:
 
     import PySide2 as PySide
     from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
-    from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
+    from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
     from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
         QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
         QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
@@ -50,7 +50,7 @@ else:
     from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
     import PySide
-    from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QPoint, QCoreApplication
+    from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
     from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
         QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
         QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
 
         self.setWindowTitle("GetDist GUI")
-        self.setWindowIcon(self._icon('Icon'))
+        self.setWindowIcon(self._icon('Icon', False))
 
         if base_dir is None: base_dir = batchjob.getCodeRootPath()
         os.chdir(base_dir)
@@ -154,6 +154,7 @@ class MainWindow(QMainWindow):
         Create Qt actions used in GUI.
         """
         self.openChainsAct = QAction("&Open folder...", self,
+                                     shortcut="Ctrl+O",
                                      statusTip="Open a directory containing chain (sample files) to use",
                                      triggered=self.selectRootDirName)
 
@@ -163,6 +164,7 @@ class MainWindow(QMainWindow):
         self.exportAct.setEnabled(False)
 
         self.scriptAct = QAction("Save script...", self,
+                                 shortcut="Ctrl+S",
                                  statusTip="Export commands to script",
                                  triggered=self.saveScript)
 
@@ -222,6 +224,11 @@ class MainWindow(QMainWindow):
         self.githubAct = QAction("GetDist on GitHub", self,
                                  statusTip="Show getdist source",
                                  triggered=self.openGitHub)
+
+        self.planckAct = QAction("Download Planck chains", self,
+                                 statusTip="Download sample chain files",
+                                 triggered=self.openPlanck)
+
         self.aboutAct = QAction("About", self,
                                 statusTip="Show About box",
                                 triggered=self.about)
@@ -260,7 +267,8 @@ class MainWindow(QMainWindow):
         self.helpMenu = menu.addMenu("&Help")
         self.helpMenu.addAction(self.helpAct)
         self.helpMenu.addAction(self.githubAct)
-
+        self.helpMenu.addSeparator()
+        self.helpMenu.addAction(self.planckAct)
         self.helpMenu.addSeparator()
         self.helpMenu.addAction(self.aboutAct)
 
@@ -276,8 +284,15 @@ class MainWindow(QMainWindow):
         if msg:
             QCoreApplication.processEvents()
 
-    def _icon(self, name):
-        pm = QPixmap(os.path.join(os.path.dirname(__file__), 'images', '%s.png' % name))
+    def _image_file(self, name):
+        return os.path.join(os.path.dirname(__file__), 'images', name)
+
+    def _icon(self, name, large=True):
+        if pyside_version > 1 and large:
+            name = name + '_large'
+        pm = QPixmap(self._image_file('%s.png' % name))
+        if hasattr(pm, 'setDevicePixelRatio'):
+            pm.setDevicePixelRatio(self.devicePixelRatio())
         return QIcon(pm)
 
     def _createWidgets(self):
@@ -303,15 +318,11 @@ class MainWindow(QMainWindow):
                      SIGNAL("activated(const QString&)"),
                      self.openDirectory)
 
-        self.pushButtonSelect = QPushButton(u"+", self.selectWidget)
-        self.pushButtonSelect.setStyleSheet("font-size:10pt; font-weight:bold")
-
+        self.pushButtonSelect = QPushButton(self._icon("open"), "", self.selectWidget)
         self.pushButtonSelect.setMaximumWidth(30)
         self.pushButtonSelect.setToolTip("Open chain file root directory")
         self.connect(self.pushButtonSelect, SIGNAL("clicked()"),
                      self.selectRootDirName)
-        shortcut = QShortcut(QKeySequence(self.tr("Ctrl+O")), self)
-        self.connect(shortcut, SIGNAL("activated()"), self.selectRootDirName)
 
         self.listRoots = ParamListWidget(self.selectWidget, self)
 
@@ -319,8 +330,7 @@ class MainWindow(QMainWindow):
                      SIGNAL("itemChanged(QListWidgetItem *)"),
                      self.updateListRoots)
 
-        self.pushButtonRemove = QPushButton(u"\u00d7", self.selectWidget)
-        self.pushButtonRemove.setStyleSheet("font-size:10pt; font-weight:bold; color:maroon")
+        self.pushButtonRemove = QPushButton(self._icon('remove'), "", self.selectWidget)
         self.pushButtonRemove.setToolTip("Remove a chain root")
         self.pushButtonRemove.setMaximumWidth(30)
 
@@ -445,17 +455,17 @@ class MainWindow(QMainWindow):
         self.plotter_script = None
 
         self.toolBar = QToolBar()
-        self.toolBar.setIconSize(QSize(20, 20))
+        self.toolBar.setIconSize(QSize(22, 22))
 
-        openAct = QAction(self._icon("file_open"),
+        openAct = QAction(self._icon("open"),
                           "open script", self.toolBar,
                           statusTip="Open script",
                           triggered=self.openScript)
-        saveAct = QAction(self._icon("file_save"),
+        saveAct = QAction(self._icon("save"),
                           "Save script", self.toolBar,
                           statusTip="Save script",
                           triggered=self.saveScript)
-        clearAct = QAction(self._icon("view_clear"),
+        clearAct = QAction(self._icon("delete"),
                            "Clear", self.toolBar,
                            statusTip="Clear",
                            triggered=self.clearScript)
@@ -471,7 +481,10 @@ class MainWindow(QMainWindow):
         PythonHighlighter(self.textWidget.document())
 
         self.pushButtonPlot2 = QPushButton("Make plot", self.editWidget)
+        self.pushButtonPlot2.setToolTip("Ctrl+Return")
         self.connect(self.pushButtonPlot2, SIGNAL("clicked()"), self.plotData2)
+        shortcut = QShortcut(QKeySequence(self.tr("Ctrl+Return")), self)
+        self.connect(shortcut, SIGNAL("activated()"), self.plotData2)
 
         layoutEdit = QVBoxLayout()
         layoutEdit.addWidget(self.toolBar)
@@ -818,6 +831,10 @@ class MainWindow(QMainWindow):
     def openGitHub(self):
         import webbrowser
         webbrowser.open("https://github.com/cmbant/getdist/")
+
+    def openPlanck(self):
+        import webbrowser
+        webbrowser.open("http://pla.esac.esa.int/pla/#cosmology")
 
     def about(self):
         """
@@ -1536,6 +1553,9 @@ class MainWindow(QMainWindow):
         """
         Slot function called when pushButtonPlot2 is pressed.
         """
+        if self.tabWidget.currentIndex() == 0:
+            self.plotData()
+            return
 
         def set_rc(opts):
             with warnings.catch_warnings():

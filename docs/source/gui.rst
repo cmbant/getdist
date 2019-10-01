@@ -5,7 +5,7 @@ Run the *getdist-gui* script to run the graphical user interface. This requires 
 
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
-.. image:: https://cosmologist.info/cosmomc/pics/planck2015/gui_planck.png
+.. image:: https://cdn.cosmologist.info/antony/getdist/gui_planck2018.png
 
 It can open chain files in a selected directry (and also `paramgrid <https://cosmologist.info/cosmomc/readme_grids.html>`_ directories as show above).
 See the `intro <https://getdist.readthedocs.io/en/latest/intro.html>`_ for a description of chain file formats.  A grid of sample chains files can be
@@ -25,7 +25,7 @@ and fine control (e.g. add custom legend text, etc), export the script, edit and
 The Script Preview tab also gives a convenient way to view the script for the current plot,
 and preview exactly what it will produce when run:
 
-.. image:: https://cosmologist.info/cosmomc/pics/planck2015/gui_script.png
+.. image:: https://cdn.cosmologist.info/antony/getdist/gui_script2018.png
 
 You can also edit and customize the script, or open and play with existing plot scripts.
 
