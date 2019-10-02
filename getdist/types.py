@@ -467,17 +467,20 @@ class LikelihoodChi2(object): pass
 
 class BestFit(ParamResults):
     """
-    Class holding the result of a likelihood minimization, inheriting from :class:`ParamResults`
+    Class holding the result of a likelihood minimization, inheriting from :class:`ParamResults`.
+    The data is read from a specific formatted text file (.minimum or .bestfit) as output by CosmoMC or Cobaya.
     """
 
-    def __init__(self, fileName=None, setParamNameFile=None, want_fixed=False):
+    def __init__(self, fileName=None, setParamNameFile=None, want_fixed=False, max_posterior=True):
         """
         :param fileName: text file to load from, assumed to be in CosmoMC's .minimum format
         :param setParamNameFile: optional name of .paramnames file listing preferred parameter labels for the parameters
         :param want_fixed:  whether to include values of parameters that are not allowed to vary
+        :param max_posterior: whether the file is a maximum posterior (default) or maximum likelihood
         """
 
         ParamResults.__init__(self)
+        self.max_posterior = max_posterior
         if fileName is not None: self.loadFromFile(fileName, want_fixed=want_fixed)
         if setParamNameFile is not None: self.setLabelsFromParamNames(setParamNameFile)
 

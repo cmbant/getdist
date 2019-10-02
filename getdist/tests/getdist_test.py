@@ -91,6 +91,11 @@ class GetDistTest(unittest.TestCase):
         np.random.seed(10)
         self.testdists = Test2DDistributions()
 
+    def testBestFit(self):
+        samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
+        bestSample = samples.getParamBestFitDict(best_fit_sample=True)
+        self.assertAlmostEqual(bestSample['loglike'], 1.708, 2)
+
     def testTables(self):
         self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
         self.assertEqual(str(self.samples.getLatex(limit=2)),

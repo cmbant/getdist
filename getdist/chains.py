@@ -985,16 +985,21 @@ class Chains(WeightedSamples):
         self.setParams(pars)
         return pars
 
-    def getParamSampleDict(self, ix):
+    def getParamSampleDict(self, ix, want_derived=True):
         """
         Returns a dictionary of parameter values for sample number ix
+
+        :param want_derived: include derived parameters
+        :param want_fixed: also include values of any fixed parameters
+        :return: ordered dictionary of parameter values
         """
         from collections import OrderedDict
         res = OrderedDict()
         for i, name in enumerate(self.paramNames.names):
-            res[name.name] = self.samples[ix, i]
-        res['weight'] = self.weights
-        res['loglike'] = self.loglikes
+            if want_derived or not name.isDerived:
+                res[name.name] = self.samples[ix, i]
+        res['weight'] = self.weights[ix]
+        res['loglike'] = self.loglikes[ix]
         return res
 
     def _makeParamvec(self, par):

@@ -1395,7 +1395,7 @@ class MCSamples(Chains):
             if density is not None: return density
         return self.get1DDensityGridData(name, **kwargs)
 
-    def get1DDensityGridData(self, j,  paramConfid=None, meanlikes=False,**kwargs):
+    def get1DDensityGridData(self, j, paramConfid=None, meanlikes=False, **kwargs):
         """
         Low-level function to get a :class:`~.densities.Density1D` instance for the marginalized 1D density of a parameter. Result is not cached.
 
@@ -1893,7 +1893,7 @@ class MCSamples(Chains):
             density.normalize(in_place=True)
         return density
 
-    def getRawNDDensityGridData(self, js,  num_plot_contours=None, get_density=False,
+    def getRawNDDensityGridData(self, js, num_plot_contours=None, get_density=False,
                                 meanlikes=False, maxlikes=False, **kwargs):
         """
         Low-level function to get unsmooth ND plot marginalized
@@ -2012,7 +2012,6 @@ class MCSamples(Chains):
         indexes = self.loglikes.argsort()
         cumsum = np.cumsum(self.weights[indexes])
         m.ND_cont1, m.ND_cont2 = np.searchsorted(cumsum, self.norm * self.contours[0:2])
-
         for j, par in enumerate(self.paramNames.names):
             region1 = self.samples[indexes[:m.ND_cont1], j]
             region2 = self.samples[indexes[:m.ND_cont2], j]
@@ -2080,13 +2079,20 @@ class MCSamples(Chains):
             return getattr(par, 'limmin', None)
         return None
 
-    def getBestFit(self):
-        bf_file = self.root + '.minimum'
+    def getBestFit(self, max_posterior=True):
+        """
+        Returns a :class:`~.types.BestFit` object with best-fit point stored in .minimum or .bestfit file
+
+       :param max_posterior: whether to get maximum posterior (from .minimum file) or maximum likelihood (from .bestfit file)
+       :return:
+        """
+        ext = '.minimum' if max_posterior else '.bestfit'
+        bf_file = self.root + ext
         if os.path.exists(bf_file):
-            return types.BestFit(bf_file)
+            return types.BestFit(bf_file, max_posterior=max_posterior)
         else:
             raise MCSamplesError(
-                'Best fit can only be included if loaded from file and file_root.minimum exists (cannot be calculated from samples)')
+                'Best fit can only be included if loaded from file and file_root%s exists (cannot be calculated from samples)' % ext)
 
     def getMargeStats(self, include_bestfit=False):
         """
@@ -2170,7 +2176,7 @@ class MCSamples(Chains):
         else:
             return labels[0] + ' ' + texs[0]
 
-    def _setDensitiesandMarge1D(self, max_frac_twotail=None,  meanlikes=False):
+    def _setDensitiesandMarge1D(self, max_frac_twotail=None, meanlikes=False):
         """
         Get all the 1D densities; result is cached.
 
@@ -2297,22 +2303,42 @@ class MCSamples(Chains):
             self.ranges.setRange(name, range)
         return super(MCSamples, self).addDerived(paramVec, name, label=label, comment=comment)
 
-    def getParamBestFitDict(self):
+    def getParamBestFitDict(self, best_fit_sample=False, want_derived=True, want_fixed=True, max_posterior=True):
         """
-        Gets a dictionary of parameter values for the best fit point, assuming .minimum best fit file exists
-        :return: dictionary of parameter values
+        Gets an ordered dictionary of parameter values for the best fit point,
+        assuming calculated results from mimimization runs in .minimum (max posterior) .bestfit (max likelihood) files exists.
+
+        Can also get the best-fit (max posterior) sample, which typically has a likelihood that differs significantly
+        from the true best fit in high dimensions.
+
+        :param best_fit_sample: load from global minimum files (False, default) or using best-fit sample (True)
+        :param want_derived: include derived parameters
+        :param want_fixed: also include values of any fixed parameters
+        :param max_posterior: whether to get maximum posterior (from .minimum file) or maximum likelihood (from .bestfit file)
+        :return: ordered dictionary of parameter values
         """
-        res = self.getBestFit().getParamDict()
-        res.update(self.ranges.fixedValueDict())
+        if best_fit_sample:
+            if not max_posterior:
+                raise ValueError('best_fit_sample is only maximum posterior')
+            return self.getParamSampleDict(np.argmin(self.loglikes))
+        else:
+            res = self.getBestFit(max_posterior=max_posterior).getParamDict(include_derived=want_derived)
+        if want_fixed:
+            res.update(self.ranges.fixedValueDict())
         return res
 
-    def getParamSampleDict(self, ix):
+    def getParamSampleDict(self, ix, want_derived=True, want_fixed=True):
         """
         Gets a dictionary of parameter values for sample number ix
-        :return: dictionary of parameter values
+
+        :param ix: index of the sample to return (zero based)
+        :param want_derived: include derived parameters
+        :param want_fixed: also include values of any fixed parameters
+        :return: ordered dictionary of parameter values
         """
-        res = super(MCSamples, self).getParamSampleDict(ix)
-        res.update(self.ranges.fixedValueDict())
+        res = super(MCSamples, self).getParamSampleDict(ix, want_derived=want_derived)
+        if want_fixed:
+            res.update(self.ranges.fixedValueDict())
         return res
 
     def getCombinedSamplesWithSamples(self, samps2, sample_weights=[1, 1]):
