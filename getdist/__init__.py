@@ -34,7 +34,7 @@ output_base_dir = config_ini.string('output_base_dir', '')
 cache_dir = config_ini.string('cache_dir', '')
 default_getdist_settings = config_ini.string('default_getdist_settings', get_defaults_file())
 distparam_template = config_ini.string('distparam_template', get_defaults_file('distparam_template.ini'))
-use_plot_data = config_ini.bool('use_plot_data', False)
+use_plot_data = False  # for legacy compatibility
 default_plot_output = config_ini.string('default_plot_output', 'pdf')
 loglevel = config_ini.string('logging', '')
 if loglevel:

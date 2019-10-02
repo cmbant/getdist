@@ -100,7 +100,6 @@ class GetDistPlotSettings(object):
         # self.prob_label = 'Probability'
         self.norm_prob_label = 'P'
         self.prob_y_ticks = False
-        self.legend_colored_text = False
 
         self.lineM = ['-k', '-r', '-b', '-g', '-m', '-c', '-y', '--k', '--r', '--b', '--g',
                       '--m']  # : line styles/colors
@@ -129,6 +128,7 @@ class GetDistPlotSettings(object):
         self.tick_prune = None  # 'lower' or 'upper'
         self.tight_gap_fraction = 0.13  # space between ticks and the edge
 
+        self.legend_colored_text = False
         self.legend_loc = 'best'
         self.figure_legend_loc = 'upper center'
         self.legend_frame = True
@@ -259,91 +259,6 @@ def getSubplotPlotter(subplot_size=2, width_inch=None, **kwargs):
         plotter.settings.colorbar_axes_fontsize += 2
         plotter.settings.legend_fontsize = plotter.settings.lab_fontsize + 1
     return plotter
-
-
-class SampleAnalysisGetDist(object):
-
-    # Deprecated old class to support pre-computed GetDist plot_data output
-    def __init__(self, plot_data):
-        self.plot_data = plot_data
-        self.newPlot()
-        self.paths = dict()
-
-    def newPlot(self):
-        self.single_samples = dict()
-
-    def get_density_grid(self, root, param1, param2, conts=2, likes=False):
-        res = self.load_2d(root, param1, param2)
-        if likes: res.likes = self.load_2d(root, param1, param2, '_likes', no_axes=True)
-        if res is None: return None
-        if conts > 0: res.contours = self.load_2d(root, param1, param2, '_cont', no_axes=True)[0:conts]
-        return res
-
-    def get_density(self, root, param, likes=False):
-        pts = self.load_1d(root, param)
-        if pts is None: return None
-        result = Density1D(pts[:, 0], pts[:, 1])
-        if likes: result.likes = self.load_1d(root, param, '.likes')[:, 1]
-        return result
-
-    def load_single_samples(self, root):
-        if root not in self.single_samples: self.single_samples[root] = np.loadtxt(
-            self.plot_data_file(root) + '_single.txt')[:, 2:]
-        return self.single_samples[root]
-
-    def paramsForRoot(self, root, labelParams=None):
-        names = ParamNames(self.plot_data_file(root) + '.paramnames')
-        if labelParams is not None: names.setLabelsAndDerivedFromParamNames(labelParams)
-        return names
-
-    def boundsForRoot(self, root):
-        return ParamBounds(self.plot_data_file(root) + '.bounds')
-
-    def plot_data_file(self, root):
-        # find first match to roots that exist in list of plot_data paths
-        if os.sep in root: return root
-        path = self.paths.get(root, None)
-        if path is not None: return path
-        for datadir in self.plot_data:
-            path = datadir + os.sep + root
-            if os.path.exists(path + '.paramnames'):
-                self.paths[root] = path
-                return path
-        return self.plot_data[0] + os.sep + root
-
-    def plot_data_file_1D(self, root, name):
-        return self.plot_data_file(root) + '_p_' + name
-
-    def plot_data_file_2D(self, root, name1, name2):
-        fname = self.plot_data_file(root) + '_2D_' + name2 + '_' + name1
-        if not os.path.exists(fname):
-            return self.plot_data_file(root) + '_2D_' + name1 + '_' + name2, True
-        else:
-            return fname, False
-
-    def load_1d(self, root, param, ext='.dat'):
-        fname = self.plot_data_file_1D(root, param.name) + ext
-        if not hasattr(param, 'plot_data'): param.plot_data = dict()
-        if fname not in param.plot_data:
-            if not os.path.exists(fname):
-                param.plot_data[fname] = None
-            else:
-                param.plot_data[fname] = np.loadtxt(fname)
-        return param.plot_data[fname]
-
-    def load_2d(self, root, param1, param2, ext='', no_axes=False):
-        fname, transpose = self.plot_data_file_2D(root, param1.name, param2.name)
-        if not os.path.exists(fname + ext): return None
-        pts = np.loadtxt(fname + ext)
-        if transpose: pts = pts.transpose()
-        if no_axes: return pts
-        x = np.loadtxt(fname + '_x')
-        y = np.loadtxt(fname + '_y')
-        if transpose:
-            return Density2D(y, x, pts)
-        else:
-            return Density2D(x, y, pts)
-
 
 class RootInfo(object):
     """
@@ -630,28 +545,18 @@ class GetDistPlotter(object):
          and derived data from a given root name tag (e.g. sampleAnalyser.samplesForRoot('rootname'))
     """
 
-    def __init__(self, plot_data=None, chain_dir=None, settings=None, analysis_settings=None, mcsamples=True):
+    def __init__(self, chain_dir=None, settings=None, analysis_settings=None):
         """
 
-        :param plot_data: (deprecated) directory name if you have pre-computed plot_data/ directory from GetDist; None by default
         :param chain_dir: Set this to a directory or grid root to search for chains (can also be a list of such, searched in order)
         :param analysis_settings: The settings to be used by :class:`MCSampleAnalysis` when analysing samples
-        :param mcsamples: if True defaults to current method of using :class:`MCSampleAnalysis` instance to analyse chains on demand
         """
         self.chain_dir = chain_dir
         if settings is None:
             self.settings = copy.deepcopy(defaultSettings)
         else:
             self.settings = settings
-        if chain_dir is None and plot_data is None: chain_dir = getdist.default_grid_root
-        if isinstance(plot_data, six.string_types):
-            self.plot_data = [plot_data]
-        else:
-            self.plot_data = plot_data
-        if chain_dir is not None or mcsamples and plot_data is None:
-            self.sampleAnalyser = MCSampleAnalysis(chain_dir, analysis_settings)
-        else:
-            self.sampleAnalyser = SampleAnalysisGetDist(self.plot_data)
+        self.sampleAnalyser = MCSampleAnalysis(chain_dir or getdist.default_grid_root, analysis_settings)
         self.newPlot()
 
     def newPlot(self):
@@ -1185,11 +1090,11 @@ class GetDistPlotter(object):
             if isinstance(root, MixtureND):
                 res = self.add_2D_mixture_projection(root, param_pair[0], param_pair[1], plotno=line_offset + i,
                                                      of=len(roots),
-                                                     add_legend_proxy=add_legend_proxy and not root in proxy_root_exclude,
+                                                     add_legend_proxy=add_legend_proxy and root not in proxy_root_exclude,
                                                      **contour_args[i])
             else:
                 res = self.add_2d_contours(root, param_pair[0], param_pair[1], line_offset + i, of=len(roots),
-                                           add_legend_proxy=add_legend_proxy and not root in proxy_root_exclude,
+                                           add_legend_proxy=add_legend_proxy and root not in proxy_root_exclude,
                                            **contour_args[i])
             xbounds, ybounds = self._updateLimits(res, xbounds, ybounds)
         if xbounds is None: return

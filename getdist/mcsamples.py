@@ -50,7 +50,7 @@ class BandwidthError(MCSamplesError):
     pass
 
 
-def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}, dist_settings={}):
+def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}):
     """
     Loads a set of samples from a file or files.
 
@@ -67,11 +67,8 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     :param jobItem: an optional grid jobItem instance for a CosmoMC grid output
     :param no_cache: Indicates whether or not we should cache loaded samples in a pickle
     :param settings: dictionary of analysis settings to override defaults
-    :param dist_settings: (old) alias for settings
     :return: The :class:`MCSamples` instance
     """
-    if settings and dist_settings: raise ValueError('Use settings or dist_settings')
-    if dist_settings: settings = dist_settings
     files = chainFiles(file_root)
     if not files:  # try new Cobaya format
         files = chainFiles(file_root, separator='.')
@@ -538,12 +535,12 @@ class MCSamples(Chains):
 
     def makeSingleSamples(self, filename="", single_thin=None):
         """
-        Make file of weight-1 samples by choosing samples
-        with probability given by their weight.
+        Make file of unit weight samples by choosing samples
+        with probability proportional to their weight.
 
         :param filename: The filename to write to, leave empty if no output file is needed
         :param single_thin: factor to thin by; if not set generates as many samples as it can up to self.max_scatter_points
-        :return: numpy array of selected weight-1 samples
+        :return: numpy array of selected weight-1 samples if no filename
         """
         if single_thin is None:
             single_thin = max(1, self.norm / self.max_mult / self.max_scatter_points)
@@ -559,7 +556,6 @@ class MCSamples(Chains):
                             f.write("%16.7E" % (self.samples[i][j]))
                         f.write("\n")
         else:
-            # return data
             return self.samples[rand <= self.weights / (self.max_mult * single_thin)]
 
     def writeThinData(self, fname, thin_ix, cool=1):
@@ -1397,16 +1393,13 @@ class MCSamples(Chains):
         if not kwargs:
             density = self.density1D.get(name, None)
             if density is not None: return density
-        return self.get1DDensityGridData(name, get_density=True, **kwargs)
+        return self.get1DDensityGridData(name, **kwargs)
 
-    def get1DDensityGridData(self, j, writeDataToFile=False, get_density=False, paramConfid=None, meanlikes=False,
-                             **kwargs):
+    def get1DDensityGridData(self, j,  paramConfid=None, meanlikes=False,**kwargs):
         """
         Low-level function to get a :class:`~.densities.Density1D` instance for the marginalized 1D density of a parameter. Result is not cached.
 
         :param j: a name or index of the parameter
-        :param writeDataToFile: True if should write to text file.
-        :param get_density: return a :class:`~.densities.Density1D` instance only, does not write out or calculate mean likelihoods for plots
         :param paramConfid: optional cached :class:`~.chains.ParamConfidenceData` instance
         :param meanlikes: include mean likelihoods
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
@@ -1541,8 +1534,6 @@ class MCSamples(Chains):
         density1D.normalize('max', in_place=True)
         if not kwargs: self.density1D[par.name] = density1D
 
-        if get_density: return density1D
-
         if meanlikes:
             ix = density1D.P > 0
             finebinlikes[ix] /= density1D.P[ix]
@@ -1557,34 +1548,7 @@ class MCSamples(Chains):
         else:
             density1D.likes = None
 
-        if writeDataToFile:
-            # get thinner grid over restricted range for plotting
-            x = par.range_min + np.arange(num_bins) * width
-            bincounts = density1D.Prob(x)
-
-            if meanlikes:
-                likeDensity = Density1D(fine_x, P=binlikes)
-                likes = likeDensity.Prob(x)
-            else:
-                likes = None
-
-            fname = self.rootname + "_p_" + par.name
-            filename = os.path.join(self.plot_data_dir, fname + ".dat")
-            with open(filename, 'w') as f:
-                for xval, binval in zip(x, bincounts):
-                    f.write("%16.7E%16.7E\n" % (xval, binval))
-
-            if meanlikes:
-                filename_like = os.path.join(self.plot_data_dir, fname + ".likes")
-                with open(filename_like, 'w') as f:
-                    for xval, binval in zip(x, likes):
-                        f.write("%16.7E%16.7E\n" % (xval, binval))
-
-            density = Density1D(x, bincounts)
-            density.likes = likes
-            return density
-        else:
-            return density1D
+        return density1D
 
     def _setEdgeMask2D(self, parx, pary, prior_mask, winw, alledge=False):
         if parx.has_limits_bot:
@@ -1647,16 +1611,14 @@ class MCSamples(Chains):
             density.normalize(in_place=True)
         return density
 
-    def get2DDensityGridData(self, j, j2, writeDataToFile=False,
-                             num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
+    def get2DDensityGridData(self, j, j2, num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
         """
         Low-level function to get 2D plot marginalized density and optional additional plot data.
 
         :param j: name or index of the x parameter
         :param j2: name or index of the y parameter.
-        :param writeDataToFile: True if should write data to file
         :param num_plot_contours: number of contours to calculate and return in density.contours
-        :param get_density: only get the 2D marginalized density, no additional plot data
+        :param get_density: only get the 2D marginalized density, don't calculate confidence level members
         :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
 
@@ -1824,7 +1786,8 @@ class MCSamples(Chains):
         density = Density2D(x, y, bins2D,
                             view_ranges=[(parx.range_min, parx.range_max), (pary.range_min, pary.range_max)])
         density.normalize('max', in_place=True)
-        if get_density: return density
+        if get_density:
+            return density
 
         ncontours = len(self.contours)
         if num_plot_contours: ncontours = min(num_plot_contours, ncontours)
@@ -1847,23 +1810,6 @@ class MCSamples(Chains):
         else:
             density.likes = None
 
-        if writeDataToFile:
-            # note store things in confusing transpose form
-            # if meanlikes:
-            # filedensity = Density2D(x, y, bin2Dlikes)
-            #                bin2Dlikes = filedensity.Prob(x, y)
-
-            plotfile = self.rootname + "_2D_%s_%s" % (parx.name, pary.name)
-            filename = os.path.join(self.plot_data_dir, plotfile)
-            np.savetxt(filename, bins2D.T, "%16.7E")
-            np.savetxt(filename + "_y", x, "%16.7E")
-            np.savetxt(filename + "_x", y, "%16.7E")
-            np.savetxt(filename + "_cont", np.atleast_2d(density.contours), "%16.7E")
-            if meanlikes:
-                np.savetxt(filename + "_likes", bin2Dlikes.T, "%16.7E")
-                #       res = Density2D(x, y, bins2D)
-                #       res.contours = density.contours
-                #       res.likes = bin2Dlikes
         return density
 
     def _setRawEdgeMaskND(self, parv, prior_mask):
@@ -1947,15 +1893,13 @@ class MCSamples(Chains):
             density.normalize(in_place=True)
         return density
 
-    def getRawNDDensityGridData(self, js, writeDataToFile=False,
-                                num_plot_contours=None, get_density=False,
+    def getRawNDDensityGridData(self, js,  num_plot_contours=None, get_density=False,
                                 meanlikes=False, maxlikes=False, **kwargs):
         """
         Low-level function to get unsmooth ND plot marginalized
-        density and optional additional plot data.
+        density and optional additional plot data (no KDE).
 
         :param js: vector of names or indices of the x_i parameters
-        :param writeDataToFile: True if should write data to file
         :param num_plot_contours: number of contours to calculate and return in density.contours
         :param get_density: only get the ND marginalized density, no additional plot data, no contours.
         :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
@@ -2038,36 +1982,6 @@ class MCSamples(Chains):
             density.maxcontours = getOtherContourLevels(binNDmaxlikes, contours, half_edge=False)
         else:
             density.maxlikes = None
-
-        if writeDataToFile:
-            # note store things in confusing transpose form
-
-            postfile = self.rootname + "_posterior" + "_%sD.dat" % ndim
-            contfile = self.rootname + "_posterior" + "_%sD_cont.dat" % ndim
-
-            allND = [np.array(binsND) for _ in range(ndim + 1)]
-            allND[0] = np.ravel(binsND, order='C')
-            for i in range(ndim):
-                # [index[::-1] for column-major order
-                allND[i + 1] = [xv[i][index[::-1][i]] for index in np.ndindex(binsND.shape)]
-
-            filename = os.path.join(self.plot_data_dir, postfile)
-            np.savetxt(filename, np.transpose(allND), "%16.7E")
-
-            filename = os.path.join(self.plot_data_dir, contfile)
-            np.savetxt(filename, np.atleast_2d(density.contours), "%16.7E")
-
-            if meanlikes:
-                allND[0] = np.ravel(binNDlikes, order='C')
-                likefile = self.rootname + "_meanlike" + "_%sD.dat" % ndim
-                filename = os.path.join(self.plot_data_dir, likefile)
-                np.savetxt(filename, np.transpose(allND), "%16.7E")
-
-            if maxlikes:
-                allND[0] = np.ravel(binNDmaxlikes, order='C')
-                likefile = self.rootname + "_maxlike" + "_%sD.dat" % ndim
-                filename = os.path.join(self.plot_data_dir, likefile)
-                np.savetxt(filename, np.transpose(allND), "%16.7E")
 
         return density
 
@@ -2256,20 +2170,18 @@ class MCSamples(Chains):
         else:
             return labels[0] + ' ' + texs[0]
 
-    def _setDensitiesandMarge1D(self, max_frac_twotail=None, writeDataToFile=False, meanlikes=False):
+    def _setDensitiesandMarge1D(self, max_frac_twotail=None,  meanlikes=False):
         """
         Get all the 1D densities; result is cached.
 
         :param max_frac_twotail: optional override for self.max_frac_twotail
-        :param writeDataToFile: True if should write to file
         :param meanlikes: include mean likelihoods
         """
         if self.done_1Dbins: return
 
         for j in range(self.n):
             paramConfid = self.initParamConfidenceData(self.samples[:, j])
-            self.get1DDensityGridData(j, writeDataToFile, get_density=not writeDataToFile, paramConfid=paramConfid,
-                                      meanlikes=meanlikes)
+            self.get1DDensityGridData(j, paramConfid=paramConfid, meanlikes=meanlikes)
             self._setMargeLimits(self.paramNames.names[j], paramConfid, max_frac_twotail)
 
         self.done_1Dbins = True
@@ -2480,17 +2392,14 @@ class MCSamples(Chains):
             text += 'g.plots_1d(roots, markers=markers)'
         self._WritePlotFile(filename, self.subplot_size_inch, text, '', ext)
 
-    def writeScriptPlots2D(self, filename, plot_2D_param=None, cust2DPlots=[], writeDataToFile=False, ext=None,
-                           shade_meanlikes=False):
+    def writeScriptPlots2D(self, filename, plot_2D_param=None, cust2DPlots=[], ext=None):
         """
         Write script that generates a 2 dimensional plot. Only intended for use by getdist script.
 
         :param filename: The filename to write to.
         :param plot_2D_param: parameter to plot other variables against
         :param cust2DPlots: list of parts of parameter names to plot
-        :param writeDataToFile: True if should write to file
         :param ext: The extension for the filename, Default if None
-        :param shade_meanlikes: shade by mean likelihoods
         :return: A dictionary indexed by pairs of parameters where 2D densities have been calculated
         """
         done2D = {}
@@ -2512,13 +2421,8 @@ class MCSamples(Chains):
                 if (par1, par2) not in done2D:
                     plot_num += 1
                     done2D[(par1, par2)] = True
-                    if writeDataToFile:
-                        self.get2DDensityGridData(j, j2, writeDataToFile=True, meanlikes=shade_meanlikes)
                     text += "pairs.append(['%s','%s'])\n" % (par1, par2)
-        if shade_meanlikes:
-            text += 'g.plots_2d(roots,param_pairs=pairs,shaded=True)'
-        else:
-            text += 'g.plots_2d(roots,param_pairs=pairs,filled=True)'
+        text += 'g.plots_2d(roots,param_pairs=pairs,filled=True)'
         self._WritePlotFile(filename, self.subplot_size_inch2, text, '_2D', ext)
         return done2D
 
@@ -2560,10 +2464,7 @@ class MCSamples(Chains):
         """
         with open(filename, 'w') as f:
             f.write("import getdist.plots as plots, os\n")
-            if self.plot_data_dir:
-                f.write("g=plots.GetDistPlotter(plot_data=r'%s')\n" % self.plot_data_dir)
-            else:
-                f.write("g=plots.GetDistPlotter(chain_dir=r'%s')\n" % (self.batch_path or os.path.dirname(self.root)))
+            f.write("g=plots.GetDistPlotter(chain_dir=r'%s')\n" % (self.batch_path or os.path.dirname(self.root)))
 
             f.write("g.settings.setWithSubplotSize(%s)\n" % subplot_size)
             f.write("roots = ['%s']\n" % self.rootname)

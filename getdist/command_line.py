@@ -5,6 +5,7 @@ import subprocess
 import getdist
 import sys
 import io
+import logging
 from getdist import MCSamples, chains, IniFile
 
 
@@ -50,6 +51,12 @@ def getdist_script(args, exit_on_error=True):
     # Input parameters
     ini = IniFile(args.ini_file)
 
+    for item in set(ini.params.keys()).intersection(
+            {'make_single_samples', 'single_thin', 'dump_ND_bins', 'plot_meanlikes', 'shade_meanlikes',
+             'plot_data_dir', 'force_twotail'}):
+        if ini.string(item) not in [0, 'F']:
+            logging.warning('%s is no longer supported by getdist, value ignored' % item)
+
     # File root
     if chain_root is not None:
         in_root = chain_root
@@ -85,16 +92,9 @@ def getdist_script(args, exit_on_error=True):
     thin_factor = ini.int('thin_factor', 0)
     thin_cool = ini.float('thin_cool', 1.0)
 
-    make_single_samples = ini.bool('make_single_samples', False)
-    single_thin = ini.int('single_thin', 1)
     cool = ini.float('cool', 1.0)
 
     chain_exclude = ini.int_list('exclude_chain')
-
-    shade_meanlikes = ini.bool('shade_meanlikes', False)
-    plot_meanlikes = ini.bool('plot_meanlikes', False)
-
-    dumpNDbins = ini.bool('dump_ND_bins', False)
 
     out_dir = ini.string('out_dir', './')
     if out_dir:
@@ -194,21 +194,11 @@ def getdist_script(args, exit_on_error=True):
     if PCA_num > 0 and not plots_only:
         mc.PCA(PCA_params, PCA_func, PCA_NormParam, writeDataToFile=True)
 
-    if not no_plots or dumpNDbins:
-        # set plot_data_dir before we generate the 1D densities below
-        plot_data_dir = ini.string('plot_data_dir', default='', allowEmpty=True)
-        if plot_data_dir and not os.path.isdir(plot_data_dir):
-            os.mkdir(plot_data_dir)
-    else:
-        plot_data_dir = None
-    mc.plot_data_dir = plot_data_dir
-
     # Do 1D bins
-    mc._setDensitiesandMarge1D(writeDataToFile=not no_plots and plot_data_dir, meanlikes=plot_meanlikes)
+    mc._setDensitiesandMarge1D()
 
     if not no_plots:
         # Output files for 1D plots
-        if plot_data_dir: doprint('Calculating plot data...')
 
         plotparams = []
         line = ini.string('plot_params', '')
@@ -250,23 +240,7 @@ def getdist_script(args, exit_on_error=True):
             else:
                 num_3D_plots -= 1
 
-        # Produce file of weight-1 samples if requested
-        if (num_3D_plots and not make_single_samples or make_scatter_samples) and not no_plots:
-            make_single_samples = True
-            single_thin = max(1, int(round(mc.norm / mc.max_mult)) // mc.max_scatter_points)
-
-        if plot_data_dir:
-            if make_single_samples:
-                filename = os.path.join(plot_data_dir, rootname.strip() + '_single.txt')
-                mc.makeSingleSamples(filename, single_thin)
-
-            # Write paramNames file
-            mc.getParamNames().saveAsText(os.path.join(plot_data_dir, rootname + '.paramnames'))
-            mc.getBounds().saveToFile(os.path.join(plot_data_dir, rootname + '.bounds'))
-
         make_plots = ini.bool('make_plots', False) or args.make_plots
-
-        done2D = {}
 
         filename = rootdirname + '.' + plot_ext
         mc.writeScriptPlots1D(filename, plotparams)
@@ -284,8 +258,7 @@ def getdist_script(args, exit_on_error=True):
         if cust2DPlots or plot_2D_param:
             doprint('...producing 2D plots')
             filename = rootdirname + '_2D.' + plot_ext
-            done2D = mc.writeScriptPlots2D(filename, plot_2D_param, cust2DPlots,
-                                           writeDataToFile=plot_data_dir, shade_meanlikes=shade_meanlikes)
+            mc.writeScriptPlots2D(filename, plot_2D_param, cust2DPlots)
             if make_plots: runScript(filename)
 
         if triangle_plot:
@@ -293,10 +266,6 @@ def getdist_script(args, exit_on_error=True):
             doprint('...producing triangle plot')
             filename = rootdirname + '_tri.' + plot_ext
             mc.writeScriptPlotsTri(filename, triangle_params)
-            for i, p2 in enumerate(triangle_params):
-                for p1 in triangle_params[i + 1:]:
-                    if not done2D.get((p1, p2)) and plot_data_dir:
-                        mc.get2DDensityGridData(p1, p2, writeDataToFile=True, meanlikes=shade_meanlikes)
             if make_plots: runScript(filename)
 
         # Do 3D plots (i.e. 2D scatter plots with coloured points)
@@ -313,25 +282,9 @@ def getdist_script(args, exit_on_error=True):
         # Limits from global likelihood
         if mc.loglikes is not None: mc.getLikeStats().saveAsText(rootdirname + '.likestats')
 
-    if dumpNDbins:
-        mc.num_bins_ND = ini.int('num_bins_ND', 10)
-        line = ini.string('ND_params', '')
-
-        if line not in ["", '0']:
-            ND_params = filterParList(line)
-            doprint(ND_params)
-
-            ND_dim = len(ND_params)
-            doprint(ND_dim)
-
-            mc.getRawNDDensityGridData(ND_params, writeDataToFile=True,
-                                       meanlikes=shade_meanlikes)
-
     # System command
     if finish_run_command:
         finish_run_command = finish_run_command.replace('%ROOTNAME%', rootname)
-        finish_run_command = finish_run_command.replace('%PLOTDIR%', plot_data_dir)
-        finish_run_command = finish_run_command.replace('%PLOTROOT%', os.path.join(plot_data_dir, rootname))
         os.system(finish_run_command)
 
     return "\n".join(result)

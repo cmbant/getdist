@@ -65,13 +65,11 @@ class GetDistFileTest(unittest.TestCase):
         ini.params['plot1'] = 'x y'
         ini.params['num_3D_plots'] = 1
         ini.params['3D_plot1'] = 'x y x'
-        ini.params['plot_data_dir'] = ''
         ini.params['triangle_params'] = '*[xy]*'
 
         ini.saveFile(fname)
         res = getdist_command([fname, self.root])
         self.assertTrue('-Ln(mean like)  = 2.30' in res)
-        self.assertFalse(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
 
         def checkRun():
             for f in ['.py', '_2D.py', '_3D.py', '_tri.py']:
@@ -84,13 +82,6 @@ class GetDistFileTest(unittest.TestCase):
                 os.remove(pyname)
 
         checkRun()
-
-        ini.params['plot_data_dir'] = 'plot_data/'
-        ini.saveFile(fname)
-        getdist_command([fname, self.root])
-        self.assertTrue(os.path.isfile(os.path.join(self.tempdir, 'plot_data', 'testchain_2D_x_y')))
-        checkRun()
-        shutil.rmtree(os.path.join(self.tempdir, 'plot_data'))
 
 
 class GetDistTest(unittest.TestCase):

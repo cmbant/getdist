@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
             Dirs = [Dirs]  # Qsettings doesn't save single item lists reliably
         if Dirs is not None:
             Dirs = [x for x in Dirs if os.path.exists(x)]
-            if lastDir is not None and not lastDir in Dirs and os.path.exists(lastDir):
+            if lastDir is not None and lastDir not in Dirs and os.path.exists(lastDir):
                 Dirs.insert(0, lastDir)
             self.listDirectories.addItems(Dirs)
             if lastDir is not None and os.path.exists(lastDir):
@@ -283,6 +283,7 @@ class MainWindow(QMainWindow):
     def showMessage(self, msg=''):
         self.statusBar().showMessage(msg)
         if msg:
+            self.statusBar().repaint()
             QCoreApplication.processEvents()
 
     def _image_file(self, name):
@@ -300,7 +301,7 @@ class MainWindow(QMainWindow):
         """
         Create widgets.
         """
-        self.setStyleSheet("* {font-size:8pt} QComboBox,QPushButton {height:1.3em}")
+        self.setStyleSheet("* {font-size:9pt} QComboBox,QPushButton {height:1.3em}")
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
@@ -736,8 +737,33 @@ class MainWindow(QMainWindow):
     def settingsChanged(self):
         if self.plotter:
             self.plotter.sampleAnalyser.reset(self.iniFile, chain_settings_have_priority=False)
-            if self.plotter.fig:
+        if self.tabWidget.currentIndex() == 0:
+            if self.plotter and self.plotter.fig:
                 self.plotData()
+        else:
+            script = self.textWidget.toPlainText().split("\n")
+            tag = 'analysis_settings ='
+            newline = tag + (' %s' % self.iniFile.params).replace(', ', ",\n" + " " * 21)
+            last = 0
+            for i, line in enumerate(script):
+                if line.startswith(tag):
+                    for j in range(i, len(script)):
+                        if '}' in script[j]:
+                            del script[i:j + 1]
+                            break
+                    script.insert(i, newline)
+                    last = None
+                    break
+                elif not last and line.startswith('g='):
+                    last = i
+            if last is not None:
+                script.insert(last, newline)
+            for i, line in enumerate(script):
+                if line.startswith('g=gplot.') and 'analysis_settings' not in line:
+                    script[i] = line.strip()[:-1] + ', analysis_settings=analysis_settings)'
+                    break
+            self.textWidget.setPlainText("\n".join(script))
+            self.plotData2()
 
     def showPlotSettings(self):
         """
@@ -975,7 +1001,7 @@ class MainWindow(QMainWindow):
                         if not info.batch in chain_dirs:
                             chain_dirs.append(info.batch)
 
-                self.plotter = module.getPlotter(mcsamples=True, chain_dir=chain_dirs, analysis_settings=self.iniFile)
+                self.plotter = module.getPlotter(chain_dir=chain_dirs, analysis_settings=self.iniFile)
                 if samps:
                     self.plotter.sampleAnalyser.mcsamples = samps
                 self.default_plot_settings = copy.copy(self.plotter.settings)
@@ -1339,7 +1365,7 @@ class MainWindow(QMainWindow):
 
             script = "import %s as gplot\nimport os\n\n" % self.script_plot_module
             if isinstance(self.iniFile, IniFile):
-                script += 'analysis_settings = %s\n' % self.iniFile.params
+                script += ('analysis_settings = %s\n' % self.iniFile.params).replace(', ', ",\n" + " " * 21)
             if len(items_x) > 1 or len(items_y) > 1:
                 plot_func = 'getSubplotPlotter'
             else:
@@ -1623,6 +1649,8 @@ class MainWindow(QMainWindow):
                     break
 
             self.exportAct.setEnabled(True)
+        except SyntaxError as e:
+            QMessageBox.critical(self, "Plot script", type(e).__name__ + ': %s\n %s' % (e, e.text))
         except Exception as e:
             self.errorReport(e, caption="Plot script")
         finally:
@@ -1927,10 +1955,18 @@ class DialogSettings(QDialog):
         self.rows = len(items) + nblank
         self.table.setRowCount(self.rows)
         for irow, key in enumerate(items):
+            value = ini.string(key)
             item = QTableWidgetItem(str(key))
             item.setFlags(item.flags() ^ Qt.ItemIsEditable)
             self.table.setItem(irow, 0, item)
-            item = QTableWidgetItem(ini.string(key))
+            bool = value in ['False', 'True']
+            item = QTableWidgetItem("" if bool else value)
+            if bool:
+                item.setCheckState(Qt.Checked if ini.bool(key) else Qt.Unchecked)
+                item.setFlags(item.flags() ^ Qt.ItemIsEditable | Qt.ItemIsUserCheckable | Qt.ItemIsSelectable)
+            else:
+                item.setFlags(item.flags() ^ Qt.ItemIsUserCheckable)
+
             hint = names.comments.get(key, None)
             if hint: item.setToolTip("\n".join(hint))
             self.table.setItem(irow, 1, item)
@@ -1959,7 +1995,11 @@ class DialogSettings(QDialog):
         for row in range(self.rows):
             key = self.table.item(row, 0).text().strip()
             if key:
-                vals[key] = self.table.item(row, 1).text().strip()
+                item = self.table.item(row, 1)
+                if item.flags() & Qt.ItemIsUserCheckable:
+                    vals[key] = str(item.checkState() == Qt.Checked)
+                else:
+                    vals[key] = item.text().strip()
         return vals
 
     def doUpdate(self):

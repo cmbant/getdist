@@ -86,10 +86,7 @@ class batchArgs(object):
                 from getdist import paramnames
 
                 if args.paramList is not None: args.paramList = paramnames.ParamNames(args.paramList)
-                if args.plot_data is not None:
-                    g = plots.GetDistPlotter(plot_data=args.plot_data)
-                else:
-                    g = plots.GetDistPlotter(chain_dir=self.batch.batchPath)
+                g = plots.GetDistPlotter(chain_dir=self.batch.batchPath)
                 if args.size_inch is not None: g.settings.setWithSubplotSize(args.size_inch)
                 return self.batch, self.args, g
             else:
