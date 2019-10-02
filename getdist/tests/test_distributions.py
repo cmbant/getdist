@@ -330,8 +330,6 @@ def run_test_program(plots=['dists_2D', 'dists_1D'], sims=100, nsamp=default_nsa
         join_subplots(g.subplots)
         plt.savefig('test_dists_2D_mbc%s_bco%s_N%s.pdf' % (mbc, bco, nsamp), bbox_inches='tight')
 
-    if plt.get_backend() != 'agg':
-        plt.show()
     if False:
         print('testing 1D gaussian MISE...')
         scales, MISEs = get1DMises(test1D.gauss)
@@ -355,7 +353,7 @@ if __name__ == "__main__":
     parser.add_argument('--nsamp', type=int, default=10000, help='Number of (independent) samples per simulation')
     parser.add_argument('--plots', nargs='*', default=['dists_1D', 'dists_2D', 'ISE_1D', 'ISE_2D'],
                         help='names of plots to make')
-    parser.add_argument('--mbc', type=int, default=1, help='mult_bias_correction_order')
-    parser.add_argument('--bco', type=int, default=1, help='boundary_correction_order')
+    parser.add_argument('--mbc', type=int, default=1, help='baseline mult_bias_correction_order')
+    parser.add_argument('--bco', type=int, default=1, help='baseline boundary_correction_order')
     args = parser.parse_args()
     run_test_program(**vars(args))

@@ -19,7 +19,6 @@ def set_logging(log):
 
 
 def get_config():
-
     config_file = os.environ.get('GETDIST_CONFIG', None)
     if not config_file:
         config_file = os.path.join(os.path.dirname(__file__), 'config.ini')

@@ -51,6 +51,7 @@ class GetDistPlotSettings(object):
     :ivar figure_legend_frame: draw box around figure legend
     :ivar figure_legend_loc: The location for the figure legend
     :ivar figure_legend_ncol: number of columns for figure legend
+    :ivar legend_colored_text: use colored text for legend labels rather than separate color blocks
     :ivar legend_fontsize: The font size for the legend
     :ivar legend_frac_subplot_line: fraction of _subplot size to use per line for spacing figure legend
     :ivar legend_frac_subplot_margin: fraction of _subplot size to use for spacing figure legend above plots
@@ -77,7 +78,9 @@ class GetDistPlotSettings(object):
     :ivar thin_long_subplot_ticks: if auto_tick=False, whether to thin out tick labels where they are long to try to prevent overlap (default: True)
     :ivar tick_prune: None, 'upper' or 'lower' to prune ticks
     :ivar tight_gap_fraction: fraction of plot width for closest tick to the edge
-    :ivar tight_layout: use tight_layout to lay out and remove white space
+    :ivar tight_layout: use tight_layout to layout and remove white space
+    :ivar title_limit: show parameter limits over 1D plots, 1 for first limit (68% default), 2 second, etc.
+    :ivar title_limit_labels: whether or not to include parameter label when adding limits above 1D plots
     :ivar title_limit_fontsize: font size to use for limits in plot titles
     :ivar x_label_rotation: The rotation for the x label in degrees.
     """
@@ -97,6 +100,7 @@ class GetDistPlotSettings(object):
         # self.prob_label = 'Probability'
         self.norm_prob_label = 'P'
         self.prob_y_ticks = False
+        self.legend_colored_text = False
 
         self.lineM = ['-k', '-r', '-b', '-g', '-m', '-c', '-y', '--k', '--r', '--b', '--g',
                       '--m']  # : line styles/colors
@@ -150,6 +154,8 @@ class GetDistPlotSettings(object):
         self.auto_ticks = False
         self.thin_long_subplot_ticks = True
 
+        self.title_limit = 0
+        self.title_limit_labels = True
         self.title_limit_fontsize = None
 
     def setWithSubplotSize(self, size_inch=3.5, size_mm=None):
@@ -859,6 +865,7 @@ class GetDistPlotter(object):
         else:
             density = self.sampleAnalyser.get_density(root, param, likes=self.settings.plot_meanlikes)
         if density is None: return None;
+        title_limit = title_limit if title_limit is not None else self.settings.title_limit
         if normalized: density.normalize()
 
         kwargs = self._get_line_styles(plotno, **kwargs)
@@ -873,9 +880,13 @@ class GetDistPlotter(object):
             if isinstance(root, MixtureND):
                 raise ValueError('limit_title not currently supported for MixtureND')
             samples = self.sampleAnalyser.samplesForRoot(root)
-            _, texs = samples.getLatex([param], title_limit)
-            ax.set_title('$' + texs[0] + '$',
-                         fontsize=self.settings.title_limit_fontsize)
+            if self.settings.title_limit_labels:
+                caption = samples.getInlineLatex(param, limit=title_limit)
+            else:
+                _, texs = samples.getLatex([param], title_limit)
+                caption = texs[0]
+            if '---' not in caption:
+                ax.set_title('$' + caption + '$', fontsize=self.settings.title_limit_fontsize)
 
         return density.bounds()
 
@@ -1572,7 +1583,7 @@ class GetDistPlotter(object):
         if not p: raise GetDistPlotError('Parameter not found: ' + name)
         return p.latexLabel()
 
-    def add_legend(self, legend_labels, legend_loc=None, line_offset=0, legend_ncol=None, colored_text=False,
+    def add_legend(self, legend_labels, legend_loc=None, line_offset=0, legend_ncol=None, colored_text=None,
                    figure=False, ax=None, label_order=None, align_right=False, fontsize=None):
         """
         Add a legend to the axes or figure.
@@ -1597,6 +1608,7 @@ class GetDistPlotter(object):
             else:
                 legend_loc = self.settings.legend_loc
         if legend_ncol is None: legend_ncol = self.settings.figure_legend_ncol
+        if colored_text is None: colored_text = self.settings.legend_colored_text
         lines = []
         if len(self.contours_added) == 0:
             for i in enumerate(legend_labels):
@@ -1606,7 +1618,8 @@ class GetDistPlotter(object):
         else:
             lines = self.contours_added
         args = {'ncol': legend_ncol}
-        if fontsize or self.settings.legend_fontsize: args['prop'] = {'size': fontsize or self.settings.legend_fontsize}
+        if fontsize or self.settings.legend_fontsize:
+            args['prop'] = {'size': fontsize or self.settings.legend_fontsize}
         if colored_text:
             args['handlelength'] = 0
             args['handletextpad'] = 0

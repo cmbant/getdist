@@ -33,7 +33,7 @@ if pyside_version == 2:
     from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
         QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
         QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-        QLabel, QTableWidget, QListWidgetItem, QTextEdit
+        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QMenu, QToolButton
 
     os.environ['QT_API'] = 'pyside2'
 
@@ -51,10 +51,11 @@ else:
 
     import PySide
     from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
-    from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
+    from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, QMenu, \
         QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
         QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption, QImage, QPixmap
+        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption, QImage, QPixmap, \
+        QToolButton
 
     os.environ['QT_API'] = 'pyside'
 
@@ -63,7 +64,7 @@ class GuiSelectionError(Exception):
     pass
 
 
-class ParamListWidget(QListWidget):
+class RootListWidget(QListWidget):
     def __init__(self, widget, owner):
         QListWidget.__init__(self, widget)
         self.setDragDropMode(self.InternalMove)
@@ -77,7 +78,7 @@ class ParamListWidget(QListWidget):
         self.owner = owner
 
     def dropEvent(self, event):
-        super(ParamListWidget, self).dropEvent(event)
+        super(RootListWidget, self).dropEvent(event)
         self.owner._updateParameters()
 
 
@@ -324,16 +325,14 @@ class MainWindow(QMainWindow):
         self.connect(self.pushButtonSelect, SIGNAL("clicked()"),
                      self.selectRootDirName)
 
-        self.listRoots = ParamListWidget(self.selectWidget, self)
-
-        self.connect(self.listRoots,
-                     SIGNAL("itemChanged(QListWidgetItem *)"),
-                     self.updateListRoots)
+        self.listRoots = RootListWidget(self.selectWidget, self)
+        self.connect(self.listRoots, SIGNAL("itemChanged(QListWidgetItem *)"), self.updateListRoots)
+        self.connect(self.listRoots, SIGNAL("itemSelectionChanged()"), self.selListRoots)
 
         self.pushButtonRemove = QPushButton(self._icon('remove'), "", self.selectWidget)
         self.pushButtonRemove.setToolTip("Remove a chain root")
+        self.pushButtonRemove.setEnabled(False)
         self.pushButtonRemove.setMaximumWidth(30)
-
         self.connect(self.pushButtonRemove, SIGNAL("clicked()"), self.removeRoot)
 
         self.comboBoxParamTag = QComboBox(self.selectWidget)
@@ -422,7 +421,9 @@ class MainWindow(QMainWindow):
         leftLayout.addWidget(self.toggleColor, 9, 2, 1, 1)
         leftLayout.addWidget(self.comboBoxColor, 9, 3, 1, 1)
         leftLayout.addWidget(self.trianglePlot, 10, 2, 1, 2)
+
         leftLayout.addWidget(self.pushButtonPlot, 12, 0, 1, 4)
+
         self.selectWidget.setLayout(leftLayout)
 
         self.listRoots.hide()
@@ -744,19 +745,20 @@ class MainWindow(QMainWindow):
         """
         self.getPlotter()
         settings = self.default_plot_settings
-        pars = ['plot_meanlikes', 'shade_meanlikes', 'prob_label', 'norm_prob_label', 'prob_y_ticks', 'lineM',
-                'plot_args', 'solid_colors', 'default_dash_styles', 'line_labels', 'x_label_rotation',
-                'num_shades', 'shade_level_scale', 'tight_layout', 'no_triangle_axis_labels', 'colormap',
-                'colormap_scatter', 'colorbar_rotation', 'colorbar_label_pad', 'colorbar_label_rotation',
-                'tick_prune', 'tight_gap_fraction', 'legend_loc', 'figure_legend_loc',
-                'legend_frame', 'figure_legend_frame', 'figure_legend_ncol', 'legend_rect_border',
-                'legend_frac_subplot_margin', 'legend_frac_subplot_line', 'num_plot_contours',
-                'solid_contour_palefactor', 'alpha_filled_add', 'alpha_factor_contour_lines', 'axis_marker_color',
-                'axis_marker_ls', 'axis_marker_lw', 'auto_ticks', 'thin_long_subplot_ticks', 'title_limit_fontsize']
+        pars = []
+        skips = ['param_names_for_labels', 'progress']
+        comments = {}
+        for line in settings.__doc__.split("\n"):
+            if 'ivar' in line:
+                items = line.split(':', 2)
+                par = items[1].split('ivar ')[1]
+                if par not in skips:
+                    pars.append(par)
+                    comments[par] = items[2].strip()
         pars.sort()
         ini = IniFile()
         for par in pars:
-            ini.getAttr(settings, par)
+            ini.getAttr(settings, par, comment=[comments.get(par, None)])
         ini.params.update(self.custom_plot_settings)
         self.plotSettingIni = ini
 
@@ -769,6 +771,7 @@ class MainWindow(QMainWindow):
         try:
             settings = self.default_plot_settings
             self.custom_plot_settings = {}
+            deleted = []
             for key, value in six.iteritems(vals):
                 current = getattr(settings, key)
                 if str(current) != value and len(value):
@@ -782,10 +785,40 @@ class MainWindow(QMainWindow):
                     else:
                         self.custom_plot_settings[key] = eval(value)
                 else:
+                    deleted.append(key)
                     self.custom_plot_settings.pop(key, None)
         except Exception as e:
             self.errorReport(e, caption="Plot settings")
-        self.plotData()
+        if self.tabWidget.currentIndex() == 0:
+            self.plotData()
+        else:
+            # Try to update current plot script text
+            script = self.textWidget.toPlainText().split("\n")
+            if self.custom_plot_settings:
+                for key, value in six.iteritems(self.custom_plot_settings):
+                    if isinstance(value, six.string_types):
+                        value = '"' + value + '"'
+                    script_set = 'g.settings.%s =' % key
+                    script_line = '%s %s' % (script_set, value)
+                    last = None
+                    for i, line in enumerate(script):
+                        if line.startswith(script_set):
+                            script[i] = script_line
+                            script_line = None
+                            break
+                        elif line.startswith('g.settings.') or last is None and line.startswith('g='):
+                            last = i
+                    if script_line and last:
+                        script.insert(last + 1, script_line)
+            for key in deleted:
+                script_set = 'g.settings.%s =' % key
+                for i, line in enumerate(script):
+                    if line.startswith(script_set):
+                        del script[i]
+                        break
+
+            self.textWidget.setPlainText("\n".join(script))
+            self.plotData2()
 
     def showConfigSettings(self):
         """
@@ -1096,6 +1129,7 @@ class MainWindow(QMainWindow):
             raise
         finally:
             self.updating = False
+            self.selListRoots()
 
     def setRootname(self, strParamName):
         """
@@ -1107,13 +1141,18 @@ class MainWindow(QMainWindow):
         if self.updating: return
         self._updateParameters()
 
+    def selListRoots(self):
+        self.pushButtonRemove.setEnabled(len(self.listRoots.selectedItems())
+                                         or self.listRoots.count() == 1)
+
     def removeRoot(self):
         logging.debug("Remove root")
         self.updating = True
+        count = self.listRoots.count()
         try:
-            for i in range(self.listRoots.count()):
+            for i in range(count):
                 item = self.listRoots.item(i)
-                if item and item.isSelected():
+                if item and (count == 1 or item.isSelected()):
                     root = str(item.text())
                     logging.debug("Remove root %s" % root)
                     self.plotter.sampleAnalyser.removeRoot(root)
@@ -1405,13 +1444,12 @@ class MainWindow(QMainWindow):
                     actionText = 'Rectangle plot'
                     script += "xparams = %s\n" % str(items_x)
                     script += "yparams = %s\n" % str(items_y)
-                    script += "filled=%s\n" % filled
                     logging.debug("Rectangle plot with xparams=%s and yparams=%s" % (str(items_x), str(items_y)))
 
                     setSizeQT(min(height / len(items_y), width / len(items_x)))
                     self.plotter.rectangle_plot(items_x, items_y, roots=roots, filled=filled)
                     self.updatePlot()
-                    script += "g.rectangle_plot(xparams, yparams, roots=roots,filled=filled)\n"
+                    script += "g.rectangle_plot(xparams, yparams, roots=roots, filled=%s)\n" % filled
 
                 else:
                     # 2D plot
@@ -1441,12 +1479,12 @@ class MainWindow(QMainWindow):
                             labels = self.plotter._default_legend_labels(None, roots)
                             self.plotter.add_legend(labels)
                             script += 'g.add_legend(%s)\n' % labels
+                            plt.tight_layout()
                         else:
                             script += "pairs = %s\n" % pairs
                             self.plotter.plots_2d(roots, param_pairs=pairs, filled=filled, shaded=shaded)
                             script += "g.plots_2d(roots, param_pairs=pairs, filled=%s, shaded=%s)\n" % (
                                 str(filled), str(shaded))
-
                         self.updatePlot()
                     elif color:
                         # 3D plot
@@ -1520,8 +1558,6 @@ class MainWindow(QMainWindow):
         self.openChainsAct.setEnabled(index == 0)
         self.dataMenu.setEnabled(index == 0)
         self.dataMenu.menuAction().setVisible(index == 0)
-        self.optionMenu.setEnabled(index == 0)
-        self.optionMenu.menuAction().setVisible(index == 0)
 
         if index == 1 and self.script:
             self.script_edit = self.textWidget.toPlainText()
@@ -1849,7 +1885,7 @@ class DialogParamTables(DialogTextOutput):
 # ==============================================================================
 
 class DialogSettings(QDialog):
-    def __init__(self, parent, ini, items=None, title='Analysis Settings', width=300, update=None):
+    def __init__(self, parent, ini, items=None, title='Analysis Settings', width=320, update=None, hint_dic={}):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
         self.update = update
@@ -1882,7 +1918,7 @@ class DialogSettings(QDialog):
                     items.append(key)
 
             for key in ini.params:
-                if not key in items and key in names.params:
+                if key not in items and key in names.params:
                     items.append(key)
         else:
             names = ini
