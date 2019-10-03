@@ -1225,10 +1225,14 @@ class GetDistPlotter(object):
             axis.set_major_formatter(sFormatter)
         else:
             # from https://stackoverflow.com/questions/25750170
-            sci_func = (lambda x, pos:
-                        "${}$".format(sFormatter._formatSciNotation('%.10g' % x)))
+            def sci_func(x, pos):
+                if sFormatter._useMathText or sFormatter._usetex:
+                    return "${}$".format(sFormatter._formatSciNotation('%.10g' % x))
+                else:
+                    return '%.10g' % x
+
             axis.set_major_formatter(matplotlib.ticker.FuncFormatter(sci_func))
-        plt.tick_params(axis='both', which='major', labelsize=self.settings.axes_fontsize)
+        axis.set_tick_params(which='major', labelsize=self.settings.axes_fontsize)
         if x and self.settings.x_label_rotation != 0:
             plt.setp(plt.xticks()[1], rotation=self.settings.x_label_rotation)
         self._set_locator(axis, x, prune=prune)
@@ -1258,13 +1262,13 @@ class GetDistPlotter(object):
         if do_xlabel and len(params) > 0:
             self.set_xlabel(params[0])
         elif no_label_no_numbers:
-            ax.tick_params(labelleft=False)
+            ax.tick_params(labelbottom=False)
         if len(params) > 1:
             self._setAxisProperties(ax.yaxis, False, prune)
             if do_ylabel:
                 self.set_ylabel(params[1])
             elif no_label_no_numbers:
-                ax.tick_params(labelbottom=False)
+                ax.tick_params(labelleft=False)
         if color_label_in_axes and len(params) > 2: self.add_text(params[2].latexLabel())
         return ax
 
