@@ -42,7 +42,9 @@ if sys.platform == "darwin":
             from PySide2 import QtCore
         else:
             import PySide
-
+    except ImportError as e:
+        print("Cannot load PySide or PySide2 - skipping MacOS GetDist GUI app %s" % e)
+    else:
         sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
         package_data['getdist.gui'] += ['GetDist GUI.app/Contents/Info.plist',
@@ -55,13 +57,14 @@ if sys.platform == "darwin":
         from distutils import dir_util
 
         file_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'getdist/gui')
+        app_name = 'GetDist GUI.app'
 
 
         def make_app():
             # Put python command into app script so it can be run from spotlight etc.
             dir_util.copy_tree(os.path.join(file_dir, 'mac_app'),
-                               os.path.join(file_dir, 'GetDist GUI.app'))
-            fname = os.path.join(file_dir, 'GetDist GUI.app/Contents/MacOS/GetDistGUI')
+                               os.path.join(file_dir, app_name))
+            fname = os.path.join(file_dir, app_name + '/Contents/MacOS/GetDistGUI')
             out = []
             with io.open(fname, 'r') as f:
                 for line in f.readlines():
@@ -72,7 +75,7 @@ if sys.platform == "darwin":
             with io.open(fname, 'w') as f:
                 f.write("\n".join(out))
             subprocess.call('chmod +x "%s"' % fname, shell=True)
-            fname = os.path.join(file_dir, 'GetDist GUI.app/Contents/Info.plist')
+            fname = os.path.join(file_dir, app_name + '/Contents/Info.plist')
             with io.open(fname, 'r') as f:
                 plist = f.read().replace('1.0.0', find_version())
             with io.open(fname, 'w') as f:
@@ -81,7 +84,7 @@ if sys.platform == "darwin":
 
         def clean():
             import shutil
-            shutil.rmtree(os.path.join(file_dir, 'GetDist GUI.app'), ignore_errors=True)
+            shutil.rmtree(os.path.join(file_dir, app_name), ignore_errors=True)
 
 
         class DevelopCommand(develop):
@@ -109,8 +112,6 @@ if sys.platform == "darwin":
             'install': InstallCommand,
             'build_py': BuildCommand
         }
-    except ImportError as e:
-        print("Cannot load PySide or PySide2 - skipping MacOS GetDist GUI app %s" % e)
 
 setup(name='GetDist',
       version=find_version(),

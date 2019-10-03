@@ -260,6 +260,7 @@ def getSubplotPlotter(subplot_size=2, width_inch=None, **kwargs):
         plotter.settings.legend_fontsize = plotter.settings.lab_fontsize + 1
     return plotter
 
+
 class RootInfo(object):
     """
     Class to hold information about a set of samples loaded from file
@@ -1202,8 +1203,8 @@ class GetDistPlotter(object):
         if self.settings.auto_ticks:
             axis.set_major_locator(plt.MaxNLocator(nbins='auto', steps=[1, 2, 2.5, 5, 10], prune=prune))
         else:
-            # if prune is None and hasattr(plt.colors, 'is_color_like'): return  # is_color_like tests for matplotlib 2
-            if x: xmin, xmax = axis.get_view_interval()
+            if x:
+                xmin, xmax = axis.get_view_interval()
             if x and (abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000):
                 maxN = int(self.settings.subplot_size_inch / 2) + 3
                 axis.set_major_locator(plt.MaxNLocator(maxN, prune=prune, steps=np.arange(1, 11)))
@@ -1228,7 +1229,8 @@ class GetDistPlotter(object):
                         "${}$".format(sFormatter._formatSciNotation('%.10g' % x)))
             axis.set_major_formatter(matplotlib.ticker.FuncFormatter(sci_func))
         plt.tick_params(axis='both', which='major', labelsize=self.settings.axes_fontsize)
-        if x and self.settings.x_label_rotation != 0: plt.setp(plt.xticks()[1], rotation=self.settings.x_label_rotation)
+        if x and self.settings.x_label_rotation != 0:
+            plt.setp(plt.xticks()[1], rotation=self.settings.x_label_rotation)
         self._set_locator(axis, x, prune=prune)
 
     def setAxes(self, params=[], lims=None, do_xlabel=True, do_ylabel=True, no_label_no_numbers=False, pos=None,
@@ -1256,13 +1258,13 @@ class GetDistPlotter(object):
         if do_xlabel and len(params) > 0:
             self.set_xlabel(params[0])
         elif no_label_no_numbers:
-            ax.set_xticklabels([])
+            ax.tick_params(labelleft=False)
         if len(params) > 1:
             self._setAxisProperties(ax.yaxis, False, prune)
             if do_ylabel:
                 self.set_ylabel(params[1])
             elif no_label_no_numbers:
-                ax.set_yticklabels([])
+                ax.tick_params(labelbottom=False)
         if color_label_in_axes and len(params) > 2: self.add_text(params[2].latexLabel())
         return ax
 
@@ -1373,7 +1375,7 @@ class GetDistPlotter(object):
         if no_ytick or not self.settings.prob_y_ticks:
             ax.set_yticks([])
         elif no_ylabel:
-            ax.set_yticklabels([])
+            ax.tick_params(labelleft=False)
         elif no_zero and not normalized:
             ticks = ax.get_yticks()
             if ticks[-1] > 1: ticks = ticks[:-1]
