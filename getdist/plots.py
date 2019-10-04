@@ -63,6 +63,7 @@ class GetDistPlotSettings(object):
     :ivar line_labels: True if you want to automatically add legends when adding more than one line to subplots
     :ivar lineM: list of default line styles/colors (['-k','-r'...])
     :ivar no_triangle_axis_labels: whether subplots in triangle plots should show axis labels if not at the edge
+    :ivar norm_1d_density: whether to normolize 1D densities (otherwise normalized to unit peak value)
     :ivar norm_prob_label: label for the y axis in normalized 1D density plots
     :ivar num_plot_contours: number of contours to plot in 2D plots (up to number of contours in analysis settings)
     :ivar num_shades: number of distinct colors to use for shading shaded 2D plots
@@ -101,6 +102,7 @@ class GetDistPlotSettings(object):
         # self.prob_label = 'Probability'
         self.norm_prob_label = 'P'
         self.prob_y_ticks = False
+        self.norm_1d_density = False
 
         self.lineM = ['-k', '-r', '-b', '-g', '-m', '-c', '-y', '--k', '--r', '--b', '--g',
                       '--m']  # : line styles/colors
@@ -765,14 +767,15 @@ class GetDistPlotter(object):
             xmin, xmax = self._check_param_ranges(root, name, xmin, xmax)
         return xmin, xmax
 
-    def add_1d(self, root, param, plotno=0, normalized=False, ax=None, title_limit=None, **kwargs):
+    def add_1d(self, root, param, plotno=0, normalized=None, ax=None, title_limit=None, **kwargs):
         """
         Low-level function to add a 1D marginalized density line to a plot
 
         :param root: The root name of the samples
         :param param: The parameter name
         :param plotno: The index of the line being added to the plot
-        :param normalized: True if areas under lines should match, False if normalized to unit maximum
+        :param normalized: True if areas under lines should match, False if normalized to unit maximum.
+                           Default from settings.norm_1d_density.
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
         :param title_limit:if not None, a maginalized limit (1,2..) to print as the title of the plot
         :param kwargs: arguments for :func:`~matplotlib:matplotlib.pyplot.plot`
@@ -780,12 +783,15 @@ class GetDistPlotter(object):
         """
         ax = ax or plt.gca()
         param = self._check_param(root, param)
+        normalized = normalized if normalized is not None else g.settings.norm_1d_density
         if isinstance(root, MixtureND):
             density = root.density1D(param.name)
             if not normalized: density.normalize(by='max')
         else:
             density = self.sampleAnalyser.get_density(root, param, likes=self.settings.plot_meanlikes)
-        if density is None: return None;
+            if density is None:
+                return None
+
         title_limit = title_limit if title_limit is not None else self.settings.title_limit
         if normalized: density.normalize()
 

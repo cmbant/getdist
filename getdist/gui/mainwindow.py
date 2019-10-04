@@ -122,7 +122,13 @@ class MainWindow(QMainWindow):
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         # Path for .ini file
-        self.iniFile = ini or getdist.default_getdist_settings
+        self.default_settings = IniFile(getdist.default_getdist_settings)
+        self.iniFile = ini
+        if ini:
+            self.base_settings = IniFile(ini)
+        else:
+            self.base_settings = self.default_settings
+        self.current_settings = copy.deepcopy(self.base_settings)
 
         # Path of root directory
         self.rootdirname = None
@@ -189,32 +195,34 @@ class MainWindow(QMainWindow):
                                     triggered=self.showLikeStats)
 
         self.convergeAct = QAction("Converge Stats", self,
-                                   shortcut="",
                                    statusTip="Show Convergence Stats",
                                    triggered=self.showConvergeStats)
 
         self.PCAAct = QAction("Parameter PCA", self,
-                              shortcut="",
                               statusTip="Do PCA of selected parameters",
                               triggered=self.showPCA)
 
         self.paramTableAct = QAction("Parameter table (latex)", self,
-                                     shortcut="",
                                      statusTip="View parameter table",
                                      triggered=self.showParamTable)
 
         self.optionsAct = QAction("Analysis settings", self,
-                                  shortcut="",
                                   statusTip="Show settings for getdist and plot densities",
                                   triggered=self.showSettings)
 
         self.plotOptionsAct = QAction("Plot settings", self,
-                                      shortcut="",
                                       statusTip="Show settings for plot display",
                                       triggered=self.showPlotSettings)
 
+        self.resetPlotOptionsAct = QAction("Reset plot settings", self,
+                                           statusTip="Reset settings for plot display",
+                                           triggered=self.resetPlotSettings)
+
+        self.resetAnalysisSettingsAct = QAction("Reset analysis settings", self,
+                                                statusTip="Reset settings for sample analysis",
+                                                triggered=self.resetAnalysisSettings)
+
         self.configOptionsAct = QAction("Plot module config ", self,
-                                        shortcut="",
                                         statusTip="Configure plot module",
                                         triggered=self.showConfigSettings)
 
@@ -262,6 +270,9 @@ class MainWindow(QMainWindow):
         self.optionMenu.addAction(self.optionsAct)
         self.optionMenu.addAction(self.plotOptionsAct)
         self.optionMenu.addAction(self.configOptionsAct)
+        self.optionMenu.addSeparator()
+        self.optionMenu.addAction(self.resetAnalysisSettingsAct)
+        self.optionMenu.addAction(self.resetPlotOptionsAct)
 
         menu.addSeparator()
 
@@ -605,7 +616,7 @@ class MainWindow(QMainWindow):
             batchjob.resetGrid(adir)
             self.openDirectory(adir)
         if self.plotter:
-            self.plotter.sampleAnalyser.reset(self.iniFile)
+            self.plotter.sampleAnalyser.reset(self.current_settings)
 
     def getRootname(self):
         rootname = None
@@ -722,6 +733,13 @@ class MainWindow(QMainWindow):
         dlg = DialogLikeStats(self, stats, rootname)
         dlg.show()
 
+    def changed_settings(self):
+        changed = {}
+        for key, value in self.current_settings.params.items():
+            if self.default_settings.params[key] != value:
+                changed[key] = value
+        return changed
+
     def showSettings(self):
         """
         Callback for action 'Show settings'
@@ -729,21 +747,21 @@ class MainWindow(QMainWindow):
         if not self.plotter:
             QMessageBox.warning(self, "Settings", "Open chains first ")
             return
-        if isinstance(self.iniFile, six.string_types): self.iniFile = IniFile(self.iniFile)
-        self.settingDlg = self.settingDlg or DialogSettings(self, self.iniFile)
+        self.settingDlg = self.settingDlg or DialogSettings(self, self.current_settings)
         self.settingDlg.show()
         self.settingDlg.activateWindow()
 
     def settingsChanged(self):
         if self.plotter:
-            self.plotter.sampleAnalyser.reset(self.iniFile, chain_settings_have_priority=False)
+            self.plotter.sampleAnalyser.reset(self.current_settings, chain_settings_have_priority=False)
         if self.tabWidget.currentIndex() == 0:
             if self.plotter and self.plotter.fig:
                 self.plotData()
         else:
             script = self.textWidget.toPlainText().split("\n")
             tag = 'analysis_settings ='
-            newline = tag + (' %s' % self.iniFile.params).replace(', ', ",\n" + " " * 21)
+            changed_settings = self.changed_settings()
+            newline = tag + (' %s' % changed_settings).replace(', ', ",\n" + " " * 21)
             last = 0
             for i, line in enumerate(script):
                 if line.startswith(tag):
@@ -792,6 +810,12 @@ class MainWindow(QMainWindow):
                                                                         width=420)
         self.plotSettingDlg.show()
         self.plotSettingDlg.activateWindow()
+
+    def resetPlotSettings(self):
+        self.custom_plot_settings = {}
+
+    def resetAnalysisSettings(self):
+        self.current_settings = copy.deepcopy(self.base_settings)
 
     def plotSettingsChanged(self, vals):
         try:
@@ -998,10 +1022,10 @@ class MainWindow(QMainWindow):
                 for root in self.root_infos:
                     info = self.root_infos[root]
                     if info.batch:
-                        if not info.batch in chain_dirs:
+                        if info.batch not in chain_dirs:
                             chain_dirs.append(info.batch)
 
-                self.plotter = module.getPlotter(chain_dir=chain_dirs, analysis_settings=self.iniFile)
+                self.plotter = module.getPlotter(chain_dir=chain_dirs, analysis_settings=self.current_settings)
                 if samps:
                     self.plotter.sampleAnalyser.mcsamples = samps
                 self.default_plot_settings = copy.copy(self.plotter.settings)
@@ -1364,8 +1388,9 @@ class MainWindow(QMainWindow):
             self.plotter.settings.__dict__.update(self.custom_plot_settings)
 
             script = "import %s as gplot\nimport os\n\n" % self.script_plot_module
-            if isinstance(self.iniFile, IniFile):
-                script += ('analysis_settings = %s\n' % self.iniFile.params).replace(', ', ",\n" + " " * 21)
+            override_setting = self.changed_settings()
+            if override_setting:
+                script += ('analysis_settings = %s\n' % override_setting).replace(', ', ",\n" + " " * 21)
             if len(items_x) > 1 or len(items_y) > 1:
                 plot_func = 'getSubplotPlotter'
             else:
@@ -1381,15 +1406,15 @@ class MainWindow(QMainWindow):
                     path = info.batch.batchPath
                 else:
                     path = info.path
-                if not path in chain_dirs:
+                if path not in chain_dirs:
                     chain_dirs.append(path)
             if len(chain_dirs) == 1:
                 chain_dirs = "r'%s'" % chain_dirs[0].rstrip('\\').rstrip('/')
 
-            if isinstance(self.iniFile, six.string_types) and self.iniFile != getdist.default_getdist_settings:
-                script += "g=gplot.%s(chain_dir=%s, analysis_settings=r'%s')\n" % (plot_func, chain_dirs, self.iniFile)
-            elif isinstance(self.iniFile, IniFile):
+            if override_setting:
                 script += "g=gplot.%s(chain_dir=%s,analysis_settings=analysis_settings)\n" % (plot_func, chain_dirs)
+            elif self.iniFile:
+                script += "g=gplot.%s(chain_dir=%s, analysis_settings=r'%s')\n" % (plot_func, chain_dirs, self.iniFile)
             else:
                 script += "g=gplot.%s(chain_dir=%s)\n" % (plot_func, chain_dirs)
 
