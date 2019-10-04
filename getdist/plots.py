@@ -1253,6 +1253,7 @@ class GetDistPlotter(object):
         self._SetAxisFormatter(axis, x)
         axis.set_tick_params(which='major', labelsize=self.settings.axes_fontsize)
         axis.get_offset_text().set_fontsize(self.settings.axes_fontsize * 3 / 4 if
+                                            not isinstance(self.settings.axes_fontsize, six.string_types) and
                                             self.settings.axes_fontsize > 7 else self.settings.axes_fontsize)
         if x and self.settings.x_label_rotation != 0:
             plt.setp(axis.get_ticklabels(), rotation=self.settings.x_label_rotation)
