@@ -889,8 +889,7 @@ class MainWindow(QMainWindow):
         mod = vals.get('plot_module', self.plot_module)
         if mod != self.plot_module or scriptmod != self.script_plot_module:
             try:
-                matplotlib.rcParams.clear()
-                matplotlib.rcParams.update(self.orig_rc)
+                self._set_rc(self.orig_rc)
                 __import__(mod)  # test for error
                 logging.debug('Loaded module %s', mod)
                 self.plot_module = mod
@@ -1638,6 +1637,12 @@ class MainWindow(QMainWindow):
         self.textWidget.clear()
         self.script_edit = ''
 
+    def _set_rc(self, opts):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            matplotlib.rcParams.clear()
+            matplotlib.rcParams.update(opts)
+
     def plotData2(self):
         """
         Slot function called when pushButtonPlot2 is pressed.
@@ -1646,17 +1651,11 @@ class MainWindow(QMainWindow):
             self.plotData()
             return
 
-        def set_rc(opts):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                matplotlib.rcParams.clear()
-                matplotlib.rcParams.update(opts)
-
         self.script_edit = self.textWidget.toPlainText()
         oldset = plots.defaultSettings
         oldrc = matplotlib.rcParams.copy()
         plots.defaultSettings = plots.GetDistPlotSettings()
-        set_rc(self.orig_rc)
+        self._set_rc(self.orig_rc)
         self.showMessage("Rendering plot....")
         try:
             script_exec = self.script_edit
@@ -1680,7 +1679,7 @@ class MainWindow(QMainWindow):
             self.errorReport(e, caption="Plot script")
         finally:
             plots.defaultSettings = oldset
-            set_rc(oldrc)
+            self._set_rc(oldrc)
             self.showMessage()
 
     def updateScriptPreview(self, plotter):
