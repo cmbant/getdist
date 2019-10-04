@@ -41,6 +41,7 @@ class GetDistPlotSettings(object):
     :ivar axis_marker_color: The color for a marker
     :ivar axis_marker_ls: The line style for a marker
     :ivar axis_marker_lw: The line width for a marker
+    :ivar axis_tick_powerlimits: exponents at which to use scientific notation for axis tick labels
     :ivar colorbar_label_pad: padding for the colorbar labels
     :ivar colorbar_label_rotation: angle to rotate colorbar label (set to zero if -90 default gives layout problem)
     :ivar colorbar_rotation: angle to rotate colorbar tick labels
@@ -153,6 +154,7 @@ class GetDistPlotSettings(object):
 
         self.auto_ticks = False
         self.thin_long_subplot_ticks = True
+        self.axis_tick_powerlimits = (-4, 5)
 
         self.title_limit = 0
         self.title_limit_labels = True
@@ -534,6 +536,19 @@ class MCSampleAnalysis(object):
             return root
         else:
             return self.samplesForRoot(root)  # #defines getUpper and getLower, all that's needed
+
+
+class SciFuncFormatter(matplotlib.ticker.Formatter):
+    # To put full sci notation into each axis label rather than split offsetText
+
+    sFormatter = matplotlib.ticker.ScalarFormatter(useOffset=False, useMathText=True)
+
+    def __call__(self, x, pos=None):
+        return "${}$".format(SciFuncFormatter.sFormatter._formatSciNotation('%.10e' % x))
+
+    def format_data(self, value):
+        # e.g. for the navigation toolbar, no latex
+        return '%-8g' % value
 
 
 class GetDistPlotter(object):
@@ -1207,9 +1222,25 @@ class GetDistPlotter(object):
                 xmin, xmax = axis.get_view_interval()
             if x and (abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000):
                 maxN = int(self.settings.subplot_size_inch / 2) + 3
+                if abs(self.settings.x_label_rotation) > 30:
+                    maxN += 1
                 axis.set_major_locator(plt.MaxNLocator(maxN, prune=prune, steps=np.arange(1, 11)))
             else:
                 axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) + 4, prune=prune))
+
+    def _SetAxisFormatter(self, axis, x):
+        power_limits = self.settings.axis_tick_powerlimits
+        if not x:
+            # Avoid offset text on y axis where won't work on subplots
+            ymin, ymax = axis.get_view_interval()
+            if max(abs(ymax), abs(ymin)) <= 10 ** (power_limits[0] + 1) \
+                    or max(abs(ymin), abs(ymax)) >= 10 ** power_limits[1]:
+                axis.set_major_formatter(SciFuncFormatter())
+                return
+
+        sFormatter = matplotlib.ticker.ScalarFormatter(useOffset=False, useMathText=True)
+        sFormatter.set_powerlimits(power_limits)
+        axis.set_major_formatter(sFormatter)
 
     def _setAxisProperties(self, axis, x, prune=None):
         """
@@ -1219,22 +1250,12 @@ class GetDistPlotter(object):
         :param x: True if x axis, False for y axis
         :param prune: Parameter for MaxNLocator constructor, ,  ['lower' | 'upper' | 'both' | None]
         """
-        sFormatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
-        sFormatter.set_powerlimits((-4, 5))
-        if isinstance(axis, matplotlib.axis.XAxis):
-            axis.set_major_formatter(sFormatter)
-        else:
-            # from https://stackoverflow.com/questions/25750170
-            def sci_func(x, pos):
-                if sFormatter._useMathText or sFormatter._usetex:
-                    return "${}$".format(sFormatter._formatSciNotation('%.10g' % x))
-                else:
-                    return '%.10g' % x
-
-            axis.set_major_formatter(matplotlib.ticker.FuncFormatter(sci_func))
+        self._SetAxisFormatter(axis, x)
         axis.set_tick_params(which='major', labelsize=self.settings.axes_fontsize)
+        axis.get_offset_text().set_fontsize(self.settings.axes_fontsize * 3 / 4 if
+                                            self.settings.axes_fontsize > 7 else self.settings.axes_fontsize)
         if x and self.settings.x_label_rotation != 0:
-            plt.setp(plt.xticks()[1], rotation=self.settings.x_label_rotation)
+            plt.setp(axis.get_ticklabels(), rotation=self.settings.x_label_rotation)
         self._set_locator(axis, x, prune=prune)
 
     def setAxes(self, params=[], lims=None, do_xlabel=True, do_ylabel=True, no_label_no_numbers=False, pos=None,
