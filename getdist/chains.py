@@ -873,6 +873,11 @@ class Chains(WeightedSamples):
             self.paramNames.setLabels(labels)
         if renames is not None:
             self.updateRenames(renames)
+        # If Cobaya sample and label not set manually via keyword, try to load from yaml
+        if ((not getattr(self, "label", False) and
+             paramNamesFile and paramNamesFile.endswith(".yaml"))):
+            from getdist.cobaya_interface import get_sample_label
+            self.label = get_sample_label(paramNamesFile)
         # Sampler that generated the chain -- assume "mcmc"
         if isinstance(sampler, six.string_types):
             if sampler.lower() not in ["mcmc", "nested", "uncorrelated"]:

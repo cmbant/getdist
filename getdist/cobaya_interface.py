@@ -9,6 +9,7 @@ import numpy as np
 
 
 # Conventions
+_label = "label"
 _prior = "prior"
 _theory = "theory"
 _params = "params"
@@ -140,3 +141,9 @@ def get_sampler_type(filename_or_info):
     default_sampler_for_chain_type = "mcmc"
     sampler = list(filename_or_info.get(_sampler, [default_sampler_for_chain_type]))[0]
     return {"mcmc": "mcmc", "polychord": "nested", "minimize": "minimize"}[sampler]
+
+def get_sample_label(filename_or_info):
+    if isinstance(filename_or_info, string_types):
+        from getdist.yaml_tools import yaml_load_file
+        filename_or_info = yaml_load_file(filename_or_info)
+    return filename_or_info.get(_label, None)

@@ -132,7 +132,7 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     """
     from getdist.cobaya_interface import _p_label, _p_renames, _weight, _minuslogpost
     from getdist.cobaya_interface import get_info_params, get_range, is_derived_param
-    from getdist.cobaya_interface import get_sampler_type, _post
+    from getdist.cobaya_interface import get_sampler_type, get_sample_label, _post
 
     if not hasattr(info, "keys"):
         raise TypeError("Cannot regonise arguments. Are you sure you are calling "
@@ -178,9 +178,10 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     weights = [c[_weight].values for c in collections]
     loglikes = [-c[_minuslogpost].values for c in collections]
     sampler = get_sampler_type(info)
+    label = get_sample_label(info)
     return MCSamples(samples=samples, weights=weights, loglikes=loglikes, sampler=sampler,
                      names=names, labels=labels, ranges=ranges, renames=renames,
-                     ignore_rows=ignore_rows, name_tag=name_tag, ini=ini,
+                     ignore_rows=ignore_rows, name_tag=name_tag, label=label, ini=ini,
                      settings=settings)
 
 
