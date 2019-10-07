@@ -188,7 +188,8 @@ class WeightedSamples(object):
                             slice_or_none(loglikes, ignore_rows))
             self.name_tag = name_tag
             if samples is not None and int(ignore_rows):
-                if print_load_details: print('Removed %s lines as burn in' % ignore_rows)
+                if print_load_details:
+                    print('Removed %s lines as burn in' % ignore_rows)
         self.label = label
         self.needs_update = True
 
@@ -1056,17 +1057,20 @@ class Chains(WeightedSamples):
         self.samples = None
         self.weights = None
         self.loglikes = None
-        if ignore_lines is None: ignore_lines = self.ignore_lines
+        if ignore_lines is None:
+            ignore_lines = self.ignore_lines
         WSkwargs = {"ignore_rows": ignore_lines,
                     "min_weight_ratio": self.min_weight_ratio}
         if isinstance(files_or_samples, six.string_types) or isinstance(files_or_samples[0], six.string_types):
             # From files
             if weights is not None or loglikes is not None:
                 raise ValueError('weights and loglikes not needed reading from file')
-            if isinstance(files_or_samples, six.string_types): files_or_samples = [files_or_samples]
+            if isinstance(files_or_samples, six.string_types):
+                files_or_samples = [files_or_samples]
             self.name_tag = self.name_tag or os.path.basename(root)
             for fname in files_or_samples:
-                if print_load_details: print(fname)
+                if print_load_details:
+                    print(fname)
                 try:
                     self.chains.append(WeightedSamples(fname, **WSkwargs))
                 except WeightedSampleError:

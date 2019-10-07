@@ -312,7 +312,10 @@ class MainWindow(QMainWindow):
         """
         Create widgets.
         """
-        self.setStyleSheet("* {font-size:9pt} QComboBox,QPushButton {height:1.3em}")
+        if sys.platform in ["darwin", "Windows"]:
+            self.setStyleSheet("* {font-size:9pt} QComboBox,QPushButton {height:1.3em}")
+        else:
+            self.setStyleSheet("* {font-size:12px} QComboBox,QPushButton {height:1.3em}")
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
@@ -327,15 +330,12 @@ class MainWindow(QMainWindow):
         self.selectWidget = QWidget(self.firstWidget)
 
         self.listDirectories = QComboBox(self.selectWidget)
-        self.connect(self.listDirectories,
-                     SIGNAL("activated(const QString&)"),
-                     self.openDirectory)
+        self.connect(self.listDirectories, SIGNAL("activated(const QString&)"), self.openDirectory)
 
         self.pushButtonSelect = QPushButton(self._icon("open"), "", self.selectWidget)
         self.pushButtonSelect.setMaximumWidth(30)
         self.pushButtonSelect.setToolTip("Open chain file root directory")
-        self.connect(self.pushButtonSelect, SIGNAL("clicked()"),
-                     self.selectRootDirName)
+        self.connect(self.pushButtonSelect, SIGNAL("clicked()"), self.selectRootDirName)
 
         self.listRoots = RootListWidget(self.selectWidget, self)
         self.connect(self.listRoots, SIGNAL("itemChanged(QListWidgetItem *)"), self.updateListRoots)
@@ -813,9 +813,15 @@ class MainWindow(QMainWindow):
 
     def resetPlotSettings(self):
         self.custom_plot_settings = {}
+        if self.plotSettingDlg:
+            self.plotSettingDlg.close()
+            self.plotSettingDlg = None
 
     def resetAnalysisSettings(self):
         self.current_settings = copy.deepcopy(self.base_settings)
+        if self.settingDlg:
+            self.settingDlg.close()
+            self.settingDlg = None
 
     def plotSettingsChanged(self, vals):
         try:
@@ -2005,7 +2011,8 @@ class DialogSettings(QDialog):
         self.table.setEditTriggers(QAbstractItemView.AllEditTriggers)
 
         self.table.resizeColumnsToContents()
-        maxh = QApplication.desktop().screenGeometry().height() * 4 / 5
+        maxh = max(parent.rect().height(),
+                   (QApplication.desktop().screenGeometry().height() - parent.rect().top()) * 4 / 5)
         self.resize(width, maxh)
         self.table.setColumnWidth(1, self.table.width() - self.table.columnWidth(0))
         self.table.resizeRowsToContents()
@@ -2013,6 +2020,13 @@ class DialogSettings(QDialog):
         h = self.table.verticalHeader().length() + self.table.horizontalHeader().height() * 4
         h = min(maxh, h)
         self.resize(width, h)
+        pos = parent.pos()
+        if pos.x() - width > 0:
+            pos.setX(pos.x() - width - 1)
+            self.move(pos)
+        elif parent.frameGeometry().right() + width < QApplication.desktop().screenGeometry().width():
+            pos.setX(parent.frameGeometry().right() + 1)
+            self.move(pos)
 
     def getDict(self):
         vals = {}

@@ -313,6 +313,7 @@ class MCSamples(Chains):
             if self.properties.bool('burn_removed', False):
                 self.ignore_frac = 0.
                 self.ignore_lines = 0
+            self.label = self.label or self.properties.params.get('label', None)
         else:
             self.properties = None
 
@@ -479,8 +480,12 @@ class MCSamples(Chains):
         if settings:
             ini.params.update(settings)
         self.ini = ini
-        if ini: self.initParameters(ini)
+        if ini:
+            self.initParameters(ini)
         if doUpdate and self.samples is not None: self.updateBaseStatistics()
+
+    def isBurnRemoved(self):
+        return self.propertiesIni().bool('burn_removed')
 
     def readChains(self, files_or_samples, weights=None, loglikes=None):
         """
@@ -497,14 +502,17 @@ class MCSamples(Chains):
         if self.ignore_frac and (
                 not self.jobItem or (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
-            if chains.print_load_details: print('Removed %s as burn in' % self.ignore_frac)
+            if chains.print_load_details:
+                print('Removed %s as burn in' % self.ignore_frac)
         elif not int(self.ignore_rows):
-            if chains.print_load_details: print('Removed no burn in')
+            if chains.print_load_details:
+                print('Removed no burn in')
 
         self.deleteFixedParams()
 
         # Make a single array for chains
-        if self.chains is not None: self.makeSingle()
+        if self.chains is not None:
+            self.makeSingle()
 
         self.updateBaseStatistics()
 

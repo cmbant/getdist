@@ -19,6 +19,7 @@ from getdist.paramnames import escapeLatex, makeList, mergeRenames
 from getdist.parampriors import ParamBounds
 from getdist.densities import Density1D, Density2D
 from getdist.gaussian_mixtures import MixtureND
+from getdist.matplotlib_ext import BoundedMaxNLocator, SciFuncFormatter
 import logging
 
 """Plotting scripts for GetDist outputs"""
@@ -37,7 +38,6 @@ class GetDistPlotSettings(object):
 
     :ivar alpha_factor_contour_lines: alpha factor for adding contour lines between filled contours
     :ivar alpha_filled_add: alpha for adding filled contours to a plot
-    :ivar auto_ticks: use matplotlib 2+ auto tick spacing/numbers (default: False, use own heuristics)
     :ivar axis_marker_color: The color for a marker
     :ivar axis_marker_ls: The line style for a marker
     :ivar axis_marker_lw: The line width for a marker
@@ -47,6 +47,7 @@ class GetDistPlotSettings(object):
     :ivar colorbar_rotation: angle to rotate colorbar tick labels
     :ivar colormap: a `Matplotlib color map <https://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for shading
     :ivar colormap_scatter: a `Matplotlib color map <https://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for 3D plots
+    :ivar constrained_layout: use matplotlib's constrained-layout to fit plots within the figure
     :ivar default_dash_styles: dict mapping line styles to detailed dash styles, default:  {'--': (3, 2), '-.': (4, 1, 1, 1)}
     :ivar fig_width_inch: The width of the figure in inches
     :ivar figure_legend_frame: draw box around figure legend
@@ -77,8 +78,6 @@ class GetDistPlotSettings(object):
     :ivar shade_meanlikes: 2D shading uses mean likelihoods rather than marginalized density
     :ivar solid_colors: List of default colors for filled 2D plots. Each element is either a color, or a tuple of values for different contour levels.
     :ivar solid_contour_palefactor: factor by which to make 2D outer filled contours paler when only specifying one contour color
-    :ivar thin_long_subplot_ticks: if auto_tick=False, whether to thin out tick labels where they are long to try to prevent overlap (default: True)
-    :ivar tick_prune: None, 'upper' or 'lower' to prune ticks
     :ivar tight_gap_fraction: fraction of plot width for closest tick to the edge
     :ivar tight_layout: use tight_layout to layout and remove white space
     :ivar title_limit: show parameter limits over 1D plots, 1 for first limit (68% default), 2 second, etc.
@@ -117,6 +116,7 @@ class GetDistPlotSettings(object):
         self.fig_width_inch = fig_width_inch  # if you want to force specific fixed width
         self.progress = False
         self.tight_layout = True
+        self.constrained_layout = False
         self.no_triangle_axis_labels = True
         # see http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps
         self.colormap = "Blues"
@@ -128,7 +128,6 @@ class GetDistPlotSettings(object):
         self.setWithSubplotSize(subplot_size_inch)
 
         self.param_names_for_labels = None
-        self.tick_prune = None  # 'lower' or 'upper'
         self.tight_gap_fraction = 0.13  # space between ticks and the edge
 
         self.legend_colored_text = False
@@ -154,8 +153,6 @@ class GetDistPlotSettings(object):
         self.axis_marker_ls = '--'
         self.axis_marker_lw = 0.5
 
-        self.auto_ticks = False
-        self.thin_long_subplot_ticks = True
         self.axis_tick_powerlimits = (-4, 5)
 
         self.title_limit = 0
@@ -540,19 +537,6 @@ class MCSampleAnalysis(object):
             return self.samplesForRoot(root)  # #defines getUpper and getLower, all that's needed
 
 
-class SciFuncFormatter(matplotlib.ticker.Formatter):
-    # To put full sci notation into each axis label rather than split offsetText
-
-    sFormatter = matplotlib.ticker.ScalarFormatter(useOffset=False, useMathText=True)
-
-    def __call__(self, x, pos=None):
-        return "${}$".format(SciFuncFormatter.sFormatter._formatSciNotation('%.10e' % x))
-
-    def format_data(self, value):
-        # e.g. for the navigation toolbar, no latex
-        return '%-8g' % value
-
-
 class GetDistPlotter(object):
     """
     Main class for making plots from one or more sets of samples.
@@ -569,6 +553,7 @@ class GetDistPlotter(object):
         :param chain_dir: Set this to a directory or grid root to search for chains (can also be a list of such, searched in order)
         :param analysis_settings: The settings to be used by :class:`MCSampleAnalysis` when analysing samples
         """
+
         self.chain_dir = chain_dir
         if settings is None:
             self.settings = copy.deepcopy(defaultSettings)
@@ -717,8 +702,9 @@ class GetDistPlotter(object):
         :param root: The root name of the samples.
         :return: :class:`~.paramnames.ParamNames` instance
         """
-        if root not in self.param_name_sets: self.param_name_sets[root] = self.sampleAnalyser.paramsForRoot(root,
-                                                                                                            labelParams=self.settings.param_names_for_labels)
+        if root not in self.param_name_sets:
+            self.param_name_sets[root] = \
+                self.sampleAnalyser.paramsForRoot(root, labelParams=self.settings.param_names_for_labels)
         return self.param_name_sets[root]
 
     def paramBoundsForRoot(self, root):
@@ -743,9 +729,11 @@ class GetDistPlotter(object):
         """
         d = self.paramBoundsForRoot(root)
         low = d.getLower(name)
-        if low is not None: xmin = max(xmin, low)
+        if low is not None:
+            xmin = max(xmin, low)
         up = d.getUpper(name)
-        if up is not None: xmax = min(xmax, up)
+        if up is not None:
+            xmax = min(xmax, up)
         return xmin, xmax
 
     def _get_param_bounds(self, roots, name):
@@ -781,12 +769,13 @@ class GetDistPlotter(object):
         :param kwargs: arguments for :func:`~matplotlib:matplotlib.pyplot.plot`
         :return: min, max for the plotted density
         """
-        ax = ax or plt.gca()
         param = self._check_param(root, param)
+        ax = ax or self._subplot_number(0, pars=(param))
         normalized = normalized if normalized is not None else g.settings.norm_1d_density
         if isinstance(root, MixtureND):
             density = root.density1D(param.name)
-            if not normalized: density.normalize(by='max')
+            if not normalized:
+                density.normalize(by='max')
         else:
             density = self.sampleAnalyser.get_density(root, param, likes=self.settings.plot_meanlikes)
             if density is None:
@@ -851,21 +840,23 @@ class GetDistPlotter(object):
                - kwargs for :func:`~matplotlib:matplotlib.pyplot.contour` and :func:`~matplotlib:matplotlib.pyplot.contourf`
         :return: bounds (from :meth:`~.densities.GridDensity.bounds`) for the 2D density plotted
         """
-        ax = ax or plt.gca()
+        ax = ax or self._subplot_number(0)
         if density is None:
             param1, param2 = self.get_param_array(root, param_pair or [param1, param2])
-
+            ax.params = (param1, param2)
             density = self.sampleAnalyser.get_density_grid(root, param1, param2,
                                                            conts=self.settings.num_plot_contours,
                                                            likes=self.settings.shade_meanlikes)
             if density is None:
-                if add_legend_proxy: self.contours_added.append(None)
+                if add_legend_proxy:
+                    self.contours_added.append(None)
                 return None
         if alpha is None: alpha = self._get_alpha2D(plotno, **kwargs)
         if contour_levels is None:
             if not hasattr(density, 'contours'):
                 contours = self.sampleAnalyser.ini.ndarray('contours')
-                if contours is not None: contours = contours[:self.settings.num_plot_contours]
+                if contours is not None:
+                    contours = contours[:self.settings.num_plot_contours]
                 density.contours = density.getContourLevels(contours)
             contour_levels = density.contours
 
@@ -879,9 +870,9 @@ class GetDistPlotter(object):
 
         def clean_args(args):  # prevent unused argument warnings
             cont_args = dict(args)
-            if 'color' in cont_args: del cont_args['color']
-            if 'ls' in cont_args: del cont_args['ls']
-            if 'lw' in cont_args: del cont_args['lw']
+            cont_args.pop('color', None)
+            cont_args.pop('ls', None)
+            cont_args.pop('lw', None)
             return cont_args
 
         if kwargs.get('filled'):
@@ -908,9 +899,6 @@ class GetDistPlotter(object):
                        **clean_args(kwargs))
         else:
             args = self._get_line_styles(plotno, **kwargs)
-            # if color is None: color = self._get_color(plotno, **kwargs)
-            # cols = [color]
-            # if ls is None: ls = self._get_linestyle(plotno, **kwargs)
             linestyles = [args['ls']]
             cols = [args['color']]
             kwargs = self._get_plot_args(plotno, **kwargs)
@@ -942,8 +930,8 @@ class GetDistPlotter(object):
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
         :param kwargs: keyword arguments for :func:`~matplotlib:matplotlib.pyplot.contourf`
         """
-        ax = ax or plt.gca()
         param1, param2 = self.get_param_array(root, [param1, param2])
+        ax = ax or self._subplot_number(0, pars=(param1, param2))
         density = density or self.sampleAnalyser.get_density_grid(root, param1, param2,
                                                                   conts=self.settings.num_plot_contours,
                                                                   likes=self.settings.shade_meanlikes)
@@ -1049,9 +1037,12 @@ class GetDistPlotter(object):
             line_args[i] = c
             if colors and i < len(colors) and colors[i]:
                 c['color'] = colors[i]
-            if ls and i < len(ls) and ls[i]: c['ls'] = ls[i]
-            if alphas and i < len(alphas) and alphas[i] is not None: c['alpha'] = alphas[i]
-            if lws and i < len(lws) and lws[i]: c['lw'] = lws[i]
+            if ls and i < len(ls) and ls[i]:
+                c['ls'] = ls[i]
+            if alphas and i < len(alphas) and alphas[i] is not None:
+                c['alpha'] = alphas[i]
+            if lws and i < len(lws) and lws[i]:
+                c['lw'] = lws[i]
         return line_args
 
     def _make_contour_args(self, nroots, **kwargs):
@@ -1065,7 +1056,7 @@ class GetDistPlotter(object):
         return contour_args
 
     def plot_2d(self, roots, param1=None, param2=None, param_pair=None, shaded=False,
-                add_legend_proxy=True, line_offset=0, proxy_root_exclude=[], **kwargs):
+                add_legend_proxy=True, line_offset=0, proxy_root_exclude=[], ax=None, **kwargs):
         """
         Create a single 2D line, contour or filled plot.
 
@@ -1077,6 +1068,7 @@ class GetDistPlotter(object):
         :param add_legend_proxy: True if should add to the legend proxy
         :param line_offset: line_offset if not adding first contours to plot
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
+        :param ax: axes to use (will be automatically made if None)
         :param kwargs: additional optional arguments:
 
                 * **filled**: True for filled contours
@@ -1098,34 +1090,39 @@ class GetDistPlotter(object):
             g.plot_2d([samples1,samples2], 'x1', 'x2', filled=True);
 
         """
-        if self.fig is None: self.make_figure()
+        if self.fig is None:
+            self.make_figure()
         roots = makeList(roots)
         if isinstance(param1, (list, tuple)):
             param_pair = param1
             param1 = None
         param_pair = self.get_param_array(roots[0], param_pair or [param1, param2])
-        if self.settings.progress: print('plotting: ', [param.name for param in param_pair])
-        if shaded and not kwargs.get('filled'): self.add_2d_shading(roots[0], param_pair[0], param_pair[1])
+        ax = ax or self._subplot_number(0, param_pair)
+        if self.settings.progress:
+            print('plotting: ', [param.name for param in param_pair])
+        if shaded and not kwargs.get('filled'):
+            self.add_2d_shading(roots[0], param_pair[0], param_pair[1], ax=ax)
         xbounds, ybounds = None, None
         contour_args = self._make_contour_args(len(roots), **kwargs)
         for i, root in enumerate(roots):
             if isinstance(root, MixtureND):
                 res = self.add_2D_mixture_projection(root, param_pair[0], param_pair[1], plotno=line_offset + i,
-                                                     of=len(roots),
+                                                     of=len(roots), ax=ax,
                                                      add_legend_proxy=add_legend_proxy and root not in proxy_root_exclude,
                                                      **contour_args[i])
             else:
-                res = self.add_2d_contours(root, param_pair[0], param_pair[1], line_offset + i, of=len(roots),
+                res = self.add_2d_contours(root, param_pair[0], param_pair[1], line_offset + i, of=len(roots), ax=ax,
                                            add_legend_proxy=add_legend_proxy and root not in proxy_root_exclude,
                                            **contour_args[i])
             xbounds, ybounds = self._updateLimits(res, xbounds, ybounds)
-        if xbounds is None: return
+        if xbounds is None:
+            return
         if 'lims' not in kwargs:
             lim1 = self._check_param_ranges(roots[0], param_pair[0].name, xbounds[0], xbounds[1])
             lim2 = self._check_param_ranges(roots[0], param_pair[1].name, ybounds[0], ybounds[1])
             kwargs['lims'] = [lim1[0], lim1[1], lim2[0], lim2[1]]
 
-        self.setAxes(param_pair, **kwargs)
+        self.setAxes(param_pair, ax=ax, **kwargs)
         return xbounds, ybounds
 
     def add_x_marker(self, marker, color=None, ls=None, lw=None, ax=None, **kwargs):
@@ -1183,8 +1180,10 @@ class GetDistPlotter(object):
         """
         ax = ax or plt.gca()
         c = color
-        if alpha2 > 0: ax.axvspan((x - sigma * 2), (x + sigma * 2), color=c, alpha=alpha2, **kwargs)
-        if alpha1 > 0: ax.axvspan((x - sigma), (x + sigma), color=c, alpha=alpha1, **kwargs)
+        if alpha2 > 0:
+            ax.axvspan((x - sigma * 2), (x + sigma * 2), color=c, alpha=alpha2, **kwargs)
+        if alpha1 > 0:
+            ax.axvspan((x - sigma), (x + sigma), color=c, alpha=alpha1, **kwargs)
 
     def add_y_bands(self, y, sigma, color='gray', ax=None, alpha1=0.15, alpha2=0.1, **kwargs):
         """
@@ -1209,30 +1208,10 @@ class GetDistPlotter(object):
         """
         ax = ax or plt.gca()
         c = color
-        if alpha2 > 0: ax.axhspan((y - sigma * 2), (y + sigma * 2), color=c, alpha=alpha2, **kwargs)
-        if alpha1 > 0: ax.axhspan((y - sigma), (y + sigma), color=c, alpha=alpha1, **kwargs)
-
-    def _set_locator(self, axis, x=False, prune=None):
-        """
-        Set the locator for ticks
-
-        :param axis: The axis instance
-        :param x: True if x axis, False for y axis
-        :param prune: Parameter for MaxNLocator constructor,  ['lower' | 'upper' | 'both' | None]
-        """
-
-        if self.settings.auto_ticks:
-            axis.set_major_locator(plt.MaxNLocator(nbins='auto', steps=[1, 2, 2.5, 5, 10], prune=prune))
-        else:
-            if x:
-                xmin, xmax = axis.get_view_interval()
-            if x and (abs(xmax - xmin) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000):
-                maxN = int(self.settings.subplot_size_inch / 2) + 3
-                if abs(self.settings.x_label_rotation) > 30:
-                    maxN += 1
-                axis.set_major_locator(plt.MaxNLocator(maxN, prune=prune, steps=np.arange(1, 11)))
-            else:
-                axis.set_major_locator(plt.MaxNLocator(int(self.settings.subplot_size_inch / 2) + 4, prune=prune))
+        if alpha2 > 0:
+            ax.axhspan((y - sigma * 2), (y + sigma * 2), color=c, alpha=alpha2, **kwargs)
+        if alpha1 > 0:
+            ax.axhspan((y - sigma), (y + sigma), color=c, alpha=alpha1, **kwargs)
 
     def _SetAxisFormatter(self, axis, x):
         power_limits = self.settings.axis_tick_powerlimits
@@ -1248,25 +1227,33 @@ class GetDistPlotter(object):
         sFormatter.set_powerlimits(power_limits)
         axis.set_major_formatter(sFormatter)
 
-    def _setAxisProperties(self, axis, x, prune=None):
+    def _setAxisProperties(self, axis, x):
         """
         Sets axis properties.
 
         :param axis: The axis to set properties to.
         :param x: True if x axis, False for y axis
-        :param prune: Parameter for MaxNLocator constructor, ,  ['lower' | 'upper' | 'both' | None]
         """
         self._SetAxisFormatter(axis, x)
+
+        self._auto_ticks(axis, check_long_tick_labels=x and abs(self.settings.x_label_rotation) < 30)
+        if x and self.settings.x_label_rotation != 0:
+            plt.setp(axis.get_ticklabels(), rotation=self.settings.x_label_rotation)
         axis.set_tick_params(which='major', labelsize=self.settings.axes_fontsize)
         axis.get_offset_text().set_fontsize(self.settings.axes_fontsize * 3 / 4 if
                                             not isinstance(self.settings.axes_fontsize, six.string_types) and
                                             self.settings.axes_fontsize > 7 else self.settings.axes_fontsize)
-        if x and self.settings.x_label_rotation != 0:
-            plt.setp(axis.get_ticklabels(), rotation=self.settings.x_label_rotation)
-        self._set_locator(axis, x, prune=prune)
+
+    def _no_x_ticklabels(self, ax):
+        ax.tick_params(labelbottom=False)
+        ax.xaxis.offsetText.set_visible(False)
+
+    def _no_y_ticklabels(self, ax):
+        ax.tick_params(labelleft=False)
+        ax.yaxis.offsetText.set_visible(False)
 
     def setAxes(self, params=[], lims=None, do_xlabel=True, do_ylabel=True, no_label_no_numbers=False, pos=None,
-                prune=None, color_label_in_axes=False, ax=None, **other_args):
+                color_label_in_axes=False, ax=None, **other_args):
         """
         Set the axis labels and ticks, and various styles. Do not usually need to call this directly.
 
@@ -1276,28 +1263,31 @@ class GetDistPlotter(object):
         :param do_ylabel: True if should include label for y axis.
         :param no_label_no_numbers: True to hide tick labels
         :param pos: optional position of the axes ['left' | 'bottom' | 'width' | 'height']
-        :param prune: Parameter for MaxNLocator constructor,  ['lower' | 'upper' | 'both' | None]
         :param color_label_in_axes: If True, and params has at last three entries, puts text in the axis to label the third parameter
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use, defaults to current axes.
         :param other_args: Not used, just quietly ignore so that setAxes can be passed general kwargs
         :return: an :class:`~matplotlib:matplotlib.axes.Axes` instance
         """
         ax = ax or plt.gca()
-        if lims is not None: ax.axis(lims)
-        if prune is None: prune = self.settings.tick_prune
-        self._setAxisProperties(ax.xaxis, True, prune)
-        if pos is not None: ax.set_position(pos)
+        if lims is not None:
+            ax.axis(lims)
+        if do_xlabel or not no_label_no_numbers:
+            self._setAxisProperties(ax.xaxis, True)
+        if pos is not None:
+            ax.set_position(pos)
         if do_xlabel and len(params) > 0:
-            self.set_xlabel(params[0])
+            self.set_xlabel(params[0], ax)
         elif no_label_no_numbers:
-            ax.tick_params(labelbottom=False)
+            self._no_x_ticklabels(ax)
         if len(params) > 1:
-            self._setAxisProperties(ax.yaxis, False, prune)
+            if do_ylabel or not no_label_no_numbers:
+                self._setAxisProperties(ax.yaxis, False)
             if do_ylabel:
-                self.set_ylabel(params[1])
+                self.set_ylabel(params[1], ax)
             elif no_label_no_numbers:
-                ax.tick_params(labelleft=False)
-        if color_label_in_axes and len(params) > 2: self.add_text(params[2].latexLabel())
+                self._no_y_ticklabels(ax)
+        if color_label_in_axes and len(params) > 2:
+            self.add_text(params[2].latexLabel(), ax=ax)
         return ax
 
     def set_xlabel(self, param, ax=None):
@@ -1323,7 +1313,7 @@ class GetDistPlotter(object):
         ax.set_ylabel(param.latexLabel(), fontsize=self.settings.lab_fontsize)
 
     def plot_1d(self, roots, param, marker=None, marker_color=None, label_right=False, title_limit=None,
-                no_ylabel=False, no_ytick=False, no_zero=False, normalized=False, param_renames={}, **kwargs):
+                no_ylabel=False, no_ytick=False, no_zero=False, normalized=False, param_renames={}, ax=None, **kwargs):
         """
         Make a single 1D plot with marginalized density lines.
 
@@ -1338,6 +1328,7 @@ class GetDistPlotter(object):
         :param no_zero: If true does not show tick label at zero on y axis
         :param normalized: plot normalized densities (if False, densities normalized to peak at 1)
         :param param_renames: optional dictionary mapping input parameter names to equivalent names used by the samples
+        :param ax: axes to use (will be created if None)
         :param kwargs: additional optional keyword arguments:
 
                 * **lims**: optional limits for x range of the plot [xmin, xmax]
@@ -1366,32 +1357,37 @@ class GetDistPlotter(object):
 
         """
         roots = makeList(roots)
-        if self.fig is None: self.make_figure()
+        if self.fig is None:
+            self.make_figure()
+        ax = ax or self._subplot_number(0, pars=[param])
         plotparam = None
         plotroot = None
         line_args = self._make_line_args(len(roots), **kwargs)
         xmin, xmax = None, None
         for i, root in enumerate(roots):
             root_param = self._check_param(root, param, param_renames)
-            if not root_param: continue
+            if not root_param:
+                continue
             bounds = self.add_1d(root, root_param, i, normalized=normalized, title_limit=title_limit if not i else 0,
-                                 **line_args[i])
+                                 ax=ax, **line_args[i])
             xmin, xmax = self._updateLimit(bounds, (xmin, xmax))
             if bounds is not None and not plotparam:
                 plotparam = root_param
                 plotroot = root
-        if plotparam is None: raise GetDistPlotError('No roots have parameter: ' + str(param))
-        if marker is not None: self.add_x_marker(marker, marker_color)
+        if plotparam is None:
+            raise GetDistPlotError('No roots have parameter: ' + str(param))
+        if marker is not None:
+            self.add_x_marker(marker, marker_color, ax=ax)
         if 'lims' in kwargs and kwargs['lims'] is not None:
             xmin, xmax = kwargs['lims']
         else:
             xmin, xmax = self._check_param_ranges(plotroot, plotparam.name, xmin, xmax)
         if normalized:
-            mx = plt.gca().yaxis.get_view_interval()[-1]
+            mx = ax.yaxis.get_view_interval()[-1]
         else:
             mx = 1.099
         kwargs['lims'] = [xmin, xmax, 0, mx]
-        ax = self.setAxes([plotparam], **kwargs)
+        self.setAxes([plotparam], ax=ax, **kwargs)
 
         if normalized:
             lab = self.settings.norm_prob_label
@@ -1401,19 +1397,19 @@ class GetDistPlotter(object):
             if label_right:
                 ax.yaxis.set_label_position("right")
                 ax.yaxis.tick_right()
-                ax.set_ylabel(lab)
-            else:
-                ax.set_ylabel(lab)
+            ax.set_ylabel(lab)
         if no_ytick or not self.settings.prob_y_ticks:
             ax.set_yticks([])
         elif no_ylabel:
-            ax.tick_params(labelleft=False)
+            self._no_y_ticklabels(ax)
         elif no_zero and not normalized:
             ticks = ax.get_yticks()
-            if ticks[-1] > 1: ticks = ticks[:-1]
+            if ticks[-1] > 1:
+                ticks = ticks[:-1]
             ax.set_yticks(ticks[1:])
+        return xmin, xmax
 
-    def make_figure(self, nplot=1, nx=None, ny=None, xstretch=1.0, ystretch=1.0):
+    def make_figure(self, nplot=1, nx=None, ny=None, xstretch=1.0, ystretch=1.0, sharex=False, sharey=False):
         """
         Makes a new figure.
 
@@ -1422,6 +1418,8 @@ class GetDistPlotter(object):
         :param ny: number of subplots in each column
         :param xstretch: The parameter of how much to stretch the width, 1 is default
         :param ystretch: The parameter of how much to stretch the height, 1 is default
+        :param sharex: no vertucak soace between subplots
+        :param sharey: no horizontal space between subplots
         :return: The plot_col, plot_row numbers of subplots for the figure
         """
         self.newPlot()
@@ -1434,12 +1432,29 @@ class GetDistPlotter(object):
         else:
             self.plot_row = ny
         if self.settings.fig_width_inch is not None:
-            self.fig = plt.figure(figsize=(self.settings.fig_width_inch,
-                                           (self.settings.fig_width_inch * self.plot_row * ystretch) / (
-                                                   self.plot_col * xstretch)))
+            figsize = (self.settings.fig_width_inch,
+                       (self.settings.fig_width_inch * self.plot_row * ystretch) / (self.plot_col * xstretch))
         else:
-            self.fig = plt.figure(figsize=(self.settings.subplot_size_inch * self.plot_col * xstretch,
-                                           self.settings.subplot_size_inch * self.plot_row * ystretch))
+            figsize = (self.settings.subplot_size_inch * self.plot_col * xstretch,
+                       self.settings.subplot_size_inch * self.plot_row * ystretch)
+        if self.settings.constrained_layout:
+            self.fig = plt.figure(figsize=figsize, constrained_layout=True)
+        else:
+            self.fig = plt.figure(figsize=figsize)
+
+        if hasattr(self.fig, 'add_gridspec'):
+            self.gridspec = self.fig.add_gridspec(self.plot_row, self.plot_col)
+        else:
+            self.gridspec = plt.GridSpec(nrows=self.plot_row, ncols=self.plot_col, figure=self.fig)
+
+        if self.settings.constrained_layout and (sharex or sharey):
+            kwargs = {}
+            if sharey:
+                kwargs = {'w_pad': 0, 'wpsace': 0}
+            if sharex:
+                kwargs = {'h_pad': 0, 'h_space': 0}
+            self.fig.set_constrained_layout_pads(**kwargs)
+
         self.subplots = np.ndarray((self.plot_row, self.plot_col), dtype=object)
         self.subplots[:, :] = None
         return self.plot_col, self.plot_row
@@ -1610,21 +1625,23 @@ class GetDistPlotter(object):
         :param no_tight: don't use :func:`~matplotlib:matplotlib.pyplot.tight_layout` to adjust subplot positions
         """
         has_legend = self.settings.line_labels and legend_labels and len(legend_labels) > 1
-        if self.settings.tight_layout and not no_tight:
+        if self.settings.tight_layout and not no_tight and not self.settings.constrained_layout:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 if no_gap:
-                    plt.tight_layout(h_pad=0, w_pad=0)
+                    self.fig.tight_layout(h_pad=0, w_pad=0)
                 else:
-                    plt.tight_layout()
+                    self.fig.tight_layout()
 
         if has_legend:
-            if legend_ncol is None: legend_ncol = self.settings.figure_legend_ncol
-            if legend_loc is None: legend_loc = self.settings.figure_legend_loc
+            if legend_ncol is None:
+                legend_ncol = self.settings.figure_legend_ncol
+            if legend_loc is None:
+                legend_loc = self.settings.figure_legend_loc
             self.extra_artists = [
                 self.add_legend(legend_labels, legend_loc, line_offset, legend_ncol, label_order=label_order,
                                 figure=True)]
-            if self.settings.tight_layout and not no_extra_legend_space:
+            if self.settings.tight_layout and not no_extra_legend_space and not self.settings.constrained_layout:
                 nrows = len(legend_labels) // legend_ncol
                 if self.settings.legend_position_config == 1:
                     frac = self.settings.legend_frac_subplot_margin + nrows * self.settings.legend_frac_subplot_line
@@ -1645,8 +1662,9 @@ class GetDistPlotter(object):
         elif hasattr(root, 'getName'):
             root = escapeLatex(root.getName())
         elif isinstance(root, six.string_types):
-            root = escapeLatex(root)
-        if not root: root = 'samples' + str(i)
+            return self._rootDisplayName(self.sampleAnalyser.samplesForRoot(root), i)
+        if not root:
+            root = 'samples' + str(i)
         return root
 
     def _default_legend_labels(self, legend_labels, roots):
@@ -1706,21 +1724,23 @@ class GetDistPlotter(object):
             params = [param for param in params if
                       param.name in wantedParams or param_renames.get(param.name, '') in wantedParams]
         nparam = len(params)
-        if share_y is None: share_y = self.settings.prob_label is not None and nparam > 1
-        plot_col, plot_row = self.make_figure(nparam, nx=nx)
+        if share_y is None:
+            share_y = self.settings.prob_label is not None and nparam > 1
+        plot_col, plot_row = self.make_figure(nparam, nx=nx, sharey=share_y)
         plot_roots = roots
         for i, param in enumerate(params):
-            ax = self._subplot_number(i)
-            if roots_per_param: plot_roots = roots[i]
+            ax = self._subplot_number(i, pars=[param], sharey=None if i == 0 or not share_y else self.subplots[0, 0])
+            if roots_per_param:
+                plot_roots = roots[i]
             marker = self._get_marker(markers, i, param.name)
             self.plot_1d(plot_roots, param, no_ylabel=share_y and i % self.plot_col > 0, marker=marker,
-                         param_renames=param_renames, title_limit=title_limit, **kwargs)
-            if xlims is not None: ax.set_xlim(xlims[i][0], xlims[i][1])
-            if share_y: self._spaceTicks(ax.xaxis, expand=xlims is None,
-                                         bounds=self._get_param_bounds(plot_roots, param.name))
+                         param_renames=param_renames, title_limit=title_limit, ax=ax, **kwargs)
+            if xlims is not None:
+                ax.set_xlim(xlims[i][0], xlims[i][1])
         self.finish_plot(self._default_legend_labels(legend_labels, roots), legend_ncol=legend_ncol,
                          label_order=label_order)
-        if share_y: plt.subplots_adjust(wspace=0)
+        if share_y and not self.settings.constrained_layout:
+            self.fig.subplots_adjust(wspace=0)
         return plot_col, plot_row
 
     def plots_2d(self, roots, param1=None, params2=None, param_pairs=None, nx=None, legend_labels=None,
@@ -1772,9 +1792,9 @@ class GetDistPlotter(object):
         plot_col, plot_row = self.make_figure(len(pairs), nx=nx)
 
         for i, pair in enumerate(pairs):
-            self._subplot_number(i)
+            ax = self._subplot_number(i, pars=pair)
             self.plot_2d(roots, param_pair=pair, filled=filled, shaded=not filled and shaded,
-                         add_legend_proxy=i == 0, **kwargs)
+                         add_legend_proxy=i == 0, ax=ax, **kwargs)
 
         self.finish_plot(self._default_legend_labels(legend_labels, roots), legend_ncol=legend_ncol,
                          label_order=label_order)
@@ -1789,20 +1809,19 @@ class GetDistPlotter(object):
         :param kwargs: arguments for :func:`~matplotlib:matplotlib.pyplot.subplot`
         :return: an :class:`~matplotlib:matplotlib.axes.Axes` instance for the subplot axes
         """
-        self.subplots[y, x] = ax = plt.subplot(self.plot_row, self.plot_col, y * self.plot_col + x + 1, **kwargs)
+        self.subplots[y, x] = ax = self.fig.add_subplot(self.gridspec[y, x], **kwargs)
         if pars is not None:
             ax.params = pars
         return ax
 
-    def _subplot_number(self, i):
+    def _subplot_number(self, i, pars=None, **kwargs):
         """
         Create a subplot with given index.
 
         :param i: index of the subplot
         :return: an :class:`~matplotlib:matplotlib.axes.Axes` instance for the subplot axes
         """
-        self.subplots[i // self.plot_col, i % self.plot_col] = ax = plt.subplot(self.plot_row, self.plot_col, i + 1)
-        return ax
+        return self._subplot(i % self.plot_col, i // self.plot_col, pars=pars, **kwargs)
 
     def plots_2d_triplets(self, root_params_triplets, nx=None, filled=False, x_lim=None):
         """
@@ -1816,52 +1835,14 @@ class GetDistPlotter(object):
         """
         plot_col, plot_row = self.make_figure(len(root_params_triplets), nx=nx)
         for i, (root, param1, param2) in enumerate(root_params_triplets):
-            ax = self._subplot_number(i)
-            self.plot_2d(root, param_pair=[param1, param2], filled=filled, add_legend_proxy=i == 0)
+            ax = self._subplot_number(i, pars=(param1, param2))
+            self.plot_2d(root, param_pair=[param1, param2], filled=filled, add_legend_proxy=i == 0, ax=ax)
             if x_lim is not None: ax.set_xlim(x_lim)
         self.finish_plot()
         return plot_col, plot_row
 
-    def _spaceTicks(self, axis, expand=True, bounds=[None, None]):
-        """
-        Space the axis ticks so there are none near the edges (which are likely to overlap on packed subplots)
-
-        :param axis: axis instance
-        :param expand: if True, increase axis range so existing ticks are safely not near edge
-                        otherwise remove end ticks
-        :return: list of tick values
-        """
-        if self.settings.auto_ticks:
-            axis.set_major_locator(plt.MaxNLocator(nbins='auto', steps=[1, 2, 2.5, 5, 10], prune='both'))
-        else:
-            xmin, xmax = axis.get_view_interval()
-            tick = [x for x in axis.get_ticklocs() if xmin < x < xmax]
-            width = xmax - xmin
-            gap_wanted = width * self.settings.tight_gap_fraction
-            if expand:
-                if bounds[0] is None or bounds[0] < xmin - 0.001 * width:
-                    xmin = min(tick[0] - gap_wanted, xmin)
-                else:
-                    if tick[0] - xmin < gap_wanted: tick = tick[1:]
-                if bounds[1] is None or bounds[1] > xmax + 0.001 * width:
-                    xmax = max(tick[-1] + gap_wanted, xmax)
-                else:
-                    if xmax - tick[-1] < gap_wanted: tick = tick[:-1]
-                axis.set_view_interval(xmin, xmax)
-            else:
-                if tick[0] - xmin < gap_wanted: tick = tick[1:]
-                if xmax - tick[-1] < gap_wanted: tick = tick[:-1]
-
-            if self.settings.thin_long_subplot_ticks and len(tick) > 2 and \
-                    (abs(tick[-1] - tick[0]) < 0.01 or max(abs(xmin), abs(xmax)) >= 1000
-                     or any([len(str(round(t, 4))) > 4 for t in tick])):
-                if len(tick) % 2 == 0 and min([len(str(round(t, 4))) for t in tick[1::2]]) < min(
-                        [len(str(round(t, 4))) for t in tick[::2]]):
-                    axis.set_ticks(tick[1::2])
-                else:
-                    axis.set_ticks(tick[0::2])
-            else:
-                axis.set_ticks(tick)
+    def _auto_ticks(self, axis, steps=[1, 2, 2.5, 3, 4, 5, 6, 8, 10], **kwargs):
+        axis.set_major_locator(BoundedMaxNLocator(nbins='auto', steps=steps, **kwargs))
 
     @staticmethod
     def _inner_ticks(ax, top_and_left=True):
@@ -1929,11 +1910,10 @@ class GetDistPlotter(object):
         roots = makeList(roots)
         params = self.get_param_array(roots[0], params)
         plot_col = len(params)
-        if plot_3d_with_param is not None: col_param = self._check_param(roots[0], plot_3d_with_param)
-        self.make_figure(nx=plot_col, ny=plot_col)
+        if plot_3d_with_param is not None:
+            col_param = self._check_param(roots[0], plot_3d_with_param)
+        self.make_figure(nx=plot_col, ny=plot_col, sharex=True, sharey=True)
         lims = dict()
-        ticks = dict()
-        filled = kwargs.get('filled_compare', filled)
 
         def defLineArgs(cont_args, cont_colors):
             cols = []
@@ -1977,65 +1957,73 @@ class GetDistPlotter(object):
         roots1d = copy.copy(roots)
         if upper_roots is not None:
             show_1d = upper_kwargs.get('show_1d', True)
-            if isinstance(show_1d, bool): show_1d = [show_1d] * len(upargs)
+            if isinstance(show_1d, bool):
+                show_1d = [show_1d] * len(upargs)
             for root, arg, show in zip(upper_roots, upargs, show_1d):
-                if show and not root in roots1d:
+                if show and root not in roots1d:
                     roots1d.append(root)
                     line_args.append(arg)
 
+        bottom = len(params) - 1
         for i, param in enumerate(params):
+            for i2 in range(bottom, i, -1):
+                self._subplot(i, i2, pars=[params[i], params[i2]],
+                              sharex=self.subplots[bottom, i] if i2 != bottom else None,
+                              sharey=self.subplots[i2, 0] if i > 0 else None)
+
+            ax = self._subplot(i, i, pars=[param], sharex=self.subplots[bottom, i] if i != bottom else None)
             marker = self._get_marker(markers, i, param.name)
-            ax = self._subplot(i, i)
             self._inner_ticks(ax, False)
-            self.plot_1d(roots1d, param, marker=marker, do_xlabel=i == plot_col - 1,
-                         no_label_no_numbers=self.settings.no_triangle_axis_labels, title_limit=title_limit,
-                         label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
-                         lims=param_limits.get(param.name, None), **diag1d_kwargs)
-            if self.settings.no_triangle_axis_labels:
-                self._spaceTicks(ax.xaxis, bounds=self._get_param_bounds(roots1d, param.name))
-            lims[i] = ax.get_xlim()
-            ticks[i] = ax.get_xticks()
+            xlim = self.plot_1d(roots1d, param, marker=marker, do_xlabel=i == plot_col - 1,
+                                no_label_no_numbers=self.settings.no_triangle_axis_labels, title_limit=title_limit,
+                                label_right=True, no_zero=True, no_ylabel=True, no_ytick=True, line_args=line_args,
+                                lims=param_limits.get(param.name, None), ax=ax, **diag1d_kwargs)
+            lims[i] = xlim
         for i, param in enumerate(params):
             marker = self._get_marker(markers, i, param.name)
             for i2 in range(i + 1, len(params)):
                 param2 = params[i2]
                 pair = [param, param2]
                 marker2 = self._get_marker(markers, i2, param2.name)
-                ax = self._subplot(i, i2, pars=[param, param2])
+                ax = self.subplots[i2, i]
                 if plot_3d_with_param is not None:
                     self.plot_3d(roots, pair + [col_param], color_bar=False, line_offset=1, add_legend_proxy=False,
                                  do_xlabel=i2 == plot_col - 1, do_ylabel=i == 0, contour_args=contour_args,
-                                 no_label_no_numbers=self.settings.no_triangle_axis_labels, **kwargs)
+                                 no_label_no_numbers=self.settings.no_triangle_axis_labels, ax=ax, **kwargs)
                 else:
                     self.plot_2d(roots, param_pair=pair, do_xlabel=i2 == plot_col - 1, do_ylabel=i == 0,
                                  no_label_no_numbers=self.settings.no_triangle_axis_labels, shaded=shaded,
-                                 add_legend_proxy=i == 0 and i2 == 1, contour_args=contour_args, **kwargs)
-                if marker is not None: self.add_x_marker(marker, **marker_args)
-                if marker2 is not None: self.add_y_marker(marker2, **marker_args)
-                ax.set_xticks(ticks[i])
-                ax.set_yticks(ticks[i2])
-                ax.set_xlim(lims[i])
-                ax.set_ylim(lims[i2])
+                                 add_legend_proxy=i == 0 and i2 == 1, contour_args=contour_args, ax=ax, **kwargs)
+                if marker is not None:
+                    self.add_x_marker(marker, ax=ax, **marker_args)
+                if marker2 is not None:
+                    self.add_y_marker(marker2, ax=ax, **marker_args)
                 self._inner_ticks(ax)
+                if i == 0:
+                    ax.set_ylim(lims[i2])
+                if i2 == len(params) - 1:
+                    ax.set_xlim(lims[i])
 
                 if upper_roots is not None:
-                    ax = self._subplot(i2, i, pars=[param2, param])
+                    ax = self._subplot(i2, i, pars=[param2, param], sharex=self.subplots[bottom, i2],
+                                       sharey=self.subplots[i, 0] if i > 0 else (
+                                           self.subplots[0, 1] if i2 > 1 else None))
                     pair.reverse()
                     if plot_3d_with_param is not None:
                         self.plot_3d(upper_roots, pair + [col_param], color_bar=False, line_offset=1,
-                                     add_legend_proxy=False,
+                                     add_legend_proxy=False, ax=ax,
                                      do_xlabel=False, do_ylabel=False, contour_args=upper_contour_args,
                                      no_label_no_numbers=self.settings.no_triangle_axis_labels)
                     else:
                         self.plot_2d(upper_roots, param_pair=pair, do_xlabel=False, do_ylabel=False,
                                      no_label_no_numbers=self.settings.no_triangle_axis_labels, shaded=shaded,
-                                     add_legend_proxy=i == 0 and i2 == 1,
+                                     add_legend_proxy=i == 0 and i2 == 1, ax=ax,
                                      proxy_root_exclude=[root for root in upper_roots if root in roots],
                                      contour_args=upper_contour_args)
-                    if marker is not None: self.add_y_marker(marker, **marker_args)
-                    if marker2 is not None: self.add_x_marker(marker2, **marker_args)
-                    ax.set_xticks(ticks[i2])
-                    ax.set_yticks(ticks[i])
+                    if marker is not None:
+                        self.add_y_marker(marker, ax=ax, **marker_args)
+                    if marker2 is not None:
+                        self.add_x_marker(marker2, ax=ax, **marker_args)
                     ax.set_xlim(lims[i2])
                     ax.set_ylim(lims[i])
                     self._inner_ticks(ax)
@@ -2043,19 +2031,21 @@ class GetDistPlotter(object):
         if upper_roots is not None:
             # make label on first 1D plot appropriate for 2D plots in rest of row
             label_ax = self.subplots[0, 0].twinx()
+            label_ax.get_shared_y_axes().join(label_ax, self.subplots[0, 1])
             label_ax.yaxis.tick_left()
             label_ax.yaxis.set_label_position('left')
             label_ax.yaxis.set_offset_position('left')
             label_ax.set_ylim(lims[0])
-            label_ax.set_yticks(ticks[0])
             self.set_ylabel(params[0], ax=label_ax)
             self._setAxisProperties(label_ax.yaxis, False)
 
-        if self.settings.no_triangle_axis_labels: plt.subplots_adjust(wspace=0, hspace=0)
+        if self.settings.no_triangle_axis_labels and not self.settings.constrained_layout:
+            self.fig.subplots_adjust(wspace=0, hspace=0)
 
         if plot_3d_with_param is not None:
             bottom = 0.5
-            if len(params) == 2: bottom += 0.1;
+            if len(params) == 2:
+                bottom += 0.1
             cb = self.fig.colorbar(self.last_scatter, cax=self.fig.add_axes([0.9, bottom, 0.03, 0.35]))
             cb.ax.yaxis.set_ticks_position('left')
             cb.ax.yaxis.set_label_position('left')
@@ -2068,7 +2058,8 @@ class GetDistPlotter(object):
                          legend_ncol=legend_ncol or (None if upper_roots is None else len(labels)),
                          legend_loc=legend_loc, no_gap=self.settings.no_triangle_axis_labels,
                          no_extra_legend_space=upper_roots is None)
-        if self.settings.no_triangle_axis_labels: plt.subplots_adjust(wspace=0, hspace=0)
+        if self.settings.no_triangle_axis_labels and not self.settings.constrained_layout:
+            self.fig.subplots_adjust(wspace=0, hspace=0)
 
     def rectangle_plot(self, xparams, yparams, yroots=None, roots=None, plot_roots=None, plot_texts=None,
                        xmarkers=None, ymarkers=None, marker_args={}, param_limits={},
@@ -2108,15 +2099,15 @@ class GetDistPlotter(object):
             g = plots.getSubplotPlotter()
             g.rectangle_plot(['x0','x1'], ['x2','x3'], roots = [samples1, samples2], filled=True)
         """
-        self.make_figure(nx=len(xparams), ny=len(yparams))
-        # f, plots = subplots(len(yparams), len(xparams), sharex='col', sharey='row')
+        self.make_figure(nx=len(xparams), ny=len(yparams), sharex=len(yparams), sharey=len(xparams))
         sharey = None
         yshares = []
         xshares = []
         ax_arr = []
         if plot_roots and yroots or roots and yroots or plot_roots and roots:
             raise GetDistPlotError('rectangle plot: must have one of roots, yroots, plot_roots')
-        if roots: roots = makeList(roots)
+        if roots:
+            roots = makeList(roots)
         limits = dict()
         for x, xparam in enumerate(xparams):
             sharex = None
@@ -2128,7 +2119,8 @@ class GetDistPlotter(object):
             xmarker = self._get_marker(xmarkers, x, xparam)
 
             for y, (yparam, subplot_roots) in enumerate(zip(yparams, yroots)):
-                if x > 0: sharey = yshares[y]
+                if x > 0:
+                    sharey = yshares[y]
                 ax = self._subplot(x, y, pars=[xparam, yparam], sharex=sharex, sharey=sharey)
                 if y == 0:
                     sharex = ax
@@ -2136,13 +2128,18 @@ class GetDistPlotter(object):
                 ymarker = self._get_marker(ymarkers, y, yparam)
 
                 res = self.plot_2d(subplot_roots, param_pair=[xparam, yparam], do_xlabel=y == len(yparams) - 1,
-                                   do_ylabel=x == 0, add_legend_proxy=x == 0 and y == 0, **kwargs)
-                if xmarker is not None: self.add_x_marker(xmarker, **marker_args)
-                if ymarker is not None: self.add_y_marker(ymarker, **marker_args)
+                                   do_ylabel=x == 0, add_legend_proxy=x == 0 and y == 0, ax=ax, **kwargs)
+                if xmarker is not None:
+                    self.add_x_marker(xmarker, ax=ax, **marker_args)
+                if ymarker is not None:
+                    self.add_y_marker(ymarker, ax=ax, **marker_args)
                 limits[xparam], limits[yparam] = self._updateLimits(res, limits.get(xparam), limits.get(yparam))
-                if y != len(yparams) - 1: plt.setp(ax.get_xticklabels(), visible=False)
-                if x != 0: plt.setp(ax.get_yticklabels(), visible=False)
-                if x == 0: yshares.append(ax)
+                if y != len(yparams) - 1:
+                    self._no_x_ticklabels(ax)
+                if x != 0:
+                    self._no_y_ticklabels(ax)
+                if x == 0:
+                    yshares.append(ax)
                 if plot_texts and plot_texts[x][y]:
                     self.add_text_left(plot_texts[x][y], y=0.9, ax=ax)
                 self._inner_ticks(ax)
@@ -2150,19 +2147,16 @@ class GetDistPlotter(object):
             ax_arr.append(axarray)
         for xparam, ax in zip(xparams, xshares):
             ax.set_xlim(param_limits.get(xparam, limits[xparam]))
-            self._spaceTicks(ax.xaxis, expand=xparam not in param_limits,
-                             bounds=self._get_param_bounds(yroots[0], xparam))
-            ax.set_xlim(ax.xaxis.get_view_interval())
         for yparam, ax in zip(yparams, yshares):
             ax.set_ylim(param_limits.get(yparam, limits[yparam]))
-            self._spaceTicks(ax.yaxis, expand=yparam not in param_limits,
-                             bounds=self._get_param_bounds(yroots[0], yparam))
-            ax.set_ylim(ax.yaxis.get_view_interval())
-        plt.subplots_adjust(wspace=0, hspace=0)
-        if roots: legend_labels = self._default_legend_labels(legend_labels, roots)
+        if not self.settings.constrained_layout:
+            self.fig.subplots_adjust(wspace=0, hspace=0)
+        if roots:
+            legend_labels = self._default_legend_labels(legend_labels, roots)
         self.finish_plot(no_gap=True, legend_labels=legend_labels, label_order=label_order,
                          legend_ncol=legend_ncol or len(legend_labels))
-        plt.subplots_adjust(wspace=0, hspace=0)
+        if not self.settings.constrained_layout:
+            self.fig.subplots_adjust(wspace=0, hspace=0)
         return ax_arr
 
     def rotate_yticklabels(self, ax=None, rotation=90):
@@ -2172,7 +2166,7 @@ class GetDistPlotter(object):
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use, defaults to current axes.
         :param rotation: How much to rotate in degrees.
         """
-        if ax is None: ax = plt.gca()
+        ax = ax or plt.gca()
         for ticklabel in ax.get_yticklabels():
             ticklabel.set_rotation(rotation)
 
@@ -2189,7 +2183,7 @@ class GetDistPlotter(object):
                **color_label_in_axes** - if True, label is not added (insert as text label in plot instead)
         :return: The new :class:`~matplotlib:matplotlib.colorbar.Colorbar` instance
         """
-        cb = plt.colorbar(mappable, orientation=orientation, ax=ax)
+        cb = self.fig.colorbar(mappable, orientation=orientation, ax=ax)
         cb.set_alpha(1)
         cb.draw_all()
         if not ax_args.get('color_label_in_axes'):
@@ -2213,8 +2207,10 @@ class GetDistPlotter(object):
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use, defaults to current axes
         :param kwargs:  Additional arguments for :class:`~matplotlib:matplotlib.lines.Line2D`
         """
-        if color is None: color = self.settings.axis_marker_color
-        if ls is None: ls = self.settings.axis_marker_ls
+        if color is None:
+            color = self.settings.axis_marker_color
+        if ls is None:
+            ls = self.settings.axis_marker_ls
         (ax or plt.gca()).add_line(plt.Line2D(xdata, ydata, color=color, ls=ls, zorder=zorder, **kwargs))
 
     def add_colorbar_label(self, cb, param, label_rotation=None):
@@ -2229,15 +2225,16 @@ class GetDistPlotter(object):
             label_rotation = self.settings.colorbar_label_rotation
         cb.set_label(param.latexLabel(), fontsize=self.settings.lab_fontsize,
                      rotation=label_rotation, labelpad=self.settings.colorbar_label_pad)
-        plt.setp(plt.getp(cb.ax, 'ymajorticklabels'), fontsize=self.settings.colorbar_axes_fontsize)
+        plt.setp(cb.ax.get_ymajorticklabels(), fontsize=self.settings.colorbar_axes_fontsize)
 
-    def _makeParamObject(self, names, samples):
-        class sampleNames(object): pass
+    def _makeParamObject(self, names, samples, obj=None):
+        class SampleNames(object):
+            pass
 
-        p = sampleNames()
+        obj = obj or SampleNames()
         for i, par in enumerate(names.names):
-            setattr(p, par.name, samples[:, i])
-        return p
+            setattr(obj, par.name, samples[:, i])
+        return obj
 
     def add_2d_scatter(self, root, x, y, color='k', alpha=1, extra_thin=1, scatter_size=None, ax=None):
         """
@@ -2326,9 +2323,10 @@ class GetDistPlotter(object):
                                                                  c=fixed_color or samples[2],
                                                                  cmap=self.settings.colormap_scatter, alpha=alpha)
 
-        if not ax: plt.sci(scat)
-        if color_bar and not fixed_color: self.last_colorbar = self.add_colorbar(params[2], mappable=self.last_scatter,
-                                                                                 ax=ax, **kwargs)
+        if not ax:
+            plt.sci(scat)
+        if color_bar and not fixed_color:
+            self.last_colorbar = self.add_colorbar(params[2], mappable=self.last_scatter, ax=ax, **kwargs)
         xbounds = [min(samples[0]), max(samples[0])]
         r = xbounds[1] - xbounds[0]
         xbounds[0] -= r / 20
@@ -2366,7 +2364,7 @@ class GetDistPlotter(object):
         self.plot_3d(roots, [param1, param2], False, line_offset, add_legend_proxy, **kwargs)
 
     def plot_3d(self, roots, params=None, params_for_plots=None, color_bar=True, line_offset=0,
-                add_legend_proxy=True, alpha_samples=False, **kwargs):
+                add_legend_proxy=True, alpha_samples=False, ax=None, **kwargs):
         """
         Make a 2D scatter plot colored by the value of a third parameter (a 3D plot).
 
@@ -2379,6 +2377,7 @@ class GetDistPlotter(object):
         :param line_offset: The line index offset for added contours
         :param add_legend_proxy: True if should add a legend proxy
         :param alpha_samples: if True, use alternative scatter style where all samples are plotted alphaed by their weights
+        :param ax: axes to add to use (defaults to current, generated if needed)
         :param kwargs: additional optional arguments:
 
                 * **filled**: True for filled contours for second and later items in roots
@@ -2400,30 +2399,31 @@ class GetDistPlotter(object):
         """
         roots = makeList(roots)
         if params_for_plots:
-            if params is not None: raise GetDistPlotError('plot_3d uses either params OR params_for_plots')
+            if params is not None:
+                raise GetDistPlotError('plot_3d uses either params OR params_for_plots')
             params_for_plots = [self.get_param_array(root, p) for p, root in zip(params_for_plots, roots)]
         else:
-            if not params: raise GetDistPlotError('No parameters for plot_3d!')
+            if not params:
+                raise GetDistPlotError('No parameters for plot_3d!')
             params = self.get_param_array(roots[0], params)
             params_for_plots = [params for _ in roots]  # all the same
-        if self.fig is None: self.make_figure()
-        if kwargs.get('filled_compare') is not None:
-            kwargs = kwargs.copy()
-            kwargs['filled'] = kwargs['filled_compare']
+        if self.fig is None:
+            self.make_figure()
+        ax = ax or self._subplot_number(0, pars=params_for_plots[0])
         contour_args = self._make_contour_args(len(roots) - 1, **kwargs)
         xlims, ylims = self.add_3d_scatter(roots[0], params_for_plots[0], color_bar=color_bar,
-                                           alpha_samples=alpha_samples, **kwargs)
+                                           alpha_samples=alpha_samples, ax=ax, **kwargs)
         for i, root in enumerate(roots[1:]):
             params = params_for_plots[i + 1]
             res = self.add_2d_contours(root, params[0], params[1], i + line_offset, add_legend_proxy=add_legend_proxy,
-                                       zorder=i + 1, **contour_args[i])
+                                       zorder=i + 1, ax=ax, **contour_args[i])
             xlims, ylims = self._updateLimits(res, xlims, ylims)
         if 'lims' not in kwargs:
             params = params_for_plots[0]
             lim1 = self._check_param_ranges(roots[0], params[0].name, xlims[0], xlims[1])
             lim2 = self._check_param_ranges(roots[0], params[1].name, ylims[0], ylims[1])
             kwargs['lims'] = [lim1[0], lim1[1], lim2[0], lim2[1]]
-        self.setAxes(params, **kwargs)
+        self.setAxes(params, ax=ax, **kwargs)
 
     def plots_3d(self, roots, param_sets, nx=None, legend_labels=None, **kwargs):
         """
@@ -2449,8 +2449,8 @@ class GetDistPlotter(object):
         plot_col, plot_row = self.make_figure(len(sets), nx=nx, xstretch=1.3)
 
         for i, triplet in enumerate(sets):
-            self._subplot_number(i)
-            self.plot_3d(roots, triplet, **kwargs)
+            ax = self._subplot_number(i, pars=triplet)
+            self.plot_3d(roots, triplet, ax=ax, **kwargs)
         self.finish_plot(self._default_legend_labels(legend_labels, roots[1:]), no_tight=True)
         return plot_col, plot_row
 
@@ -2469,7 +2469,8 @@ class GetDistPlotter(object):
         """
         roots = makeList(roots)
         param_z = self.get_param_array(roots[0], param_z)
-        if max_z is not None and len(param_z) > max_z: param_z = param_z[:max_z]
+        if max_z is not None and len(param_z) > max_z:
+            param_z = param_z[:max_z]
         param_x, param_y = self.get_param_array(roots[0], [param_x, param_y])
         sets = [[param_x, param_y, z] for z in param_z if z != param_x and z != param_y]
         return self.plots_3d(roots, sets, **kwargs)
@@ -2482,7 +2483,7 @@ class GetDistPlotter(object):
         :param x: The x coordinate of where to add the label
         :param y: The y coordinate of where to add the label.
         :param ax: the :class:`~matplotlib:matplotlib.axes.Axes` instance to use,
-                   index or [x,y] coordinate of subplot to use, or default to current axes.
+                   index or [y,x] coordinate of subplot to use, or default to current axes.
         :param kwargs: keyword arguments for :func:`~matplotlib:matplotlib.pyplot.text`
         """
         args = {'horizontalalignment': 'right', 'verticalalignment': 'center'}
@@ -2538,17 +2539,28 @@ class GetDistPlotter(object):
         :param fname: The file to read
         :return: A list of param names
         """
-        p = ParamNames(fname)
-        return [name.name for name in p.names]
 
-    def get_axes_for_params(self, par1, par2):
-        def compare_param(p1, p2):
-            if isinstance(p1, ParamInfo): p1 = p1.name
-            if isinstance(p2, ParamInfo): p2 = p2.name
-            return p1 == p2
+        return ParamNames(fname).list()
 
+    def get_axes_for_params(self, *pars, **kwargs):
+        """
+        Get axes corresponding to given parameters
+
+        :param pars: x or x,y or x,y,color parameters
+        :param ordered: if False match y,x as well as x,y
+        :return: axes instance or None if not found
+        """
+        ordered = kwargs.get('ordered', True)
+        par_list = [p.name if isinstance(p, ParamInfo) else p for p in pars]
+        if not ordered:
+            par_list = set(par_list)
+            func = set
+        else:
+            func = list
         for ax in self.subplots.reshape(-1):
-            params = getattr(ax, 'params')
-            if params is not None and compare_param(params[0], par1) and compare_param(params[1], par2):
-                return ax
+            if ax:
+                params = getattr(ax, 'params', None)
+                if params is not None and \
+                        func([p.name if isinstance(p, ParamInfo) else p for p in params]) == par_list:
+                    return ax
         return None

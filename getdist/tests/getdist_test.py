@@ -172,6 +172,7 @@ class GetDistTest(unittest.TestCase):
         samples = mixture.MCSamples(3000, label='Samples')
         g = plots.getSubplotPlotter()
         g.triangle_plot([samples, mixture], filled=False)
+        g.newPlot()
         g.plot_1d(cond, 't')
 
         s1 = 0.0003
@@ -209,6 +210,11 @@ class GetDistTest(unittest.TestCase):
         g.plots_1d(samples, ['x', 'y'], share_y=True)
         g.newPlot()
         g.triangle_plot(samples, ['x', 'y', 'z'])
+        self.assertTrue(g.get_axes_for_params('x', 'z') == g.subplots[2, 0])
+        self.assertTrue(g.get_axes_for_params('z', 'x', ordered=False) == g.subplots[2, 0])
+        self.assertTrue(g.get_axes_for_params('x') == g.subplots[0, 0])
+        self.assertTrue(g.get_axes_for_params('x', 'p', 'q') is None)
+
         g.newPlot()
         g.triangle_plot(samples, ['x', 'y'], plot_3d_with_param='z')
         g.newPlot()

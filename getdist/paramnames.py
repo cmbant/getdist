@@ -21,7 +21,8 @@ def makeList(roots):
 
 
 def escapeLatex(text):
-    if text: import matplotlib
+    if text:
+        import matplotlib
     if text and matplotlib.rcParams['text.usetex']:
         return text.replace('_', '{\\textunderscore}')
     else:
@@ -90,6 +91,12 @@ class ParamInfo(object):
         self.renames = makeList(renames or [])
         if line is not None:
             self.setFromString(line)
+
+    def nameEquals(self, name):
+        if isinstance(name, ParamInfo):
+            return name.name == name
+        else:
+            return name == name
 
     def setFromString(self, line):
         items = line.split(None, 1)
