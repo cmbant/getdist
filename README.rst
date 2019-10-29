@@ -37,11 +37,11 @@ Getting Started
 
 Install getdist using pip::
 
-    $ sudo pip install getdist
+    $ pip install getdist
 
 or from source files using::
 
-    $ sudo python setup.py install
+    $ python setup.py install
 
 You can test if things are working using the unit test by running::
 
@@ -50,6 +50,8 @@ You can test if things are working using the unit test by running::
 Check the dependencies listed in the next section are installed. You can then use the getdist module from your scripts, or
 use the GetDist GUI (*getdist-gui* command).
 
+Once installed, the best way to get up to speed is probably to read through
+the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_.
 
 Dependencies
 =============
@@ -104,7 +106,7 @@ The .ranges file gives hard bounds for the parameters, e.g.::
 
 Note that not all parameters need to be specified, and "N" can be used to denote that a particular upper or lower limit is unbounded. The ranges are used to determine densities and plot bounds if there are samples near the boundary; if there are no samples anywhere near the boundary the ranges have no affect on plot bounds, which are chosen appropriately for the range of the samples.
 
-There can also optionally be a .properties.ini file, which can specify *burn_removed=T* to ensure no burn in is removed, or *ignore_rows=x" to ignore the first
+There can also optionally be a .properties.ini file, which can specify *burn_removed=T* to ensure no burn in is removed, or *ignore_rows=x* to ignore the first
 fraction *x* of the file rows (or if *x > 1*, the specified number of rows).
 
 Loading samples
@@ -130,10 +132,11 @@ from two chains with root names *xxx* and *yyy*::
 
 	from getdist import plots
 	g = plots.get_single_plotter(chain_dir='/path/to/', analysis_settings={'ignore_rows':0.3})
-	g.plot_2d(['xxx','yyy], ['x', 'y'])
+	g.plot_2d(['xxx','yyy'], ['x', 'y'])
 
 
-MCSamples objects can also be constructed directly from numpy arrays in memory, see the example in the `Plot Gallery <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_.
+MCSamples objects can also be constructed directly from numpy arrays in memory, see the example
+in the `Plot Gallery <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_.
 
 GetDist script
 ===================
