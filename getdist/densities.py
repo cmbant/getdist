@@ -6,7 +6,7 @@ class DensitiesError(Exception):
     pass
 
 
-defaultContours = [0.68, 0.95]
+defaultContours = (0.68, 0.95)
 
 
 def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge=True):
@@ -14,7 +14,7 @@ def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge
      Get contour levels enclosing "contours" fraction of the probability, for any dimension bins array
 
      :param inbins: binned density.
-     :param contours: list of confidence contours to calculate, default [0.68, 0.95]
+     :param contours: list or tuple of confidence contours to calculate, default [0.68, 0.95]
      :param missing_norm: accounts of any points not included in inbins (e.g. points in far tails that are not in inbins)
      :param half_edge: If True, edge bins are only half integrated over in each direction.
      :return: list of density levels

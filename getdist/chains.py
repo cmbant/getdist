@@ -2,26 +2,38 @@ from __future__ import print_function
 import os
 import random
 import numpy as np
+from collections import OrderedDict
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
+import getdist.cobaya_interface as cobaya
 import pickle
 import six
+import logging
+import copy
 
 # whether to write to terminal chain names and burn in details when loaded from file
 print_load_details = True
 
+_int_types = six.integer_types + (np.integer,)
+
 try:
     import pandas
-    from distutils.version import LooseVersion
 
-    use_pandas = LooseVersion(pandas.__version__) > LooseVersion("0.14.0")
-except:
+    use_pandas = True
+except ImportError:
     use_pandas = False
 
 
 class WeightedSampleError(Exception):
     """
     An exception that is raised when a WeightedSamples error occurs
+    """
+    pass
+
+
+class ParamError(WeightedSampleError):
+    """
+    An Exception that indicates a bad parameter.
     """
     pass
 
@@ -64,13 +76,18 @@ def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
             if not root.endswith((os.sep, "/")):
                 fname += separator
             fname += str(index)
-        if not fname.endswith(ext): fname += ext
-        if index > first_chain and not os.path.exists(fname) or 0 < last_chain < index: break
+        if not fname.endswith(ext):
+            fname += ext
+        if index > first_chain and not os.path.exists(fname) or 0 < last_chain < index:
+            break
         if (chain_indices is None or index in chain_indices) \
-                and (chain_exclude is None or not index in chain_exclude) \
+                and (chain_exclude is None or index not in chain_exclude) \
                 and index >= first_chain and os.path.exists(fname):
             files.append(fname)
     return files
+
+
+_pandas_suggestion = True
 
 
 def loadNumpyTxt(fname, skiprows=None):
@@ -87,7 +104,11 @@ def loadNumpyTxt(fname, skiprows=None):
             return pandas.read_csv(fname, delim_whitespace=True, header=None, dtype=np.float64,
                                    skiprows=skiprows, comment='#').values
         else:
-            return np.loadtxt(fname, skiprows=skiprows)
+            global _pandas_suggestion
+            if _pandas_suggestion:
+                _pandas_suggestion = False
+                logging.warning('Install pandas for faster reading from text files')
+            return np.loadtxt(fname, skiprows=skiprows or 0)
     except ValueError:
         print('Error reading %s' % fname)
         raise
@@ -95,7 +116,7 @@ def loadNumpyTxt(fname, skiprows=None):
 
 def getSignalToNoise(C, noise=None, R=None, eigs_only=False):
     """
-    Returns w, M, where w is the eigenvalues of the signal to noise (small means better constrained)
+    Returns w, M, where w is the eigenvalues of the signal to noise (small y better constrained)
 
     :param C: covariance matrix
     :param noise: noise matrix
@@ -104,7 +125,8 @@ def getSignalToNoise(C, noise=None, R=None, eigs_only=False):
     :return: eigenvalues and matrix
     """
     if R is None:
-        if noise is None: raise WeightedSampleError('Must give noise or rotation R')
+        if noise is None:
+            raise WeightedSampleError('Must give noise or rotation R')
         R = np.linalg.inv(np.linalg.cholesky(noise))
 
     M = np.dot(R, C).dot(R.T)
@@ -124,7 +146,8 @@ def covToCorr(cov, copy=True):
     :param copy: True if we shouldn't modify the input matrix, False otherwise.
     :return: correlation matrix
     """
-    if copy: cov = cov.copy()
+    if copy:
+        cov = cov.copy()
     for i, di in enumerate(np.sqrt(cov.diagonal())):
         if di:
             cov[i, :] /= di
@@ -170,7 +193,8 @@ class WeightedSamples(object):
         :param loglikes: array of -log(Likelihood)
         :param name_tag: The name of this instance.
         :param label: latex label for these samples
-        :param files_are_chains: use False if the samples file (filename) does not start with two columns giving weights and -log(Likelihoods)
+        :param files_are_chains: use False if the samples file (filename) does not start with two columns giving
+                                 weights and -log(Likelihoods)
         :param min_weight_ratio: remove samples with weight less than min_weight_ratio times the maximum weight
         """
 
@@ -188,7 +212,8 @@ class WeightedSamples(object):
                             slice_or_none(loglikes, ignore_rows))
             self.name_tag = name_tag
             if samples is not None and int(ignore_rows):
-                if print_load_details: print('Removed %s lines as burn in' % ignore_rows)
+                if print_load_details:
+                    print('Removed %s lines as burn in' % ignore_rows)
         self.label = label
         self.needs_update = True
 
@@ -269,7 +294,7 @@ class WeightedSamples(object):
         self.needs_update = True
 
     def _makeParamvec(self, par):
-        if isinstance(par, six.integer_types):
+        if isinstance(par, _int_types):
             if 0 <= par < self.n:
                 return self.samples[:, par]
             elif par == -1:
@@ -318,7 +343,7 @@ class WeightedSamples(object):
 
     def setMeans(self):
         """
-        Calculates and saves the means for the samples
+        Calculates and saves the means of the samples
 
         :return: numpy array of parameter means
         """
@@ -329,15 +354,19 @@ class WeightedSamples(object):
             self.mean_loglike = None
         return self.means
 
-    def getMeans(self):
+    def getMeans(self, pars=None):
         """
         Gets the parameter means, from saved array if previously calculated.
 
+        :param pars: optional list of parameter indices to return means for
         :return: numpy array of parameter means
         """
         if self.means is None:
-            return self.setMeans()
-        return self.means
+            self.setMeans()
+        if pars is None:
+            return self.means
+        else:
+            return np.array([self.means[i] for i in pars])
 
     def getVars(self):
         """
@@ -354,7 +383,7 @@ class WeightedSamples(object):
 
     def setDiffs(self):
         """
-        saves self.diffs array of parameter differences from the means, e.g. to later calculate variances etc.
+        saves self.diffs array of parameter differences from the y, e.g. to later calculate variances etc.
 
         :return: array of differences
         """
@@ -374,7 +403,8 @@ class WeightedSamples(object):
         :param normalized: Set to False to get covariance (note even if normalized, corr[0]<>1 in general unless weights are unity).
         :return: zero-based array giving auto-correlations
         """
-        if maxOff is None: maxOff = self.n - 1
+        if maxOff is None:
+            maxOff = self.n - 1
         d = self.mean_diff(paramVec) * self.weights
         corr = autoConvolve(d, n=maxOff + 1, normalize=True)
         if normalized: corr /= self.var(paramVec)
@@ -388,8 +418,10 @@ class WeightedSamples(object):
         Gets the auto-correlation length for parameter j
 
         :param j: The index of the parameter to use
-        :param weight_units: False to get result in sample point (row) units; weight_units=False gives standard definition for raw chains
-        :param min_corr: specifies a minimum value of the autocorrelation to use, e.g. where sampling noise is typically as large as the calculation
+        :param weight_units: False to get result in sample point (row) units; weight_units=False gives standard
+                             definition for raw chains
+        :param min_corr: specifies a minimum value of the autocorrelation to use, e.g. where sampling noise is
+                         typically as large as the calculation
         :param corr: The auto-correlation array to use, calculated internally by default using :func:`getAutocorrelation`
         :return: the auto-correlation length
         """
@@ -410,9 +442,10 @@ class WeightedSamples(object):
 
     def getEffectiveSamplesGaussianKDE(self, paramVec, h=0.2, scale=None, maxoff=None, min_corr=0.05):
         """
-        Roughly estimate an effective sample number for use in the leading term for the MISE (mean integrated squared error)
-        of a Gaussian-kernel KDE (Kernel Density Estimate). This is used for optimizing the kernel bandwidth, and though
-        approximate should be better than entirely ignoring samples correlations, or only counting distinct samples.
+        Roughly estimate an effective sample number for use in the leading term for the MISE
+        (mean integrated squared error) of a Gaussian-kernel KDE (Kernel Density Estimate). This is used for
+        optimizing the kernel bandwidth, and though approximate should be better than entirely ignoring sample
+        correlations, or only counting distinct samples.
 
         Uses fiducial assumed kernel scale h; result does depend on this (typically by factors O(2))
 
@@ -421,7 +454,7 @@ class WeightedSamples(object):
         In the limit h-> 0 (but still >0) answer should be correct (then just includes MCMC rejection duplicates).
         In reality correct result for practical h should depends on shape of the correlation function.
 
-        If self.sampler is 'nested' or 'uncorrelated' return result for uncorrelated samples
+        If self.sampler is 'nested' or 'uncorrelated' return result for uncorrelated samples.
 
         :param paramVec: parameter array, or int index of parameter to use
         :param h: fiducial assumed kernel scale.
@@ -435,25 +468,80 @@ class WeightedSamples(object):
         d = self._makeParamvec(paramVec)
         # Result does depend on kernel width, but hopefully not strongly around typical values ~ sigma/4
         kernel_std = (scale or self.std(d)) * h
-        # Dependence is from very correlated points due to MCMC rejections; shouldn't need more than about correlation length
-        if maxoff is None: maxoff = int(self.getCorrelationLength(d, weight_units=False) * 1.5) + 4
+        # Dependence is from very correlated points due to MCMC rejections;
+        # Shouldn't need more than about correlation length
+        if maxoff is None:
+            maxoff = int(self.getCorrelationLength(d, weight_units=False) * 1.5) + 4
         maxoff = min(maxoff, self.numrows // 10)  # can get problems otherwise if weights are all very large
         uncorr_len = self.numrows // 2
-        UncorrTerm = 0
+        uncorr_term = 0
         nav = 0
         # first get expected value of each term for uncorrelated samples
         for k in range(uncorr_len, uncorr_len + 5):
             nav += self.numrows - k
             diff2 = (d[:-k] - d[k:]) ** 2 / kernel_std ** 2
-            UncorrTerm += np.dot(np.exp(-diff2 / 4) * self.weights[:-k], self.weights[k:])
-        UncorrTerm /= nav
+            uncorr_term += np.dot(np.exp(-diff2 / 4) * self.weights[:-k], self.weights[k:])
+        uncorr_term /= nav
 
         corr = np.zeros(maxoff + 1)
         corr[0] = np.dot(self.weights, self.weights)
         n = float(self.numrows)
         for k in range(1, maxoff + 1):
             diff2 = (d[:-k] - d[k:]) ** 2 / kernel_std ** 2
-            corr[k] = np.dot(np.exp(-diff2 / 4) * self.weights[:-k], self.weights[k:]) - (n - k) * UncorrTerm
+            corr[k] = np.dot(np.exp(-diff2 / 4) * self.weights[:-k], self.weights[k:]) - (n - k) * uncorr_term
+            if corr[k] < min_corr * corr[0]:
+                corr[k] = 0
+                break
+        N = corr[0] + 2 * np.sum(corr[1:])
+        return self.get_norm() ** 2 / N
+
+    def getEffectiveSamplesGaussianKDE_2d(self, i, j, h=0.3, maxoff=None, min_corr=0.05):
+        """
+        Roughly estimate an effective sample number for use in the leading term for the 2D MISE.
+        If self.sampler is 'nested' or 'uncorrelated' return result for uncorrelated samples.
+
+        :param i: parameter array, or int index of first parameter to use
+        :param j: parameter array, or int index of second parameter to use
+        :param h: fiducial assumed kernel scale.
+        :param maxoff: maximum value of auto-correlation length to use
+        :param min_corr: ignore correlations smaller than this auto-correlation
+        :return: A very rough effective sample number for leading term for the MISE of a Gaussian KDE.
+        """
+        if getattr(self, "sampler", "") in ["nested", "uncorrelated"]:
+            return self.get_norm() ** 2 / np.dot(self.weights, self.weights)
+        d1 = self._makeParamvec(i)
+        d2 = self._makeParamvec(j)
+        cov = self.cov([d1, d2])
+        if abs(cov[0, 1]) > np.sqrt(cov[0, 0] * cov[1, 1]) * 0.999:
+            # totally correlated, fall back to 1D
+            return self.getEffectiveSamplesGaussianKDE(i, h=h, min_corr=min_corr)
+        # result does depend on kernel width, use fiducial h
+        kernel_inv = np.linalg.inv(cov) / h ** 2
+
+        # Dependence is from very correlated points due to MCMC rejections;
+        # Shouldn't need more than about correlation length
+        if maxoff is None:
+            maxoff = int(max(self.getCorrelationLength(d1, weight_units=False),
+                             self.getCorrelationLength(d2, weight_units=False)) * 1.5) + 4
+        maxoff = min(maxoff, self.numrows // 10)  # can get problems otherwise if weights are all very large
+        uncorr_len = self.numrows // 2
+        uncorr_term = 0
+        nav = 0
+        # first get expected value of each term for uncorrelated samples
+        for k in range(uncorr_len, uncorr_len + 5):
+            nav += self.numrows - k
+            delta = np.vstack((d1[:-k] - d1[k:], d2[:-k] - d2[k:]))
+            diff2 = np.sum(delta * kernel_inv.dot(delta), 0)
+            uncorr_term += np.dot(np.exp(-diff2 / 4) * self.weights[:-k], self.weights[k:])
+        uncorr_term /= nav
+
+        corr = np.zeros(maxoff + 1)
+        corr[0] = np.dot(self.weights, self.weights)
+        n = float(self.numrows)
+        for k in range(1, maxoff + 1):
+            delta = np.vstack((d1[:-k] - d1[k:], d2[:-k] - d2[k:]))
+            diff2 = np.sum(delta * kernel_inv.dot(delta), 0)
+            corr[k] = np.dot(np.exp(-diff2 / 4) * self.weights[:-k], self.weights[k:]) - (n - k) * uncorr_term
             if corr[k] < min_corr * corr[0]:
                 corr[k] = 0
                 break
@@ -469,7 +557,8 @@ class WeightedSamples(object):
         :return: weighted sum
         """
         paramVec = self._makeParamvec(paramVec)
-        if where is None: return self.weights.dot(paramVec)
+        if where is None:
+            return self.weights.dot(paramVec)
         return np.dot(paramVec[where], self.weights[where])
 
     def get_norm(self, where=None):
@@ -480,7 +569,8 @@ class WeightedSamples(object):
         :return: normalization
         """
         if where is None:
-            if self.norm is None: self.norm = np.sum(self.weights)
+            if self.norm is None:
+                self.norm = np.sum(self.weights)
             return self.norm
         else:
             return np.sum(self.weights[where])
@@ -565,7 +655,7 @@ class WeightedSamples(object):
         :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
         :return: array of p_i - mean(p_i)
         """
-        if isinstance(paramVec, six.integer_types) and paramVec >= 0 and where is None:
+        if isinstance(paramVec, _int_types) and paramVec >= 0 and where is None:
             if self.diffs is not None:
                 return self.diffs[paramVec]
             return self.samples[:, paramVec] - self.getMeans()[paramVec]
@@ -583,8 +673,9 @@ class WeightedSamples(object):
         :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
         :return: list of arrays p_i-mean(p-i) for each parameter
         """
-        if pars is None: pars = self.n
-        if isinstance(pars, six.integer_types) and pars >= 0 and where is None:
+        if pars is None:
+            pars = self.n
+        if isinstance(pars, _int_types) and pars >= 0 and where is None:
             means = self.getMeans()
             return [self.samples[:, i] - means[i] for i in range(pars)]
         return [self.mean_diff(i, where) for i in pars]
@@ -610,7 +701,8 @@ class WeightedSamples(object):
         :param weights: A numpy array of weights for each sample, defaults to self.weights
         :return: :class:`~.chains.ParamConfidenceData` instance
         """
-        if weights is None: weights = self.weights
+        if weights is None:
+            weights = self.weights
         d = ParamConfidenceData()
         d.paramVec = self._makeParamvec(paramVec)[start:end]
         d.norm = np.sum(weights[start:end])
@@ -645,13 +737,13 @@ class WeightedSamples(object):
 
     def getSignalToNoise(self, params, noise=None, R=None, eigs_only=False):
         """
-        Returns w, M, where w is the eigenvalues of the signal to noise (small means better constrained)
+        Returns w, M, where w is the eigenvalues of the signal to noise (small y better constrained)
 
         :param params: list of parameters indices to use
         :param noise: noise matrix
         :param R: rotation matrix, defaults to inverse of Cholesky root of the noise matrix
         :param eigs_only: only return eigenvalues
-        :return: w, M, where w is the eigenvalues of the signal to noise (small means better constrained)
+        :return: w, M, where w is the eigenvalues of the signal to noise (small y better constrained)
         """
         C = self.cov(params)
         return getSignalToNoise(C, noise, R, eigs_only)
@@ -702,7 +794,7 @@ class WeightedSamples(object):
 
         return thin_ix
 
-    def randomSingleSamples_indices(self):
+    def random_single_samples_indices(self):
         """
         Returns an array of sample indices that give a list of weight-one samples, by randomly
         selecting samples depending on the sample weights
@@ -823,6 +915,8 @@ class WeightedSamples(object):
             loglikes = np.zeros(self.numrows)
         if make_dirs and not os.path.exists(os.path.dirname(root)):
             os.makedirs(os.path.dirname(root))
+        if root.endswith('.txt'):
+            root = root[:-3]
         np.savetxt(root + ('' if chain_index is None else '_' + str(chain_index + 1)) + '.txt',
                    np.hstack((self.weights.reshape(-1, 1), loglikes.reshape(-1, 1), self.samples)),
                    fmt=self.precision)
@@ -851,7 +945,6 @@ class Chains(WeightedSamples):
         :param kwargs: extra options for :class:`~.chains.WeightedSamples`'s constructor
 
         """
-        from getdist.cobaya_interface import get_sampler_type, _separator_files
 
         self.chains = None
         WeightedSamples.__init__(self, **kwargs)
@@ -861,7 +954,7 @@ class Chains(WeightedSamples):
         if not paramNamesFile and root:
             mid = not root.endswith((os.sep, "/"))
             endings = ['.paramnames', ('__' if mid else '') + 'full.yaml',
-                       (_separator_files if mid else '') + 'updated.yaml']
+                       (cobaya._separator_files if mid else '') + 'updated.yaml']
             try:
                 paramNamesFile = next(
                     root + ending for ending in endings if os.path.exists(root + ending))
@@ -872,13 +965,16 @@ class Chains(WeightedSamples):
             self.paramNames.setLabels(labels)
         if renames is not None:
             self.updateRenames(renames)
+        # If Cobaya sample and label not set manually via keyword, try to load from yaml
+        if not self.label and isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith(".yaml"):
+            self.label = cobaya.get_sample_label(paramNamesFile)
         # Sampler that generated the chain -- assume "mcmc"
         if isinstance(sampler, six.string_types):
             if sampler.lower() not in ["mcmc", "nested", "uncorrelated"]:
                 raise ValueError("Unknown sampler type %s" % sampler)
             self.sampler = sampler.lower()
         elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
-            self.sampler = get_sampler_type(paramNamesFile)
+            self.sampler = cobaya.get_sampler_type(paramNamesFile)
         else:
             self.sampler = "mcmc"
 
@@ -886,12 +982,12 @@ class Chains(WeightedSamples):
         """
         Sets the names of the params.
 
-        :param names: Either a :class:`~.paramnames.ParamNames` object, the name of a .paramnames file to load, a list of name strings,
-                      otherwise use default names (param1, param2...).
+        :param names: Either a :class:`~.paramnames.ParamNames` object, the name of a .paramnames file to load, a list
+                      of name strings, otherwise use default names (param1, param2...).
         """
         self.paramNames = None
         if isinstance(names, ParamNames):
-            self.paramNames = names
+            self.paramNames = copy.deepcopy(names)
         elif isinstance(names, six.string_types):
             self.paramNames = ParamNames(names)
         elif names is not None:
@@ -942,6 +1038,23 @@ class Chains(WeightedSamples):
         self.index = index
         return self.index
 
+    def _parAndNumber(self, name):
+        """
+        Get index and ParamInfo for a name or index
+
+        :param name: name or parameter index
+        :return: index, ParamInfo instance
+        """
+        if isinstance(name, ParamInfo):
+            name = name.name
+        if isinstance(name, six.string_types):
+            name = self.index.get(name, None)
+            if name is None:
+                return None, None
+        if isinstance(name, _int_types):
+            return name, self.paramNames.names[name]
+        raise ParamError("Unknown parameter type %s" % name)
+
     def getRenames(self):
         """
         Gets dictionary of renames known to each parameter.
@@ -985,21 +1098,27 @@ class Chains(WeightedSamples):
         self.setParams(pars)
         return pars
 
-    def getParamSampleDict(self, ix):
+    def getParamSampleDict(self, ix, want_derived=True):
         """
         Returns a dictionary of parameter values for sample number ix
+
+        :param ix: sample index
+        :param want_derived: include derived parameters
+        :return: ordered dictionary of parameter values
         """
-        from collections import OrderedDict
         res = OrderedDict()
         for i, name in enumerate(self.paramNames.names):
-            res[name.name] = self.samples[ix, i]
-        res['weight'] = self.weights
-        res['loglike'] = self.loglikes
+            if want_derived or not name.isDerived:
+                res[name.name] = self.samples[ix, i]
+        res['weight'] = self.weights[ix]
+        res['loglike'] = self.loglikes[ix]
         return res
 
     def _makeParamvec(self, par):
-        if self.needs_update: self.updateBaseStatistics()
-        if isinstance(par, ParamInfo): par = par.name
+        if self.needs_update:
+            self.updateBaseStatistics()
+        if isinstance(par, ParamInfo):
+            par = par.name
         if isinstance(par, six.string_types):
             return self.samples[:, self.index[par]]
         return WeightedSamples._makeParamvec(self, par)
@@ -1051,17 +1170,20 @@ class Chains(WeightedSamples):
         self.samples = None
         self.weights = None
         self.loglikes = None
-        if ignore_lines is None: ignore_lines = self.ignore_lines
+        if ignore_lines is None:
+            ignore_lines = self.ignore_lines
         WSkwargs = {"ignore_rows": ignore_lines,
                     "min_weight_ratio": self.min_weight_ratio}
         if isinstance(files_or_samples, six.string_types) or isinstance(files_or_samples[0], six.string_types):
             # From files
             if weights is not None or loglikes is not None:
                 raise ValueError('weights and loglikes not needed reading from file')
-            if isinstance(files_or_samples, six.string_types): files_or_samples = [files_or_samples]
+            if isinstance(files_or_samples, six.string_types):
+                files_or_samples = [files_or_samples]
             self.name_tag = self.name_tag or os.path.basename(root)
             for fname in files_or_samples:
-                if print_load_details: print(fname)
+                if print_load_details:
+                    print(fname)
                 try:
                     self.chains.append(WeightedSamples(fname, **WSkwargs))
                 except WeightedSampleError:
@@ -1214,7 +1336,16 @@ class Chains(WeightedSamples):
         :param make_dirs: True if this should (recursively) create the directory if it doesn't exist
         """
         super(Chains, self).saveAsText(root, chain_index, make_dirs)
-        if not chain_index: self.paramNames.saveAsText(root + '.paramnames')
+        if not chain_index:
+            self.saveTextMetadata(root)
+
+    def saveTextMetadata(self, root):
+        """
+        Saves metadata about the sames to text files with given file root
+
+        :param root: root file name
+        """
+        self.paramNames.saveAsText(root + '.paramnames')
 
     def savePickle(self, filename):
         """

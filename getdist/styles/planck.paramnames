@@ -1,0 +1,116 @@
+omegabh2      \Omega_{\mathrm{b}} h^2	#physical baryon density
+omegach2      \Omega_{\mathrm{c}} h^2	#physical CDM matter density
+theta         100\theta_{\mathrm{MC}}		#100 times the ratio of sound horizon to angular-diameter distance to (CMB) last-scattering surface (approx)
+tau           \tau
+omegak        \Omega_K
+mnu           \Sigma m_\nu\,[\mathrm{eV}]    #sum of physical masses of standard neutrinos
+meffsterile   m_{\nu,\,\mathrm{sterile}}^{\mathrm{eff}}\,[\mathrm{eV}]   #effective mass of sterile neutrino (eV), \approx omeganuh2*94
+w             w_0		#equation of state parameter for scalar field dark energy today
+wa            w_a       #w_a variation
+nnu           N_{\mathrm{eff}}   #effective number of neutrinos (only clearly defined for massless)
+yhe           Y_{\mathrm{P}}    #Helium mass fraction (not used if bbn_consistency)
+alpha1        \alpha_{-1} #correlated CDM isocurvature
+deltazrei     \Delta z_{\mathrm{re}} #width of reionization
+Alens         A_{\mathrm{L}}     #lensing potential scaled by sqrt(A_lens)
+Alensf        A_{\mathrm{L}}^{\mathrm{fid}}     #lensing potential scaled by sqrt(A_lens)
+fdm           \epsilon_0 f_d    #CosmoRec dark matter annihilation parameter, 0910.3663
+logA          \ln(10^{10} A_\mathrm{s})
+ns            n_\mathrm{s}	    #beware that pivot scale can change in .ini file
+nrun          \mathrm{d}n_{\mathrm{s}}/\mathrm{d}\ln k               # d n_\mathrm{s} / d\ln k
+nrunrun       \mathrm{d}^2n_{\mathrm{s}}/\mathrm{d}\ln k^2
+r             r #ratio of tensor to scalar primordial power at pivot scale 0.05 Mpc^{-1}
+nt            n_\mathrm{t}
+ntrun         \mathrm{d}n_\mathrm{t}/\mathrm{d}\ln k
+Aphiphi       A^{\phi\phi}_{\mathrm{L}} #scaling of lensing potential power (lensed power spectra unchanged)
+alpha_SNLS    \alpha_{\mathrm{SNLS}}
+beta_SNLS     \beta_{\mathrm{SNLS}}
+asz           A_{\mathrm{tSZ}}     # SZ template amplitude, as in WMAP
+calPlanck     y_{\rm cal}
+aps100        A^{\mathrm{PS}}_{100}      # Point source amplitude at 100 GHz
+aps143        A^{\mathrm{PS}}_{143}      # Point source amplitude at 143 GHz
+aps143217     A^{\mathrm{PS}}_{143\times 217}
+aps217        A^{\mathrm{PS}}_{217}      # Point source amplitude at 217 GHz
+acib143       A^{\mathrm{CIB}}_{143}     # CIB amplitude at 143 GHz
+acib217       A^{\mathrm{CIB}}_{217}     # CIB amplitude at 217 GHz
+asz143        A^{\mathrm{tSZ}}_{143}     # Thermal SZ amplitude at 143 GHz
+psr           r^{\mathrm{PS}}_{143\times 217}  # 143-217 correlation coefficient of point source residuals
+cibr          r^{\mathrm{CIB}}_{143\times 217}       # 143-217 correlation coefficient of CIB
+ncib          \gamma^{\mathrm{CIB}}           # spectral index of the CIB
+cal0          c_{100}       # relative power spectrum calibration factor 100/143 to rescale measured power with
+cal1          c_{143}       # calibration factor 143
+cal2          c_{217}       # relative calibration factor 217/143 (as for 100)
+calEE         c_{EE}       # calibration factor 143
+calTE         c_{TE}       # relative calibration factor 217/143 (as for 100)
+xi            \xi^{\mathrm{tSZ}\times\mathrm{CIB}}     # TSZ-CIB template amplitude (positive is negative)
+aksz          A^{\mathrm{kSZ}}
+bm_1_1        \beta^1_1
+bm_1_2        \beta^1_2
+bm_1_3        \beta^1_3
+bm_1_4        \beta^1_4
+bm_1_5        \beta^1_5
+bm_2_1        \beta^2_1
+bm_2_2        \beta^2_2
+bm_2_3        \beta^2_3
+bm_2_4        \beta^2_4
+bm_2_5        \beta^2_5
+bm_3_1        \beta^3_1
+bm_3_2        \beta^3_2
+bm_3_3        \beta^3_3
+bm_3_4        \beta^3_4
+bm_3_5        \beta^3_5
+bm_4_1        \beta^4_1
+bm_4_2        \beta^4_2
+bm_4_3        \beta^4_3
+bm_4_4        \beta^4_4
+bm_4_5        \beta^4_5
+a_ps_act_148     A^{\mathrm{PS,\,ACT}}_{148}
+a_ps_act_217     A^{\mathrm{PS,\,ACT}}_{218}
+a_ps_spt_95      A^{\mathrm{PS,\,SPT}}_{95}
+a_ps_spt_150     A^{\mathrm{PS,\,SPT}}_{150}
+a_ps_spt_220     A^{\mathrm{PS,\,SPT}}_{220}
+r_ps_spt_95x150  r^{\mathrm{PS}}_{95\times 150}
+r_ps_spt_95x220  r^{\mathrm{PS}}_{95\times 220}
+r_ps_150x220     r^{\mathrm{PS}}_{150\times 220}
+act_dust_s       A^{\mathrm{ACTs}}_{\mathrm{dust}}
+act_dust_e       A^{\mathrm{ACTe}}_{\mathrm{dust}}
+cal_acts_148     y^{\mathrm{ACTs}}_{148}
+cal_acts_217     y^{\mathrm{ACTs}}_{217}
+cal_acte_148     y^{\mathrm{ACTe}}_{148}
+cal_acte_217     y^{\mathrm{ACTe}}_{217}
+cal_spt_95       y^{\mathrm{SPT}}_{95}
+cal_spt_150      y^{\mathrm{SPT}}_{150}
+cal_spt_220      y^{\mathrm{SPT}}_{220}
+omegal*       \Omega_\Lambda
+omegam*       \Omega_{\mathrm{m}}
+sigma8*       \sigma_8
+zrei*         z_{\mathrm{re}}
+rmsdeflect*   \langle d^2\rangle^{1/2}
+r10*          r_{10}	#tensor-scalar C_l amplitude at l=10
+H0*           H_0		#hubble parameter is H0 km/s/Mpc
+r02*          r_{0.002}         #r at k=0.002
+rBB*          r_{0.01}         #r at k=0.01 (roughly peak of tensor BB)
+logAT*        {\rm{ln}}(10^{10} A_{\mathrm{t}})
+AT*           10^9 A_{\mathrm{t}}
+A*            10^9 A_{\mathrm{s}}
+omegamh2*     \Omega_{\mathrm{m}} h^2 #includes massive neutrinos
+omegamh3*     \Omega_{\mathrm{m}} h^3 #well determined orthogonal to degeneracy for 6-param model
+s8omegamp5*   \sigma_8 \Omega_{\mathrm{m}}^{0.5}
+s8omegamp25*  \sigma_8 \Omega_{\mathrm{m}}^{0.25}
+yheused*      Y_{\mathrm{P}} #MCMC value or from bbn consistency
+YpBBN*        Y_{\rm P}^{\rm BBN}
+DHBBN*        10^5 {\rm D}/{\rm H}
+clamp*        10^9 A_{\mathrm{s}} e^{-2\tau}   #parameter determining C_l amplitude
+ctlamp*       10^9 A_t e^{-2\tau}   #parameter determining L~100 tensor C_l amplitude
+ns02*         n_{\mathrm{s},0.002}
+omeganuh2*    \Omega_\nu h^2
+age*          \mathrm{Age}/\mathrm{Gyr}
+zstar*        z_\ast
+rstar*        r_\ast
+thetastar*    100\theta_\ast
+zdrag*        z_{\mathrm{drag}}
+rdrag*        r_{\mathrm{drag}}
+kd*           k_{\mathrm{D}}
+thetad*       100\theta_{\mathrm{D}}
+zeq*          z_{\mathrm{eq}}
+thetaeq*      100\theta_{\mathrm{eq}}
+cef           \alpha/\alpha_0

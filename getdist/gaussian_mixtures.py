@@ -4,6 +4,7 @@ from getdist.densities import Density1D, Density2D
 from getdist.paramnames import ParamNames
 from getdist.mcsamples import MCSamples
 import six
+import copy
 
 
 def make_2D_Cov(sigmax, sigmay, corr):
@@ -17,7 +18,7 @@ class MixtureND(object):
 
     def __init__(self, means, covs, weights=None, lims=None, names=None, label='', labels=None):
         """
-        :param means: list of means for each Gaussian in the mixture
+        :param means: list of y for each Gaussian in the mixture
         :param covs: list of covariances for the Gaussians in the mixture
         :param weights: optional weight for each component (defaults to equal weight)
         :param lims: optional list of hard limits for each parameter, [[x1min,x1max], [x2min,x2max]]; use None for no limit
@@ -82,15 +83,15 @@ class MixtureND(object):
         :param size: number of samples
         :param names: set to override existing names
         :param logLikes: if True set the sample likelihood values from the pdf, if false, don't store log likelihoods
-        :return: list of [x,y] pair names
+        :return: a new :class:`.mcsamples.MCSamples` instance
         """
         samples = self.sim(size)
         if logLikes:
             loglikes = -np.log(self.pdf(samples))
         else:
             loglikes = None
-        return MCSamples(samples=samples, loglikes=loglikes, paramNamesFile=self.paramNames, names=names,
-                         ranges=self.lims, **kwargs)
+        return MCSamples(samples=samples, loglikes=loglikes, paramNamesFile=copy.deepcopy(self.paramNames),
+                         names=names, ranges=self.lims, **kwargs)
 
     def autoRanges(self, sigma_max=4, lims=None):
         res = []
@@ -160,12 +161,14 @@ class MixtureND(object):
 
         :param index: parameter name or index
         :param num_points: number of grid points to evaluate PDF
-        :param sigma_max: maximum number of standard deviations away from means to include in computed range
+        :param sigma_max: maximum number of standard deviations away from y to include in computed range
         :param no_limit_marge: if true don't raise error if limits on other parameters
         :return: :class:`~.densities.Density1D` instance
         """
-        if isinstance(index, six.string_types): index = self.names.index(index)
-        if not no_limit_marge: self.checkNoLimits([index])
+        if isinstance(index, six.string_types):
+            index = self.names.index(index)
+        if not no_limit_marge:
+            self.checkNoLimits([index])
         mn, mx = self.autoRanges(sigma_max)[index]
         x = np.linspace(mn, mx, num_points)
         like = self.pdf_marged(index, x)
@@ -196,7 +199,8 @@ class MixtureND(object):
 
     def _params_to_indices(self, params):
         indices = []
-        if params is None: params = self.names
+        if params is None:
+            params = self.names
         for p in params:
             if isinstance(p, six.string_types):
                 indices.append(self.names.index(p))
@@ -217,7 +221,8 @@ class MixtureND(object):
         """
 
         indices = self._params_to_indices(params)
-        if not no_limit_marge: self.checkNoLimits(indices)
+        if not no_limit_marge:
+            self.checkNoLimits(indices)
         indices = np.array(indices)
         if self.names is not None:
             names = [self.names[i] for i in indices]
@@ -227,7 +232,8 @@ class MixtureND(object):
             lims = [self.lims[i] for i in indices]
         else:
             lims = None
-        if label is None: label = self.label
+        if label is None:
+            label = self.label
         covs = [cov[np.ix_(indices, indices)] for cov in self.covs]
         means = [mean[indices] for mean in self.means]
         if len(indices) == 2:
@@ -246,7 +252,7 @@ class MixtureND(object):
         :param fixed_params: list of names or numbers of parameters to fix
         :param fixed_param_values:  list of values for the fixed parameters
         :param label: optional label for the new mixture
-        :return: A new :class:`MixtureND` instance with cov_i = Projection(Cov_i^{-1})^{-1} and shifted conditional means
+        :return: A new :class:`MixtureND` instance with cov_i = Projection(Cov_i^{-1})^{-1} and shifted conditional y
         """
 
         fixed_params = self._params_to_indices(fixed_params)
@@ -283,9 +289,10 @@ class MixtureND(object):
         return mixture
 
     def checkNoLimits(self, keep_params):
-        if self.lims is None: return
+        if self.lims is None:
+            return
         for i, lim in enumerate(self.lims):
-            if not i in keep_params and (lim[0] is not None or lim[1] is not None):
+            if i not in keep_params and (lim[0] is not None or lim[1] is not None):
                 raise Exception(
                     'In general can only marginalize analytically if no hard boundary limits: ' + self.label)
 
@@ -294,7 +301,8 @@ class MixtureND(object):
         return self.lims[self.names.index(name)][1]
 
     def getLower(self, name):
-        if self.lims is None: return None
+        if self.lims is None:
+            return None
         return self.lims[self.names.index(name)][1]
 
 
@@ -303,10 +311,10 @@ class Mixture2D(MixtureND):
     Gaussian mixture model in 2D with optional boundaries for fixed x and y ranges
     """
 
-    def __init__(self, means, covs, weights=None, lims=None, names=['x', 'y'],
+    def __init__(self, means, covs, weights=None, lims=None, names=('x', 'y'),
                  xmin=None, xmax=None, ymin=None, ymax=None, **kwargs):
         """
-        :param means: list of means for each Gaussian in the mixture
+        :param means: list of y for each Gaussian in the mixture
         :param covs: list of covariances for the Gaussians in the mixture. Instead of 2x2 arrays, each cov can also be a
          list of [sigma_x, sigma_y, correlation] parameters
         :param weights: optional weight for each component (defaults to equal weight)
@@ -356,7 +364,8 @@ class Mixture2D(MixtureND):
         :param y: optional value of y to evaluate pdf. If not specified, returns 1D marginalized value for x.
         :return: value of pdf at x or x,y
         """
-        if y is None: return super(Mixture2D, self).pdf(x)
+        if y is None:
+            return super(Mixture2D, self).pdf(x)
         tot = None
         for i, (mean, icov, weight, norm) in enumerate(zip(self.means, self.invcovs, self.weights, self.norms)):
             dx = x - mean[0]
@@ -390,14 +399,17 @@ class GaussianND(MixtureND):
 
     def __init__(self, mean, cov, is_inv_cov=False, **kwargs):
         """
-        :param mean: array specifying means of parameters
+        :param mean: array specifying y of parameters
         :param cov: covariance matrix (or filename of text file with covariance matrix)
         :param is_inv_cov: set True if cov is actually an inverse covariance
         :param kwargs: arguments passed to :class:`MixtureND`
         """
-        if isinstance(mean, six.string_types): mean = np.loadtxt(mean)
-        if isinstance(cov, six.string_types): cov = np.loadtxt(cov)
-        if is_inv_cov: cov = np.linalg.inv(cov)
+        if isinstance(mean, six.string_types):
+            mean = np.loadtxt(mean)
+        if isinstance(cov, six.string_types):
+            cov = np.loadtxt(cov)
+        if is_inv_cov:
+            cov = np.linalg.inv(cov)
         super(GaussianND, self).__init__([mean], [cov], **kwargs)
 
 
@@ -409,7 +421,7 @@ class Mixture1D(MixtureND):
     def __init__(self, means, sigmas, weights=None, lims=None, name='x',
                  xmin=None, xmax=None, **kwargs):
         """
-        :param means: array of means for each component
+        :param means: array of y for each component
         :param sigmas: array of standard deviations for each component
         :param weights: weights for each component (defaults to equal weight)
         :param lims: optional array limits for each component
@@ -459,7 +471,8 @@ class RandomTestMixtureND(MixtureND):
         :param seed:  random seed
         :param label: label for the generated mixture
         """
-        if seed: np.random.seed(seed)
+        if seed:
+            np.random.seed(seed)
         covs = []
         for _ in range(ncomponent):
             A = np.random.rand(ndim, ndim)
@@ -470,11 +483,14 @@ class RandomTestMixtureND(MixtureND):
 
 def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10, names=None, labels=None):
     """
-    get a list of MCSamples instances with random samples from random covariances and means
+    get a list of MCSamples instances with random samples from random covariances and y
     """
-    if seed: np.random.seed(seed)
-    if names is None: names = ["x%s" % i for i in range(ndim)]
-    if labels is None: labels = ["x_{%s}" % i for i in range(ndim)]
+    if seed:
+        np.random.seed(seed)
+    if names is None:
+        names = ["x%s" % i for i in range(ndim)]
+    if labels is None:
+        labels = ["x_{%s}" % i for i in range(ndim)]
     return [RandomTestMixtureND(ndim, ncomponent, names).MCSamples(nsamp, labels=labels,
                                                                    name_tag='Sim %s' % (i + 1)) for i in
             range(nMCSamples)]

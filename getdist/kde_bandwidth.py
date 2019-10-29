@@ -126,7 +126,7 @@ def gaussian_kde_bandwidth_binned(data, Neff, a=None):
             try:
                 hfrac = brentq(_bandwidth_fixed_point, 0.019 * n_scaling, 0.5, (Neff, I, logI, a2), xtol=hfrac / 20)
             except Exception:
-                # Could get sign error for the bounsd in brentq, in which case small answer may be correct
+                # Could get sign error for the bounds in brentq, in which case small answer may be correct
                 # or the method has failed (e.g. flat distribution between two bounds)
                 pass
         return hfrac

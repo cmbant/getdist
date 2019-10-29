@@ -9,17 +9,6 @@ using_conda = os.path.exists(os.path.join(sys.prefix, 'conda-meta'))
 matplotlib.use('Qt4Agg' if pyside_version == 1 else 'Qt5Agg')
 
 try:
-    from packaging.version import Version
-
-    if Version(matplotlib.__version__) < Version("2.2.0"):
-        if pyside_version == 1:
-            matplotlib.rcParams['backend.qt4'] = 'PySide'
-        else:
-            matplotlib.rcParams['backend.qt5'] = 'PySide2'
-except ImportError:
-    pass
-
-try:
     if pyside_version == 1:
         import PySide
     else:
@@ -36,6 +25,6 @@ except ImportError as e:
     if not using_conda:
         print('Using Anaconda is probably the most reliable method')
     print("E.g. make and use a new environment using conda-forge")
-    print('conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib packaging PySide2')
+    print('conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib PySide2')
 
     sys.exit(-1)

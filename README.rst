@@ -48,7 +48,7 @@ You can test if things are working using the unit test by running::
     $ python setup.py test
 
 Check the dependencies listed in the next section are installed. You can then use the getdist module from your scripts, or
-use the GUI program GetDistGUI.py.
+use the GetDist GUI (*getdist-gui* command).
 
 
 Dependencies
@@ -61,25 +61,8 @@ Dependencies
 
 Python distributions like Anaconda have most of what you need (except for LaTeX).
 
-To use the GUI, installing PySide2 in Python 3 can be tricky. Try using `Anaconda <https://www.anaconda.com/distribution/>`_,
-making a consistent new environment from conda-forge (which includes PySide2) using::
-
-  conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib packaging PySide2
-
-To install binary backages on Linux-like systems install pacakages
-*py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.
-For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/install.php>`_::
-
-   sudo port install python27
-   sudo port select --set python python27
-   sudo port install py-matplotlib
-   sudo port install py-scipy
-   sudo port install py-pyside
-   sudo port install texlive-latex-extra
-   sudo port install texlive-fonts-recommended
-   sudo port install dvipng
-
-If you don't want to install dependencies locally, you can also use a pre-configured `virtual environment <https://cosmologist.info/CosmoBox/>`_.
+To use the `GUI <https://getdist.readthedocs.io/en/latest/gui.html>`_ you need PySide or PySide2.
+See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installation>`_ for suggestions on how to install.
 
 Algorithm details
 ==================
@@ -138,7 +121,7 @@ The MCSamples object can be passed to plot functions, or used to get many result
 for parameter names *x1* and *x2*::
 
     from getdist import plots
-    g = plots.getSinglePlotter()
+    g = plots.get_single_plotter()
     g.plot_2d(samples, ['x1', 'x2'])
 
 When you have many different chain files in the same directory,
@@ -146,7 +129,7 @@ plotting can work directly with the root file names. For example to compare *x* 
 from two chains with root names *xxx* and *yyy*::
 
 	from getdist import plots
-	g = plots.getSinglePlotter(chain_dir='/path/to/', analysis_settings={'ignore_rows':0.3})
+	g = plots.get_single_plotter(chain_dir='/path/to/', analysis_settings={'ignore_rows':0.3})
 	g.plot_2d(['xxx','yyy], ['x', 'y'])
 
 
@@ -155,9 +138,9 @@ MCSamples objects can also be constructed directly from numpy arrays in memory, 
 GetDist script
 ===================
 
-If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the GetDist.py script:
+If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the *getdist* script:
 
-	usage: GetDist.py [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
+	usage: getdist [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
 
 	GetDist sample analyser
 
@@ -180,7 +163,7 @@ If you have chain files on on disk, you can also quickly calculate convergence a
 where *ini_file* is optionally a .ini file listing *key=value* parameter option values, and chain_root is the root file name of the chains.
 For example::
 
-   GetDist.py distparams.ini chains/test_chain
+   getdist distparams.ini chains/test_chain
 
 This produces a set of files containing parameter means and limits (.margestats), N-D likelihood contour boundaries and best-fit sample (.likestats),
 convergence diagnostics (.converge), parameter covariance and correlation (.covmat and .corr), and optionally various simple plotting scripts.
@@ -188,14 +171,14 @@ If no *ini_file* is given, default settings are used. The *ignore_rows* option a
 
 To customize settings you can run::
 
-   GetDist.py --make_param_file distparams.ini
+   getdist --make_param_file distparams.ini
 
 to produce the setting file distparams.ini, edit it, then run with your custom settings.
 
 GetDist GUI
 ===================
 
-Run the GetDistGUI.py script to run the graphical user interface. This requires PySide, but will run on Windows, Linux and Mac.
+Run *getdist-gui* to run the graphical user interface. This requires PySide, but will run on Windows, Linux and Mac.
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 See the `GUI Readme <http://getdist.readthedocs.org/en/latest/gui.html>`_.
 
@@ -213,6 +196,6 @@ and using CosmoMC parameter grids in the `Readme <https://cosmologist.info/cosmo
 
 .. raw:: html
 
-    <a href="http://www.sussex.ac.uk/astronomy/"><img src="https://cdn.cosmologist.info/antony/Sussex.png" height="170px"></a>
-    <a href="http://erc.europa.eu/"><img src="https://erc.europa.eu/sites/default/files/content/erc_banner-vertical.jpg" height="200px"></a>
+    <a href="http://www.sussex.ac.uk/astronomy/"><img src="https://cdn.cosmologist.info/antony/Sussex.png" style="height:170px"></a>
+    <a href="http://erc.europa.eu/"><img src="https://erc.europa.eu/sites/default/files/content/erc_banner-vertical.jpg" style="height:200px"></a>
 

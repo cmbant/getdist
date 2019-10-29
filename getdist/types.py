@@ -7,6 +7,7 @@ import numpy as np
 from getdist import paramnames
 import six
 import tempfile
+from collections import OrderedDict
 
 _sci_tolerance = 4
 
@@ -27,7 +28,7 @@ def texEscapeText(string):
 
 
 def times_ten_power(exponent):
-    return '\cdot 10^{%d}' % exponent
+    return r'\cdot 10^{%d}' % exponent
 
 
 def float_to_decimal(f):
@@ -377,7 +378,7 @@ class ResultTable(object):
     def endTable(self):
         self.lines.append(self.format.endTable())
 
-    def tableTex(self, document=False, latex_preamble=None, packages=['amsmath', 'amssymb', 'bm']):
+    def tableTex(self, document=False, latex_preamble=None, packages=('amsmath', 'amssymb', 'bm')):
         """
         Get the latex string for the table
 
@@ -467,17 +468,20 @@ class LikelihoodChi2(object): pass
 
 class BestFit(ParamResults):
     """
-    Class holding the result of a likelihood minimization, inheriting from :class:`ParamResults`
+    Class holding the result of a likelihood minimization, inheriting from :class:`ParamResults`.
+    The data is read from a specific formatted text file (.minimum or .bestfit) as output by CosmoMC or Cobaya.
     """
 
-    def __init__(self, fileName=None, setParamNameFile=None, want_fixed=False):
+    def __init__(self, fileName=None, setParamNameFile=None, want_fixed=False, max_posterior=True):
         """
         :param fileName: text file to load from, assumed to be in CosmoMC's .minimum format
         :param setParamNameFile: optional name of .paramnames file listing preferred parameter labels for the parameters
         :param want_fixed:  whether to include values of parameters that are not allowed to vary
+        :param max_posterior: whether the file is a maximum posterior (default) or maximum likelihood
         """
 
         ParamResults.__init__(self)
+        self.max_posterior = max_posterior
         if fileName is not None: self.loadFromFile(fileName, want_fixed=want_fixed)
         if setParamNameFile is not None: self.setLabelsFromParamNames(setParamNameFile)
 
@@ -552,7 +556,6 @@ class BestFit(ParamResults):
             return None
 
     def getParamDict(self, include_derived=True):
-        from collections import OrderedDict
         res = OrderedDict()
         for i, name in enumerate(self.names):
             if include_derived or not name.isDerived:
@@ -865,7 +868,7 @@ class ConvergeStats(ParamResults):
                         if len(line.strip()) == 0: break
                         try:
                             self.R_eigs.append(line.split()[1])
-                        except:
+                        except Exception:
                             self.R_eigs.append('1e30')
                 elif 'Parameter auto-correlations' in textFileLines[i]:
                     self.auto_correlation_steps = [int(s) for s in textFileLines[i + 2].split()]

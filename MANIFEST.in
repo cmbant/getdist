@@ -1,3 +1,7 @@
 include README.rst
 include *.py
 include getdist/analysis_defaults.ini
+recursive-include getdist/gui/mac_app *
+include getdist/gui/images/*.png
+include getdist/styles/*.sty
+include getdist/styles/*.paramnames

@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 
 
 class ParamBounds(object):
@@ -16,7 +17,6 @@ class ParamBounds(object):
         :param fileName: optional file name to read from
         """
         self.names = []
-        from collections import OrderedDict
         self.lower = OrderedDict()
         self.upper = OrderedDict()
         if fileName is not None: self.loadFromFile(fileName)

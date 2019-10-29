@@ -69,7 +69,7 @@ class batchArgs(object):
                                      help='directory/ies containing getdist output plot_data')
             self.parser.add_argument('--paramNameFile', default='clik_latex.paramnames',
                                      help=".paramnames file for custom labels for parameters")
-            self.parser.add_argument('--paramList', default=None,
+            self.parser.add_argument('--param_list', default=None,
                                      help=".paramnames file listing specific parameters to include (only)")
             self.parser.add_argument('--size_inch', type=float, default=None, help='output subplot size in inches')
             self.parser.add_argument('--nx', default=None, help='number of plots per row')
@@ -86,10 +86,7 @@ class batchArgs(object):
                 from getdist import paramnames
 
                 if args.paramList is not None: args.paramList = paramnames.ParamNames(args.paramList)
-                if args.plot_data is not None:
-                    g = plots.GetDistPlotter(plot_data=args.plot_data)
-                else:
-                    g = plots.GetDistPlotter(chain_dir=self.batch.batchPath)
+                g = plots.GetDistPlotter(chain_dir=self.batch.batchPath)
                 if args.size_inch is not None: g.settings.setWithSubplotSize(args.size_inch)
                 return self.batch, self.args, g
             else:

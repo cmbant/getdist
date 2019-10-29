@@ -7,6 +7,8 @@ import six
 from getdist import IniFile
 from paramgrid import batchjob, batchjob_args
 
+# defaults here are for Planck. Unltimately should be refactored out of general code but harmless.
+
 default_params = dict()
 default_params['mnu'] = '0.02 0 5 0.1 0.03'
 default_params['omegak'] = '-0.0008 -0.3 0.3 0.001 0.001'  # starting exactly on flat seems to confuse minimizer
@@ -65,7 +67,7 @@ def updateIniParams(ini, params, path):
 
 
 def pathIsGrid(batchPath):
-    return os.path.exists(os.path.join(batchPath, 'batch.pyobj')) or os.path.exists(
+    return os.path.exists(batchjob.grid_cache_file(batchPath)) or os.path.exists(
         os.path.join(batchPath, 'config', 'config.ini'))
 
 

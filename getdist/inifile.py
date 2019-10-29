@@ -219,9 +219,11 @@ class IniFile(object):
         default = getattr(instance, name, default)
         setattr(instance, name, self.asType(name, type(default), default, allowEmpty=allowEmpty))
 
-    def getAttr(self, instance, name, default=None):
+    def getAttr(self, instance, name, default=None, comment=None):
         val = getattr(instance, name, default)
         self.params[name] = val
+        if comment:
+            self.comments[name] = comment
 
     def bool(self, name, default=False):
         """

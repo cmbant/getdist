@@ -3,7 +3,7 @@ getdist.plots
 
 .. currentmodule:: getdist.plots
 
-This module is used for making plots from samples. The :class:`~getSinglePlotter` and :class:`~getSubplotPlotter` functions are used to make a plotter instance,
+This module is used for making plots from samples. The :func:`~.plots.get_single_plotter` and :func:`~get_subplot_plotter` functions are used to make a plotter instance,
 which is then used to make and export plots.
 
 Many plotter functions take a **roots** argument, which is either a root name for
@@ -17,15 +17,14 @@ You can also use glob patterns to match specific subsets of parameters (e.g. *x\
    :toctree: _summaries
    :nosignatures:
 
-   getSinglePlotter
-   getSubplotPlotter
+   get_single_plotter
+   get_subplot_plotter
    GetDistPlotter
    GetDistPlotSettings
 
 .. automodule:: getdist.plots
    :members:
-   :exclude-members: makeList
-
+   :exclude-members: makeList, getSinglePlotter, getSubplotPlotter, getPlotter, RootInfo
 
 
 

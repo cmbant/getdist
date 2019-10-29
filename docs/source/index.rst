@@ -7,7 +7,7 @@ GetDist is a Python package for analysing and plotting Monte Carlo (or other) sa
    :maxdepth: 1
 
    Introduction <intro>
-   Plot gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>
+   Plot gallery and tutorial <https://getdist.readthedocs.org/en/latest/plot_gallery.html>
    GetDist GUI program <gui>
 
 High-level modules for analysing samples and plotting:

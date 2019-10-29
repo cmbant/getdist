@@ -1,5 +1,4 @@
 numpy
-matplotlib>=2.0.0
+matplotlib>=2.2.0
 six
-scipy>=0.11.0
-packaging
+scipy>=1.0.0
