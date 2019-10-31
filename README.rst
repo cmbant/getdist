@@ -210,7 +210,7 @@ You can refer to the notes::
       archivePrefix  = "arXiv",
       primaryClass   = "astro-ph.IM",
       SLACcitation   = "%%CITATION = ARXIV:1910.13970;%%",
-      note = "{\url{https://getdist.readthedocs.io}}",
+      url            = "https://getdist.readthedocs.io"
      }
 
 
