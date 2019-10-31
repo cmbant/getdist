@@ -3,7 +3,9 @@ GetDist
 ===================
 :GetDist: MCMC sample analysis, plotting and GUI
 :Author: Antony Lewis
-:Homepage: https://github.com/cmbant/getdist
+:Homepage: https://getdist.readthedocs.io
+:Source: https://github.com/cmbant/getdist
+:Reference: https://arxiv.org/abs/1910.13970
 
 .. image:: https://secure.travis-ci.org/cmbant/getdist.png?branch=master
   :target: https://secure.travis-ci.org/cmbant/getdist
@@ -56,7 +58,7 @@ the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_ga
 Dependencies
 =============
 * Python 2.7+ or 3.6+
-* matplotlib
+* matplotlib 2.2+ (3.1+ recommended)
 * scipy
 * PySide (Python 2) or PySide2 (Python 3) - optional, only needed for GUI
 * Working LaTeX installation (not essential, only for some plotting/table functions)
@@ -69,8 +71,8 @@ See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installatio
 Algorithm details
 ==================
 
-Details of kernel density estimation (KDE) algorithms and references are give in the
-`GetDist Notes <https://cosmologist.info/notes/GetDist.pdf>`_.
+Details of kernel density estimation (KDE) algorithms and references are give in the GetDist notes
+`arXiv:1910.13970 <https://arxiv.org/pdf/1910.13970>`_.
 
 Samples file format
 ===================
@@ -114,8 +116,8 @@ Loading samples
 
 To load an MCSamples object from text files do::
 
-	 from getdist import loadMCSamples
-	 samples = loadMCSamples('/path/to/xxx', settings={'ignore_rows':0.3})
+     from getdist import loadMCSamples
+     samples = loadMCSamples('/path/to/xxx', settings={'ignore_rows':0.3})
 
 Here *settings* gives optional parameter settings for the analysis. *ignore_rows* is useful for MCMC chains where you want to
 discard some fraction from the start of each chain as burn in (use a number >1 to discard a fixed number of sample lines rather than a fraction).
@@ -130,9 +132,9 @@ When you have many different chain files in the same directory,
 plotting can work directly with the root file names. For example to compare *x* and *y* constraints
 from two chains with root names *xxx* and *yyy*::
 
-	from getdist import plots
-	g = plots.get_single_plotter(chain_dir='/path/to/', analysis_settings={'ignore_rows':0.3})
-	g.plot_2d(['xxx','yyy'], ['x', 'y'])
+    from getdist import plots
+    g = plots.get_single_plotter(chain_dir='/path/to/', analysis_settings={'ignore_rows':0.3})
+    g.plot_2d(['xxx','yyy'], ['x', 'y'])
 
 
 MCSamples objects can also be constructed directly from numpy arrays in memory, see the example
@@ -143,25 +145,25 @@ GetDist script
 
 If you have chain files on on disk, you can also quickly calculate convergence and marginalized statistics using the *getdist* script:
 
-	usage: getdist [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
+    usage: getdist [-h] [--ignore_rows IGNORE_ROWS] [-V] [ini_file] [chain_root]
 
-	GetDist sample analyser
+    GetDist sample analyser
 
-	positional arguments:
-	  *ini_file*              .ini file with analysis settings (optional, if omitted uses defaults
+    positional arguments:
+      *ini_file*              .ini file with analysis settings (optional, if omitted uses defaults
 
-	  *chain_root*            Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file
+      *chain_root*            Root name of chain to analyse (e.g. chains/test), required unless file_root specified in ini_file
 
-	optional arguments:
-	  -h, --help            show this help message and exit
-	  --ignore_rows IGNORE_ROWS
-	                        set initial fraction of chains to cut as burn in
-	                        (fraction of total rows, or >1 number of rows);
-	                        overrides any value in ini_file if set
-	  --make_param_file MAKE_PARAM_FILE
+    optional arguments:
+      -h, --help            show this help message and exit
+      --ignore_rows IGNORE_ROWS
+                            set initial fraction of chains to cut as burn in
+                            (fraction of total rows, or >1 number of rows);
+                            overrides any value in ini_file if set
+      --make_param_file MAKE_PARAM_FILE
                         Produce a sample distparams.ini file that you can edit
                         and use when running GetDist
-	  -V, --version         show program's version number and exit
+      -V, --version         show program's version number and exit
 
 where *ini_file* is optionally a .ini file listing *key=value* parameter option values, and chain_root is the root file name of the chains.
 For example::
@@ -194,6 +196,25 @@ and `Cobaya <https://cobaya.readthedocs.io/>`_ sampling programs.
 No need to install this package separately if you have a full CosmoMC installation; the Cobaya installation will also install GetDist as a dependency.
 Detailed help is available for plotting Planck chains
 and using CosmoMC parameter grids in the `Readme <https://cosmologist.info/cosmomc/readme_python.html>`_.
+
+Citation
+===================
+You can refer to the notes::
+
+     @article{Lewis:2019xzd,
+      author         = "Lewis, Antony",
+      title          = "{GetDist: a Python package for analysing Monte Carlo
+                        samples}",
+      year           = "2019",
+      eprint         = "1910.13970",
+      archivePrefix  = "arXiv",
+      primaryClass   = "astro-ph.IM",
+      SLACcitation   = "%%CITATION = ARXIV:1910.13970;%%",
+      note = "{\url{https://getdist.readthedocs.io}}",
+     }
+
+
+and references therein as appropriate.
 
 ===================
 

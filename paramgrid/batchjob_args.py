@@ -1,14 +1,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import fnmatch
-import sys
 import six
-
-try:
-    import argparse
-except:
-    print('use "module load" to load python 2.7+')
-    sys.exit()
+import argparse
 from paramgrid import batchjob
 
 
@@ -65,8 +59,6 @@ class batchArgs(object):
             self.parser.add_argument('--notall', type=int, default=None,
                                      help='only include chains where all N chains don\'t already exist on disk')
         if self.doplots:
-            self.parser.add_argument('--plot_data', nargs='*', default=None,
-                                     help='directory/ies containing getdist output plot_data')
             self.parser.add_argument('--paramNameFile', default='clik_latex.paramnames',
                                      help=".paramnames file for custom labels for parameters")
             self.parser.add_argument('--param_list', default=None,
@@ -87,7 +79,7 @@ class batchArgs(object):
 
                 if args.paramList is not None: args.paramList = paramnames.ParamNames(args.paramList)
                 g = plots.GetDistPlotter(chain_dir=self.batch.batchPath)
-                if args.size_inch is not None: g.settings.setWithSubplotSize(args.size_inch)
+                if args.size_inch is not None: g.settings.set_with_subplot_size(args.size_inch)
                 return self.batch, self.args, g
             else:
                 return self.batch, self.args
@@ -112,7 +104,7 @@ class batchArgs(object):
 
     def groupMatches(self, jobItem):
         return (self.args.group is None or jobItem.group in self.args.group) and (
-                self.args.skip_group is None or not jobItem.group in self.args.skip_group)
+                self.args.skip_group is None or jobItem.group not in self.args.skip_group)
 
     def dataMatches(self, jobItem):
         if self.args.musthave_data is not None and not jobItem.data_set.hasAll(self.args.musthave_data): return False
@@ -144,7 +136,8 @@ class batchArgs(object):
         items = dict()
         for jobItem in self.filteredBatchItems():
             if not chainExist or jobItem.chainExists():
-                if not jobItem.paramtag in items: items[jobItem.paramtag] = []
+                if not jobItem.paramtag in items:
+                    items[jobItem.paramtag] = []
                 items[jobItem.paramtag].append(jobItem)
         return sorted(six.iteritems(items))
 

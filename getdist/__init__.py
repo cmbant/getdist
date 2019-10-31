@@ -1,5 +1,6 @@
 __author__ = 'Antony Lewis'
 __version__ = "1.0.0"
+__url__ = "https://getdist.readthedocs.io"
 
 from getdist.inifile import IniFile
 from getdist.paramnames import ParamInfo, ParamNames

@@ -1178,8 +1178,8 @@ class MCSamples(Chains):
     def getAutoBandwidth1D(self, bins, par, param, mult_bias_correction_order=None, kernel_order=1, N_eff=None):
         """
         Get optimized kernel density bandwidth (in units of the range of the bins)
-        Based on optimal Improved Sheather-Jones bandwidth for basic Parzen kernel, then scaled if higher-order method being used.
-        For details see the `notes <https://cosmologist.info/notes/GetDist.pdf>`_.
+        Based on optimal Improved Sheather-Jones bandwidth for basic Parzen kernel, then scaled if higher-order method
+        being used. For details see the notes at `arXiv:1910.13970 <https://arxiv.org/abs/1910.13970>`_.
 
         :param bins: numpy array of binned weights for the samples
         :param par: A :class:`~.paramnames.ParamInfo` instance for the parameter to analyse
@@ -1226,7 +1226,7 @@ class MCSamples(Chains):
         Get optimized kernel density bandwidth matrix in parameter units, using Improved Sheather Jones method in
         sheared parameters. The shearing is determined using the covariance, so you know the distribution is
         multi-modal, potentially giving 'fake' correlation, turn off shearing by setting min_corr=1.
-        For details see the `notes <https://cosmologist.info/notes/GetDist.pdf>`_.
+        For details see the notes `arXiv:1910.13970 <https://arxiv.org/abs/1910.13970>`_.
 
         :param bins: 2D numpy array of binned weights
         :param parx: A :class:`~.paramnames.ParamInfo` instance for the x parameter
