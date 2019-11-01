@@ -5,7 +5,6 @@ import io
 import re
 import os
 import sys
-import six
 
 try:
     from setuptools import setup
@@ -40,7 +39,7 @@ if sys.platform == "darwin":
     # Mac wrapper .app bundle
     try:
         # Just check for errors, and skip if no valid PySide
-        if six.PY3:
+        if sys.version_info[0] == 3:
             from PySide2 import QtCore
         else:
             import PySide
