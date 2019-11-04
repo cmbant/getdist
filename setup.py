@@ -120,8 +120,16 @@ setup(name='GetDist',
       long_description=get_long_description(),
       author='Antony Lewis',
       url="https://github.com/cmbant/getdist",
+      project_urls={
+          'Documentation': 'https://getdist.readthedocs.io',
+          'Source': 'https://github.com/cmbant/getdist',
+          'Tracker': 'https://github.com/cmbant/getdist/issues',
+          'Reference': 'https://arxiv.org/abs/1910.13970',
+          'Licensing': 'https://github.com/cmbant/getdist/blob/master/LICENCE.txt'
+      },
       zip_safe=False,
       packages=['getdist', 'getdist.gui', 'getdist.tests', 'getdist.styles', 'paramgrid'],
+      platforms="any",
       entry_points={
           'console_scripts': [
               'getdist=getdist.command_line:getdist_command',
@@ -135,8 +143,8 @@ setup(name='GetDist',
           'six',
           "scipy (>=1.0.0)"],
       # PySide or pyside2 is needed for the GUI
-      #  optional (for faster file read)
-      # 'pandas (>=0.14.0)'
+      # pandas optional (for faster txt chain file read)
+      extras_require={'GUI': ["PySide2>=5.2"], 'txt': ["pandas>=0.14.0"]},
       cmdclass=cmd_class,
       classifiers=[
           'Development Status :: 5 - Production/Stable',
@@ -145,9 +153,10 @@ setup(name='GetDist',
           "Programming Language :: Python :: 2",
           'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.5',
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
       ],
+      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*',
       keywords=['MCMC', 'KDE', 'sample', 'density estimation', 'plot', 'figure']
       )

@@ -1,5 +1,5 @@
 language: python
-dist: xenial
+dist: bionic
 git:
   depth: false
 sudo: false
@@ -9,36 +9,40 @@ matrix:
   include:
     - env:
         - CHANNEL="defaults"
+        - PYDIST="ANACONDA"
+        - PYVER="3"
       python: "2.7"
     - env:
         - CHANNEL="defaults"
+        - PYDIST="ANACONDA"
+        - PYVER="3"
       python: "3.6"
     - env:
         - CHANNEL="conda-forge"
+        - PYDIST="ANACONDA"
+        - PYVER="3"
       python: "3.7"
-
+    - name: "3.7 with bionic"
+      python: "3.7"
+      
 install:
   # Setup anaconda following http://conda.pydata.org/docs/travis.html
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-  - conda create -q -n test-environment -c $CHANNEL python=$TRAVIS_PYTHON_VERSION scipy matplotlib PyYAML;
-  - source activate test-environment
+  - if [[ "$PYDIST" == "ANACONDA" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda$PYVER-latest-Linux-x86_64.sh -O miniconda.sh;
+      bash miniconda.sh -b -p $HOME/miniconda;
+      export PATH="$HOME/miniconda/bin:$PATH";
+      hash -r;
+      conda config --set always_yes yes --set changeps1 no;
+      conda info -a;
+      conda create -q -n test-environment -c $CHANNEL python=$TRAVIS_PYTHON_VERSION scipy matplotlib PyYAML;
+      source activate test-environment;
+    fi  
+  - python --version
   - python setup.py install
   - getdist --help
 
 script:
     - python setup.py test
-
 
 deploy:
   - provider: pypi

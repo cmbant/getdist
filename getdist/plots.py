@@ -8,7 +8,7 @@ import six
 import warnings
 import logging
 
-matplotlib.use('Agg', warn=False)
+matplotlib.use('Agg')
 import matplotlib.patches
 import matplotlib.colors
 import matplotlib.gridspec
