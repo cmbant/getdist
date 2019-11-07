@@ -2521,7 +2521,7 @@ class MCSamples(Chains):
 
 # Useful functions
 
-def GetChainRootFiles(rootdir):
+def getChainRootFiles(rootdir):
     """
     Gets the root names of all chain files in a directory.
 
@@ -2537,7 +2537,7 @@ def GetChainRootFiles(rootdir):
     return files
 
 
-def GetRootFileName(rootdir):
+def getRootFileName(rootdir):
     """
     Gets the root name of chains in given directory (assuming only one set of chain files).
 

@@ -17,7 +17,7 @@ from getdist.gui.qt_import import pyside_version
 
 import getdist
 from getdist import plots, IniFile
-from getdist.mcsamples import GetChainRootFiles, SettingError, ParamError
+from getdist.mcsamples import getChainRootFiles, SettingError, ParamError
 from getdist.gui.SyntaxHighlight import PythonHighlighter
 from paramgrid import batchjob, gridconfig
 import matplotlib.pyplot as plt
@@ -1020,7 +1020,7 @@ class MainWindow(QMainWindow):
             if self.is_grid:
                 self._resetGridData()
 
-            root_list = GetChainRootFiles(dirName)
+            root_list = getChainRootFiles(dirName)
             if not len(root_list):
                 QMessageBox.critical(self, "Open chains", "No chains or grid found in that directory")
                 cur_dirs = self.getDirectories()

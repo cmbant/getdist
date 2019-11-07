@@ -41,11 +41,13 @@ def getdist_script(args, exit_on_error=True):
         chain_root = chain_root[:-4]
 
     if chain_root is not None and ('*' in chain_root or '?' in chain_root):
-        import glob, copy
-        for f in glob.glob(chain_root + '.paramnames'):
-            fileargs = copy.copy(args)
-            fileargs.chain_root = f.replace('.paramnames', '')
-            getdist_script(fileargs)
+        import glob
+        import copy
+        for ending in ['.paramnames', 'updated.yaml']:
+            for f in glob.glob(chain_root + ending):
+                fileargs = copy.copy(args)
+                fileargs.chain_root = f.replace(ending, '')
+                getdist_script(fileargs)
         return
 
     # Input parameters
