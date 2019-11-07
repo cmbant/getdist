@@ -79,8 +79,8 @@ def getdist_script(args, exit_on_error=True):
     mc = MCSamples(in_root, ini=ini, files_are_chains=samples_are_chains, paramNamesFile=paramnames)
 
     if ini.bool('adjust_priors', False) or ini.bool('map_params', False):
-        do_error(
-            'To adjust priors or define new parameters, use a separate python script; see the python getdist docs for examples')
+        do_error('To adjust priors or define new parameters, use a separate python script; '
+                 'see the python getdist docs for examples')
 
     plot_ext = ini.string('plot_ext', 'py')
     finish_run_command = ini.string('finish_run_command', '')
@@ -139,8 +139,11 @@ def getdist_script(args, exit_on_error=True):
     # -1 y keep reading until one not found
 
     # Chain files
-    chain_files = chains.chainFiles(in_root, first_chain=first_chain, last_chain=last_chain,
-                                    chain_exclude=chain_exclude)
+    for separator in ['_', '.']:
+        chain_files = chains.chainFiles(in_root, first_chain=first_chain, last_chain=last_chain,
+                                        chain_exclude=chain_exclude, separator=separator)
+        if chain_files:
+            break
 
     mc.loadChains(in_root, chain_files)
 

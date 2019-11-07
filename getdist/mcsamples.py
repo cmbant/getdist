@@ -1196,7 +1196,7 @@ class MCSamples(Chains):
         if h is None or h < 0.01 * N_eff ** (-1. / 5) * (par.range_max - par.range_min) / bin_range:
             hnew = 1.06 * par.sigma_range * N_eff ** (-1. / 5) / bin_range
             if par.name not in self.no_warning_params \
-                    and (not self.no_warning_chi2_params or 'chi2_' not in par.name):
+                    and (not self.no_warning_chi2_params or 'chi2_' not in par.name and 'minuslog' not in par.name):
                 msg = 'auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)' % (
                     par.name, h, N_eff, hnew)
                 if getattr(self, 'raise_on_bandwidth_errors', False):

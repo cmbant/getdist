@@ -1174,6 +1174,8 @@ class Chains(WeightedSamples):
             ignore_lines = self.ignore_lines
         WSkwargs = {"ignore_rows": ignore_lines,
                     "min_weight_ratio": self.min_weight_ratio}
+        if not files_or_samples:
+            raise ValueError('files_or_samples is loadChains')
         if isinstance(files_or_samples, six.string_types) or isinstance(files_or_samples[0], six.string_types):
             # From files
             if weights is not None or loglikes is not None:
