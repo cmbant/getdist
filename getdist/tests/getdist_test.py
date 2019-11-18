@@ -9,6 +9,9 @@ import subprocess
 from getdist import loadMCSamples, plots, IniFile
 from getdist.tests.test_distributions import Test2DDistributions, Gaussian1D, Gaussian2D
 from getdist.mcsamples import MCSamples
+from getdist.styles.tab10 import style_name as tab10
+from getdist.styles.planck import style_name as planck
+from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
 
@@ -254,9 +257,6 @@ class GetDistTest(unittest.TestCase):
                     self.assertTrue(g.subplots[i, j].get_xlim() == g.subplots[j, j].get_xlim())
 
     def test_styles(self):
-        from getdist.styles.tab10 import style_name as tab10
-        from getdist.styles.planck import style_name as planck
-        from matplotlib import rcParams
         tmp = rcParams.copy()
         plots.set_active_style(tab10)
         g = plots.get_single_plotter()

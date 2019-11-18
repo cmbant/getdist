@@ -11,7 +11,7 @@ import sys
 
 
 def get_defaults_file(name='analysis_defaults.ini'):
-    return os.path.join(os.path.dirname(__file__), name)
+    return os.path.join(os.path.abspath(os.path.dirname(__file__)), name)
 
 
 def set_logging(log):
@@ -23,7 +23,7 @@ def set_logging(log):
 def get_config():
     config_file = os.environ.get('GETDIST_CONFIG', None)
     if not config_file:
-        config_file = os.path.join(os.path.dirname(__file__), 'config.ini')
+        config_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'config.ini')
     if os.path.exists(config_file):
         return IniFile(config_file)
     else:
