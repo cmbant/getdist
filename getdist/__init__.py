@@ -37,9 +37,16 @@ def _get_cache_dir():
         import tempfile
         tmp = tempfile.gettempdir()
     tmp = os.path.join(tmp, 'getdist_cache')
-    if not os.path.exists(tmp):
-        os.mkdir(tmp)
     return tmp
+
+
+def make_cache_dir():
+    try:
+        if cache_dir:
+            os.makedirs(cache_dir)
+    except OSError:
+        pass
+    return cache_dir if cache_dir and os.path.exists(cache_dir) else None
 
 
 config_ini = get_config()

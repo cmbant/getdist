@@ -492,8 +492,8 @@ class MCSampleAnalysis(_BaseObject):
                         break
                 else:
                     name = os.path.join(chain_dir, root)
-                    if any([chainFiles(name, separator=sep)
-                            for sep in ['_', _separator_files]]):
+                    if any(chainFiles(name, separator=sep)
+                            for sep in ['_', _separator_files]):
                         file_root = name
                         break
         if not file_root:

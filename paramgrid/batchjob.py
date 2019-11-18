@@ -14,9 +14,10 @@ from getdist.mcsamples import loadMCSamples
 
 def grid_cache_file(directory):
     directory = os.path.abspath(directory)
-    if getdist.cache_dir:
+    cache_dir = getdist.make_cache_dir()
+    if cache_dir:
         import hashlib
-        return os.path.join(getdist.cache_dir, '_batch_'
+        return os.path.join(cache_dir, '_batch_'
                             + hashlib.md5(directory.encode('utf-8')).hexdigest()[:10]) + '.pyobj'
     return os.path.join(directory, 'batch.pyobj')
 
@@ -41,10 +42,14 @@ def readobject(directory=None):
     try:
         config_dir = os.path.abspath(directory) + os.sep + 'config'
         if os.path.exists(config_dir):
-            # set path in case using functions defined and hence imported from in settings file
+            # set path in case using functions defined and hence imported from settings file
             sys.path.insert(0, config_dir)
-        with open(fname, 'rb') as inp:
-            grid = pickle.load(inp)
+        try:
+            with open(fname, 'rb') as inp:
+                grid = pickle.load(inp)
+        finally:
+            if os.path.exists(config_dir):
+                sys.path.pop(0)
         if not os.path.exists(grid.basePath):
             raise FileNotFoundError('Directory not found %s' % grid.basePath)
         return grid
@@ -141,7 +146,7 @@ class dataSet(object):
         if isinstance(name, six.string_types):
             return name in self.names
         else:
-            return any([True for i in name if i in self.names])
+            return any(True for i in name if i in self.names)
 
     def hasAll(self, name):
         if isinstance(name, six.string_types):
@@ -300,7 +305,7 @@ class jobItem(propertiesItem):
         if isinstance(name, six.string_types):
             return name in self.param_set
         else:
-            return any([True for i in name if i in self.param_set])
+            return any(True for i in name if i in self.param_set)
 
     def importanceJobs(self):
         return self.importanceItems

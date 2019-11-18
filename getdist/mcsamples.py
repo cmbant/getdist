@@ -66,10 +66,11 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     if not files:  # try new Cobaya format
         files = chainFiles(file_root, separator='.')
     path, name = os.path.split(file_root)
-    if getdist.cache_dir:
+    cache_dir = None if no_cache else getdist.make_cache_dir()
+    if cache_dir:
         import hashlib
         cache_name = name + '_' + hashlib.md5(os.path.abspath(path).encode('utf-8')).hexdigest()[:10]
-        path = getdist.cache_dir
+        path = cache_dir
     else:
         cache_name = name
     if not os.path.exists(path):
@@ -84,7 +85,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
         allfiles = files + [
             os.path.join(folder, f) for f in os.listdir(folder) if (
                     f.startswith(prefix) and
-                    any([f.lower().endswith(end) for end in ['updated.yaml', 'full.yaml']]))]
+                    any(f.lower().endswith(end) for end in ['updated.yaml', 'full.yaml']))]
     if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
         try:
             with open(cachefile, 'rb') as inp:
@@ -1939,7 +1940,7 @@ class MCSamples(Chains):
         [self._initParamRanges(j) for j in jv]
 
         boundary_correction_order = kwargs.get('boundary_correction_order', self.boundary_correction_order)
-        has_prior = np.any([parv[i].has_limits for i in range(ndim)])
+        has_prior = any(parv[i].has_limits for i in range(ndim))
 
         nbinsND = kwargs.get('num_bins_ND', self.num_bins_ND)
         ixv, widthv, xminv, xmaxv = zip(*[self._binSamples(self.samples[:, jv[i]],
