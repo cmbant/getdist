@@ -139,7 +139,7 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     except AttributeError:
         raise TypeError(
             "The second argument does not appear to be a (list of) samples `Collection`.")
-    if not all([list(c.data) == columns for c in collections[1:]]):
+    if not all(list(c.data) == columns for c in collections[1:]):
         raise ValueError("The given collections don't have the same columns.")
     # Check consistency with info
     info_params = get_info_params(info)

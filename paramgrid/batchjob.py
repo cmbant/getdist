@@ -152,7 +152,7 @@ class dataSet(object):
         if isinstance(name, six.string_types):
             return name in self.names
         else:
-            return all([(i in self.names) for i in name])
+            return all(i in self.names for i in name)
 
     def tagReplacing(self, x, y):
         items = []
@@ -351,7 +351,7 @@ class jobItem(propertiesItem):
             return chains
 
     def allChainExists(self, num_chains):
-        return all([self.chainExists(i + 1) for i in range(num_chains)])
+        return all(self.chainExists(i + 1) for i in range(num_chains))
 
     def chainFileDate(self, chain=1):
         return os.path.getmtime(self.chainName(chain))

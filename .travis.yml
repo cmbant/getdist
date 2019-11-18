@@ -21,7 +21,7 @@ matrix:
         - CHANNEL="conda-forge"
         - PYDIST="ANACONDA"
         - PYVER="3"
-      python: "3.7"
+      python: "3.8"
     - name: "3.7 with bionic"
       python: "3.7"
       
@@ -38,11 +38,11 @@ install:
       source activate test-environment;
     fi  
   - python --version
-  - python setup.py install
+  - pip install .
   - getdist --help
 
 script:
-    - python setup.py test
+  - python -m unittest getdist.tests.getdist_test
 
 deploy:
   - provider: pypi

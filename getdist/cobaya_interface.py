@@ -123,7 +123,7 @@ def expand_info_param(info_param):
             info_param = odict()
         else:
             info_param = odict([[_p_value, info_param]])
-    if all([(f not in info_param) for f in [_prior, _p_value, _p_derived]]):
+    if all((f not in info_param) for f in [_prior, _p_value, _p_derived]):
         info_param[_p_derived] = True
     # Dynamical input parameters: save as derived by default
     value = info_param.get(_p_value, None)
