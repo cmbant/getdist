@@ -75,7 +75,7 @@ def get_info_params(info):
 def get_range(param_info):
     # Sampled
     if is_sampled_param(param_info):
-        info_lims = dict([[l, param_info[_prior].get(l)] for l in ["min", "max", "loc", "scale"]])
+        info_lims = dict((l, param_info[_prior].get(l)) for l in ["min", "max", "loc", "scale"])
         if info_lims["min"] is not None or info_lims["max"] is not None:
             lims = [param_info[_prior].get("min"), param_info[_prior].get("max")]
         elif info_lims["loc"] is not None or info_lims["scale"] is not None:
@@ -122,7 +122,7 @@ def expand_info_param(info_param):
         if info_param is None:
             info_param = odict()
         else:
-            info_param = odict([[_p_value, info_param]])
+            info_param = odict([(_p_value, info_param)])
     if all((f not in info_param) for f in [_prior, _p_value, _p_derived]):
         info_param[_p_derived] = True
     # Dynamical input parameters: save as derived by default

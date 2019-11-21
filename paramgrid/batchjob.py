@@ -146,7 +146,7 @@ class dataSet(object):
         if isinstance(name, six.string_types):
             return name in self.names
         else:
-            return any(True for i in name if i in self.names)
+            return any(i in self.names for i in name)
 
     def hasAll(self, name):
         if isinstance(name, six.string_types):
