@@ -194,7 +194,8 @@ def getdist_script(args, exit_on_error=True):
         mc.writeThinData(filename, thin_ix, thin_cool)
 
     doprint(mc.getNumSampleSummaryText().strip())
-    if mc.likeStats: doprint(mc.likeStats.likeSummary().strip())
+    if mc.likeStats:
+        doprint(mc.likeStats.likeSummary().strip())
 
     if PCA_num > 0 and not plots_only:
         mc.PCA(PCA_params, PCA_func, PCA_NormParam, writeDataToFile=True)

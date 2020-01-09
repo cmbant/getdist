@@ -992,20 +992,19 @@ class MainWindow(QMainWindow):
         if not last_dir: last_dir = os.getcwd()
 
         title = self.tr("Choose an existing chains grid or chains folder")
-        dirName = QFileDialog.getExistingDirectory(
-            self, title, last_dir,
-            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
-        dirName = str(dirName)
-        logging.debug("dirName: %s" % dirName)
-        if dirName is None or dirName == '':
+        dir_name = QFileDialog.getExistingDirectory(self, title, last_dir,
+                                                    QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        dir_name = os.path.abspath(str(dir_name))
+        logging.debug("dirName: %s" % dir_name)
+        if dir_name is None or dir_name == '':
             return  # No directory selected
 
-        if self.openDirectory(dirName, save=False):
+        if self.openDirectory(dir_name, save=False):
             items = self.getDirectories()
-            if dirName in items:
-                self.listDirectories.setCurrentIndex(items.index(dirName))
+            if dir_name in items:
+                self.listDirectories.setCurrentIndex(items.index(dir_name))
             else:
-                self.listDirectories.insertItem(0, dirName)
+                self.listDirectories.insertItem(0, dir_name)
                 self.listDirectories.setCurrentIndex(0)
             self.saveDirectories()
 
@@ -1076,8 +1075,8 @@ class MainWindow(QMainWindow):
         roots = self.checkedRootNames()
         if not len(roots):
             return
-        # Get previuos selection (with its renames) before we overwrite the list of tags
-        old_selection = OrderedDict([["x", []], ["y", []]])
+        # Get previous selection (with its renames) before we overwrite the list of tags
+        old_selection = OrderedDict([("x", []), ("y", [])])
         for x_, getter in zip(old_selection, [self.getXParams, self.getYParams]):
             if not hasattr(self, "paramNames"):
                 break
@@ -1106,7 +1105,7 @@ class MainWindow(QMainWindow):
         renames = self.paramNames.getRenames(keep_empty=True)
         renames_list_func = lambda x: (" (" + ", ".join(x) + ")") if x else ""
         self.paramNamesTags = OrderedDict([
-            [p + renames_list_func(r), p] for p, r in renames.items()])
+            (p + renames_list_func(r), p) for p, r in renames.items()])
         self._updateListParameters(list(self.paramNamesTags), self.listParametersX)
         self._updateListParameters(list(self.paramNamesTags), self.listParametersY)
         # Update selection in both boxes (needs to be done after *both* boxes have been
@@ -1476,8 +1475,8 @@ class MainWindow(QMainWindow):
             logging.debug("Plotting with roots = %s" % str(roots))
 
             # fudge factor of 0.8 seems to help with overlapping labels on retina Mac.
-            height = self.plotWidget.height() / self.logicalDpiX() *0.8
-            width = self.plotWidget.width() / self.logicalDpiX() *0.8
+            height = self.plotWidget.height() / self.logicalDpiX() * 0.8
+            width = self.plotWidget.width() / self.logicalDpiX() * 0.8
 
             def setSizeForN(cols, rows):
                 if self.plotter.settings.fig_width_inch is not None:
