@@ -22,7 +22,8 @@ import numpy as np
 from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
-from getdist.chains import chainFiles
+from getdist.chain_grid import ChainDirGrid
+from getdist.chains import findChainFileRoot
 from getdist.paramnames import escapeLatex, makeList, mergeRenames
 from getdist.densities import Density2D
 from getdist.gaussian_mixtures import MixtureND
@@ -403,7 +404,7 @@ class MCSampleAnalysis(_BaseObject):
         if chain_dir in self.chain_locations:
             return
         self.chain_locations.append(chain_dir)
-        is_batch = isinstance(chain_dir, batchjob.batchJob)
+        is_batch = isinstance(chain_dir, (batchjob.batchJob, ChainDirGrid))
         if is_batch or gridconfig.pathIsGrid(chain_dir):
             if is_batch:
                 batch = chain_dir
@@ -411,9 +412,9 @@ class MCSampleAnalysis(_BaseObject):
                 batch = batchjob.readobject(chain_dir)
             self.chain_dirs.append(batch)
             # this gets things like specific parameter limits etc. specific to the grid
-            # yuk, this should only be for old Planck grids. New ones don't need getdist_common
+            # Legacy, only for old Planck grids. New ones don't need getdist_common
             # should instead set custom settings in the grid setting file
-            if os.path.exists(batch.commonPath + 'getdist_common.ini'):
+            if hasattr(batch, 'commonPath') and os.path.exists(batch.commonPath + 'getdist_common.ini'):
                 batchini = IniFile(batch.commonPath + 'getdist_common.ini')
                 if self.ini:
                     self.ini.params.update(batchini.params)
@@ -466,21 +467,16 @@ class MCSampleAnalysis(_BaseObject):
             raise GetDistPlotError('MixtureND is a distribution not a set of samples')
         elif not isinstance(root, six.string_types):
             raise GetDistPlotError('Root names must be strings (or MCSamples instances)')
-        if os.path.isabs(root):
-            # deal with just-folder prefix
-            if root.endswith((os.sep, "/")):
-                root = os.path.basename(root[:-1]) + os.sep
-            else:
-                root = os.path.basename(root)
         if root in self.mcsamples and cache:
             return self.mcsamples[root]
+        if os.path.isabs(root):
+            file_root = root
         job_item = None
         if self.chain_settings_have_priority:
-            dist_settings = settings or {}
+            dist_settings = settings.copy() if settings else {}
         else:
             dist_settings = {}
         if not file_root:
-            from getdist.cobaya_interface import _separator_files
             for chain_dir in self.chain_dirs:
                 if hasattr(chain_dir, "resolveRoot"):
                     job_item = chain_dir.resolveRoot(root)
@@ -488,14 +484,17 @@ class MCSampleAnalysis(_BaseObject):
                         file_root = job_item.chainRoot
                         if hasattr(chain_dir, 'getdist_options'):
                             dist_settings.update(chain_dir.getdist_options)
-                        dist_settings.update(job_item.dist_settings)
+                        if hasattr(job_item, 'dist_settings'):
+                            dist_settings.update(job_item.dist_settings)
                         break
                 else:
-                    name = os.path.join(chain_dir, root)
-                    if any(chainFiles(name, separator=sep)
-                            for sep in ['_', _separator_files]):
-                        file_root = name
+                    file_root = findChainFileRoot(chain_dir, root)
+                    dir_ini = os.path.join(chain_dir, 'getdist.ini')
+                    if os.path.exists(dir_ini):
+                        dist_settings.update(IniFile(dir_ini).params)
+                    if file_root:
                         break
+
         if not file_root:
             raise GetDistPlotError('chain not found: ' + root)
         if not self.chain_settings_have_priority:
@@ -525,17 +524,17 @@ class MCSampleAnalysis(_BaseObject):
             if file_root.batch:
                 return self.samples_for_root(file_root.root)
             else:
-                return self.samples_for_root(file_root.root, os.path.join(file_root.path, file_root.root))
+                return self.samples_for_root(file_root.root,
+                                             os.path.normpath(os.path.join(file_root.path, file_root.root)))
         else:
             return self.samples_for_root(os.path.basename(file_root), file_root)
 
-    def remove_root(self, file_root):
+    def remove_root(self, root):
         """
         Remove a given root file (does not delete it)
 
-        :param file_root: The file root to remove
+        :param root: The root name to remove
         """
-        root = os.path.basename(file_root)
         self.mcsamples.pop(root, None)
         self.single_samples.pop(root, None)
         self.densities_1D.pop(root, None)
@@ -649,7 +648,7 @@ class GetDistPlotter(_BaseObject):
     def __init__(self, chain_dir=None, settings=None, analysis_settings=None, auto_close=False):
         """
 
-        :param chain_dir: Set this to a directory or grid root to search for chains
+        :param chain_dir: Set this to a directory or grid root directory to search for chains
                           (can also be a list of such, searched in order)
         :param analysis_settings: The settings to be used by :class:`MCSampleAnalysis` when analysing samples
         :param auto_close: whether to automatically close the figure whenever a new plot made or this instance released
@@ -1964,7 +1963,11 @@ class GetDistPlotter(_BaseObject):
         elif hasattr(root, 'getName'):
             root = escapeLatex(root.getName())
         elif isinstance(root, six.string_types):
-            return self._root_display_name(self.sample_analyser.samples_for_root(root), i)
+            label = self._root_display_name(self.sample_analyser.samples_for_root(root), i)
+            if label in root and '/' in root:
+                return escapeLatex(root)
+            else:
+                return label
         if not root:
             root = 'samples' + str(i)
         return root

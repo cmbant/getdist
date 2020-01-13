@@ -1,5 +1,5 @@
 __author__ = 'Antony Lewis'
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 __url__ = "https://getdist.readthedocs.io"
 
 from getdist.inifile import IniFile
@@ -33,11 +33,12 @@ def get_config():
 def _get_cache_dir():
     if sys.platform == "darwin":
         tmp = os.path.expanduser('~/Library/Caches')
-    else:
+    elif sys.platform == "win32":
         import tempfile
         tmp = tempfile.gettempdir()
-    tmp = os.path.join(tmp, 'getdist_cache')
-    return tmp
+    else:
+        tmp = os.getenv('XDG_CACHE_HOME', os.path.expanduser('~/.cache'))
+    return os.path.join(tmp, 'getdist_cache')
 
 
 def make_cache_dir():

@@ -52,6 +52,30 @@ def slice_or_none(x, start=None, end=None):
     return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
 
 
+def findChainFileRoot(chain_dir, root, search_subdirectories=True):
+    """
+    Finds chain files with name root somewhere under chain_dir directory tree.
+    root can also be a relative path relaqtive to chain_dir, or have leading directories as needed to make unique
+
+    :param chain_dir: directory to look in
+    :param root: root name for the chain
+    :param search_subdirectories: recursively look in subdirectories under chain_dir
+    :return: full path and root if found, otherwise None
+    """
+    from getdist.cobaya_interface import _separator_files
+    root = root.replace('/', os.sep).replace('\\', os.sep)
+    file_root = os.path.join(chain_dir, root)
+    if any(chainFiles(file_root, separator=sep, last_chain=1) for sep in ['_', _separator_files]):
+        return file_root
+    if search_subdirectories:
+        for base, dirs, files in os.walk(chain_dir):
+            for _dir in dirs:
+                file_root = os.path.join(base, _dir, root)
+                if any(chainFiles(file_root, separator=sep, last_chain=1) for sep in ['_', _separator_files]):
+                    return file_root
+    return None
+
+
 def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
                first_chain=0, last_chain=-1, chain_exclude=None):
     """
@@ -830,8 +854,8 @@ class WeightedSamples(object):
 
     def reweightAddingLogLikes(self, logLikes):
         """
-        Importance sample the samples, by adding logLike (array of -log(likelihood values) to the currently stored likelihoods,
-        and re-weighting accordingly, e.g. for adding a new data constraint
+        Importance sample the samples, by adding logLike (array of -log(likelihood values) to the currently
+        stored likelihoods, and re-weighting accordingly, e.g. for adding a new data constraint
 
         :param logLikes: array of -log(likelihood) for each sample to adjust
         """
@@ -906,7 +930,8 @@ class WeightedSamples(object):
         Saves the samples as text files
 
         :param root: The root name to use
-        :param chain_index: Optional index to be used for the samples' filename, zero based, e.g. for saving one of multiple chains
+        :param chain_index: Optional index to be used for the samples' filename, zero based, e.g. for saving
+                            one of multiple chains
         :param make_dirs: True if this should create the directories if necessary.
         """
         if self.loglikes is not None:
@@ -935,7 +960,7 @@ class Chains(WeightedSamples):
         """
 
         :param root: optional root name for files
-        :param jobItem: optional jobItem for parameter grid item
+        :param jobItem: optional jobItem for parameter grid item. Should have jobItem.chainRoot and jobItem.batchPath
         :param paramNamesFile: optional filename of a .paramnames files that holds parameter names
         :param names: optional list of names for the parameters
         :param labels: optional list of latex labels for the parameters

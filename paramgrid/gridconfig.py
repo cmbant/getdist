@@ -67,8 +67,11 @@ def updateIniParams(ini, params, path):
 
 
 def pathIsGrid(batchPath):
-    return os.path.exists(batchjob.grid_cache_file(batchPath)) or os.path.exists(
-        os.path.join(batchPath, 'config', 'config.ini'))
+    ini_name = os.path.join(batchPath, 'config', 'config.ini')
+    if os.path.exists(ini_name):
+        return IniFile(ini_name).string('format', 'cosmomc') == 'cosmomc'
+    else:
+        return False
 
 
 def makeGrid(batchPath, settingName=None, settings=None, readOnly=False, interactive=False):

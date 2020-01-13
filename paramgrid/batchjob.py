@@ -13,7 +13,7 @@ from getdist.mcsamples import loadMCSamples
 
 
 def grid_cache_file(directory):
-    directory = os.path.abspath(directory)
+    directory = os.path.normcase(os.path.abspath(directory))
     cache_dir = getdist.make_cache_dir()
     if cache_dir:
         import hashlib
@@ -50,7 +50,7 @@ def readobject(directory=None):
         finally:
             if os.path.exists(config_dir):
                 sys.path.pop(0)
-        if not os.path.exists(grid.basePath):
+        if hasattr(grid, 'basePath') and not os.path.exists(grid.basePath):
             raise FileNotFoundError('Directory not found %s' % grid.basePath)
         return grid
     except Exception as e:

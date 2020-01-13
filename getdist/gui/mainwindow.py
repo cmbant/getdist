@@ -17,6 +17,7 @@ from getdist.gui.qt_import import pyside_version
 
 import getdist
 from getdist import plots, IniFile
+from getdist.chain_grid import ChainDirGrid, file_root_to_root
 from getdist.mcsamples import getChainRootFiles, SettingError, ParamError
 from getdist.gui.SyntaxHighlight import PythonHighlighter
 from paramgrid import batchjob, gridconfig
@@ -1016,17 +1017,21 @@ class MainWindow(QMainWindow):
                 if save: self.saveDirectories()
                 return True
 
-            if self.is_grid:
-                self._resetGridData()
+            self._resetGridData()
 
             root_list = getChainRootFiles(dirName)
             if not len(root_list):
+                if self._readChainsSubdirectories(dirName):
+                    if save: self.saveDirectories()
+                    return True
+
                 QMessageBox.critical(self, "Open chains", "No chains or grid found in that directory")
                 cur_dirs = self.getDirectories()
                 if dirName in cur_dirs:
                     self.listDirectories.removeItem(cur_dirs.index(dirName))
                     self.saveDirectories()
                 return False
+
             self.rootdirname = dirName
 
             self.getPlotter(chain_dir=dirName)
@@ -1121,12 +1126,40 @@ class MainWindow(QMainWindow):
 
     def _resetGridData(self):
         # Grid chains parameters
-        self.is_grid = False
         self.batch = None
         self.grid_paramtag_jobItems = {}
         self.paramTag = ""
-        self.dataTag = ""
-        self.data2chains = {}
+
+    def _readChainsSubdirectories(self, path):
+
+        self.batch = ChainDirGrid(path)
+        for base, dirs, files in os.walk(path):
+            for _dir in dirs:
+                files = getChainRootFiles(os.path.join(base, _dir))
+                if files:
+                    self.batch.add(_dir, os.path.join(base, _dir), files)
+                for base_rel, dirs_rel, files_rel in os.walk(os.path.join(base, _dir)):
+                    for _subdir in dirs_rel:
+                        files = getChainRootFiles(os.path.join(base_rel, _subdir))
+                        if files:
+                            self.batch.add(_dir, os.path.join(base_rel, _subdir), files)
+            break
+
+        if self.batch.base_dir_names:
+            self.batch.make_unique()
+            self.rootdirname = path
+            self.getPlotter(chain_dir=path)
+            self.comboBoxRootname.hide()
+            self.listRoots.show()
+            self.pushButtonRemove.show()
+            self.comboBoxParamTag.clear()
+            self.comboBoxParamTag.addItems(sorted(self.batch.base_dir_names))
+            self.setParamTag(self.comboBoxParamTag.itemText(0))
+            self.comboBoxParamTag.show()
+            self.comboBoxDataTag.show()
+            return True
+
+        return False
 
     def _readGridChains(self, batchPath):
         """
@@ -1135,7 +1168,6 @@ class MainWindow(QMainWindow):
         # Reset data
         self._resetPlotData()
         self._resetGridData()
-        self.is_grid = True
         logging.debug("Read grid chain in %s" % batchPath)
         batch = batchjob.readobject(batchPath)
         self.batch = batch
@@ -1165,9 +1197,7 @@ class MainWindow(QMainWindow):
         self.comboBoxRootname.clear()
         self.listRoots.show()
         self.pushButtonRemove.show()
-        baseRoots = [(os.path.basename(root) if not root.endswith((os.sep, "/"))
-                      else os.path.basename(root[:-1]) + os.sep)
-                     for root in listOfRoots]
+        baseRoots = [file_root_to_root(root) for root in listOfRoots]
         self.comboBoxRootname.addItems(baseRoots)
         if len(baseRoots) > 1:
             self.comboBoxRootname.setCurrentIndex(-1)
@@ -1208,9 +1238,8 @@ class MainWindow(QMainWindow):
             item.setText(root)
             self._updateParameters()
         except Exception as e:
-            self.errorReport(e)
+            self.errorReport(e, capture=True)
             self.listRoots.takeItem(self.listRoots.count() - 1)
-            raise
         finally:
             self.updating = False
             self.selListRoots()
@@ -1254,7 +1283,11 @@ class MainWindow(QMainWindow):
         logging.debug("Param: %s" % self.paramTag)
 
         self.comboBoxDataTag.clear()
-        self.comboBoxDataTag.addItems([jobItem.datatag for jobItem in self.grid_paramtag_jobItems[self.paramTag]])
+        if isinstance(self.batch, ChainDirGrid):
+            self.comboBoxDataTag.addItems(self.batch.roots_for_dir(self.paramTag))
+        else:
+            self.comboBoxDataTag.addItems([jobItem.datatag for jobItem in self.grid_paramtag_jobItems[self.paramTag]])
+
         self.comboBoxDataTag.setCurrentIndex(-1)
         self.comboBoxDataTag.show()
 
@@ -1262,9 +1295,11 @@ class MainWindow(QMainWindow):
         """
         Slot function called on change of comboBoxDataTag.
         """
-        self.dataTag = str(strDataTag)
-        logging.debug("Data: %s" % strDataTag)
-        self.newRootItem(self.paramTag + '_' + self.dataTag)
+        if isinstance(self.batch, ChainDirGrid):
+            self.newRootItem(str(strDataTag))
+        else:
+            logging.debug("Data: %s" % strDataTag)
+            self.newRootItem(self.paramTag + '_' + str(strDataTag))
 
     def _updateListParameters(self, items, listParameters):
         listParameters.clear()
