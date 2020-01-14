@@ -7,7 +7,7 @@ It allows you to open a folder of chain files, then easily select, open, plot an
 
 .. image:: https://cdn.cosmologist.info/antony/getdist/gui_planck2018.png
 
-It can open chain files in a selected directry (and also `paramgrid <https://cosmologist.info/cosmomc/readme_grids.html>`_ directories as show above).
+It can open chain files under a selected directry structure (and also `paramgrid <https://cosmologist.info/cosmomc/readme_grids.html>`_ directories as show above).
 See the `intro <https://getdist.readthedocs.io/en/latest/intro.html>`_ for a description of chain file formats.  A grid of sample chains files can be
 downloaded `here <http://pla.esac.esa.int/pla/#cosmology>`_, after downloading a file just unzip and open the main directory in the GUI.
 

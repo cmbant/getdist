@@ -19,10 +19,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 from matplotlib.font_manager import font_scalings
 import numpy as np
-from paramgrid import gridconfig, batchjob
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
-from getdist.chain_grid import ChainDirGrid
+from getdist.chain_grid import is_grid_object, get_chain_root_files, ChainDirGrid, load_supported_grid
 from getdist.chains import findChainFileRoot
 from getdist.paramnames import escapeLatex, makeList, mergeRenames
 from getdist.densities import Density2D
@@ -389,7 +388,7 @@ class MCSampleAnalysis(_BaseObject):
         self.ini = None
         self.chain_settings_have_priority = True
         if chain_locations is not None:
-            if isinstance(chain_locations, six.string_types):
+            if isinstance(chain_locations, six.string_types) or not hasattr(chain_locations, '__len__'):
                 chain_locations = [chain_locations]
             for chain_dir in chain_locations:
                 self.add_chain_dir(chain_dir)
@@ -399,17 +398,15 @@ class MCSampleAnalysis(_BaseObject):
         """
         Adds a new chain directory or grid path for searching for samples
 
-        :param chain_dir: The directory to add
+        :param chain_dir: The root directory to add
         """
+        if isinstance(chain_dir, six.string_types):
+            chain_dir = os.path.normpath(chain_dir)
         if chain_dir in self.chain_locations:
             return
         self.chain_locations.append(chain_dir)
-        is_batch = isinstance(chain_dir, (batchjob.batchJob, ChainDirGrid))
-        if is_batch or gridconfig.pathIsGrid(chain_dir):
-            if is_batch:
-                batch = chain_dir
-            else:
-                batch = batchjob.readobject(chain_dir)
+        batch = load_supported_grid(chain_dir)
+        if batch:
             self.chain_dirs.append(batch)
             # this gets things like specific parameter limits etc. specific to the grid
             # Legacy, only for old Planck grids. New ones don't need getdist_common
@@ -420,8 +417,10 @@ class MCSampleAnalysis(_BaseObject):
                     self.ini.params.update(batchini.params)
                 else:
                     self.ini = batchini
-        else:
+        elif get_chain_root_files(chain_dir):
             self.chain_dirs.append(chain_dir)
+        else:
+            self.chain_dirs.append(ChainDirGrid(chain_dir))
 
     def reset(self, settings=None, chain_settings_have_priority=True):
         """
@@ -478,8 +477,11 @@ class MCSampleAnalysis(_BaseObject):
             dist_settings = {}
         if not file_root:
             for chain_dir in self.chain_dirs:
-                if hasattr(chain_dir, "resolveRoot"):
-                    job_item = chain_dir.resolveRoot(root)
+                if is_grid_object(chain_dir):
+                    if hasattr(chain_dir, 'resolve_root'):
+                        job_item = chain_dir.resolve_root(root)
+                    else:
+                        job_item = chain_dir.resolveRoot(root)
                     if job_item:
                         file_root = job_item.chainRoot
                         if hasattr(chain_dir, 'getdist_options'):
@@ -619,7 +621,7 @@ class MCSampleAnalysis(_BaseObject):
             samples = self.samples_for_root(root)
             names = samples.getParamNames()
         if label_params is not None:
-            names.setLabelsAndDerivedFromParamNames(os.path.join(batchjob.getCodeRootPath(), label_params))
+            names.setLabelsAndDerivedFromParamNames(label_params)
         return names
 
     def bounds_for_root(self, root):
@@ -648,7 +650,7 @@ class GetDistPlotter(_BaseObject):
     def __init__(self, chain_dir=None, settings=None, analysis_settings=None, auto_close=False):
         """
 
-        :param chain_dir: Set this to a directory or grid root directory to search for chains
+        :param chain_dir: Set this to a directory or grid directory hierarchy to search for chains
                           (can also be a list of such, searched in order)
         :param analysis_settings: The settings to be used by :class:`MCSampleAnalysis` when analysing samples
         :param auto_close: whether to automatically close the figure whenever a new plot made or this instance released

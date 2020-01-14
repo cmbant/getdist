@@ -57,7 +57,7 @@ def findChainFileRoot(chain_dir, root, search_subdirectories=True):
     Finds chain files with name root somewhere under chain_dir directory tree.
     root can also be a relative path relaqtive to chain_dir, or have leading directories as needed to make unique
 
-    :param chain_dir: directory to look in
+    :param chain_dir: root directory of hierarchy of directories to look in
     :param root: root name for the chain
     :param search_subdirectories: recursively look in subdirectories under chain_dir
     :return: full path and root if found, otherwise None

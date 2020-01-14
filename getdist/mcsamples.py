@@ -206,7 +206,7 @@ class MCSamples(Chains):
 
 
         :param root: A root file name when loading from file
-        :param jobItem: Optional paramgrid.batchjob.jobItem instance if a member of a parameter grid
+        :param jobItem: optional jobItem for parameter grid item. Should have jobItem.chainRoot and jobItem.batchPath
         :param ini: a .ini file to use for custom analysis settings
         :param settings: a dictionary of custom analysis settings
         :param ranges: a dictionary giving any additional hard prior bounds for parameters,
@@ -2521,21 +2521,6 @@ class MCSamples(Chains):
 
 
 # Useful functions
-
-def getChainRootFiles(rootdir):
-    """
-    Gets the root names of all chain files in a directory.
-
-    :param rootdir: The root directory to check
-    :return:  The root names
-    """
-    pattern = os.path.join(rootdir, '*.paramnames')
-    files = [os.path.splitext(f)[0] for f in glob.glob(pattern)]
-    for ending in ['full.yaml', 'updated.yaml']:
-        pattern = os.path.join(rootdir, "*" + ending)
-        files += [f[:-len(ending)].rstrip("_.") for f in glob.glob(pattern)]
-    files.sort()
-    return files
 
 
 def getRootFileName(rootdir):

@@ -127,7 +127,7 @@ setup(name='GetDist',
           'Licensing': 'https://github.com/cmbant/getdist/blob/master/LICENCE.txt'
       },
       zip_safe=False,
-      packages=['getdist', 'getdist.gui', 'getdist.tests', 'getdist.styles', 'paramgrid'],
+      packages=['getdist', 'getdist.gui', 'getdist.tests', 'getdist.styles'],
       platforms="any",
       entry_points={
           'console_scripts': [

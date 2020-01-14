@@ -17,10 +17,9 @@ from getdist.gui.qt_import import pyside_version
 
 import getdist
 from getdist import plots, IniFile
-from getdist.chain_grid import ChainDirGrid, file_root_to_root
-from getdist.mcsamples import getChainRootFiles, SettingError, ParamError
+from getdist.chain_grid import ChainDirGrid, file_root_to_root, get_chain_root_files, load_supported_grid
+from getdist.mcsamples import SettingError, ParamError
 from getdist.gui.SyntaxHighlight import PythonHighlighter
-from paramgrid import batchjob, gridconfig
 import matplotlib.pyplot as plt
 
 if pyside_version == 2:
@@ -105,8 +104,14 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(self._icon('Icon', False))
 
         if base_dir is None:
-            base_dir = batchjob.getCodeRootPath()
-        os.chdir(base_dir)
+            try:
+                # If cosmomc is configured
+                from paramgrid import batchjob
+                base_dir = batchjob.getCodeRootPath()
+            except ImportError:
+                pass
+        if base_dir:
+            os.chdir(base_dir)
         self.updating = False
         self.app = app
         self.base_dir = base_dir
@@ -1011,15 +1016,16 @@ class MainWindow(QMainWindow):
 
     def openDirectory(self, dirName, save=True):
         try:
-            if gridconfig.pathIsGrid(dirName):
+            batch = load_supported_grid(dirName)
+            if batch:
                 self.rootdirname = dirName
-                self._readGridChains(self.rootdirname)
+                self._readGridChains(batch)
                 if save: self.saveDirectories()
                 return True
 
             self._resetGridData()
 
-            root_list = getChainRootFiles(dirName)
+            root_list = get_chain_root_files(dirName)
             if not len(root_list):
                 if self._readChainsSubdirectories(dirName):
                     if save: self.saveDirectories()
@@ -1131,24 +1137,16 @@ class MainWindow(QMainWindow):
         self.paramTag = ""
 
     def _readChainsSubdirectories(self, path):
+        self.batch = None
+        for root, info in self.root_infos.items():
+            if info.batch and os.path.normpath(info.batch.batchPath) == os.path.normpath(path):
+                self.batch = info.batch
 
-        self.batch = ChainDirGrid(path)
-        for base, dirs, files in os.walk(path):
-            for _dir in dirs:
-                files = getChainRootFiles(os.path.join(base, _dir))
-                if files:
-                    self.batch.add(_dir, os.path.join(base, _dir), files)
-                for base_rel, dirs_rel, files_rel in os.walk(os.path.join(base, _dir)):
-                    for _subdir in dirs_rel:
-                        files = getChainRootFiles(os.path.join(base_rel, _subdir))
-                        if files:
-                            self.batch.add(_dir, os.path.join(base_rel, _subdir), files)
-            break
+        self.batch = self.batch or ChainDirGrid(path)
 
         if self.batch.base_dir_names:
-            self.batch.make_unique()
             self.rootdirname = path
-            self.getPlotter(chain_dir=path)
+            self.getPlotter(chain_dir=self.batch)
             self.comboBoxRootname.hide()
             self.listRoots.show()
             self.pushButtonRemove.show()
@@ -1161,15 +1159,14 @@ class MainWindow(QMainWindow):
 
         return False
 
-    def _readGridChains(self, batchPath):
+    def _readGridChains(self, batch):
         """
         Setup of a grid of chain results.
         """
         # Reset data
         self._resetPlotData()
         self._resetGridData()
-        logging.debug("Read grid chain in %s" % batchPath)
-        batch = batchjob.readobject(batchPath)
+        logging.debug("Read grid chain in %s" % batch.batchPath)
         self.batch = batch
         items = dict()
         for jobItem in batch.items(True, True):
@@ -1224,7 +1221,10 @@ class MainWindow(QMainWindow):
             plotter = self.getPlotter()
 
             if self.batch:
-                path = self.batch.resolveRoot(root).chainPath
+                if hasattr(self.batch, 'resolve_root'):
+                    path = self.batch.resolve_root(root).chainPath
+                else:
+                    path = self.batch.resolveRoot(root).chainPath
             else:
                 path = self.rootdirname
             # new style, if the prefix is just a folder
@@ -1418,8 +1418,8 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, caption, type(e).__name__ + ': ' + str(e) + "\n\n" + msg)
             del msg
 
-        if not isinstance(e, GuiSelectionError) and not capture:
-            raise
+            if not isinstance(e, GuiSelectionError) and not capture:
+                raise
 
     def closePlots(self):
         if self.plotter.fig is not None:
@@ -1437,7 +1437,8 @@ class MainWindow(QMainWindow):
         actionText = "plot"
         try:
             # Ensure at least 1 root name specified
-            os.chdir(self.base_dir)
+            if self.base_dir:
+                os.chdir(self.base_dir)
 
             roots = self.checkedRootNames()
             if not len(roots):

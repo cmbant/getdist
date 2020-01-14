@@ -294,13 +294,14 @@ class ParamList(object):
             param = self.parWithName(par.name)
             if param is not None:
                 param.label = par.label
-                if set_derived: param.isDerived = par.isDerived
+                if set_derived:
+                    param.isDerived = par.isDerived
 
     def getRenames(self, keep_empty=False):
         """
         Gets dictionary of renames known to each parameter.
         """
-        return OrderedDict([[param.name, getattr(param, "renames", [])]
+        return OrderedDict([(param.name, getattr(param, "renames", []))
                             for param in self.names
                             if (getattr(param, "renames", False) or keep_empty)])
 
