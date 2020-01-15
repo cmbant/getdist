@@ -482,8 +482,10 @@ class BestFit(ParamResults):
 
         ParamResults.__init__(self)
         self.max_posterior = max_posterior
-        if fileName is not None: self.loadFromFile(fileName, want_fixed=want_fixed)
-        if setParamNameFile is not None: self.setLabelsFromParamNames(setParamNameFile)
+        if fileName is not None:
+            self.loadFromFile(fileName, want_fixed=want_fixed)
+        if setParamNameFile is not None:
+            self.setLabelsFromParamNames(setParamNameFile)
 
     def getColumnLabels(self, **kwargs):
         return ['Best fit']
@@ -495,13 +497,15 @@ class BestFit(ParamResults):
             self.weight = float(first[1].strip())
             del (textFileLines[0])
             first = textFileLines[0].strip().split('=')
-        if first[0].strip() != '-log(Like)': raise Exception('Error in format of parameter (best fit) file')
+        if first[0].strip() != '-log(Like)':
+            raise Exception('Error in format of parameter (best fit) file')
         self.logLike = float(first[1].strip())
         isFixed = False
         isDerived = False
         self.chiSquareds = []
         chunks = 0
-        if len(textFileLines[1].strip()) > 0: del (textFileLines[1])  # if it has chi2 line as well
+        if len(textFileLines[1].strip()) > 0:
+            del (textFileLines[1])  # if it has chi2 line as well
         for ix in range(2, len(textFileLines)):
             line = textFileLines[ix]
             if len(line.strip()) == 0:
@@ -539,7 +543,8 @@ class BestFit(ParamResults):
     def sortedChiSquareds(self):
         likes = dict()
         for (kind, val) in self.chiSquareds:
-            if not kind in likes: likes[kind] = []
+            if kind not in likes:
+                likes[kind] = []
             likes[kind].append(val)
         return sorted(six.iteritems(likes))
 

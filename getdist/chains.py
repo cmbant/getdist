@@ -111,8 +111,7 @@ def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
 
 
 def hasChainFiles(file_root, ext='.txt'):
-    from getdist.cobaya_interface import _separator_files
-    return any(chainFiles(file_root, ext=ext, separator=sep, last_chain=1) for sep in ['_', _separator_files])
+    return any(chainFiles(file_root, ext=ext, separator=sep, last_chain=1) for sep in ['_', '.'])
 
 
 _pandas_suggestion = True
@@ -983,7 +982,7 @@ class Chains(WeightedSamples):
         if not paramNamesFile and root:
             mid = not root.endswith((os.sep, "/"))
             endings = ['.paramnames', ('__' if mid else '') + 'full.yaml',
-                       (cobaya._separator_files if mid else '') + 'updated.yaml']
+                       ('.' if mid else '') + 'updated.yaml']
             try:
                 paramNamesFile = next(
                     root + ending for ending in endings if os.path.exists(root + ending))

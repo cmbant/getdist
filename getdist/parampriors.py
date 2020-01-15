@@ -1,5 +1,6 @@
 import os
 from collections import OrderedDict
+import numpy as np
 
 
 class ParamBounds(object):
@@ -19,7 +20,8 @@ class ParamBounds(object):
         self.names = []
         self.lower = OrderedDict()
         self.upper = OrderedDict()
-        if fileName is not None: self.loadFromFile(fileName)
+        if fileName is not None:
+            self.loadFromFile(fileName)
 
     def loadFromFile(self, fileName):
         self.filenameLoadedFrom = os.path.split(fileName)[1]
@@ -31,12 +33,11 @@ class ParamBounds(object):
                     if len(strings) == 3:
                         self.setRange(strings[0], strings[1:])
         elif extension in ('.yaml', '.yml'):
-            from getdist.cobaya_interface import get_range, is_fixed_param, get_info_params
+            from getdist.cobaya_interface import get_range, get_info_params
             from getdist.yaml_tools import yaml_load_file
             info_params = get_info_params(yaml_load_file(fileName))
             for p, info in info_params.items():
-                if not is_fixed_param(info):
-                    self.setRange(p, get_range(info))
+                self.setRange(p, get_range(info))
 
     def __str__(self):
         s = ''
@@ -64,9 +65,12 @@ class ParamBounds(object):
             f.write(str(self))
 
     def setRange(self, name, strings):
-        if strings[0] != 'N' and strings[0] is not None: self.lower[name] = float(strings[0])
-        if strings[1] != 'N' and strings[1] is not None: self.upper[name] = float(strings[1])
-        if not name in self.names: self.names.append(name)
+        if strings[0] != 'N' and strings[0] is not None and strings[0] != -np.inf:
+            self.lower[name] = float(strings[0])
+        if strings[1] != 'N' and strings[1] is not None and strings[1] != np.inf:
+            self.upper[name] = float(strings[1])
+        if name not in self.names:
+            self.names.append(name)
 
     def getUpper(self, name):
         """
