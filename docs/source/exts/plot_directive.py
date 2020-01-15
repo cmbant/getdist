@@ -202,7 +202,6 @@ def _option_context(arg):
         return arg
     else:
         raise ValueError("argument should be None or 'reset'")
-    return directives.choice(arg, ('None', 'reset'))
 
 
 def _option_format(arg):

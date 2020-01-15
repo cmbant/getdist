@@ -9,7 +9,7 @@ import getdist.cobaya_interface as cobaya
 import pickle
 import six
 import logging
-import copy
+from copy import deepcopy
 
 # whether to write to terminal chain names and burn in details when loaded from file
 print_load_details = True
@@ -62,16 +62,15 @@ def findChainFileRoot(chain_dir, root, search_subdirectories=True):
     :param search_subdirectories: recursively look in subdirectories under chain_dir
     :return: full path and root if found, otherwise None
     """
-    from getdist.cobaya_interface import _separator_files
     root = root.replace('/', os.sep).replace('\\', os.sep)
     file_root = os.path.join(chain_dir, root)
-    if any(chainFiles(file_root, separator=sep, last_chain=1) for sep in ['_', _separator_files]):
+    if hasChainFiles(file_root):
         return file_root
     if search_subdirectories:
         for base, dirs, files in os.walk(chain_dir):
             for _dir in dirs:
                 file_root = os.path.join(base, _dir, root)
-                if any(chainFiles(file_root, separator=sep, last_chain=1) for sep in ['_', _separator_files]):
+                if hasChainFiles(file_root):
                     return file_root
     return None
 
@@ -109,6 +108,11 @@ def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
                 and index >= first_chain and os.path.exists(fname):
             files.append(fname)
     return files
+
+
+def hasChainFiles(file_root, ext='.txt'):
+    from getdist.cobaya_interface import _separator_files
+    return any(chainFiles(file_root, ext=ext, separator=sep, last_chain=1) for sep in ['_', _separator_files])
 
 
 _pandas_suggestion = True
@@ -1012,7 +1016,7 @@ class Chains(WeightedSamples):
         """
         self.paramNames = None
         if isinstance(names, ParamNames):
-            self.paramNames = copy.deepcopy(names)
+            self.paramNames = deepcopy(names)
         elif isinstance(names, six.string_types):
             self.paramNames = ParamNames(names)
         elif names is not None:

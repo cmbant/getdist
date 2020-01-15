@@ -15,13 +15,13 @@ def get_chain_root_files(rootdir):
     :param rootdir: The root directory to check
     :return:  The root names
     """
-    from getdist.chains import chainFiles
+    from getdist.chains import hasChainFiles
     pattern = os.path.join(rootdir, '*.paramnames')
     files = [os.path.splitext(f)[0] for f in glob.glob(pattern)]
     ending = 'updated.yaml'
     pattern = os.path.join(rootdir, "*" + ending)
     files += [f[:-len(ending)].rstrip("_.") for f in glob.glob(pattern)]
-    files = [f for f in files if chainFiles(os.path.join(rootdir, f), last_chain=1)]
+    files = [f for f in files if hasChainFiles(os.path.join(rootdir, f))]
     files.sort()
     return files
 

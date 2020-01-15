@@ -331,15 +331,15 @@ def run_test_program(plots=['dists_2D', 'dists_1D'], sims=100, nsamp=default_nsa
         join_subplots(g.subplots)
         plt.savefig('test_dists_2D_mbc%s_bco%s_N%s.pdf' % (mbc, bco, nsamp), bbox_inches='tight')
 
-    if False:
-        print('testing 1D gaussian MISE...')
-        scales, MISEs = get1DMises(test1D.gauss)
-        for scale, MISE in zip(scales, MISEs):
-            print(scale, MISE, np.sqrt(MISE))
-        print('testing 2D gaussian MISE...')
-        scales, MISEs = get2DMises(test2D.gauss)
-        for scale, MISE in zip(scales, MISEs):
-            print(scale, MISE, np.sqrt(MISE))
+    # if False:
+    #     print('testing 1D gaussian MISE...')
+    #     scales, MISEs = get1DMises(test1D.gauss)
+    #     for scale, MISE in zip(scales, MISEs):
+    #         print(scale, MISE, np.sqrt(MISE))
+    #     print('testing 2D gaussian MISE...')
+    #     scales, MISEs = get2DMises(test2D.gauss)
+    #     for scale, MISE in zip(scales, MISEs):
+    #         print(scale, MISE, np.sqrt(MISE))
 
 
 if __name__ == "__main__":

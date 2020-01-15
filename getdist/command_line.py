@@ -132,8 +132,6 @@ def getdist_script(args, exit_on_error=True):
             PCA_func = ['N'] * PCA_num  # No mapping
         PCA_NormParam = ini.string('PCA_normparam', '') or None
 
-    make_scatter_samples = ini.bool('make_scatter_samples', False)
-
     # ==============================================================================
 
     first_chain = ini.int('first_chain', 0)

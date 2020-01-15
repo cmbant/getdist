@@ -250,16 +250,15 @@ class KernelOptimizer2D(object):
         p[4, 0] = p_20
         p[2, 2] = p_11
 
-        if False:
-            p[0, 0] = self.psi([0, 0], tpsi)
-            self.p00 = p[0, 0]
-            p[1, 3] = self.psi_odd([1, 3], tpsi)
-            p[3, 1] = self.psi_odd([3, 1], tpsi)
-        else:
-            p[0, 0] = self.func2d([0, 0], tpsi)
-            self.p00 = p[0, 0]
-            p[1, 3] = self.func2d_odd([1, 3], tpsi)
-            p[3, 1] = self.func2d_odd([3, 1], tpsi)
+        # p[0, 0] = self.psi([0, 0], tpsi)
+        # self.p00 = p[0, 0]
+        # p[1, 3] = self.psi_odd([1, 3], tpsi)
+        # p[3, 1] = self.psi_odd([3, 1], tpsi)
+
+        p[0, 0] = self.func2d([0, 0], tpsi)
+        self.p00 = p[0, 0]
+        p[1, 3] = self.func2d_odd([1, 3], tpsi)
+        p[3, 1] = self.func2d_odd([3, 1], tpsi)
 
         self.p = p
         AMISE = self.AMISE(np.array([h_x, h_y, 0]))

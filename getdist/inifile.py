@@ -27,8 +27,10 @@ class IniFile(object):
         :param settings: a filename of a .ini file to read, or a dictionary of name/values
         :param keep_includes:
              - False: load all INCLUDE and DEFAULT files, making one params dictionary
-             - True: only load settings in main file, and store INCLUDE and DEFAULT entries into defaults and includes filename lists.
-        :param expand_environment_variables: whether to expand $(var) placeholders in parameter values using environment variables
+             - True: only load settings in main file, and store INCLUDE and DEFAULT entries into defaults
+               and includes filename lists.
+        :param expand_environment_variables: whether to expand $(var) placeholders in parameter values
+               using environment variables
         """
 
         self.params = dict()
@@ -78,7 +80,8 @@ class IniFile(object):
                 # Remove blank lines and comment lines from the python list of lists.
                 for line in textFileHandle:
                     s = line.strip()
-                    if s == 'END': break
+                    if s == 'END':
+                        break
                     if s.startswith('#'):
                         comments.append(s[1:].rstrip())
                         continue
@@ -91,15 +94,18 @@ class IniFile(object):
                         if eq >= 0:
                             key = s[0:eq].strip()
                             if key in self.params:
-                                if if_not_defined: continue
+                                if if_not_defined:
+                                    continue
                                 raise IniError('Error: duplicate key: ' + key + ' in ' + filename)
                             value = s[eq + 1:].strip()
                             if self.expand_environment_variables:
                                 value = self.expand_placeholders(value)
                             self.params[key] = value
                             self.readOrder.append(key)
-                            if len(comments): self.comments[key] = comments
-                    if not s.startswith('#'): comments = []
+                            if len(comments):
+                                self.comments[key] = comments
+                    if not s.startswith('#'):
+                        comments = []
 
             if keep_includes:
                 self.includes += fileincludes
@@ -131,15 +137,18 @@ class IniFile(object):
         :param filename:  name of file to save to
         """
 
-        if not filename: filename = self.original_filename
-        if not filename: raise IniError('No filename for iniFile.saveFile()')
+        if not filename:
+            filename = self.original_filename
+        if not filename:
+            raise IniError('No filename for iniFile.saveFile()')
         with open(filename, 'w') as f:
             f.write(str(self))
 
     def fileLines(self):
 
         def asIniText(value):
-            if type(value) == type(''): return value
+            if isinstance(value, type('')):
+                return value
             if type(value) == bool:
                 return str(value)[0]
             return str(value)
