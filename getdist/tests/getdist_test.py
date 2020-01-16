@@ -59,7 +59,7 @@ class GetDistFileTest(unittest.TestCase):
         os.chdir(self.tempdir)
         res = getdist_command([self.root])
         # Note this can fail if your local analysis defaults changes the default ignore_rows
-        self.assertTrue('-Ln(mean like)  = 2.30' in res)
+        self.assertTrue('-Ln(mean like)  = 2.30' in res, res)
         fname = 'testchain_pars.ini'
         getdist_command(['--make_param_file', fname])
         ini = IniFile(fname)

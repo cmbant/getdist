@@ -284,7 +284,8 @@ def getdist_script(args, exit_on_error=True):
         mc.getMargeStats().saveAsText(rootdirname + '.margestats')
 
         # Limits from global likelihood
-        if mc.loglikes is not None: mc.getLikeStats().saveAsText(rootdirname + '.likestats')
+        if mc.loglikes is not None:
+            mc.getLikeStats().saveAsText(rootdirname + '.likestats')
 
     # System command
     if finish_run_command:

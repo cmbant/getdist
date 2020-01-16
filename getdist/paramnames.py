@@ -162,6 +162,7 @@ class ParamList(object):
         :param names: a list of name strings to use
         """
         self.names = []
+        self.info_dict = None  # if read from yaml file, saved here
         if default:
             self.setDefault(default)
         if names is not None:
@@ -402,7 +403,8 @@ class ParamNames(ParamList):
             from getdist.yaml_tools import yaml_load_file
             from getdist.cobaya_interface import get_info_params, is_sampled_param
             from getdist.cobaya_interface import is_derived_param, _p_label, _p_renames
-            info_params = get_info_params(yaml_load_file(fileName))
+            self.info_dict = yaml_load_file(fileName)
+            info_params = get_info_params(self.info_dict)
             # first sampled, then derived
             self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
                                     renames=(info or {}).get(_p_renames))

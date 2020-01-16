@@ -11,7 +11,7 @@ import numpy as np
 import six
 from scipy.stats import norm
 import getdist
-from getdist import chains, types, covmat, ParamInfo, IniFile, ParamNames
+from getdist import chains, types, covmat, ParamInfo, IniFile, ParamNames, cobaya_interface
 from getdist.densities import Density1D, Density2D, DensityND
 from getdist.densities import getContourLevels as getOtherContourLevels
 from getdist.chains import Chains, chainFiles, lastModified, WeightedSampleError, ParamError
@@ -20,7 +20,7 @@ from getdist.cobaya_interface import MCSamplesFromCobaya
 import getdist.kde_bandwidth as kde
 from getdist.parampriors import ParamBounds
 
-pickle_version = 21
+pickle_version = 22
 
 
 class MCSamplesError(WeightedSampleError):
@@ -244,9 +244,22 @@ class MCSamples(Chains):
                 self.ignore_lines = 0
             self.label = self.label or self.properties.params.get('label', None)
             if 'sampler' not in kwargs:
-                self.sampler = self.properties.string('sampler', self.sampler)
+                self.setSampler(self.properties.string('sampler', self.sampler))
         else:
-            self.properties = None
+            if root and self.paramNames and self.paramNames.info_dict:
+                self.properties = IniFile()
+                if cobaya_interface.get_burn_removed(self.paramNames.info_dict):
+                    self.properties.params['burn_removed'] = True
+                    self.ignore_frac = 0.
+                    self.ignore_lines = 0
+                if not self.label:
+                    self.label = cobaya_interface.get_sample_label(self.paramNames.info_dict)
+                    self.properties.params['label'] = self.label
+                if 'sampler' not in kwargs:
+                    self.setSampler(cobaya_interface.get_sampler_type(self.paramNames.info_dict))
+                self.properties.params['sampler'] = self.sampler
+            else:
+                self.properties = None
 
         if samples is not None:
             self.readChains(samples, weights, loglikes)
@@ -278,7 +291,7 @@ class MCSamples(Chains):
         if isinstance(ranges, (list, tuple)):
             for i, minmax in enumerate(ranges):
                 self.ranges.setRange(self.parName(i), minmax)
-        elif isinstance(ranges, dict):
+        elif hasattr(ranges, "keys"):
             for key, value in ranges.items():
                 self.ranges.setRange(key, value)
         elif isinstance(ranges, ParamBounds):
@@ -420,7 +433,7 @@ class MCSamples(Chains):
         :param doUpdate: True if should update internal computed values, False otherwise (e.g. if want to make
                          other changes first)
         """
-        assert (settings is None or isinstance(settings, dict))
+        assert (settings is None or hasattr(settings, "keys"))
         if not ini:
             ini = self.ini
         elif isinstance(ini, six.string_types):
@@ -1984,15 +1997,15 @@ class MCSamples(Chains):
 
     def _readRanges(self):
         if self.root:
-            ranges_file_classic = self.root + '.ranges'
-            ranges_file_cobaya_old = (
-                    self.root + ('' if self.root.endswith((os.sep, "/")) else '__') + 'full.yaml')
-            ranges_file_cobaya = (
-                    self.root + ('' if self.root.endswith((os.sep, "/")) else '.') + 'updated.yaml')
-            for ranges_file in [ranges_file_classic, ranges_file_cobaya_old, ranges_file_cobaya]:
-                if os.path.isfile(ranges_file):
-                    self.ranges = ParamBounds(ranges_file)
-                    return
+            ranges_file = self.root + '.ranges'
+            if os.path.isfile(ranges_file):
+                self.ranges = ParamBounds(ranges_file)
+                return
+            ranges_file = cobaya_interface.cobaya_params_file(self.root)
+            if ranges_file:
+                self.ranges = ParamBounds(ranges_file)
+                return
+
         self.ranges = ParamBounds()
 
     def getBounds(self):

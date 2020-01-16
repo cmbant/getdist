@@ -7,6 +7,7 @@ from copy import deepcopy
 import logging
 from collections import OrderedDict as odict
 import numpy as np
+import os
 
 # Conventions
 _label = "label"
@@ -27,6 +28,23 @@ _chi2 = "chi2"
 _weight = "weight"
 _minuslogpost = "minuslogpost"
 _post = "post"
+
+
+def cobaya_params_file(root):
+    file = root + ('' if root.endswith((os.sep, "/")) else '.') + 'updated.yaml'
+    if not os.path.exists(file):
+        file = root + ('' if root.endswith((os.sep, "/")) else '__') + 'full.yaml'
+        if os.path.exists(file):
+            return file
+    return None
+
+
+def yaml_file_or_dict(file_or_dict):
+    if isinstance(file_or_dict, string_types):
+        from getdist.yaml_tools import yaml_load_file
+        return yaml_load_file(file_or_dict)
+    else:
+        return file_or_dict
 
 
 def MCSamplesFromCobaya(info, collections, name_tag=None,
@@ -201,17 +219,16 @@ def expand_info_param(info_param):
     return info_param
 
 
-def get_sampler_type(filename_or_info):
-    if isinstance(filename_or_info, string_types):
-        from getdist.yaml_tools import yaml_load_file
-        filename_or_info = yaml_load_file(filename_or_info)
-    default_sampler_for_chain_type = "mcmc"
-    sampler = list(filename_or_info.get(_sampler, [default_sampler_for_chain_type]))[0]
+def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):
+    sampler = list(yaml_file_or_dict(filename_or_info).get(_sampler, [default_sampler_for_chain_type]))[0]
     return {"mcmc": "mcmc", "polychord": "nested", "minimize": "minimize"}[sampler]
 
 
 def get_sample_label(filename_or_info):
-    if isinstance(filename_or_info, string_types):
-        from getdist.yaml_tools import yaml_load_file
-        filename_or_info = yaml_load_file(filename_or_info)
-    return filename_or_info.get(_label, None)
+    return yaml_file_or_dict(filename_or_info).get(_label, None)
+
+
+def get_burn_removed(filename_or_info):
+    info = get_info_params(yaml_file_or_dict(filename_or_info))
+    # if skip burn in *has already been done*
+    return info.get(_post, {}).get("skip", 0)

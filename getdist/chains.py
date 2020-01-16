@@ -5,7 +5,7 @@ import numpy as np
 from collections import OrderedDict
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
-import getdist.cobaya_interface as cobaya
+from getdist import cobaya_interface
 import pickle
 import six
 import logging
@@ -980,31 +980,26 @@ class Chains(WeightedSamples):
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
         self.root = root
         if not paramNamesFile and root:
-            mid = not root.endswith((os.sep, "/"))
-            endings = ['.paramnames', ('__' if mid else '') + 'full.yaml',
-                       ('.' if mid else '') + 'updated.yaml']
-            try:
-                paramNamesFile = next(
-                    root + ending for ending in endings if os.path.exists(root + ending))
-            except StopIteration:
-                paramNamesFile = None
+            if os.path.exists(root + '.paramnames'):
+                paramNamesFile = root + '.paramnames'
+            else:
+                paramNamesFile = cobaya_interface.cobaya_params_file(root)
         self.setParamNames(paramNamesFile or names)
         if labels is not None:
             self.paramNames.setLabels(labels)
         if renames is not None:
             self.updateRenames(renames)
-        # If Cobaya sample and label not set manually via keyword, try to load from yaml
-        if not self.label and isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith(".yaml"):
-            self.label = cobaya.get_sample_label(paramNamesFile)
         # Sampler that generated the chain -- assume "mcmc"
         if isinstance(sampler, six.string_types):
-            if sampler.lower() not in ["mcmc", "nested", "uncorrelated"]:
-                raise ValueError("Unknown sampler type %s" % sampler)
-            self.sampler = sampler.lower()
-        elif isinstance(paramNamesFile, six.string_types) and paramNamesFile.endswith("yaml"):
-            self.sampler = cobaya.get_sampler_type(paramNamesFile)
+            self.setSampler(sampler)
         else:
             self.sampler = "mcmc"
+
+    def setSampler(self, sampler):
+        sampler = sampler.lower()
+        if sampler not in ["mcmc", "nested", "uncorrelated"]:
+            raise ValueError("Unknown sampler type %s" % sampler)
+        self.sampler = sampler
 
     def setParamNames(self, names=None):
         """

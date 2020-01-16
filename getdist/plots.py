@@ -433,7 +433,7 @@ class MCSampleAnalysis(_BaseObject):
         self.analysis_settings = {}
         if isinstance(settings, IniFile):
             ini = settings
-        elif isinstance(settings, dict):
+        elif hasattr(settings, "keys"):
             ini = IniFile(getdist.default_getdist_settings)
             ini.params.update(settings)
         else:
@@ -2219,7 +2219,7 @@ class GetDistPlotter(_BaseObject):
     @staticmethod
     def _get_marker(markers, index, name):
         if markers is not None:
-            if isinstance(markers, dict):
+            if hasattr(markers, "keys"):
                 return markers.get(name)
             elif index < len(markers):
                 return markers[index]
