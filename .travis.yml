@@ -40,6 +40,7 @@ install:
   - python --version
   - pip install .
   - getdist --help
+  - git clone --depth=1 https://github.com/cmbant/getdist_testchains
 
 script:
   - python -m unittest getdist.tests.getdist_test

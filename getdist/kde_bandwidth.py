@@ -5,8 +5,8 @@ from scipy import fftpack
 try:
     from scipy.optimize import fsolve, brentq, minimize
 except ImportError:
-    print(
-        'Install scipy version 11 or higher (or e.g. module load python 2.7.5 or higher which is likely linked to later scipy)')
+    print('Install scipy version 11 or higher (or e.g. module load python 2.7.5 or higher which is '
+          'likely linked to later scipy)')
     raise
 
 from getdist.convolve import dct2d
@@ -80,8 +80,10 @@ def bin_samples(samples, range_min=None, range_max=None, nbins=2046, edge_fac=0.
     mx = np.max(samples)
     mn = np.min(samples)
     delta = mx - mn
-    if range_min is None: range_min = mn - delta * edge_fac
-    if range_max is None: range_max = mx + delta * edge_fac
+    if range_min is None:
+        range_min = mn - delta * edge_fac
+    if range_max is None:
+        range_max = mx + delta * edge_fac
     R = range_max - range_min
     dx = R / (nbins - 1)
     bins = (samples - range_min) / dx
@@ -113,7 +115,8 @@ def gaussian_kde_bandwidth_binned(data, Neff, a=None):
     """
     I = np.arange(1, data.size) ** 2
     logI = np.log(I)
-    if a is None: a = fftpack.dct(data / np.sum(data))
+    if a is None:
+        a = fftpack.dct(data / np.sum(data))
     a2 = (a[1:] / 2) ** 2
     try:
         n_scaling = Neff ** (-1. / 5)
@@ -228,7 +231,8 @@ class KernelOptimizer2D(object):
         return var + bias
 
     def get_h(self, do_correlation=None):
-        if do_correlation is None: do_correlation = self.do_correlation
+        if do_correlation is None:
+            do_correlation = self.do_correlation
         p = np.zeros((5, 5))
         fixed = False
         tpsi = self.t_star

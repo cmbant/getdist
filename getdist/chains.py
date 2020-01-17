@@ -292,7 +292,8 @@ class WeightedSamples(object):
             self.samples = samples
             self.n = self.samples.shape[1]
             self.numrows = self.samples.shape[0]
-            if min_weight_ratio is None: min_weight_ratio = self.min_weight_ratio
+            if min_weight_ratio is None:
+                min_weight_ratio = self.min_weight_ratio
             if min_weight_ratio is not None and min_weight_ratio >= 0:
                 self.setMinWeightRatio(min_weight_ratio)
         self._weightsChanged()
@@ -401,7 +402,8 @@ class WeightedSamples(object):
 
         :return: A numpy array of variances.
         """
-        if self.means is None: self.setMeans()
+        if self.means is None:
+            self.setMeans()
         self.vars = np.empty(self.n)
         for i in range(self.n):
             self.vars[i] = self.weights.dot((self.samples[:, i] - self.means[i]) ** 2) / self.norm
@@ -426,15 +428,18 @@ class WeightedSamples(object):
 
         :param paramVec: an array of parameter values, or the int index of the parameter in stored samples to use
         :param maxOff: maximum autocorrelation distance to return
-        :param weight_units: False to get result in sample point (row) units; weight_units=False gives standard definition for raw chains
-        :param normalized: Set to False to get covariance (note even if normalized, corr[0]<>1 in general unless weights are unity).
+        :param weight_units: False to get result in sample point (row) units; weight_units=False gives standard
+                             definition for raw chains
+        :param normalized: Set to False to get covariance
+                          (note even if normalized, corr[0]<>1 in general unless weights are unity).
         :return: zero-based array giving auto-correlations
         """
         if maxOff is None:
             maxOff = self.n - 1
         d = self.mean_diff(paramVec) * self.weights
         corr = autoConvolve(d, n=maxOff + 1, normalize=True)
-        if normalized: corr /= self.var(paramVec)
+        if normalized:
+            corr /= self.var(paramVec)
         if weight_units:
             return corr * d.size / self.get_norm()
         else:
@@ -449,7 +454,8 @@ class WeightedSamples(object):
                              definition for raw chains
         :param min_corr: specifies a minimum value of the autocorrelation to use, e.g. where sampling noise is
                          typically as large as the calculation
-        :param corr: The auto-correlation array to use, calculated internally by default using :func:`getAutocorrelation`
+        :param corr: The auto-correlation array to use, calculated internally by default
+                     using :func:`getAutocorrelation`
         :return: the auto-correlation length
         """
         if corr is None:
@@ -580,7 +586,8 @@ class WeightedSamples(object):
         Calculates the weighted sum of a parameter vector, sum_i w_i p_i
 
         :param paramVec: array of parameter values or int index of parameter to use
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                      (where x>=5 would mean only process samples with x>=5).
         :return: weighted sum
         """
         paramVec = self._makeParamvec(paramVec)
@@ -592,7 +599,8 @@ class WeightedSamples(object):
         """
         gets the normalization, the sum of the sample weights: sum_i w_i
 
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                      (where x>=5 would mean only process samples with x>=5).
         :return: normalization
         """
         if where is None:
@@ -607,7 +615,8 @@ class WeightedSamples(object):
         Get the mean of the given parameter vector.
 
         :param paramVec: array of parameter values or int index of parameter to use
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                      (where x>=5 would mean only process samples with x>=5).
         :return: parameter mean
         """
         if isinstance(paramVec, (list, tuple)):
@@ -620,7 +629,8 @@ class WeightedSamples(object):
         Get the variance of the given parameter vector.
 
         :param paramVec: array of parameter values or int index of parameter to use
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                      (where x>=5 would mean only process samples with x>=5).
         :return: parameter variance
         """
         if isinstance(paramVec, (list, tuple)):
@@ -635,7 +645,8 @@ class WeightedSamples(object):
         Get the standard deviation of the given parameter vector.
 
         :param paramVec: array of parameter values or int index of parameter to use
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                     (where x>=5 would mean only process samples with x>=5).
         :return: parameter standard deviation.
         """
         return np.sqrt(self.var(paramVec, where))
@@ -645,7 +656,8 @@ class WeightedSamples(object):
         Get parameter covariance
 
         :param pars: if specified, a list of parameter vectors or int indices to use
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                      (where x>=5 would mean only process samples with x>=5).
         :return: The covariance matrix
         """
         diffs = self.mean_diffs(pars, where)
@@ -679,7 +691,8 @@ class WeightedSamples(object):
         Calculates an array of differences between a parameter vector and the mean parameter value
 
         :param paramVec: array of parameter values or int index of parameter to use
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                      (where x>=5 would mean only process samples with x>=5).
         :return: array of p_i - mean(p_i)
         """
         if isinstance(paramVec, _int_types) and paramVec >= 0 and where is None:
@@ -697,7 +710,8 @@ class WeightedSamples(object):
         Calculates a list of parameter vectors giving distances from parameter means
 
         :param pars: if specified, list of parameter vectors or int parameter indices to use
-        :param where: if specified, a filter for the samples to use (where x>=5 would mean only process samples with x>=5).
+        :param where: if specified, a filter for the samples to use
+                      (where x>=5 would mean only process samples with x>=5).
         :return: list of arrays p_i-mean(p-i) for each parameter
         """
         if pars is None:
@@ -743,7 +757,8 @@ class WeightedSamples(object):
         Calculate sample confidence limits, not using kernel densities just counting samples in the tails
 
         :param paramVec: array of parameter values or int index of parameter to use
-        :param limfrac: fraction of samples in the tail, e.g. 0.05 for a 95% one-tail limit, or 0.025 for a 95% two-tail limit
+        :param limfrac: fraction of samples in the tail,
+                        e.g. 0.05 for a 95% one-tail limit, or 0.025 for a 95% two-tail limit
         :param upper: True to get upper limit, False for lower limit
         :param start: Start index for the vector to use
         :param end: The end index, use None to go all the way to the end of the vector.
@@ -783,7 +798,8 @@ class WeightedSamples(object):
         :param weights: The weights to thin, None if this should use the weights stored in the object.
         :return: array of indices of samples to keep
         """
-        if weights is None:  weights = self.weights
+        if weights is None:
+            weights = self.weights
         numrows = len(weights)
         norm1 = np.sum(weights)
         weights = weights.astype(np.int)
@@ -808,13 +824,15 @@ class WeightedSamples(object):
                 if mult + tot < factor:
                     tot += mult
                     i += 1
-                    if i < numrows: mult = weights[i]
+                    if i < numrows:
+                        mult = weights[i]
                 else:
                     thin_ix[ix] = i
                     ix += 1
                     if mult == factor - tot:
                         i += 1
-                        if i < numrows: mult = weights[i]
+                        if i < numrows:
+                            mult = weights[i]
                     else:
                         mult -= (factor - tot)
                     tot = 0
@@ -903,14 +921,16 @@ class WeightedSamples(object):
         """
         Removes parameters that do not vary (are the same in all samples)
 
-        :return: list of fixed parameter indices that were removed
+        :return: tuple (list of fixed parameter indices that were removed, fixed values)
         """
         fixed = []
+        values = []
         for i in range(self.samples.shape[1]):
             if np.all(self.samples[:, i] == self.samples[0, i]):
                 fixed.append(i)
+                values.append(self.samples[0, i])
         self.changeSamples(np.delete(self.samples, fixed, 1))
-        return fixed
+        return fixed, values
 
     def removeBurn(self, remove=0.3):
         """
@@ -1115,7 +1135,8 @@ class Chains(WeightedSamples):
         Creates a :class:`~.chains.ParSamples` object, with variables giving vectors for all the parameters,
         for example samples.getParams().name1 would be the vector of samples with name 'name1'
 
-        :return: A :class:`~.chains.ParSamples` object containing all the parameter vectors, with attributes given by the parameter names
+        :return: A :class:`~.chains.ParSamples` object containing all the parameter vectors, with attributes
+                given by the parameter names
         """
         pars = ParSamples()
         self.setParams(pars)
@@ -1257,7 +1278,8 @@ class Chains(WeightedSamples):
         c.f. Brooks and Gelman 1997.
 
         :param nparam: The number of parameters (starting at first), by default uses all of them
-        :param chainlist: list of :class:`~.chains.WeightedSamples`, the samples to use. Defaults to all the separate chains in this instance.
+        :param chainlist: list of :class:`~.chains.WeightedSamples`, the samples to use.
+                          Defaults to all the separate chains in this instance.
         :return: array of  var(mean)/mean(var) for orthogonalized parameters
         """
         if chainlist is None:
@@ -1286,7 +1308,8 @@ class Chains(WeightedSamples):
         c.f. Brooks and Gelman 1997.
 
         :param nparam: The number of parameters, by default uses all
-        :param chainlist: list of :class:`~.chains.WeightedSamples`, the samples to use. Defaults to all the separate chains in this instance.
+        :param chainlist: list of :class:`~.chains.WeightedSamples`, the samples to use. Defaults to all the
+                          separate chains in this instance.
         :return: The worst var(mean)/mean(var) for orthogonalized parameters. Should be <<1 for good convergence.
         """
         return np.max(self.getGelmanRubinEigenvalues(nparam, chainlist))
@@ -1309,7 +1332,8 @@ class Chains(WeightedSamples):
     def getSeparateChains(self):
         """
         Gets a list of samples for separate chains.
-        If the chains have already been combined, uses the stored sample offsets to reconstruct the array (generally no array copying)
+        If the chains have already been combined, uses the stored sample offsets to reconstruct the array
+        (generally no array copying)
 
         :return: The list of :class:`~.chains.WeightedSamples` for each chain.
         """
@@ -1325,7 +1349,8 @@ class Chains(WeightedSamples):
         """
         Remove a fraction of the samples as burn in
 
-        :param ignore_frac: fraction of sample points to remove from the start of the samples, or each chain if not combined
+        :param ignore_frac: fraction of sample points to remove from the start of the samples, or each chain
+                            if not combined
         """
         if self.samples is not None:
             self.removeBurn(ignore_frac)
@@ -1340,15 +1365,21 @@ class Chains(WeightedSamples):
         Delete parameters that are fixed (the same value in all samples)
         """
         if self.samples is not None:
-            fixed = WeightedSamples.deleteFixedParams(self)
+            fixed, values = WeightedSamples.deleteFixedParams(self)
             self.chains = None
         else:
             fixed = []
+            values = []
             chain = self.chains[0]
             for i in range(chain.n):
-                if np.all(chain.samples[:, i] == chain.samples[0, i]): fixed.append(i)
+                if np.all(chain.samples[:, i] == chain.samples[0, i]):
+                    fixed.append(i)
+                    values.append(chain.samples[0, i])
             for chain in self.chains:
                 chain.changeSamples(np.delete(chain.samples, fixed, 1))
+        if hasattr(self, 'ranges'):
+            for ix, value in zip(fixed, values):
+                self.ranges.setFixed(self.paramNames.names[ix].name, value)
         self.paramNames.deleteIndices(fixed)
         self._getParamIndices()
 
@@ -1357,7 +1388,8 @@ class Chains(WeightedSamples):
         Saves the samples as text files, including parameter names as .paramnames file.
 
         :param root: The root name to use
-        :param chain_index: Optional index to be used for the filename, zero based, e.g. for saving one of multiple chains
+        :param chain_index: Optional index to be used for the filename, zero based, e.g. for saving one
+                            of multiple chains
         :param make_dirs: True if this should (recursively) create the directory if it doesn't exist
         """
         super(Chains, self).saveAsText(root, chain_index, make_dirs)

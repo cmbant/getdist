@@ -363,3 +363,22 @@ class UtilTest(unittest.TestCase):
             os.remove(temp)
 
         self.assertFalse(len(fails), "Too few ticks for %s" % fails)
+
+
+class CobayaTest(unittest.TestCase):
+    def test_chains(self):
+        path = os.getenv('TRAVIS_BUILD_DIR', os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+        path = os.path.normpath(os.path.join(path, 'getdist_testchains', 'cobaya'))
+        if os.path.exists(path):
+            root = os.path.join(path, 'DES_shear')
+            samples = loadMCSamples(root, settings={'ignore_rows': 0.3}, no_cache=True)
+            self.assertAlmostEqual(samples.mean('ombh2'), 0.02764592190482377, 6)
+            pars = samples.getParamSampleDict(10)
+            self.assertAlmostEqual(0.06, pars['mnu'], 6)
+            self.assertAlmostEqual(samples.getUpper('ns'), 1.07, 6)
+            self.assertAlmostEqual(samples.getLower('ns'), 0.87, 6)
+            self.assertEqual(samples.getLower('DES_DzS2'), None)
+            self.assertAlmostEqual(0, pars['omk'])
+            from getdist.command_line import getdist_command
+            res = getdist_command([root])
+            self.assertTrue('-log(Like) = 95.49' in res, res)

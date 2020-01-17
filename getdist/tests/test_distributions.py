@@ -40,7 +40,8 @@ def compareSimPlot(g, samples, density, par='x', normalized=True):
     g.plot_1d(samples, par, colors=['C0'], normalized=normalized)
     density.normalize('integral' if normalized else 'max')
     plt.plot(density.x, density.P, color='C3')
-    if normalized: plt.ylim(0, plt.gca().get_ylim()[1] * 1.1)
+    if normalized:
+        plt.ylim(0, plt.gca().get_ylim()[1] * 1.1)
 
 
 def plot1DSim(g, prob, nsamp=default_nsamp, settings={}):
@@ -217,8 +218,10 @@ def plot_compare_method(ax, prob, colors=['k'], sims=100, nsamp=default_nsamp,
                         scalings=[0.3, 0.5, 0.7, 0.9, 1, 1.1, 1.3, 1.5, 1.7], test_settings=[None], linestyles=['-']):
     # compare Parzen estimator with higher order
     print(prob.label, ', size = ', nsamp)
-    if len(colors) == 1: colors = colors * len(scalings)
-    if len(linestyles) == 1: linestyles = linestyles * len(scalings)
+    if len(colors) == 1:
+        colors = colors * len(scalings)
+    if len(linestyles) == 1:
+        linestyles = linestyles * len(scalings)
     miselist = np.empty((len(scalings), len(test_settings)))
     for i, (settings, ls, color) in enumerate(zip(test_settings, linestyles, colors)):
         if prob.dim == 1:

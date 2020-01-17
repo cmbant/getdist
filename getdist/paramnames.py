@@ -133,11 +133,13 @@ class ParamInfo(object):
 
     def setFromStringWithComment(self, items):
         self.setFromString(items[0])
-        if items[1] != 'NULL': self.comment = items[1]
+        if items[1] != 'NULL':
+            self.comment = items[1]
 
     def string(self, wantComments=True):
         res = self.name
-        if self.isDerived: res += '*'
+        if self.isDerived:
+            res += '*'
         res = res + '\t' + self.label
         if wantComments and self.comment != '':
             res = res + '\t#' + self.comment
@@ -158,7 +160,8 @@ class ParamList(object):
         """
         :param fileName: name of .paramnames file to load from
         :param setParamNameFile: override specific parameter names' labels using another file
-        :param default: set to int>0 to automatically generate that number of default names and labels (param1, p_{1}, etc.)
+        :param default: set to int>0 to automatically generate that number of default names and labels
+                       (param1, p_{1}, etc.)
         :param names: a list of name strings to use
         """
         self.names = []
@@ -323,7 +326,7 @@ class ParamList(object):
         return textFileLines
 
     def deleteIndices(self, indices):
-        self.names = [name for i, name in enumerate(self.names) if not i in indices]
+        self.names = [name for i, name in enumerate(self.names) if i not in indices]
 
     def filteredCopy(self, params):
         usedNames = self.__class__()
@@ -343,7 +346,8 @@ class ParamList(object):
         :param name: name tag for the new parameter
         :param kwargs: other arguments for constructing the new :class:`ParamInfo`
         """
-        if kwargs.get('derived') is None: kwargs['derived'] = True
+        if kwargs.get('derived') is None:
+            kwargs['derived'] = True
         kwargs['name'] = name
         self.names.append(ParamInfo(**kwargs))
         return self.names[-1]
@@ -380,7 +384,8 @@ class ParamList(object):
 
 class ParamNames(ParamList):
     """
-    Holds an orders list of :class:`ParamInfo` objects describing a set of parameters, inheriting from :class:`ParamList`.
+    Holds an orders list of :class:`ParamInfo` objects describing a set of parameters,
+    inheriting from :class:`ParamList`.
 
     Can be constructed programmatically, and also loaded and saved to a .paramnames files, which is a plain text file
     giving the names and optional label and comment for each parameter, in order.

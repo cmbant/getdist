@@ -177,7 +177,8 @@ class IniFile(object):
         return self.params
 
     def delete_keys(self, keys):
-        for k in keys: self.params.pop(k, None)
+        for k in keys:
+            self.params.pop(k, None)
 
     def _undefined(self, name):
         raise IniError('parameter not defined: ' + name)
@@ -243,7 +244,8 @@ class IniFile(object):
         """
         if self.isSet(name):
             s = self.params[name]
-            if isinstance(s, bool): return s
+            if isinstance(s, bool):
+                return s
             if s[0] == 'T':
                 return True
             elif s[0] == 'F':

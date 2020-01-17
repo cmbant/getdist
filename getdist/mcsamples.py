@@ -542,7 +542,8 @@ class MCSamples(Chains):
         :param cool: if not 1, cools the samples by this factor
         """
         nparams = self.samples.shape[1]
-        if cool != 1: logging.info('Cooled thinned output with temp: %s', cool)
+        if cool != 1:
+            logging.info('Cooled thinned output with temp: %s', cool)
         MaxL = np.max(self.loglikes)
         with open(fname, 'w') as f:
             i = 0
@@ -612,9 +613,9 @@ class MCSamples(Chains):
         with optional (log modulus) mapping to find power law fits.
 
         :param params: List of names of the parameters to use
-        :param param_map: A transformation to apply to parameter values;
-                        A list or string containing either N (no transformation) or L (for log transform) for each parameter.
-                        By default uses log if no parameter values cross zero
+        :param param_map: A transformation to apply to parameter values;  A list or string containing
+                          either N (no transformation) or L (for log transform) for each parameter.
+                          By default uses log if no parameter values cross zero
 
         :param normparam: optional name of parameter to normalize result (i.e. this parameter will have unit power)
         :param writeDataToFile: True if should write the output to file.
@@ -680,7 +681,8 @@ class MCSamples(Chains):
             PCmean[i] = np.dot(self.weights, PCdata[:, i]) / self.norm
             PCdata[:, i] -= PCmean[i]
             sd[i] = np.sqrt(np.dot(self.weights, PCdata[:, i] ** 2) / self.norm)
-            if sd[i] != 0: PCdata[:, i] /= sd[i]
+            if sd[i] != 0:
+                PCdata[:, i] /= sd[i]
 
         PCAtext += "\n"
         PCAtext += 'Correlation matrix for reduced parameters\n'
@@ -735,7 +737,8 @@ class MCSamples(Chains):
         nrows = PCdata.shape[0]
         for i in range(nrows):
             PCdata[i, :] = np.dot(u, PCdata[i, :])
-            if doexp: PCdata[i, :] = np.exp(PCdata[i, :])
+            if doexp:
+                PCdata[i, :] = np.exp(PCdata[i, :])
 
         PCAtext += '\n'
         PCAtext += 'Principle components\n'
@@ -767,8 +770,8 @@ class MCSamples(Chains):
 
         # Find out how correlated these components are with other parameters
         PCAtext += 'Correlations of principle components\n'
-        l = ["%8i" % i for i in range(1, n + 1)]
-        PCAtext += '%s\n' % ("".join(l))
+        comps = ["%8i" % i for i in range(1, n + 1)]
+        PCAtext += '%s\n' % ("".join(comps))
 
         for i in range(n):
             PCdata[:, i] = (PCdata[:, i] - newmean[i]) / newsd[i]
@@ -840,13 +843,15 @@ class MCSamples(Chains):
         num_chains_used = len(chainlist)
         if num_chains_used > 1 and feedback:
             print('Number of chains used = ', num_chains_used)
-        for chain in chainlist: chain.setDiffs()
+        for chain in chainlist:
+            chain.setDiffs()
         parForm = self.paramNames.parFormat()
         parNames = [parForm % self.parName(j) for j in range(nparam)]
         limits = np.array([1 - (1 - test_confidence) / 2, (1 - test_confidence) / 2])
 
         if 'CorrLengths' in what:
-            lines += "Parameter autocorrelation lengths (effective number of samples N_eff = tot weight/weight length)\n"
+            lines += "Parameter autocorrelation lengths " \
+                     "(effective number of samples N_eff = tot weight/weight length)\n"
             lines += "\n"
             lines += parForm % "" + '%15s %15s %15s\n' % ('Weight Length', 'Sample length', 'N_eff')
             maxoff = np.min([chain.weights.size // 10 for chain in chainlist])
@@ -860,7 +865,8 @@ class MCSamples(Chains):
                 N = corr[0] + 2 * np.sum(corr[1:ix])
                 maxN = max(N, maxN)
                 form = '%15.2E'
-                if self.mean_mult > 1: form = '%15.2f'
+                if self.mean_mult > 1:
+                    form = '%15.2f'
                 lines += parNames[j] + form % N + ' %15.2f %15i\n' % (N / self.mean_mult, self.norm / N)
             self.indep_thin = maxN
             lines += "\n"
@@ -960,7 +966,8 @@ class MCSamples(Chains):
                                 while True:
                                     thin_ix = self.thin_indices(thin_fac[ix], chain.weights)
                                     thin_rows = len(thin_ix)
-                                    if thin_rows < 2: break
+                                    if thin_rows < 2:
+                                        break
                                     binchain = np.ones(thin_rows, dtype=np.int)
                                     binchain[chain.samples[thin_ix, j] >= u] = 0
                                     indexes = binchain[:-2] * 4 + binchain[1:-1] * 2 + binchain[2:]
@@ -968,7 +975,7 @@ class MCSamples(Chains):
                                     tran = np.bincount(indexes, minlength=8).reshape((2, 2, 2))
                                     # tran[:, :, :] = 0
                                     # for i in range(2, thin_rows):
-                                    #                                        tran[binchain[i - 2]][binchain[i - 1]][binchain[i]] += 1
+                                    #     tran[binchain[i - 2]][binchain[i - 1]][binchain[i]] += 1
 
                                     # Test whether 2nd order is better than Markov using BIC statistic
                                     g2 = 0
@@ -985,7 +992,8 @@ class MCSamples(Chains):
                                                     g2 += math.log(focus / fitted) * focus
                                     g2 *= 2
 
-                                    if g2 - math.log(float(thin_rows - 2)) * 2 < 0: break
+                                    if g2 - math.log(float(thin_rows - 2)) * 2 < 0:
+                                        break
                                     thin_fac[ix] += 1
 
                                 # Get Markov transition probabilities for binary processes
@@ -1011,7 +1019,8 @@ class MCSamples(Chains):
                         while True:
                             thin_ix = self.thin_indices(thin_fac[ix], chain.weights)
                             thin_rows = len(thin_ix)
-                            if thin_rows < 2: break
+                            if thin_rows < 2:
+                                break
                             binchain = np.ones(thin_rows, dtype=np.int)
                             binchain[chain.samples[thin_ix, hardest] >= u] = 0
                             indexes = binchain[:-1] * 2 + binchain[1:]
@@ -1036,14 +1045,16 @@ class MCSamples(Chains):
                                         g2 += np.log(focus / fitted) * focus
                             g2 *= 2
 
-                            if g2 - np.log(float(thin_rows - 1)) < 0: break
+                            if g2 - np.log(float(thin_rows - 1)) < 0:
+                                break
 
                             thin_fac[ix] += 1
                     except LoopException:
                         pass
                     except:
                         thin_fac[ix] = 0
-                    if thin_fac[ix] and thin_rows < 2: thin_fac[ix] = 0
+                    if thin_fac[ix] and thin_rows < 2:
+                        thin_fac[ix] = 0
 
                 lines += "Raftery&Lewis statistics\n"
                 lines += "\n"
@@ -1069,7 +1080,8 @@ class MCSamples(Chains):
                 lines += "\n"
 
             if 'CorrSteps' in what:
-                # Get correlation lengths. We ignore the fact that there are jumps between chains, so slight underestimate
+                # Get correlation lengths.
+                # We ignore the fact that there are jumps between chains, so slight underestimate
                 lines += "Parameter auto-correlations as function of step separation\n"
                 lines += "\n"
                 if self.corr_length_thin != 0:
@@ -1290,15 +1302,18 @@ class MCSamples(Chains):
         return self._initParam(self.paramNames.names[j], paramVec, self.means[j], self.sddev[j], paramConfid)
 
     def _initParam(self, par, paramVec, mean=None, sddev=None, paramConfid=None):
-        if mean is None: mean = paramVec.mean()
-        if sddev is None: sddev = paramVec.std()
+        if mean is None:
+            mean = paramVec.mean()
+        if sddev is None:
+            sddev = paramVec.std()
         par.err = sddev
         par.mean = mean
         par.param_min = np.min(paramVec)
         par.param_max = np.max(paramVec)
         paramConfid = paramConfid or self.initParamConfidenceData(paramVec)
         # sigma_range is estimate related to shape of structure in the distribution = std dev for Gaussian
-        # search for peaks using quantiles, e.g. like simplified version of Janssen 95 (http://dx.doi.org/10.1080/10485259508832654)
+        # search for peaks using quantiles,
+        # e.g. like simplified version of Janssen 95 (http://dx.doi.org/10.1080/10485259508832654)
         confid_points = np.linspace(0.1, 0.9, 9)
         confids = self.confidence(paramConfid,
                                   np.array([self.range_confidence, 1 - self.range_confidence] + list(confid_points)))
@@ -1393,7 +1408,8 @@ class MCSamples(Chains):
         :return: A :class:`~.densities.Density1D` instance
         """
 
-        if self.needs_update: self.updateBaseStatistics()
+        if self.needs_update:
+            self.updateBaseStatistics()
         j = self._parAndNumber(j)[0]
         if j is None:
             return None
@@ -1446,7 +1462,8 @@ class MCSamples(Chains):
         fine_x = np.linspace(binmin, binmax, fine_bins)
         density1D = Density1D(fine_x, P=conv, view_ranges=[par.range_min, par.range_max])
 
-        if meanlikes: rawbins = conv.copy()
+        if meanlikes:
+            rawbins = conv.copy()
 
         if par.has_limits and boundary_correction_order >= 0:
             # correct for cuts allowing for normalization over window
@@ -1515,7 +1532,8 @@ class MCSamples(Chains):
                 density1D.P /= a0
 
         density1D.normalize('max', in_place=True)
-        if not kwargs: self.density1D[par.name] = density1D
+        if not kwargs:
+            self.density1D[par.name] = density1D
 
         if meanlikes:
             ix = density1D.P > 0
@@ -1594,7 +1612,8 @@ class MCSamples(Chains):
         :param j2: name or index of the y parameter.
         :param num_plot_contours: number of contours to calculate and return in density.contours
         :param get_density: only get the 2D marginalized density, don't calculate confidence level members
-        :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
+        :param meanlikes: calculate mean likelihoods as well as marginalized density
+                          (returned as array in density.likes)
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
 
             - **fine_bins_2D**
@@ -1766,7 +1785,8 @@ class MCSamples(Chains):
             return density
 
         ncontours = len(self.contours)
-        if num_plot_contours: ncontours = min(num_plot_contours, ncontours)
+        if num_plot_contours:
+            ncontours = min(num_plot_contours, ncontours)
         contours = self.contours[:ncontours]
 
         logging.debug('time 2D convolutions: %s', time.time() - start)
@@ -1857,7 +1877,8 @@ class MCSamples(Chains):
         :param kwargs: keyword arguments for the :meth:`~.mcsamples.MCSamples.getRawNDDensityGridData` function
         :return: :class:`~.densities.DensityND` instance
         """
-        if self.needs_update: self.updateBaseStatistics()
+        if self.needs_update:
+            self.updateBaseStatistics()
         density = self.getRawNDDensityGridData(xs, get_density=True, **kwargs)
         if normalized:
             density.normalize(in_place=True)
@@ -1872,8 +1893,10 @@ class MCSamples(Chains):
         :param js: vector of names or indices of the x_i parameters
         :param num_plot_contours: number of contours to calculate and return in density.contours
         :param get_density: only get the ND marginalized density, no additional plot data, no contours.
-        :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
-        :param maxlikes: calculate the profile likelihoods in addition to the others (returned as array in density.maxlikes)
+        :param meanlikes: calculate mean likelihoods as well as marginalized density
+                         (returned as array in density.likes)
+        :param maxlikes: calculate the profile likelihoods in addition to the others
+                         (returned as array in density.maxlikes)
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
 
         :return: a :class:`~.densities.DensityND` instance
@@ -1886,7 +1909,8 @@ class MCSamples(Chains):
 
         jv, parv = zip(*[self._parAndNumber(j) for j in js])
 
-        if None in jv: return None
+        if None in jv:
+            return None
 
         [self._initParamRanges(j) for j in jv]
 
@@ -2086,8 +2110,9 @@ class MCSamples(Chains):
         """
         Get best fit sample and n-D confidence limits, and various likelihood based statistics
 
-        :return: a :class:`~.types.LikeStats` instance storing N-D limits for parameter i in result.names[i].ND_limit_top,
-                 result.names[i].ND_limit_bot, and best-fit sample value in result.names[i].bestfit_sample
+        :return: a :class:`~.types.LikeStats` instance storing N-D limits for parameter i in
+                 result.names[i].ND_limit_top, result.names[i].ND_limit_bot, and best-fit sample value
+                 in result.names[i].bestfit_sample
         """
         return self.likeStats or self._setLikeStats()
 
@@ -2107,18 +2132,22 @@ class MCSamples(Chains):
         Get tex snippet for constraints on a list of parameters
 
         :param params: list of parameter names, or a single parameter name
-        :param limit: which limit to get, 1 is the first (default 68%), 2 is the second (limits array specified by self.contours)
+        :param limit: which limit to get, 1 is the first (default 68%), 2 is the second
+                     (limits array specified by self.contours)
         :param err_sig_figs: significant figures in the error
-        :return: labels, texs: a list of parameter labels, and a list of tex snippets, or for a single parameter, the latex snippet.
+        :return: labels, texs: a list of parameter labels, and a list of tex snippets,
+                               or for a single parameter, the latex snippet.
         """
         if isinstance(params, six.string_types):
             return self.getInlineLatex(params, limit, err_sig_figs)
 
         marge = self.getMargeStats()
-        if params is None: params = marge.list()
+        if params is None:
+            params = marge.list()
 
         formatter = types.NoLineTableFormatter()
-        if err_sig_figs: formatter.numberFormatter.err_sf = err_sig_figs
+        if err_sig_figs:
+            formatter.numberFormatter.err_sf = err_sig_figs
         texs = []
         labels = []
         for par in params:
@@ -2143,7 +2172,8 @@ class MCSamples(Chains):
         :return: The tex snippet.
         """
         labels, texs = self.getLatex([param], limit, err_sig_figs)
-        if texs[0] is None: raise ValueError('parameter %s not found' % param)
+        if texs[0] is None:
+            raise ValueError('parameter %s not found' % param)
         if not texs[0][0] in ['<', '>']:
             return labels[0] + ' = ' + texs[0]
         else:
@@ -2156,7 +2186,8 @@ class MCSamples(Chains):
         :param max_frac_twotail: optional override for self.max_frac_twotail
         :param meanlikes: include mean likelihoods
         """
-        if self.done_1Dbins: return
+        if self.done_1Dbins:
+            return
 
         for j in range(self.n):
             paramConfid = self.initParamConfidenceData(self.samples[:, j])
@@ -2182,14 +2213,13 @@ class MCSamples(Chains):
         interpGrid = None
         for ix1, contour in enumerate(self.contours):
 
-            marge_limits_bot = par.has_limits_bot and not self.force_twotail \
-                               and density1D.P[0] > max_frac_twotail[ix1]
-            marge_limits_top = par.has_limits_top and not self.force_twotail \
-                               and density1D.P[-1] > max_frac_twotail[ix1]
+            marge_limits_bot = par.has_limits_bot and not self.force_twotail and density1D.P[0] > max_frac_twotail[ix1]
+            marge_limits_top = par.has_limits_top and not self.force_twotail and density1D.P[-1] > max_frac_twotail[ix1]
 
             if not marge_limits_bot or not marge_limits_top:
                 # give limit
-                if not interpGrid: interpGrid = density1D.initLimitGrids()
+                if not interpGrid:
+                    interpGrid = density1D.initLimitGrids()
                 tail_limit_bot, tail_limit_top, marge_limits_bot, marge_limits_top = density1D.getLimits(contour,
                                                                                                          interpGrid)
                 limfrac = 1 - contour
@@ -2264,7 +2294,8 @@ class MCSamples(Chains):
         """
         Adds a new derived parameter
 
-        :param paramVec: The vector of parameter values to add. For example a combination of parameter arrays from MCSamples.getParams()
+        :param paramVec: The vector of parameter values to add. For example a combination of
+                         parameter arrays from MCSamples.getParams()
         :param name: The name for the new parameter
         :param label: optional latex label for the parameter
         :param comment: optional comment describing the parameter
@@ -2412,15 +2443,18 @@ class MCSamples(Chains):
             cuts = [par1 + '__' + par2 for par1, par2 in cust2DPlots]
         for j, par1 in enumerate(self.paramNames.list()):
             if plot_2D_param or cust2DPlots:
-                if par1 == plot_2D_param: continue
+                if par1 == plot_2D_param:
+                    continue
                 j2min = 0
             else:
                 j2min = j + 1
 
             for j2 in range(j2min, self.n):
                 par2 = self.parName(j2)
-                if plot_2D_param and par2 != plot_2D_param: continue
-                if len(cust2DPlots) and (par1 + '__' + par2) not in cuts: continue
+                if plot_2D_param and par2 != plot_2D_param:
+                    continue
+                if len(cust2DPlots) and (par1 + '__' + par2) not in cuts:
+                    continue
                 if (par1, par2) not in done2D:
                     plot_num += 1
                     done2D[(par1, par2)] = True

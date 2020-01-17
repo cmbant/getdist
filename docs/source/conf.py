@@ -14,7 +14,7 @@
 
 import sys
 import os
-import shlex
+import getdist
 
 autoclass_content = 'both'
 
@@ -78,8 +78,6 @@ master_doc = 'index'
 project = u'GetDist'
 copyright = u'Antony Lewis'
 author = u'Antony Lewis'
-
-import getdist
 
 version = getdist.__version__
 release = getdist.__version__

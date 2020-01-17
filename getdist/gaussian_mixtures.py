@@ -21,7 +21,8 @@ class MixtureND(object):
         :param means: list of y for each Gaussian in the mixture
         :param covs: list of covariances for the Gaussians in the mixture
         :param weights: optional weight for each component (defaults to equal weight)
-        :param lims: optional list of hard limits for each parameter, [[x1min,x1max], [x2min,x2max]]; use None for no limit
+        :param lims: optional list of hard limits for each parameter, [[x1min,x1max], [x2min,x2max]];
+                     use None for no limit
         :param names: list of names (strings) for each parameter. If not set, set to "param1", "param2"...
         :param label: name for labelling this mixture
         :param labels: list of latex labels for each parameter. If not set, defaults to p_{1}, p_{2}...
@@ -31,7 +32,8 @@ class MixtureND(object):
         self.dim = self.means.shape[1]
         self.covs = [np.array(cov) for cov in covs]
         self.invcovs = [np.linalg.inv(cov) for cov in self.covs]
-        if weights is None: weights = [1. / len(means)] * len(means)
+        if weights is None:
+            weights = [1. / len(means)] * len(means)
         self.weights = np.array(weights, dtype=np.float64)
         if np.sum(self.weights) <= 0:
             raise ValueError('Weight <= 0 in MixtureND')
@@ -62,8 +64,10 @@ class MixtureND(object):
                     v = np.random.multivariate_normal(mean, cov, size=num)
                     if self.lims is not None:
                         for i, (mn, mx) in enumerate(self.lims):
-                            if mn is not None: v = v[v[:, i] >= mn]
-                            if mx is not None: v = v[v[:, i] <= mx]
+                            if mn is not None:
+                                v = v[v[:, i] >= mn]
+                            if mx is not None:
+                                v = v[v[:, i] <= mx]
                     tot += v.shape[0]
                     res.append(v)
             if tot >= size:
@@ -71,14 +75,16 @@ class MixtureND(object):
             if block is None:
                 block = min(max(size, 100000), int(1.1 * (size * (size - tot))) // max(tot, 1) + 1)
         samples = np.vstack(res)
-        if len(res) > 1: samples = np.random.permutation(samples)
+        if len(res) > 1:
+            samples = np.random.permutation(samples)
         if tot != size:
             samples = samples[:-(tot - size), :]
         return samples
 
     def MCSamples(self, size, names=None, logLikes=False, **kwargs):
         """
-        Gets a set of independent samples from the mixture as a  :class:`.mcsamples.MCSamples` object ready for plotting etc.
+        Gets a set of independent samples from the mixture as a  :class:`.mcsamples.MCSamples` object
+        ready for plotting etc.
 
         :param size: number of samples
         :param names: set to override existing names
@@ -95,8 +101,10 @@ class MixtureND(object):
 
     def autoRanges(self, sigma_max=4, lims=None):
         res = []
-        if lims is None: lims = self.lims
-        if lims is None: lims = [(None, None) for _ in range(self.dim)]
+        if lims is None:
+            lims = self.lims
+        if lims is None:
+            lims = [(None, None) for _ in range(self.dim)]
         for i, (mn, mx) in enumerate(lims):
             covmin = None
             covmax = None
@@ -104,8 +112,10 @@ class MixtureND(object):
                 for mean, cov in zip(self.means, self.covs):
                     sigma = np.sqrt(cov[i, i])
                     xmin, xmax = mean[i] - sigma_max * sigma, mean[i] + sigma_max * sigma
-                    if mn is not None: xmax = max(xmax, mn + sigma_max * sigma)
-                    if mx is not None: xmin = min(xmin, mx - sigma_max * sigma)
+                    if mn is not None:
+                        xmax = max(xmax, mn + sigma_max * sigma)
+                    if mx is not None:
+                        xmin = min(xmin, mx - sigma_max * sigma)
                     covmin = min(xmin, covmin) if covmin is not None else xmin
                     covmax = max(xmax, covmax) if covmax is not None else xmax
             res.append((covmin if mn is None else mn, covmax if mx is None else mx))
@@ -142,8 +152,10 @@ class MixtureND(object):
         :param no_limit_marge: if true don't raise an error if mixture has limits
         :return: marginalized 1D pdf at x
         """
-        if isinstance(index, six.string_types): index = self.names.index(index)
-        if not no_limit_marge: self.checkNoLimits([index])
+        if isinstance(index, six.string_types):
+            index = self.names.index(index)
+        if not no_limit_marge:
+            self.checkNoLimits([index])
         tot = None
         for i, (mean, cov, weight) in enumerate(zip(self.means, self.covs, self.weights)):
             dx = x - mean[index]
@@ -214,7 +226,8 @@ class MixtureND(object):
         """
         Calculates a reduced mixture model by marginalization over unwanted parameters
 
-        :param params: array of parameter names or indices to retain. If none, will simply return a copy of this mixture.
+        :param params: array of parameter names or indices to retain.
+                       If none, will simply return a copy of this mixture.
         :param label: optional label for the marginalized mixture
         :param no_limit_marge: if true don't raise an error if mixture has limits.
         :return: a new marginalized  :class:`MixtureND` instance
@@ -257,7 +270,7 @@ class MixtureND(object):
 
         fixed_params = self._params_to_indices(fixed_params)
         self.checkNoLimits(fixed_params)
-        keep_params = [i for i in range(self.dim) if not i in fixed_params]
+        keep_params = [i for i in range(self.dim) if i not in fixed_params]
         if not len(keep_params):
             raise ValueError('conditionalMixture must leave at least one non-fixed parameter')
         new_means = []
@@ -272,9 +285,9 @@ class MixtureND(object):
             else:
                 logw = invcov[np.ix_(fixed_params, fixed_params)].dot(deltas).dot(deltas) \
                        + np.log(np.linalg.det(cov[np.ix_(fixed_params, fixed_params)]
-                                              - cov[np.ix_(fixed_params, keep_params)].dot(
-                    np.linalg.inv(cov[np.ix_(keep_params, keep_params)]).dot(
-                        cov[np.ix_(keep_params, fixed_params)]))))
+                                              - cov[np.ix_(fixed_params, keep_params)]
+                                              .dot(np.linalg.inv(cov[np.ix_(keep_params, keep_params)])
+                                                   .dot(cov[np.ix_(keep_params, fixed_params)]))))
             new_weights.append(logw)
             new_means.append(new_mean)
             new_covs.append(new_cov)
@@ -297,7 +310,8 @@ class MixtureND(object):
                     'In general can only marginalize analytically if no hard boundary limits: ' + self.label)
 
     def getUpper(self, name):
-        if self.lims is None: return None
+        if self.lims is None:
+            return None
         return self.lims[self.names.index(name)][1]
 
     def getLower(self, name):
@@ -315,10 +329,11 @@ class Mixture2D(MixtureND):
                  xmin=None, xmax=None, ymin=None, ymax=None, **kwargs):
         """
         :param means: list of y for each Gaussian in the mixture
-        :param covs: list of covariances for the Gaussians in the mixture. Instead of 2x2 arrays, each cov can also be a
-         list of [sigma_x, sigma_y, correlation] parameters
+        :param covs: list of covariances for the Gaussians in the mixture. Instead of 2x2 arrays,
+                     each cov can also be a list of [sigma_x, sigma_y, correlation] parameters
         :param weights: optional weight for each component (defaults to equal weight)
-        :param lims: optional list of hard limits for each parameter, [[x1min,x1max], [x2min,x2max]]; use None for no limit
+        :param lims: optional list of hard limits for each parameter, [[x1min,x1max], [x2min,x2max]];
+                     use None for no limit
         :param names: list of names (strings) for each parameter. If not set, set to x, y
         :param xmin: optional lower hard bound for x
         :param xmax: optional upper hard bound for x

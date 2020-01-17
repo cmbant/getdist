@@ -164,7 +164,8 @@ def convolveGaussianDCT(x, sigma, pad_sigma=4, mode='same', cache={}):
         gauss = np.exp(-(np.arange(0, s) * (np.pi * hnorm)) ** 2 / 2.)
         cache[(s, hnorm)] = gauss
     res = fftpack.idct(fftpack.dct(padded_x, overwrite_x=fill > 0) * gauss, overwrite_x=fill > 0) / (2 * s)
-    if fill == 0: return res
+    if fill == 0:
+        return res
     if mode == 'same':
         return res[fill:-fill2]
     elif mode == 'valid':

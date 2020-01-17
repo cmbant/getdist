@@ -15,7 +15,8 @@ def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge
 
      :param inbins: binned density.
      :param contours: list or tuple of confidence contours to calculate, default [0.68, 0.95]
-     :param missing_norm: accounts of any points not included in inbins (e.g. points in far tails that are not in inbins)
+     :param missing_norm: accounts of any points not included in inbins
+                         (e.g. points in far tails that are not in inbins)
      :param half_edge: If True, edge bins are only half integrated over in each direction.
      :return: list of density levels
 
@@ -154,7 +155,8 @@ class Density1D(GridDensity):
         :param derivative: optional order of derivative to calculate (default: no derivative)
         :return: P(x) density value
         """
-        if self.spl is None: self._initSpline()
+        if self.spl is None:
+            self._initSpline()
         if isinstance(x, (np.ndarray, list, tuple)):
             return splev(x, self.spl, derivative, ext=1)
         else:
@@ -170,7 +172,8 @@ class Density1D(GridDensity):
         class InterpGrid(object):
             pass
 
-        if self.spl is None: self._initSpline()
+        if self.spl is None:
+            self._initSpline()
         g = InterpGrid()
         if factor is None:
             g.factor = max(2, 20000 // self.n)
@@ -226,14 +229,16 @@ class Density1D(GridDensity):
                 i = g.bign - np.argmax(g.grid[::-1] > trial) - 1
                 d = (g.grid[i] - trial) / (g.grid[i] - g.grid[i + 1])
                 mx = self.x[0] + (i + d) * finespace
-            if parr is not p: return mn, mx, lim_bot, lim_top
+            if parr is not p:
+                return mn, mx, lim_bot, lim_top
             results.append((mn, mx, lim_bot, lim_top))
         return results
 
 
 class Density2D(GridDensity, RectBivariateSpline):
     """
-    Class for 2D marginalized densities, inheriting from :class:`GridDensity` and :class:`~scipy:scipy.interpolate.RectBivariateSpline`.
+    Class for 2D marginalized densities, inheriting from :class:`GridDensity`
+    and :class:`~scipy:scipy.interpolate.RectBivariateSpline`.
     """
 
     def __init__(self, x, y, P=None, view_ranges=None):
@@ -267,13 +272,15 @@ class Density2D(GridDensity, RectBivariateSpline):
         """
         Evaluate density at x,y using interpolation
         """
-        if self.spl is None: self._initSpline()
+        if self.spl is None:
+            self._initSpline()
         return self.spl.ev(x, y)
 
 
 class DensityND(GridDensity, LinearNDInterpolator):
     """
-    Class for ND marginalized densities, inheriting from :class:`GridDensity` and :class:`~scipy:scipy.interpolate.LinearNDInterpolator`.
+    Class for ND marginalized densities, inheriting from :class:`GridDensity`
+    and :class:`~scipy:scipy.interpolate.LinearNDInterpolator`.
     """
 
     def __init__(self, xs, P=None, view_ranges=None):
@@ -343,5 +350,6 @@ class DensityND(GridDensity, LinearNDInterpolator):
         """
         Evaluate density at x,y,z using interpolation
         """
-        if self.spl is None: self._initSpline()
+        if self.spl is None:
+            self._initSpline()
         return self.spl.__call__(xs)

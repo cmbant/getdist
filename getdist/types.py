@@ -65,7 +65,8 @@ def numberFigs(number, sigfig, sci=False):
     shift = d.adjusted()
     result = int(''.join(map(str, digits[:sigfig])))
     # Round the result
-    if len(digits) > sigfig and digits[sigfig] >= 5: result += 1
+    if len(digits) > sigfig and digits[sigfig] >= 5:
+        result += 1
     result = list(str(result))
     # Rounding can change the length of result
     # If so, adjust shift
@@ -103,7 +104,8 @@ class NumberFormatter(object):
         elif frac > 0.01 and value < 1000:
             sf = 3
         err_sf = self.err_sf
-        if value >= 20 and frac > 0.1 and limplus >= 2: err_sf = 1
+        if value >= 20 and frac > 0.1 and limplus >= 2:
+            err_sf = 1
         if sci:
             # First, call without knowing sig figs, to get the exponent
             exponent = self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]
@@ -120,7 +122,8 @@ class NumberFormatter(object):
             sf -= 1
             if sf == 0:
                 res = ('%.' + str(maxdp) + 'f') % value
-                if float(res) == 0.0: res = ('%.' + str(maxdp) + 'f') % 0
+                if float(res) == 0.0:
+                    res = ('%.' + str(maxdp) + 'f') % 0
                 break
             else:
                 res = self.formatNumber(value, sf)
@@ -142,8 +145,10 @@ class NumberFormatter(object):
         if sci:
             s, exponent = s
         if wantSign:
-            if s[0] != '-' and float(s) < 0: s = '-' + s
-            if float(s) > 0: s = '+' + s
+            if s[0] != '-' and float(s) < 0:
+                s = '-' + s
+            if float(s) > 0:
+                s = '+' + s
         if sci:
             return s, exponent
         else:
@@ -151,7 +156,8 @@ class NumberFormatter(object):
 
     def decimal_places(self, s):
         i = s.find('.')
-        if i > 0: return len(s) - i - 1
+        if i > 0:
+            return len(s) - i - 1
         return 0
 
     def plusMinusLimit(self, limit, upper, lower):
@@ -176,7 +182,8 @@ class TableFormatter(object):
         self.numberFormatter = NumberFormatter()
 
     def getLine(self, position=None):
-        if position is not None and hasattr(self, position): return getattr(self, position)
+        if position is not None and hasattr(self, position):
+            return getattr(self, position)
         return self.hline
 
     def belowTitleLine(self, colsPerParam, numResults=None):
@@ -208,13 +215,15 @@ class TableFormatter(object):
         wid = len(txt)
         if latex:
             wid += 2
-            if bold: wid += 11
+            if bold:
+                wid += 11
         res = txt + self.spacer * max(0, 28 - wid)
         if latex:
             res = self.texEquation(res)
             if bold:
                 res = '{\\boldmath' + res + '}'
-        if separator: res += self.colSeparator
+        if separator:
+            res += self.colSeparator
         return res
 
 
@@ -222,7 +231,8 @@ class OpenTableFormatter(TableFormatter):
     def __init__(self):
         TableFormatter.__init__(self)
         self.border = ''
-        self.aboveTitles = r'\noalign{\vskip 3pt}' + self.hline + r'\noalign{\vskip 1.5pt}' + self.hline + r'\noalign{\vskip 5pt}'
+        self.aboveTitles = r'\noalign{\vskip 3pt}' + self.hline + r'\noalign{\vskip 1.5pt}' \
+                           + self.hline + r'\noalign{\vskip 5pt}'
         self.belowTitles = r'\noalign{\vskip 3pt}' + self.hline
         self.aboveHeader = ''
         self.belowHeader = self.hline
@@ -259,9 +269,11 @@ class ResultTable(object):
                  shiftSigma_subset=False):
         """
         :param ncol: number of columns
-        :param results: a :class:`MargeStats` or :class:`BestFit` instance, or a list of them for comparing different results
+        :param results: a :class:`MargeStats` or :class:`BestFit` instance, or a list of them for
+                        comparing different results
         :param limit: which limit to include (1 is first limit calculated, usually 68%, 2 the second, usually 95%)
-        :param tableParamNames: optional :class:`~.paramnames.ParamNames` instance listing particular parameters to include
+        :param tableParamNames: optional :class:`~.paramnames.ParamNames` instance listing particular
+                                parameters to include
         :param titles: optional titles describing different results
         :param formatter: a table formatting class
         :param numFormatter: a number formatting class
@@ -284,8 +296,10 @@ class ResultTable(object):
             self.tableParamNames = results[0]
         else:
             self.tableParamNames = tableParamNames
-        if paramList is not None: self.tableParamNames = self.tableParamNames.filteredCopy(paramList)
-        if numFormatter is not None: self.format.numFormatter = numFormatter
+        if paramList is not None:
+            self.tableParamNames = self.tableParamNames.filteredCopy(paramList)
+        if numFormatter is not None:
+            self.format.numFormatter = numFormatter
 
         self.results = results
         self.boldBaseParameters = True
@@ -298,7 +312,8 @@ class ResultTable(object):
 
         nparams = self.tableParamNames.numParams()
         numrow = nparams // ncol
-        if nparams % ncol != 0: numrow += 1
+        if nparams % ncol != 0:
+            numrow += 1
         rows = []
         for par in self.tableParamNames.names[0:numrow]:
             rows.append([par])
@@ -307,7 +322,8 @@ class ResultTable(object):
                 rows[i - numrow * col].append(self.tableParamNames.names[i])
 
         self.lines.append(self.format.startTable(ncol, self.colsPerResult, len(results)))
-        if titles is not None: self.addTitlesRow(titles)
+        if titles is not None:
+            self.addTitlesRow(titles)
         self.addHeaderRow()
         for row in rows[:-1]:
             self.addFullTableRow(row)
@@ -337,8 +353,6 @@ class ResultTable(object):
         cols += [self.format.titleSubColumn(self.colsPerResult, title) for title in titles]
         self.lines.append(self.format.colSeparator.join(cols * self.ncol) + self.format.endofrow)
 
-        # res = self.format.titleSubColumn(1, '') + self.format.colSeparator + self.format.colSeparator.join(self.format.titleSubColumn(self.colsPerResult, title) for title in titles)
-        # self.lines.append(((self.format.colSeparator + res) * self.ncol)[1:] + self.format.endofrow)
         belowTitleLine = self.format.belowTitleLine(self.colsPerResult, self.colsPerParam // self.colsPerResult)
         if belowTitleLine:
             self.lines.append(belowTitleLine)
@@ -350,10 +364,6 @@ class ResultTable(object):
             cols += [self.format.headerWrapper % s for s in result.getColumnLabels(self.limit)]
         self.lines.append(self.format.colSeparator.join(cols * self.ncol) + self.format.endofrow)
 
-        # res = self.format.colSeparator + self.format.headerWrapper % self.format.paramText
-        # for result in self.results:
-        #            res += self.format.colSeparator + self.format.colSeparator.join([self.format.headerWrapper % s for s in result.getColumnLabels(self.limit)])
-        #        self.lines.append((res * self.ncol).replace(self.format.colSeparator,'',1) + self.format.endofrow)
         self.addLine("belowHeader")
 
     def paramResultsTex(self, param):
@@ -463,7 +473,8 @@ class ParamResults(paramnames.ParamList):
     pass
 
 
-class LikelihoodChi2(object): pass
+class LikelihoodChi2(object):
+    pass
 
 
 class BestFit(ParamResults):
@@ -513,7 +524,8 @@ class BestFit(ParamResults):
                 isFixed = not isFixed
                 isDerived = True
                 if chunks == 3:
-                    if ix + 2 >= len(textFileLines): break
+                    if ix + 2 >= len(textFileLines):
+                        break
                     for likePart in textFileLines[ix + 2:]:
                         if len(likePart.strip()) != 0:
                             (chisq, name) = [s.strip() for s in likePart.split(None, 2)][1:]
@@ -550,7 +562,8 @@ class BestFit(ParamResults):
 
     def chiSquareForKindName(self, kind, name):
         for (akind, val) in self.chiSquareds:
-            if akind == kind and val.name == name: return val.chisq
+            if akind == kind and val.name == name:
+                return val.chisq
         return None
 
     def texValues(self, formatter, p, **kwargs):
@@ -668,7 +681,8 @@ class MargeStats(ParamResults):
         self.limits = [float(s.strip()) for s in lims.split(';')]
         self.hasBestFit = False
         for line in textFileLines[3:]:
-            if len(line.strip()) == 0: break
+            if len(line.strip()) == 0:
+                break
             param = paramnames.ParamInfo()
             items = [s.strip() for s in line.split(None, len(self.limits) * 3 + 3)]
             param.name = items[0]
@@ -720,7 +734,8 @@ class MargeStats(ParamResults):
     def addBestFit(self, bf):
         self.hasBestFit = True
         self.logLike = bf.logLike
-        # the next line deletes parameters not in best-fit; this is good e.g. to get rid of yhe from importance sampled result
+        # the next line deletes parameters not in best-fit;
+        # this is good e.g. to get rid of yhe from importance sampled result
         self.names = [x for x in self.names if bf.parWithName(x.name) is not None]
         for par in self.names:
             param = bf.parWithName(par.name)
@@ -757,7 +772,8 @@ class MargeStats(ParamResults):
                 else:
                     # in this case give mean and effective dof
                     res += r'\,({\nu\rm{:}\,%.1f})' % (param.err ** 2 / 2)
-                    # res, plus_str, minus_str = formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean, lim.lower, sci=False)
+                    # res, plus_str, minus_str =
+                    # formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean, lim.lower, sci=False)
                     # res += '^{' + plus_str + '}_{>' + minus_str + '}'
             elif lim.twotail:
                 if not formatter.numberFormatter.plusMinusLimit(limit, lim.upper - param.mean, lim.lower - param.mean):
@@ -789,7 +805,7 @@ class MargeStats(ParamResults):
                 if refVal is not None:
                     delta = param.mean - refVal.mean
                     if shiftSigma_indep or shiftSigma_subset:
-                        res += '\quad('
+                        res += r'\quad('
                         if shiftSigma_subset:
                             # give mean shift in sigma units for subset data (regularized to max sigma/20)
                             subset_sigma = np.sqrt(abs(param.err ** 2 - refVal.err ** 2))
@@ -800,7 +816,7 @@ class MargeStats(ParamResults):
                             res += ', %+.1f \\sigma_i' % (delta / indep_sigma)
                         res += ')'
                     else:
-                        res += '\quad(%+.1f \\sigma)' % (delta / refVal.err)
+                        res += r'\quad(%+.1f \\sigma)' % (delta / refVal.err)
             if self.hasBestFit:  # add best fit too
                 rangew = (lim.upper - lim.lower) / 10
                 bestfit, _, _, exponent = formatter.numberFormatter.namesigFigs(param.best_fit, rangew, -rangew,
@@ -824,7 +840,8 @@ class LikeStats(ParamResults):
         textFileLines = self.fileList(filename)
         results = dict()
         for line in textFileLines:
-            if len(line.strip()) == 0: break
+            if len(line.strip()) == 0:
+                break
             name, value = [x.strip() for x in line.split('=')]
             results[name] = float(value)
         self.logLike_sample = results.get('Best fit sample -log(Like)', None)
@@ -870,7 +887,8 @@ class ConvergeStats(ParamResults):
             for i in range(len(textFileLines)):
                 if textFileLines[i].find('var(mean)') >= 0:
                     for line in textFileLines[i + 1:]:
-                        if len(line.strip()) == 0: break
+                        if len(line.strip()) == 0:
+                            break
                         try:
                             self.R_eigs.append(line.split()[1])
                         except Exception:
@@ -880,7 +898,8 @@ class ConvergeStats(ParamResults):
                     self.auto_correlations = []
                     self.auto_correlation_pars = []
                     for line in textFileLines[i + 3:]:
-                        if len(line.strip()) == 0: break
+                        if len(line.strip()) == 0:
+                            break
                         items = line.split(None, len(self.auto_correlation_steps) + 1)
                         self.auto_correlation_pars.append(items[0])
                         self.auto_correlations.append([float(s) for s in items[1:-1]])

@@ -608,7 +608,8 @@ class MainWindow(QMainWindow):
         if plotter:
             filename, _ = QFileDialog.getSaveFileName(
                 self, "Choose a file name", '.', "PDF (*.pdf);; Image (*.png *.jpg)")
-            if not filename: return
+            if not filename:
+                return
             filename = str(filename)
             plotter.export(filename)
         else:
@@ -648,7 +649,8 @@ class MainWindow(QMainWindow):
     def getRootname(self):
         rootname = None
         item = self.listRoots.currentItem()
-        if not item and self.listRoots.count(): item = self.listRoots.item(0)
+        if not item and self.listRoots.count():
+            item = self.listRoots.item(0)
         if item is not None:
             rootname = str(item.text())
         if rootname is None:
@@ -660,7 +662,8 @@ class MainWindow(QMainWindow):
         Callback for action 'Show Converge Stats'.
         """
         rootname = self.getRootname()
-        if rootname is None: return
+        if rootname is None:
+            return
         try:
             self.showMessage("Calculating convergence stats....")
             samples = self.getSamples(rootname)
@@ -681,12 +684,15 @@ class MainWindow(QMainWindow):
         Callback for action 'Show PCA'.
         """
         rootname = self.getRootname()
-        if rootname is None: return
+        if rootname is None:
+            return
         try:
             samples = self.getSamples(rootname)
             pars = self.getXParams()
-            if len(pars) == 1: pars += self.getYParams()
-            if len(pars) < 2: raise GuiSelectionError('Select two or more parameters first')
+            if len(pars) == 1:
+                pars += self.getYParams()
+            if len(pars) < 2:
+                raise GuiSelectionError('Select two or more parameters first')
             self.showMessage("Calculating PCA....")
             PCA = samples.PCA(pars)
             dlg = DialogPCA(self, PCA, rootname)
@@ -701,7 +707,8 @@ class MainWindow(QMainWindow):
         Callback for action 'Show Marge Stats'.
         """
         rootname = self.getRootname()
-        if rootname is None: return
+        if rootname is None:
+            return
         try:
             self.showMessage("Calculating margestats....")
             QCoreApplication.processEvents()
@@ -719,7 +726,8 @@ class MainWindow(QMainWindow):
         Callback for action 'Show Parameter Table'.
         """
         rootname = self.getRootname()
-        if rootname is None: return
+        if rootname is None:
+            return
         try:
             samples = self.getSamples(rootname)
             pars = self.getXParams()
@@ -751,7 +759,8 @@ class MainWindow(QMainWindow):
 
     def showLikeStats(self):
         rootname = self.getRootname()
-        if rootname is None: return
+        if rootname is None:
+            return
         samples = self.getSamples(rootname)
         stats = samples.getLikeStats()
         if stats is None:
@@ -983,7 +992,8 @@ class MainWindow(QMainWindow):
         dirs = self.getDirectories()
         if self.rootdirname:
             dirs = [self.rootdirname] + [x for x in dirs if not x == self.rootdirname]
-        if len(dirs) > 10: dirs = dirs[:10]
+        if len(dirs) > 10:
+            dirs = dirs[:10]
         settings = self.getSettings()
         settings.setValue('directoryList', dirs)
         if self.rootdirname:
@@ -995,7 +1005,8 @@ class MainWindow(QMainWindow):
         """
         settings = self.getSettings()
         last_dir = settings.value('lastSearchDirectory')
-        if not last_dir: last_dir = os.getcwd()
+        if not last_dir:
+            last_dir = os.getcwd()
 
         title = self.tr("Choose an existing chains grid or chains folder")
         dir_name = QFileDialog.getExistingDirectory(self, title, last_dir,
@@ -1020,7 +1031,8 @@ class MainWindow(QMainWindow):
             if batch:
                 self.rootdirname = dirName
                 self._readGridChains(batch)
-                if save: self.saveDirectories()
+                if save:
+                    self.saveDirectories()
                 return True
 
             self._resetGridData()
@@ -1028,7 +1040,8 @@ class MainWindow(QMainWindow):
             root_list = get_chain_root_files(dirName)
             if not len(root_list):
                 if self._readChainsSubdirectories(dirName):
-                    if save: self.saveDirectories()
+                    if save:
+                        self.saveDirectories()
                     return True
 
                 QMessageBox.critical(self, "Open chains", "No chains or grid found in that directory")
@@ -1171,7 +1184,8 @@ class MainWindow(QMainWindow):
         items = dict()
         for jobItem in batch.items(True, True):
             if jobItem.chainExists():
-                if jobItem.paramtag not in items: items[jobItem.paramtag] = []
+                if jobItem.paramtag not in items:
+                    items[jobItem.paramtag] = []
                 items[jobItem.paramtag].append(jobItem)
         logging.debug("Found %i names for grid" % len(list(items.keys())))
         self.grid_paramtag_jobItems = items
@@ -1251,7 +1265,8 @@ class MainWindow(QMainWindow):
         self.newRootItem(str(strParamName))
 
     def updateListRoots(self, item):
-        if self.updating: return
+        if self.updating:
+            return
         self._updateParameters()
 
     def selListRoots(self):
@@ -1709,7 +1724,8 @@ class MainWindow(QMainWindow):
                     self, "Overwrite script",
                     "Script is not empty. Overwrite current script?",
                     QMessageBox.Yes | QMessageBox.No)
-                if reply == QMessageBox.No: return
+                if reply == QMessageBox.No:
+                    return
 
             self.script_edit = self.script
             self.textWidget.setPlainText(self.script_edit)
@@ -1719,7 +1735,8 @@ class MainWindow(QMainWindow):
     def openScript(self):
         filename, _ = QFileDialog.getOpenFileName(
             self, "Choose a file name", '.', "Python (*.py)")
-        if not filename: return
+        if not filename:
+            return
         filename = str(filename)
         logging.debug("Open file %s" % filename)
         with open(filename, 'r') as f:
@@ -2015,7 +2032,8 @@ class DialogParamTables(DialogTextOutput):
             dpi = None if pyside_version == 1 else self.logicalDpiX() * self.devicePixelRatio()
             buf = self.tables[index].tablePNG(bytesIO=True, dpi=dpi)
             pixmap = QPixmap.fromImage(QImage.fromData(buf.getvalue()))
-            if pyside_version > 1: pixmap.setDevicePixelRatio(self.devicePixelRatio())
+            if pyside_version > 1:
+                pixmap.setDevicePixelRatio(self.devicePixelRatio())
             label = QLabel(viewWidget)
             label.setPixmap(pixmap)
             layout = QGridLayout()
@@ -2030,7 +2048,8 @@ class DialogParamTables(DialogTextOutput):
     def saveLatex(self):
         filename, _ = QFileDialog.getSaveFileName(
             self, "Choose a file name", '.', "Latex (*.tex)")
-        if not filename: return
+        if not filename:
+            return
         self.tables[self.tabWidget.currentIndex()].write(str(filename))
 
 
@@ -2092,7 +2111,8 @@ class DialogSettings(QDialog):
                 item.setFlags(item.flags() ^ Qt.ItemIsUserCheckable)
 
             hint = names.comments.get(key, None)
-            if hint: item.setToolTip("\n".join(hint))
+            if hint:
+                item.setToolTip("\n".join(hint))
             self.table.setItem(irow, 1, item)
         for i in range(nblank):
             item = QTableWidgetItem(str(""))

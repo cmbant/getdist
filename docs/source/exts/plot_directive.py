@@ -342,7 +342,7 @@ def remove_coding(text):
     Remove the coding comment, which six.exec_ doesn't like.
     """
     return re.sub(
-        "^#\s*-\*-\s*coding:\s*.*-\*-$", "", text, flags=re.MULTILINE)
+        r"^#\s*-\*-\s*coding:\s*.*-\*-$", "", text, flags=re.MULTILINE)
 
 
 # ------------------------------------------------------------------------------

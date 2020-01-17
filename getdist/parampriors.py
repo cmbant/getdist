@@ -64,6 +64,9 @@ class ParamBounds(object):
         with open(fileName, 'w') as f:
             f.write(str(self))
 
+    def setFixed(self, name, value):
+        self.setRange(name, (value, value))
+
     def setRange(self, name, strings):
         if strings[0] != 'N' and strings[0] is not None and strings[0] != -np.inf:
             self.lower[name] = float(strings[0])
