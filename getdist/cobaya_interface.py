@@ -32,7 +32,9 @@ _post = "post"
 
 def cobaya_params_file(root):
     file = root + ('' if root.endswith((os.sep, "/")) else '.') + 'updated.yaml'
-    if not os.path.exists(file):
+    if os.path.exists(file):
+        return file
+    else:
         file = root + ('' if root.endswith((os.sep, "/")) else '__') + 'full.yaml'
         if os.path.exists(file):
             return file
