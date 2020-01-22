@@ -33,11 +33,11 @@ class ParamBounds(object):
                     if len(strings) == 3:
                         self.setRange(strings[0], strings[1:])
         elif extension in ('.yaml', '.yml'):
-            from getdist.cobaya_interface import get_range, get_info_params
-            from getdist.yaml_tools import yaml_load_file
-            info_params = get_info_params(yaml_load_file(fileName))
+            from getdist.cobaya_interface import get_range, get_info_params, is_parameter_with_range
+            info_params = get_info_params(fileName)
             for p, info in info_params.items():
-                self.setRange(p, get_range(info))
+                if is_parameter_with_range(info):
+                    self.setRange(p, get_range(info))
 
     def __str__(self):
         s = ''

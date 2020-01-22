@@ -6,6 +6,7 @@ from six import string_types
 from copy import deepcopy
 import logging
 from collections import OrderedDict as odict
+from numbers import Number
 import numpy as np
 import os
 
@@ -117,6 +118,7 @@ def get_info_params(info):
     """
     Extracts parameter info from the new yaml format.
     """
+    info = yaml_file_or_dict(info)
     # Prune fixed parameters
     info_params = info.get(_params)
     info_params_full = odict()
@@ -193,6 +195,11 @@ def is_fixed_param(info_param):
     return fixed_value(info_param) is not None
 
 
+def is_parameter_with_range(info_param):
+    value = fixed_value(info_param)
+    return value is None or isinstance(value, Number) or is_derived_param(info_param)
+
+
 def is_sampled_param(info_param):
     """
     Returns True if the parameter has a prior.
@@ -237,6 +244,6 @@ def get_sample_label(filename_or_info):
 
 
 def get_burn_removed(filename_or_info):
-    info = get_info_params(yaml_file_or_dict(filename_or_info))
+    info = get_info_params(filename_or_info)
     # if skip burn in *has already been done*
     return info.get(_post, {}).get("skip", 0)
