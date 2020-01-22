@@ -2395,7 +2395,7 @@ class MCSamples(Chains):
             else:
                 ini = IniFile()
             if self.properties:
-                ini.params.update(self.properties)
+                ini.params.update(self.properties.params)
             if self.label:
                 ini.params.update({'label': self.label})
             ini.params.update(properties)

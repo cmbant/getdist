@@ -1,4 +1,5 @@
 # AL 2011-2017
+from __future__ import absolute_import
 import os
 import fnmatch
 import six
