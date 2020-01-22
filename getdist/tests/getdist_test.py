@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 import tempfile
 import os
-import re
 import numpy as np
 import unittest
 import subprocess
+import shutil
 from getdist import loadMCSamples, plots, IniFile
 from getdist.tests.test_distributions import Test2DDistributions, Gaussian1D, Gaussian2D
 from getdist.mcsamples import MCSamples
@@ -23,16 +23,17 @@ class GetDistFileTest(unittest.TestCase):
 
         # Simulate some chain files
         prob = Test2DDistributions().bimodal[0]
-        self.tempdir = tempfile.gettempdir()
+        self.tempdir = os.path.join(tempfile.gettempdir(), 'gettdist_tests')
+        if not os.path.exists(self.tempdir):
+            os.mkdir(self.tempdir)
         self.root = os.path.join(self.tempdir, 'testchain')
         for n in range(3):
             mcsamples = prob.MCSamples(4000, logLikes=True)
             mcsamples.saveAsText(self.root, chain_index=n)
 
     def tearDown(self):
-        for f in os.listdir(self.tempdir):
-            if re.search('testchain*', f):
-                os.remove(os.path.join(self.tempdir, f))
+        os.chdir(tempfile.gettempdir())
+        shutil.rmtree(self.tempdir)
 
     def testFileLoadPlot(self):
         samples = loadMCSamples(self.root, settings={'ignore_rows': 0.1})
@@ -366,6 +367,16 @@ class UtilTest(unittest.TestCase):
 
 
 class CobayaTest(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = os.path.join(tempfile.gettempdir(), 'gettdist_tests')
+        if not os.path.exists(self.tempdir):
+            os.mkdir(self.tempdir)
+        os.chdir(self.tempdir)
+
+    def tearDown(self):
+        os.chdir(tempfile.gettempdir())
+        shutil.rmtree(self.tempdir)
+
     def test_chains(self):
         path = os.getenv('TRAVIS_BUILD_DIR', os.path.join(os.path.dirname(__file__), '..', '..', '..'))
         path = os.path.normpath(os.path.join(path, 'getdist_testchains', 'cobaya'))

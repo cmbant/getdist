@@ -169,7 +169,13 @@ def get_range(param_info):
     # Fixed
     else:
         value = fixed_value(param_info)
-        lims = (value, value)
+        try:
+            float(value)
+        except ValueError:
+            # e.g. lambda function values
+            lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(param_info or {})
+        else:
+            lims = (value, value)
     return lims[0] if lims[0] != -np.inf else None, lims[1] if lims[1] != np.inf else None
 
 
