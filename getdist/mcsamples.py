@@ -67,7 +67,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     if not files:  # try new Cobaya format
         files = chainFiles(file_root, separator='.')
     path, name = os.path.split(file_root)
-    cache_dir = None if no_cache else getdist.make_cache_dir()
+    cache_dir = getdist.make_cache_dir()
     if cache_dir:
         import hashlib
         cache_name = name + '_' + hashlib.md5(os.path.abspath(path).encode('utf-8')).hexdigest()[:10]
@@ -102,7 +102,11 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     if not len(files):
         raise IOError('No chains found: ' + file_root)
     samples.readChains(files)
-    samples.savePickle(cachefile)
+    if no_cache:
+        if os.path.exists(cachefile):
+            os.remove(cachefile)
+    else:
+        samples.savePickle(cachefile)
     return samples
 
 
@@ -246,20 +250,21 @@ class MCSamples(Chains):
             if 'sampler' not in kwargs:
                 self.setSampler(self.properties.string('sampler', self.sampler))
         else:
+            self.properties = IniFile()
             if root and self.paramNames and self.paramNames.info_dict:
-                self.properties = IniFile()
                 if cobaya_interface.get_burn_removed(self.paramNames.info_dict):
                     self.properties.params['burn_removed'] = True
                     self.ignore_frac = 0.
                     self.ignore_lines = 0
                 if not self.label:
                     self.label = cobaya_interface.get_sample_label(self.paramNames.info_dict)
-                    self.properties.params['label'] = self.label
+                    if self.label:
+                        self.properties.params['label'] = self.label
                 if 'sampler' not in kwargs:
                     self.setSampler(cobaya_interface.get_sampler_type(self.paramNames.info_dict))
                 self.properties.params['sampler'] = self.sampler
-            else:
-                self.properties = None
+        if self.ignore_frac or self.ignore_rows:
+            self.properties.params['burn_removed'] = True
 
         if samples is not None:
             self.readChains(samples, weights, loglikes)
@@ -2388,8 +2393,8 @@ class MCSamples(Chains):
         """
         super(MCSamples, self).saveTextMetadata(root)
         self.ranges.saveToFile(root + '.ranges')
-        if properties or self.properties or self.label:
-            ini_name = root + '.properties.ini'
+        ini_name = root + '.properties.ini'
+        if properties or self.properties and self.properties.params or self.label:
             if os.path.exists(ini_name):
                 ini = IniFile(ini_name)
             else:
@@ -2400,6 +2405,8 @@ class MCSamples(Chains):
                 ini.params.update({'label': self.label})
             ini.params.update(properties)
             ini.saveFile(ini_name)
+        elif os.path.exists(ini_name):
+            os.remove(ini_name)
 
     def saveChainsAsText(self, root, make_dirs=False, properties={}):
         if self.chains is None:

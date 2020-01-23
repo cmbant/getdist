@@ -11,6 +11,7 @@ from getdist.tests.test_distributions import Test2DDistributions, Gaussian1D, Ga
 from getdist.mcsamples import MCSamples
 from getdist.styles.tab10 import style_name as tab10
 from getdist.styles.planck import style_name as planck
+from getdist.parampriors import ParamBounds
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
@@ -372,16 +373,16 @@ class CobayaTest(unittest.TestCase):
         if not os.path.exists(self.tempdir):
             os.mkdir(self.tempdir)
         os.chdir(self.tempdir)
+        self.path = os.getenv('TRAVIS_BUILD_DIR', os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+        self.path = os.path.normpath(os.path.join(self.path, 'getdist_testchains', 'cobaya'))
 
     def tearDown(self):
         os.chdir(tempfile.gettempdir())
         shutil.rmtree(self.tempdir)
 
     def test_chains(self):
-        path = os.getenv('TRAVIS_BUILD_DIR', os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-        path = os.path.normpath(os.path.join(path, 'getdist_testchains', 'cobaya'))
-        if os.path.exists(path):
-            root = os.path.join(path, 'DES_shear')
+        if os.path.exists(self.path):
+            root = os.path.join(self.path, 'DES_shear')
             samples = loadMCSamples(root, settings={'ignore_rows': 0.3}, no_cache=True)
             self.assertAlmostEqual(samples.mean('ombh2'), 0.02764592190482377, 6)
             pars = samples.getParamSampleDict(10)
@@ -393,3 +394,15 @@ class CobayaTest(unittest.TestCase):
             from getdist.command_line import getdist_command
             res = getdist_command([root])
             self.assertTrue('-log(Like) = 95.49' in res, res)
+
+    def test_planck_chains(self):
+        if os.path.exists(self.path):
+            root = os.path.join(self.path, 'compare_devel_drag')
+            samples = loadMCSamples(root, settings={'ignore_rows': 0.3}, no_cache=True)
+            self.assertAlmostEqual(samples.mean('ombh2'), 0.0223749, 6)
+            self.assertAlmostEqual(samples.getUpper('H0'), 100, 6)
+            self.assertEqual(samples.getLower('sigma8'), None)
+            samples.saveAsText(r'planck_test')
+            ranges = ParamBounds('planck_test')
+            for par in samples.paramNames.names:
+                self.assertEqual(samples.getUpper(par), ranges.getUpper(par))
