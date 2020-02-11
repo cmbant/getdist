@@ -1,7 +1,7 @@
 GetDist GUI
 ===================
 
-Run the *getdist-gui* script to run the graphical user interface. This requires PySide or `PySide2 <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
+Run the *getdist-gui* script to run the graphical user interface. This requires PySide2 <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
 
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
@@ -45,7 +45,7 @@ The "Plot module config" option lets you use a different module to define the pl
 Installation
 ##############
 
-To run the GUI you need PySide (for Python 2) or PySide2 (for Python 3). This is not included in default dependencies
+To run the GUI you need PySide2. This is not included in default dependencies
 because it is only needed for the GUI and on some systems installation from pip may not work easily.
 
 Install PySide2 from pip using::
@@ -59,20 +59,7 @@ making a consistent new environment from conda-forge (which includes PySide2) us
 
 (note that PySide2 is currently not included in the default Anaconda packages).
 
-Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
+Once PySide2 is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
 On a Mac the installation will also make a GetDist GUI Mac app, which you can find using Spotlight.
-
-To install binary backages on Linux-like systems install packages
-*py-matplotlib, py-scipy, py-pyside, texlive-latex-extra, texlive-fonts-recommended, dvipng*.
-For example on a Mac using Python 2.7 from `MacPorts <https://www.macports.org/install.php>`_::
-
-   sudo port install python27
-   sudo port select --set python python27
-   sudo port install py-matplotlib
-   sudo port install py-scipy
-   sudo port install py-pyside
-   sudo port install texlive-latex-extra
-   sudo port install texlive-fonts-recommended
-   sudo port install dvipng
 
 If you don't want to install dependencies locally, you can also use a pre-configured `virtual environment <https://cosmologist.info/CosmoBox/>`_.

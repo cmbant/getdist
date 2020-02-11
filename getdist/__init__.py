@@ -1,5 +1,5 @@
 __author__ = 'Antony Lewis'
-__version__ = "1.0.4"
+__version__ = "1.1.0"
 __url__ = "https://getdist.readthedocs.io"
 
 from getdist.inifile import IniFile
@@ -8,6 +8,12 @@ from getdist.chains import WeightedSamples
 from getdist.mcsamples import MCSamples, loadMCSamples
 import os
 import sys
+
+if sys.version_info < (3, 7):
+    import platform
+
+    if platform.python_implementation() != 'CPython':
+        raise ValueError('Only CPython is supported on Python 3.6')
 
 
 def get_defaults_file(name='analysis_defaults.ini'):

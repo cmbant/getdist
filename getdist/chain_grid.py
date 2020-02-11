@@ -30,6 +30,7 @@ def is_grid_object(obj):
     return hasattr(obj, "resolve_root") or hasattr(obj, "resolveRoot")
 
 
+# noinspection PyUnresolvedReferences
 def load_supported_grid(chain_dir):
     if is_grid_object(chain_dir):
         return chain_dir
@@ -44,7 +45,7 @@ def load_supported_grid(chain_dir):
     return None
 
 
-class ChainItem(object):
+class ChainItem:
     # Basic object for chain on disk, basic duck-type compatibility with JobItem in more complex BatchJob grids
     def __init__(self, batchPath, chainRoot, paramtag, name=None):
         self.batchPath = batchPath  # root directory of grid structure
@@ -54,7 +55,7 @@ class ChainItem(object):
         self.chainPath = os.path.dirname(chainRoot)
 
 
-class ChainDirGrid(object):
+class ChainDirGrid:
     # Basic grid, just all chains under a given folder (including nested subfolders)
     # getdist.ini in the base directory can specify default getdist analysis settings for all chains in the folders.
     # Chains are indexed by their root name, which includes as many leading subdirectories as needed to be unique

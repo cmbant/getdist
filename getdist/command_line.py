@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import subprocess
 import getdist
 import sys
-import io
 import logging
 from getdist import MCSamples, chains, IniFile
 
@@ -13,6 +10,7 @@ def runScript(fname):
     subprocess.Popen(['python', fname])
 
 
+# noinspection PyUnboundLocalVariable
 def getdist_script(args, exit_on_error=True):
     def do_error(msg):
         if exit_on_error:
@@ -300,12 +298,12 @@ def getdist_script(args, exit_on_error=True):
 
 
 def make_param_file(file_name, feedback=True):
-    with io.open(getdist.distparam_template) as f:
+    with open(getdist.distparam_template, encoding="utf-8-sig") as f:
         content = f.read()
-    with io.open(getdist.default_getdist_settings) as f:
+    with open(getdist.default_getdist_settings, encoding="utf-8-sig") as f:
         analysis = f.read()
     content = content.replace('%%%ANALYSIS_DEFAULTS%%%', analysis)
-    with io.open(file_name, 'w') as f:
+    with open(file_name, 'w', encoding="utf-8") as f:
         f.write(content)
     if feedback:
         print('Template .ini file written to ' + file_name)
@@ -351,7 +349,7 @@ def getdist_gui():
                 run_gui()
         else:
             print('GetDist GUI.app not found; not running getdist-gui, getdist package not installed '
-                  'or no valid PySide/PySide2 found when setup was run. Running script...')
+                  'or no valid PySide2 found when setup was run. Running script...')
             run_gui()
     else:
         run_gui()

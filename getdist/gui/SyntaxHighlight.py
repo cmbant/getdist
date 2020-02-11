@@ -1,12 +1,5 @@
-from __future__ import absolute_import
-from .qt_import import pyside_version
-
-if pyside_version == 2:
-    from PySide2.QtCore import QRegExp
-    from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
-else:
-    from PySide.QtCore import QRegExp
-    from PySide.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+from PySide2.QtCore import QRegExp
+from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
 
 def txformat(color, style=''):

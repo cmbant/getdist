@@ -1,7 +1,7 @@
 # usage:
 # python covcmb.py out.covmat in1.covmat in2.covmat
 # Nb. in1 values take priority over in2
-from __future__ import print_function
+
 import sys
 from getdist import covmat
 

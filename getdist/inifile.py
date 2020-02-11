@@ -1,16 +1,12 @@
-from __future__ import absolute_import
-from __future__ import print_function
-# AL 2011-2015
 import os
 import numpy as np
-import six
 
 
 class IniError(Exception):
     pass
 
 
-class IniFile(object):
+class IniFile:
     """
     Class for storing option parameter values and reading/saving to file
 
@@ -40,9 +36,9 @@ class IniFile(object):
         self.includes = []
         self.original_filename = None
         self.expand_environment_variables = expand_environment_variables
-        if isinstance(settings, six.string_types):
+        if isinstance(settings, str):
             self.readFile(settings, keep_includes)
-        elif hasattr(settings, "keys"):
+        elif settings:
             self.params.update(settings)
 
     def expand_placeholders(self, s):
@@ -76,7 +72,7 @@ class IniFile(object):
             filedefaults = []
             self.original_filename = filename
             comments = []
-            with open(filename) as textFileHandle:
+            with open(filename, encoding='utf-8-sig') as textFileHandle:
                 # Remove blank lines and comment lines from the python list of lists.
                 for line in textFileHandle:
                     s = line.strip()
@@ -141,7 +137,7 @@ class IniFile(object):
             filename = self.original_filename
         if not filename:
             raise IniError('No filename for iniFile.saveFile()')
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             f.write(str(self))
 
     def fileLines(self):
@@ -349,7 +345,7 @@ class IniFile(object):
                 return [tp(x) for x in self.params[name]]
 
         s = self.string(name, default)
-        if isinstance(s, six.string_types):
+        if isinstance(s, str):
             if tp is not None:
                 return [tp(x) for x in s.split()]
             return s.split()

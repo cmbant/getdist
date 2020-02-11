@@ -1,9 +1,8 @@
 import os
-from collections import OrderedDict
 import numpy as np
 
 
-class ParamBounds(object):
+class ParamBounds:
     """
     Class for holding list of parameter bounds (e.g. for plotting, or hard priors).
     A limit is None if not specified, denoted by 'N' if read from a string or file
@@ -18,8 +17,8 @@ class ParamBounds(object):
         :param fileName: optional file name to read from
         """
         self.names = []
-        self.lower = OrderedDict()
-        self.upper = OrderedDict()
+        self.lower = {}
+        self.upper = {}
         if fileName is not None:
             self.loadFromFile(fileName)
 
@@ -27,7 +26,7 @@ class ParamBounds(object):
         self.filenameLoadedFrom = os.path.split(fileName)[1]
         extension = os.path.splitext(fileName)[-1]
         if extension in ('.ranges', '.bounds'):
-            with open(fileName) as f:
+            with open(fileName, encoding='utf-8-sig') as f:
                 for line in f:
                     strings = [text.strip() for text in line.split()]
                     if len(strings) == 3:
@@ -61,7 +60,7 @@ class ParamBounds(object):
 
         :param fileName: file name to save to
         """
-        with open(fileName, 'w') as f:
+        with open(fileName, 'w', encoding='utf-8') as f:
             f.write(str(self))
 
     def setFixed(self, name, value):
@@ -106,8 +105,7 @@ class ParamBounds(object):
         """
         :return: dictionary of fixed parameter values
         """
-        from collections import OrderedDict
-        res = OrderedDict()
+        res = {}
         for name in self.names:
             value = self.fixedValue(name)
             if value is not None:

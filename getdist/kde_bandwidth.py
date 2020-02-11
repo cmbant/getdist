@@ -1,14 +1,6 @@
-from __future__ import print_function
 import numpy as np
 from scipy import fftpack
-
-try:
-    from scipy.optimize import fsolve, brentq, minimize
-except ImportError:
-    print('Install scipy version 11 or higher (or e.g. module load python 2.7.5 or higher which is '
-          'likely linked to later scipy)')
-    raise
-
+from scipy.optimize import fsolve, brentq, minimize
 from getdist.convolve import dct2d
 import logging
 import warnings
@@ -145,7 +137,7 @@ K = np.array(
 Kodd = np.array([1] + [np.prod(np.arange(1, 2 * j, 2)) / 2. ** (j + 1) / np.sqrt(np.pi) for j in range(1, 9)])
 
 
-class KernelOptimizer2D(object):
+class KernelOptimizer2D:
     def __init__(self, data, Neff, correlation, do_correlation=True, fallback_t=None):
         size = data.shape[0]
         if size != data.shape[1]:
@@ -162,6 +154,7 @@ class KernelOptimizer2D(object):
         try:
             # t is the bandwidth squared (used for estimating moments), calculated using fixed point
             self.t_star = brentq(self._bandwidth_fixed_point_2D, 0, 0.1, xtol=0.001 ** 2)
+            # noinspection PyTypeChecker
             if fallback_t and self.t_star > 0.01 and self.t_star > 2 * fallback_t:
                 # For 2D distributions with boundaries, fixed point can overestimate significantly
                 logging.debug('KernelOptimizer2D Using fallback (t* > 2*t_gallback)')

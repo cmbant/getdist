@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import glob
 import logging
@@ -7,14 +5,14 @@ import copy
 import pickle
 import math
 import time
+from typing import Mapping
+
 import numpy as np
-import six
 from scipy.stats import norm
 import getdist
 from getdist import chains, types, covmat, ParamInfo, IniFile, ParamNames, cobaya_interface
-from getdist.densities import Density1D, Density2D, DensityND
-from getdist.densities import getContourLevels as getOtherContourLevels
-from getdist.chains import Chains, chainFiles, lastModified, WeightedSampleError, ParamError
+from getdist.densities import Density1D, Density2D
+from getdist.chains import Chains, chainFiles, last_modified, WeightedSampleError, ParamError
 from getdist.convolve import convolve1D, convolve2D
 from getdist.cobaya_interface import MCSamplesFromCobaya
 import getdist.kde_bandwidth as kde
@@ -44,7 +42,7 @@ class BandwidthError(MCSamplesError):
     pass
 
 
-def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}):
+def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings=None):
     """
     Loads a set of samples from a file or files.
 
@@ -87,7 +85,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
             os.path.join(folder, f) for f in os.listdir(folder) if (
                     f.startswith(prefix) and
                     any(f.lower().endswith(end) for end in ['updated.yaml', 'full.yaml']))]
-    if not no_cache and os.path.exists(cachefile) and lastModified(allfiles) < os.path.getmtime(cachefile):
+    if not no_cache and os.path.exists(cachefile) and last_modified(allfiles) < os.path.getmtime(cachefile):
         try:
             with open(cachefile, 'rb') as inp:
                 cache = pickle.load(inp)
@@ -110,7 +108,7 @@ def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings={}
     return samples
 
 
-class Kernel1D(object):
+class Kernel1D:
     def __init__(self, winw, h):
         self.winw = winw
         self.h = h
@@ -296,7 +294,7 @@ class MCSamples(Chains):
         if isinstance(ranges, (list, tuple)):
             for i, minmax in enumerate(ranges):
                 self.ranges.setRange(self.parName(i), minmax)
-        elif hasattr(ranges, "keys"):
+        elif isinstance(ranges, Mapping):
             for key, value in ranges.items():
                 self.ranges.setRange(key, value)
         elif isinstance(ranges, ParamBounds):
@@ -322,7 +320,7 @@ class MCSamples(Chains):
         :param i: The index or name of a parameter.
         :return: The parameter's label.
         """
-        if isinstance(i, six.string_types):
+        if isinstance(i, str):
             return self.paramNames.parWithName(i).label
         else:
             return self.paramNames.names[i].label
@@ -438,10 +436,10 @@ class MCSamples(Chains):
         :param doUpdate: True if should update internal computed values, False otherwise (e.g. if want to make
                          other changes first)
         """
-        assert (settings is None or hasattr(settings, "keys"))
+        assert (settings is None or isinstance(settings, Mapping))
         if not ini:
             ini = self.ini
-        elif isinstance(ini, six.string_types):
+        elif isinstance(ini, str):
             ini = IniFile(ini)
         else:
             ini = copy.deepcopy(ini)
@@ -492,7 +490,7 @@ class MCSamples(Chains):
 
         :return: self
         """
-        super(MCSamples, self).updateBaseStatistics()
+        super().updateBaseStatistics()
         mult_max = (self.mean_mult * self.numrows) / min(self.numrows // 2, 500)
         outliers = np.sum(self.weights > mult_max)
         if outliers != 0:
@@ -611,7 +609,7 @@ class MCSamples(Chains):
         return fraction_indices
 
     def PCA(self, params, param_map=None, normparam=None, writeDataToFile=False, filename=None,
-            conditional_params=[], n_best_only=None):
+            conditional_params=(), n_best_only=None):
         """
         Perform principle component analysis (PCA). In other words,
         get eigenvectors and eigenvalues for normalized variables
@@ -797,7 +795,7 @@ class MCSamples(Chains):
             PCAtext += '   (%s)\n' % (self.parLabel(j))
 
         if writeDataToFile:
-            with open(filename or self.rootdirname + ".PCA", "w") as f:
+            with open(filename or self.rootdirname + ".PCA", "w", encoding='utf-8') as f:
                 f.write(PCAtext)
         if n_best_only:
             if n_best_only == 1:
@@ -822,8 +820,9 @@ class MCSamples(Chains):
             int(self.norm ** 2 / np.dot(self.weights, self.weights)))
         return lines
 
+    # noinspection PyUnboundLocalVariable
     def getConvergeTests(self, test_confidence=0.95, writeDataToFile=False,
-                         what=['MeanVar', 'GelmanRubin', 'SplitTest', 'RafteryLewis', 'CorrLengths'],
+                         what=('MeanVar', 'GelmanRubin', 'SplitTest', 'RafteryLewis', 'CorrLengths'),
                          filename=None, feedback=False):
         """
         Do convergence tests.
@@ -907,6 +906,7 @@ class MCSamples(Chains):
                 lines += "var(mean)/mean(var) for eigenvalues of covariance of y of orthonormalized parameters\n"
                 for jj, Di in enumerate(D):
                     lines += "%3i%13.5f\n" % (jj + 1, Di)
+                # noinspection PyStringFormat
                 GRSummary = " var(mean)/mean(var), remaining chains, worst e-value: R-1 = %13.5F" % self.GelmanRubin
             else:
                 self.GelmanRubin = None
@@ -1128,7 +1128,7 @@ class MCSamples(Chains):
                         lines += " %s\n" % label
 
         if writeDataToFile:
-            with open(filename or (self.rootdirname + '.converge'), 'w') as f:
+            with open(filename or (self.rootdirname + '.converge'), 'w', encoding='utf-8') as f:
                 f.write(lines)
         return lines
 
@@ -1301,7 +1301,7 @@ class MCSamples(Chains):
         return hx, hy, c
 
     def _initParamRanges(self, j, paramConfid=None):
-        if isinstance(j, six.string_types):
+        if isinstance(j, str):
             j = self.index[j]
         paramVec = self.samples[:, j]
         return self._initParam(self.paramNames.names[j], paramVec, self.means[j], self.sddev[j], paramConfid)
@@ -1395,6 +1395,7 @@ class MCSamples(Chains):
                 return density
         return self.get1DDensityGridData(name, **kwargs)
 
+    # noinspection PyUnboundLocalVariable
     def get1DDensityGridData(self, j, paramConfid=None, meanlikes=False, **kwargs):
         """
         Low-level function to get a :class:`~.densities.Density1D` instance for the marginalized 1D density
@@ -1609,6 +1610,7 @@ class MCSamples(Chains):
             density.normalize(in_place=True)
         return density
 
+    # noinspection PyUnboundLocalVariable
     def get2DDensityGridData(self, j, j2, num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
         """
         Low-level function to get 2D plot marginalized density and optional additional plot data.
@@ -1807,185 +1809,187 @@ class MCSamples(Chains):
 
         return density
 
-    def _setRawEdgeMaskND(self, parv, prior_mask):
-        ndim = len(parv)
-        vrap = parv[::-1]
-        mskShape = prior_mask.shape
-
-        if len(mskShape) != ndim:
-            raise ValueError("parv and prior_mask or different sizes!")
-
-        # create a slice object iterating over everything
-        mskSlices = [slice(None) for _ in range(ndim)]
-
-        for i in range(ndim):
-            if vrap[i].has_limits_bot:
-                mskSlices[i] = 0
-                prior_mask[mskSlices] /= 2
-                mskSlices[i] = slice(None)
-
-            if vrap[i].has_limits_top:
-                mskSlices[i] = mskShape[i] - 1
-                prior_mask[mskSlices] /= 2
-                mskSlices[i] = slice(None)
-
-    def _flattenValues(self, ixs, xsizes):
-        ndim = len(ixs)
-
-        q = ixs[0]
-        for i in range(1, ndim):
-            q = q + np.prod(xsizes[0:i]) * ixs[i]
-        return q
-
-    def _unflattenValues(self, q, xsizes):
-        ndim = len(xsizes)
-
-        ixs = list([np.array(q) for _ in range(ndim)])
-
-        if ndim == 1:
-            ixs[0] = q
-            return ixs
-
-        ixs[ndim - 1] = q / np.prod(xsizes[0:ndim - 1])
-
-        acc = 0
-        for k in range(ndim - 2, -1, -1):
-            acc = acc + ixs[k + 1] * np.prod(xsizes[0:k + 1])
-            if k > 0:
-                ixs[k] = (q - acc) / np.prod(xsizes[0:k])
-            else:
-                ixs[k] = q - acc
-
-        return ixs
-
-    def _makeNDhist(self, ixs, xsizes):
-
-        if len(ixs) != len(xsizes):
-            raise ValueError('index and size arrays are of unequal length')
-
-        flatixv = self._flattenValues(ixs, xsizes)
-
-        # to be removed debugging only
-        if np.count_nonzero(np.asarray(ixs) - self._unflattenValues(flatixv, xsizes)) != 0:
-            raise ValueError('ARG!!! flatten/unflatten screwed')
-
-        # note arrays are indexed y,x
-        return np.bincount(flatixv, weights=self.weights,
-                           minlength=np.prod(xsizes)).reshape(xsizes[::-1], order='C'), flatixv
-
-    def getRawNDDensity(self, xs, normalized=False, **kwargs):
-        """
-        Returns a :class:`~.densities.DensityND` instance with marginalized ND density.
-
-        :param xs: indices or names of x_i parameters
-        :param normalized: if False, is normalized so the maximum is 1, if True, density is normalized
-        :param kwargs: keyword arguments for the :meth:`~.mcsamples.MCSamples.getRawNDDensityGridData` function
-        :return: :class:`~.densities.DensityND` instance
-        """
-        if self.needs_update:
-            self.updateBaseStatistics()
-        density = self.getRawNDDensityGridData(xs, get_density=True, **kwargs)
-        if normalized:
-            density.normalize(in_place=True)
-        return density
-
-    def getRawNDDensityGridData(self, js, num_plot_contours=None, get_density=False,
-                                meanlikes=False, maxlikes=False, **kwargs):
-        """
-        Low-level function to get unsmooth ND plot marginalized
-        density and optional additional plot data (no KDE).
-
-        :param js: vector of names or indices of the x_i parameters
-        :param num_plot_contours: number of contours to calculate and return in density.contours
-        :param get_density: only get the ND marginalized density, no additional plot data, no contours.
-        :param meanlikes: calculate mean likelihoods as well as marginalized density
-                         (returned as array in density.likes)
-        :param maxlikes: calculate the profile likelihoods in addition to the others
-                         (returned as array in density.maxlikes)
-        :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
-
-        :return: a :class:`~.densities.DensityND` instance
-        """
-
-        if self.needs_update:
-            self.updateBaseStatistics()
-
-        ndim = len(js)
-
-        jv, parv = zip(*[self._parAndNumber(j) for j in js])
-
-        if None in jv:
-            return None
-
-        [self._initParamRanges(j) for j in jv]
-
-        boundary_correction_order = kwargs.get('boundary_correction_order', self.boundary_correction_order)
-        has_prior = any(parv[i].has_limits for i in range(ndim))
-
-        nbinsND = kwargs.get('num_bins_ND', self.num_bins_ND)
-        ixv, widthv, xminv, xmaxv = zip(*[self._binSamples(self.samples[:, jv[i]],
-                                                           parv[i], nbinsND) for i in range(ndim)])
-
-        # could also be non-equals over the dimensions
-        xsizev = nbinsND * np.ones(ndim, dtype=np.int)
-
-        binsND, flatixv = self._makeNDhist(ixv, xsizev)
-
-        if has_prior and boundary_correction_order >= 0:
-            # Correct for edge effects
-            prior_mask = np.ones(xsizev[::-1])
-            self._setRawEdgeMaskND(parv, prior_mask)
-            binsND /= prior_mask
-
-        if meanlikes:
-            likeweights = self.weights * np.exp(self.mean_loglike - self.loglikes)
-            binNDlikes = np.bincount(flatixv, weights=likeweights,
-                                     minlength=np.prod(xsizev)).reshape(xsizev[::-1], order='C')
-        else:
-            binNDlikes = None
-
-        if maxlikes:
-            binNDmaxlikes = np.zeros(binsND.shape)
-            ndindex = zip(*[ixv[i] for i in range(ndim)[::-1]])
-            bestfit = np.max(-self.loglikes)
-
-            for irec in range(len(self.loglikes)):
-                binNDmaxlikes[ndindex[irec]] = max(binNDmaxlikes[ndindex[irec]],
-                                                   np.exp(-bestfit - self.loglikes[irec]))
-        else:
-            binNDmaxlikes = None
-
-        xv = [np.linspace(xminv[i], xmaxv[i], xsizev[i]) for i in range(ndim)]
-        views = [(parv[i].range_min, parv[i].range_max) for i in range(ndim)]
-
-        density = DensityND(xv, binsND, view_ranges=views)
-
-        # density.normalize('integral', in_place=True)
-        density.normalize('max', in_place=True)
-        if get_density:
-            return density
-
-        ncontours = len(self.contours)
-        if num_plot_contours:
-            ncontours = min(num_plot_contours, ncontours)
-        contours = self.contours[:ncontours]
-
-        # Get contour containing contours(:) of the probability
-        density.contours = density.getContourLevels(contours)
-
-        if meanlikes:
-            binNDlikes /= np.max(binNDlikes)
-            density.likes = binNDlikes
-        else:
-            density.likes = None
-
-        if maxlikes:
-            density.maxlikes = binNDmaxlikes
-            density.maxcontours = getOtherContourLevels(binNDmaxlikes, contours, half_edge=False)
-        else:
-            density.maxlikes = None
-
-        return density
+    # This ND code was contributed but not updated, and currently seems not to work; welcome pull request to restore
+    # def _setRawEdgeMaskND(self, parv, prior_mask):
+    #     ndim = len(parv)
+    #     vrap = parv[::-1]
+    #     mskShape = prior_mask.shape
+    #
+    #     if len(mskShape) != ndim:
+    #         raise ValueError("parv and prior_mask or different sizes!")
+    #
+    #     # create a slice object iterating over everything
+    #     mskSlices = [slice(None) for _ in range(ndim)]
+    #
+    #     for i in range(ndim):
+    #         if vrap[i].has_limits_bot:
+    #             mskSlices[i] = 0
+    #             prior_mask[mskSlices] /= 2
+    #             mskSlices[i] = slice(None)
+    #
+    #         if vrap[i].has_limits_top:
+    #             mskSlices[i] = mskShape[i] - 1
+    #             prior_mask[mskSlices] /= 2
+    #             mskSlices[i] = slice(None)
+    #
+    # def _flattenValues(self, ixs, xsizes):
+    #     ndim = len(ixs)
+    #
+    #     q = ixs[0]
+    #     for i in range(1, ndim):
+    #         q = q + np.prod(xsizes[0:i]) * ixs[i]
+    #     return q
+    #
+    # def _unflattenValues(self, q, xsizes):
+    #     ndim = len(xsizes)
+    #
+    #     ixs = list([np.array(q) for _ in range(ndim)])
+    #
+    #     if ndim == 1:
+    #         ixs[0] = q
+    #         return ixs
+    #
+    #     ixs[ndim - 1] = q / np.prod(xsizes[0:ndim - 1])
+    #
+    #     acc = 0
+    #     for k in range(ndim - 2, -1, -1):
+    #         acc = acc + ixs[k + 1] * np.prod(xsizes[0:k + 1])
+    #         if k > 0:
+    #             ixs[k] = (q - acc) / np.prod(xsizes[0:k])
+    #         else:
+    #             ixs[k] = q - acc
+    #
+    #     return ixs
+    #
+    # def _makeNDhist(self, ixs, xsizes):
+    #
+    #     if len(ixs) != len(xsizes):
+    #         raise ValueError('index and size arrays are of unequal length')
+    #
+    #     flatixv = self._flattenValues(ixs, xsizes)
+    #
+    #     # to be removed debugging only
+    #     if np.count_nonzero(np.asarray(ixs) - self._unflattenValues(flatixv, xsizes)) != 0:
+    #         raise ValueError('ARG!!! flatten/unflatten screwed')
+    #
+    #     # note arrays are indexed y,x
+    #     return np.bincount(flatixv, weights=self.weights,
+    #                        minlength=np.prod(xsizes)).reshape(xsizes[::-1], order='C'), flatixv
+    #
+    # def getRawNDDensity(self, xs, normalized=False, **kwargs):
+    #     """
+    #     Returns a :class:`~.densities.DensityND` instance with marginalized ND density.
+    #
+    #     :param xs: indices or names of x_i parameters
+    #     :param normalized: if False, is normalized so the maximum is 1, if True, density is normalized
+    #     :param kwargs: keyword arguments for the :meth:`~.mcsamples.MCSamples.getRawNDDensityGridData` function
+    #     :return: :class:`~.densities.DensityND` instance
+    #     """
+    #     if self.needs_update:
+    #         self.updateBaseStatistics()
+    #     density = self.getRawNDDensityGridData(xs, get_density=True, **kwargs)
+    #     if normalized:
+    #         density.normalize(in_place=True)
+    #     return density
+    #
+    # # noinspection PyUnresolvedReferences
+    # def getRawNDDensityGridData(self, js, num_plot_contours=None, get_density=False,
+    #                             meanlikes=False, maxlikes=False, **kwargs):
+    #     """
+    #     Low-level function to get unsmooth ND plot marginalized
+    #     density and optional additional plot data (no KDE).
+    #
+    #     :param js: vector of names or indices of the x_i parameters
+    #     :param num_plot_contours: number of contours to calculate and return in density.contours
+    #     :param get_density: only get the ND marginalized density, no additional plot data, no contours.
+    #     :param meanlikes: calculate mean likelihoods as well as marginalized density
+    #                      (returned as array in density.likes)
+    #     :param maxlikes: calculate the profile likelihoods in addition to the others
+    #                      (returned as array in density.maxlikes)
+    #     :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
+    #
+    #     :return: a :class:`~.densities.DensityND` instance
+    #     """
+    #
+    #     if self.needs_update:
+    #         self.updateBaseStatistics()
+    #
+    #     ndim = len(js)
+    #
+    #     jv, parv = zip(*[self._parAndNumber(j) for j in js])
+    #
+    #     if None in jv:
+    #         return None
+    #
+    #     [self._initParamRanges(j) for j in jv]
+    #
+    #     boundary_correction_order = kwargs.get('boundary_correction_order', self.boundary_correction_order)
+    #     has_prior = any(parv[i].has_limits for i in range(ndim))
+    #
+    #     nbinsND = kwargs.get('num_bins_ND', self.num_bins_ND)
+    #     ixv, widthv, xminv, xmaxv = zip(*[self._binSamples(self.samples[:, jv[i]],
+    #                                                        parv[i], nbinsND) for i in range(ndim)])
+    #
+    #     # could also be non-equals over the dimensions
+    #     xsizev = nbinsND * np.ones(ndim, dtype=np.int)
+    #
+    #     binsND, flatixv = self._makeNDhist(ixv, xsizev)
+    #
+    #     if has_prior and boundary_correction_order >= 0:
+    #         # Correct for edge effects
+    #         prior_mask = np.ones(xsizev[::-1])
+    #         self._setRawEdgeMaskND(parv, prior_mask)
+    #         binsND /= prior_mask
+    #
+    #     if meanlikes:
+    #         likeweights = self.weights * np.exp(self.mean_loglike - self.loglikes)
+    #         binNDlikes = np.bincount(flatixv, weights=likeweights,
+    #                                  minlength=np.prod(xsizev)).reshape(xsizev[::-1], order='C')
+    #     else:
+    #         binNDlikes = None
+    #
+    #     if maxlikes:
+    #         binNDmaxlikes = np.zeros(binsND.shape)
+    #         ndindex = zip(*[ixv[i] for i in range(ndim)[::-1]])
+    #         bestfit = np.max(-self.loglikes)
+    #
+    #         for irec in range(len(self.loglikes)):
+    #             binNDmaxlikes[ndindex[irec]] = max(binNDmaxlikes[ndindex[irec]],
+    #                                                np.exp(-bestfit - self.loglikes[irec]))
+    #     else:
+    #         binNDmaxlikes = None
+    #
+    #     xv = [np.linspace(xminv[i], xmaxv[i], xsizev[i]) for i in range(ndim)]
+    #     views = [(parv[i].range_min, parv[i].range_max) for i in range(ndim)]
+    #
+    #     density = DensityND(xv, binsND, view_ranges=views)
+    #
+    #     # density.normalize('integral', in_place=True)
+    #     density.normalize('max', in_place=True)
+    #     if get_density:
+    #         return density
+    #
+    #     ncontours = len(self.contours)
+    #     if num_plot_contours:
+    #         ncontours = min(num_plot_contours, ncontours)
+    #     contours = self.contours[:ncontours]
+    #
+    #     # Get contour containing contours(:) of the probability
+    #     density.contours = density.getContourLevels(contours)
+    #
+    #     if meanlikes:
+    #         binNDlikes /= np.max(binNDlikes)
+    #         density.likes = binNDlikes
+    #     else:
+    #         density.likes = None
+    #
+    #     if maxlikes:
+    #         density.maxlikes = binNDmaxlikes
+    #         density.maxcontours = getOtherContourLevels(binNDmaxlikes, contours, half_edge=False)
+    #     else:
+    #         density.maxlikes = None
+    #
+    #     return density
 
     def _setLikeStats(self):
         """
@@ -2143,7 +2147,7 @@ class MCSamples(Chains):
         :return: labels, texs: a list of parameter labels, and a list of tex snippets,
                                or for a single parameter, the latex snippet.
         """
-        if isinstance(params, six.string_types):
+        if isinstance(params, str):
             return self.getInlineLatex(params, limit, err_sig_figs)
 
         marge = self.getMargeStats()
@@ -2201,6 +2205,7 @@ class MCSamples(Chains):
 
         self.done_1Dbins = True
 
+    # noinspection PyUnboundLocalVariable
     def _setMargeLimits(self, par, paramConfid, max_frac_twotail=None, density1D=None):
         """
         Get limits, one or two tail depending on whether posterior
@@ -2311,7 +2316,7 @@ class MCSamples(Chains):
 
         if range is not None:
             self.ranges.setRange(name, range)
-        return super(MCSamples, self).addDerived(paramVec, name, label=label, comment=comment)
+        return super().addDerived(paramVec, name, label=label, comment=comment)
 
     def getParamBestFitDict(self, best_sample=False, want_derived=True, want_fixed=True, max_posterior=True):
         """
@@ -2348,12 +2353,12 @@ class MCSamples(Chains):
         :param want_fixed: also include values of any fixed parameters
         :return: ordered dictionary of parameter values
         """
-        res = super(MCSamples, self).getParamSampleDict(ix, want_derived=want_derived)
+        res = super().getParamSampleDict(ix, want_derived=want_derived)
         if want_fixed:
             res.update(self.ranges.fixedValueDict())
         return res
 
-    def getCombinedSamplesWithSamples(self, samps2, sample_weights=[1, 1]):
+    def getCombinedSamplesWithSamples(self, samps2, sample_weights=(1, 1)):
         """
         Make a new  :class:`MCSamples` instance by appending samples from samps2 for parameters which are in common.
         By default they are weighted so that the probability mass of each set of samples is the same,
@@ -2373,7 +2378,7 @@ class MCSamples(Chains):
             loglikes = None
         if sample_weights is None:
             fac = 1
-            sample_weights = [1, 1]
+            sample_weights = (1, 1)
         else:
             fac = np.sum(self.weights) / np.sum(samps2.weights)
         weights = np.concatenate([self.weights * sample_weights[0], samps2.weights * sample_weights[1] * fac])
@@ -2384,14 +2389,14 @@ class MCSamples(Chains):
                           ranges=self.ranges, settings=copy.deepcopy(self.ini.params))
         return samps
 
-    def saveTextMetadata(self, root, properties={}):
+    def saveTextMetadata(self, root, properties=None):
         """
         Saves metadata about the sames to text files with given file root
 
         :param root: root file name
         :param properties: optional dictiory of values to save in root.properties.ini
         """
-        super(MCSamples, self).saveTextMetadata(root)
+        super().saveTextMetadata(root)
         self.ranges.saveToFile(root + '.ranges')
         ini_name = root + '.properties.ini'
         if properties or self.properties and self.properties.params or self.label:
@@ -2403,12 +2408,12 @@ class MCSamples(Chains):
                 ini.params.update(self.properties.params)
             if self.label:
                 ini.params.update({'label': self.label})
-            ini.params.update(properties)
+            ini.params.update(properties or {})
             ini.saveFile(ini_name)
         elif os.path.exists(ini_name):
             os.remove(ini_name)
 
-    def saveChainsAsText(self, root, make_dirs=False, properties={}):
+    def saveChainsAsText(self, root, make_dirs=False, properties=None):
         if self.chains is None:
             chain_list = self.getSeparateChains()
         else:
@@ -2433,7 +2438,7 @@ class MCSamples(Chains):
             text += 'g.plots_1d(roots, markers=markers)'
         self._WritePlotFile(filename, self.subplot_size_inch, text, '', ext)
 
-    def _writeScriptPlots2D(self, filename, plot_2D_param=None, cust2DPlots=[], ext=None):
+    def _writeScriptPlots2D(self, filename, plot_2D_param=None, cust2DPlots=(), ext=None):
         """
         Write script that generates a 2 dimensional plot. Only intended for use by getdist script.
 
@@ -2460,6 +2465,7 @@ class MCSamples(Chains):
                 par2 = self.parName(j2)
                 if plot_2D_param and par2 != plot_2D_param:
                     continue
+                # noinspection PyUnboundLocalVariable
                 if len(cust2DPlots) and (par1 + '__' + par2) not in cuts:
                     continue
                 if (par1, par2) not in done2D:
@@ -2506,7 +2512,7 @@ class MCSamples(Chains):
         :param tag: Tag used for the filename the created file will export to.
         :param ext: The extension for the filename, Default if None
         """
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             f.write("import getdist.plots as plots, os\n")
             f.write("g=plots.GetDistPlotter(chain_dir=r'%s')\n" % (self.batch_path or os.path.dirname(self.root)))
 

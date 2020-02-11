@@ -5,6 +5,7 @@ from matplotlib import cm
 # Simple style that uses matplotlib's default color table for contours and lines
 
 class DefaultColorsPlotter(plots.GetDistPlotter):
+    # noinspection PyUnresolvedReferences
     def set_default_settings(self):
         s = plots.GetDistPlotSettings()
         s.solid_colors = cm.tab10

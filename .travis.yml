@@ -10,25 +10,18 @@ matrix:
     - env:
         - CHANNEL="defaults"
         - PYDIST="ANACONDA"
-        - PYVER="3"
-      python: "2.7"
-    - env:
-        - CHANNEL="defaults"
-        - PYDIST="ANACONDA"
-        - PYVER="3"
       python: "3.6"
     - env:
         - CHANNEL="conda-forge"
         - PYDIST="ANACONDA"
-        - PYVER="3"
       python: "3.8"
     - name: "3.7 with bionic"
       python: "3.7"
-      
+
 install:
   # Setup anaconda following http://conda.pydata.org/docs/travis.html
   - if [[ "$PYDIST" == "ANACONDA" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda$PYVER-latest-Linux-x86_64.sh -O miniconda.sh;
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
       bash miniconda.sh -b -p $HOME/miniconda;
       export PATH="$HOME/miniconda/bin:$PATH";
       hash -r;
@@ -36,7 +29,7 @@ install:
       conda info -a;
       conda create -q -n test-environment -c $CHANNEL python=$TRAVIS_PYTHON_VERSION scipy matplotlib;
       source activate test-environment;
-    fi  
+    fi
   - python --version
   - pip install .
   - pip install PyYAML

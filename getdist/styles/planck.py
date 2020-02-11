@@ -44,15 +44,15 @@ class PlanckPlotter(plots.GetDistPlotter):
         scaling = kwargs.pop('scaling', None)
         kwargs.pop('rc_sizes', None)
         width_inch = kwargs.pop("width_inch", None) or 3.464
-        return super(PlanckPlotter, cls).get_single_plotter(scaling=scaling if scaling is not None else False,
-                                                            rc_sizes=True, width_inch=width_inch, **kwargs)
+        return super().get_single_plotter(scaling=scaling if scaling is not None else False,
+                                          rc_sizes=True, width_inch=width_inch, **kwargs)
 
     @classmethod
     def get_subplot_plotter(cls, **kwargs):
         scaling = kwargs.pop('scaling', None)
         kwargs.pop('rc_sizes', None)
-        return super(PlanckPlotter, cls).get_subplot_plotter(scaling=scaling if scaling is not None else False,
-                                                             rc_sizes=True, **kwargs)
+        return super().get_subplot_plotter(scaling=scaling if scaling is not None else False,
+                                           rc_sizes=True, **kwargs)
 
 
 style_name = 'planck'

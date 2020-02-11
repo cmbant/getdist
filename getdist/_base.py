@@ -27,7 +27,7 @@ def _map_name(obj, name):
         return None
 
 
-class _BaseObject(object):
+class _BaseObject:
     # Compatibility of pep_8_style and camelCase for backwards compatibility
 
     _fail_on_not_exist = False

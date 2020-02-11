@@ -1,25 +1,21 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import decimal
 import os
 from io import BytesIO
 import numpy as np
-from getdist import paramnames
-import six
+from getdist.paramnames import ParamInfo, ParamList
 import tempfile
-from collections import OrderedDict
 
 _sci_tolerance = 4
 
 
-class TextFile(object):
+class TextFile:
     def __init__(self, lines=None):
-        if isinstance(lines, six.string_types):
+        if isinstance(lines, str):
             lines = [lines]
         self.lines = lines or []
 
     def write(self, outfile):
-        with open(outfile, 'w') as f:
+        with open(outfile, 'w', encoding='utf-8') as f:
             f.write("\n".join(self.lines))
 
 
@@ -45,6 +41,7 @@ def float_to_decimal(f):
     return result
 
 
+# noinspection PyUnboundLocalVariable
 def numberFigs(number, sigfig, sci=False):
     # http://stackoverflow.com/questions/2663612/nicely-representing-a-floating-point-number-in-python/2663623#2663623
     assert (sigfig > 0)
@@ -90,12 +87,13 @@ def numberFigs(number, sigfig, sci=False):
     return ''.join(result)
 
 
-class NumberFormatter(object):
+class NumberFormatter:
     def __init__(self, sig_figs=4, separate_limit_tol=0.1, err_sf=2):
         self.sig_figs = sig_figs
         self.separate_limit_tol = separate_limit_tol
         self.err_sf = err_sf
 
+    # noinspection PyUnboundLocalVariable
     def namesigFigs(self, value, limplus, limminus, wantSign=True, sci=False):
         frac = limplus / (abs(value) + limplus)
         sf = self.sig_figs
@@ -136,6 +134,7 @@ class NumberFormatter(object):
         else:
             return res, plus_str, minus_str
 
+    # noinspection PyUnboundLocalVariable
     def formatNumber(self, value, sig_figs=None, wantSign=False, sci=False):
         if sig_figs is None:
             sf = self.sig_figs
@@ -164,7 +163,7 @@ class NumberFormatter(object):
         return limit != 1 or abs(abs(upper / lower) - 1) > self.separate_limit_tol
 
 
-class TableFormatter(object):
+class TableFormatter:
     def __init__(self):
         self.border = '|'
         self.endofrow = '\\\\'
@@ -259,7 +258,7 @@ class NoLineTableFormatter(OpenTableFormatter):
         return r'\noalign{\vskip 3pt}\cline{2-' + str(colsPerParam * numResults + 1) + r'}\noalign{\vskip 3pt}'
 
 
-class ResultTable(object):
+class ResultTable:
     """
     Class for holding a latex table of parameter statistics
     """
@@ -290,8 +289,6 @@ class ResultTable(object):
         else:
             self.format = formatter
         self.ncol = ncol
-        if isinstance(results, six.string_types):
-            results = [results]
         if tableParamNames is None:
             self.tableParamNames = results[0]
         else:
@@ -464,7 +461,7 @@ class ResultTable(object):
             return outfile
 
 
-class ParamResults(paramnames.ParamList):
+class ParamResults(ParamList):
     """
     Base class for a set of parameter results, inheriting from :class:`~.paramnames.ParamList`,
     so that self.names is a list of :class:`~.paramnames.ParamInfo` instances for each parameter, which
@@ -473,8 +470,10 @@ class ParamResults(paramnames.ParamList):
     pass
 
 
-class LikelihoodChi2(object):
-    pass
+class LikelihoodChi2:
+    name: str
+    tag: str
+    chisq: float
 
 
 class BestFit(ParamResults):
@@ -544,7 +543,7 @@ class BestFit(ParamResults):
                     break
                 continue
             if not isFixed or want_fixed:
-                param = paramnames.ParamInfo()
+                param = ParamInfo()
                 param.isFixed = isFixed
                 param.isDerived = isDerived
                 (param.number, param.best_fit, param.name, param.label) = [s.strip() for s in line.split(None, 3)]
@@ -554,14 +553,14 @@ class BestFit(ParamResults):
 
     def sortedChiSquareds(self):
         likes = dict()
-        for (kind, val) in self.chiSquareds:
+        for kind, val in self.chiSquareds:
             if kind not in likes:
                 likes[kind] = []
             likes[kind].append(val)
-        return sorted(six.iteritems(likes))
+        return sorted(iter(likes.items()))
 
     def chiSquareForKindName(self, kind, name):
-        for (akind, val) in self.chiSquareds:
+        for akind, val in self.chiSquareds:
             if akind == kind and val.name == name:
                 return val.chisq
         return None
@@ -574,7 +573,7 @@ class BestFit(ParamResults):
             return None
 
     def getParamDict(self, include_derived=True):
-        res = OrderedDict()
+        res = dict()
         for i, name in enumerate(self.names):
             if include_derived or not name.isDerived:
                 res[name.name] = name.best_fit
@@ -583,7 +582,7 @@ class BestFit(ParamResults):
         return res
 
 
-class ParamLimit(object):
+class ParamLimit:
     """
     Class containing information about a marginalized parameter limit.
 
@@ -683,7 +682,7 @@ class MargeStats(ParamResults):
         for line in textFileLines[3:]:
             if len(line.strip()) == 0:
                 break
-            param = paramnames.ParamInfo()
+            param = ParamInfo()
             items = [s.strip() for s in line.split(None, len(self.limits) * 3 + 3)]
             param.name = items[0]
             if param.name[-1] == '*':
@@ -756,7 +755,7 @@ class MargeStats(ParamResults):
         return res + [self.limitText(limit) + '\\% limits']
 
     def texValues(self, formatter, p, limit=2, refResults=None, shiftSigma_indep=False, shiftSigma_subset=False):
-        if not isinstance(p, paramnames.ParamInfo):
+        if not isinstance(p, ParamInfo):
             param = self.parWithName(p)
         else:
             param = self.parWithName(p.name)

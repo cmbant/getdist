@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-
-from __future__ import absolute_import
-import io
+from __future__ import print_function
 import re
 import os
 import sys
@@ -11,9 +9,13 @@ try:
 except ImportError:
     from distutils.core import setup
 
+if sys.version_info[0] == 2:
+    print('getdist no longer support Python 2, please upgrade to Python 3')
+    sys.exit(1)
+
 
 def find_version():
-    version_file = io.open(os.path.join(os.path.dirname(__file__), 'getdist/__init__.py')).read()
+    version_file = open(os.path.join(os.path.dirname(__file__), 'getdist/__init__.py')).read()
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
@@ -21,7 +23,7 @@ def find_version():
 
 
 def get_long_description():
-    with open('README.rst') as f:
+    with open('README.rst',  encoding="utf-8-sig") as f:
         lines = f.readlines()
         i = -1
         while '=====' not in lines[i]:
@@ -39,12 +41,9 @@ if sys.platform == "darwin":
     # Mac wrapper .app bundle
     try:
         # Just check for errors, and skip if no valid PySide
-        if sys.version_info[0] == 3:
-            from PySide2 import QtCore
-        else:
-            import PySide
+        from PySide2 import QtCore
     except ImportError as e:
-        print("Cannot load PySide or PySide2 - skipping MacOS GetDist GUI app %s" % e)
+        print("Cannot load PySide2 - skipping MacOS GetDist GUI app %s" % e)
     else:
         sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -67,19 +66,19 @@ if sys.platform == "darwin":
                                os.path.join(file_dir, app_name))
             fname = os.path.join(file_dir, app_name + '/Contents/MacOS/GetDistGUI')
             out = []
-            with io.open(fname, 'r') as f:
+            with open(fname, 'r') as f:
                 for line in f.readlines():
                     if 'python=' in line:
                         out.append('python="%s"' % sys.executable)
                     else:
                         out.append(line.strip())
-            with io.open(fname, 'w') as f:
+            with open(fname, 'w') as f:
                 f.write("\n".join(out))
             subprocess.call('chmod +x "%s"' % fname, shell=True)
             fname = os.path.join(file_dir, app_name + '/Contents/Info.plist')
-            with io.open(fname, 'r') as f:
+            with open(fname, 'r') as f:
                 plist = f.read().replace('1.0.0', find_version())
-            with io.open(fname, 'w') as f:
+            with open(fname, 'w') as f:
                 f.write(plist)
 
 
@@ -139,9 +138,8 @@ setup(name='GetDist',
       install_requires=[
           'numpy',
           'matplotlib (>=2.2.0)',
-          'six',
           "scipy (>=1.0.0)"],
-      # PySide or pyside2 is needed for the GUI
+      # PySide2 is needed for the GUI
       # pandas optional (for faster txt chain file read)
       extras_require={'GUI': ["PySide2>=5.2"], 'txt': ["pandas>=0.14.0"]},
       cmdclass=cmd_class,
@@ -149,13 +147,11 @@ setup(name='GetDist',
           'Development Status :: 5 - Production/Stable',
           'Operating System :: OS Independent',
           'Intended Audience :: Science/Research',
-          "Programming Language :: Python :: 2",
-          'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
       ],
-      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*',
+      python_requires='>=3.6',
       keywords=['MCMC', 'KDE', 'sample', 'density estimation', 'plot', 'figure']
       )

@@ -1,10 +1,6 @@
-# AL 2011-2017
-from __future__ import absolute_import
 import os
 import fnmatch
-import six
 from itertools import chain
-from collections import OrderedDict
 
 
 def makeList(roots):
@@ -24,10 +20,9 @@ def makeList(roots):
 def escapeLatex(text):
     if text:
         import matplotlib
-    if text and matplotlib.rcParams['text.usetex']:
-        return text.replace('_', '{\\textunderscore}')
-    else:
-        return text
+        if matplotlib.rcParams['text.usetex']:
+            return text.replace('_', '{\\textunderscore}')
+    return text
 
 
 def mergeRenames(*dicts, **kwargs):
@@ -71,7 +66,7 @@ def mergeRenames(*dicts, **kwargs):
     return merged
 
 
-class ParamInfo(object):
+class ParamInfo:
     """
     Parameter information object.
 
@@ -150,12 +145,13 @@ class ParamInfo(object):
         return self.string()
 
 
-class ParamList(object):
+class ParamList:
     """
     Holds an orders list of :class:`ParamInfo` objects describing a set of parameters.
 
     :ivar names: list of :class:`ParamInfo` objects
     """
+    loadFromFile: callable
 
     def __init__(self, fileName=None, setParamNameFile=None, default=0, names=None, labels=None):
         """
@@ -220,7 +216,7 @@ class ParamList(object):
                 return par
         return None
 
-    def parWithName(self, name, error=False, renames={}):
+    def parWithName(self, name, error=False, renames=None):
         """
         Gets the :class:`ParamInfo` object for the parameter with the given name
 
@@ -229,10 +225,12 @@ class ParamList(object):
         :param renames: a dictionary that is used to provide optional name mappings
                         to the stored names
         """
-        given_names = set([name] + makeList(renames.get(name, [])))
+        given_names = {name}
+        if renames:
+            given_names.update(makeList(renames.get(name, [])))
         for par in self.names:
             known_names = set([par.name] + makeList(getattr(par, 'renames', [])) +
-                              makeList(renames.get(par.name, [])))
+                              (makeList(renames.get(par.name, [])) if renames else []))
             if known_names.intersection(given_names):
                 return par
         if error:
@@ -251,7 +249,7 @@ class ParamList(object):
                 return i
         return -1
 
-    def parsWithNames(self, names, error=False, renames={}):
+    def parsWithNames(self, names, error=False, renames=None):
         """
         gets the list of :class:`ParamInfo` instances for given list of name strings.
         Also expands any names that are globs into list with matching parameter names
@@ -262,7 +260,7 @@ class ParamList(object):
         :param renames: optional dictionary giving mappings of parameter names
         """
         res = []
-        if isinstance(names, six.string_types):
+        if isinstance(names, str):
             names = [names]
         errors = makeList(error)
         if len(errors) < len(names):
@@ -306,9 +304,9 @@ class ParamList(object):
         """
         Gets dictionary of renames known to each parameter.
         """
-        return OrderedDict([(param.name, getattr(param, "renames", []))
-                            for param in self.names
-                            if (getattr(param, "renames", False) or keep_empty)])
+        return {param.name: getattr(param, "renames", [])
+                for param in self.names
+                if (getattr(param, "renames", False) or keep_empty)}
 
     def updateRenames(self, renames):
         """
@@ -322,7 +320,7 @@ class ParamList(object):
                 self.parWithName(name).renames = rename
 
     def fileList(self, fname):
-        with open(fname) as f:
+        with open(fname, encoding='utf-8-sig') as f:
             textFileLines = f.readlines()
         return textFileLines
 
@@ -379,7 +377,7 @@ class ParamList(object):
 
         :param filename: filename to save to
         """
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             f.write(str(self))
 
 
@@ -403,13 +401,13 @@ class ParamNames(ParamList):
         self.filenameLoadedFrom = os.path.split(fileName)[1]
         extension = os.path.splitext(fileName)[-1]
         if extension == '.paramnames':
-            with open(fileName) as f:
+            with open(fileName, encoding='utf-8-sig') as f:
                 self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
         elif extension.lower() in ('.yaml', '.yml'):
-            from getdist.yaml_tools import yaml_load_file
+            from getdist import yaml_tools
             from getdist.cobaya_interface import get_info_params, is_sampled_param
             from getdist.cobaya_interface import is_derived_param, _p_label, _p_renames
-            self.info_dict = yaml_load_file(fileName)
+            self.info_dict = yaml_tools.yaml_load_file(fileName)
             info_params = get_info_params(self.info_dict)
             # first sampled, then derived
             self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),

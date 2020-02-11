@@ -1,61 +1,68 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import os
 import copy
 import logging
 import matplotlib
+import matplotlib.colors
 import numpy as np
 import scipy
 import sys
 import signal
 import warnings
 from io import BytesIO
-import six
-from collections import OrderedDict
-from getdist.gui.qt_import import pyside_version
+
+matplotlib.use('Qt5Agg')
+
+try:
+    from PySide2 import QtCore
+except ImportError as e:
+    if 'DLL load failed' in str(e):
+        print('DLL load failed attempting to load PySide2: problem with your python configuration')
+    else:
+        print(e)
+        print("Can't import PySide2 modules, you need to install Pyside2")
+    if not os.path.exists(os.path.join(sys.prefix, 'conda-meta')):
+        print('Using Anaconda is probably the most reliable method')
+    print("E.g. make and use a new environment using conda-forge")
+    print('conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib PySide2')
+
+    sys.exit(-1)
 
 import getdist
 from getdist import plots, IniFile
 from getdist.chain_grid import ChainDirGrid, file_root_to_root, get_chain_root_files, load_supported_grid
 from getdist.mcsamples import SettingError, ParamError
+
 from getdist.gui.SyntaxHighlight import PythonHighlighter
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as QNavigationToolbar
 
-if pyside_version == 2:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as QNavigationToolbar
+import PySide2
+from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
+from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
+from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
+    QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
+    QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
+    QLabel, QTableWidget, QListWidgetItem, QTextEdit
 
-    import PySide2 as PySide
-    from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
-    from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
-    from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
-        QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
-        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-        QLabel, QTableWidget, QListWidgetItem, QTextEdit
+os.environ['QT_API'] = 'pyside2'
 
-    os.environ['QT_API'] = 'pyside2'
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)  # DPI support
+QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)  # DPI support
-    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+try:
+    # If cosmomc is configured
+    from paramgrid import batchjob
+except ImportError:
+    batchjob = None
 
 
-    class NavigationToolbar(QNavigationToolbar):
-        def sizeHint(self):
-            return QToolBar.sizeHint(self)
-
-else:
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-
-    import PySide
-    from PySide.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
-    from PySide.QtGui import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
-        QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
-        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QIcon, QKeySequence, QFont, QTextOption, QImage, QPixmap
-
-    os.environ['QT_API'] = 'pyside'
+# noinspection PyCallByClass
+class NavigationToolbar(QNavigationToolbar):
+    def sizeHint(self):
+        return QToolBar.sizeHint(self)
 
 
 class GuiSelectionError(Exception):
@@ -64,7 +71,7 @@ class GuiSelectionError(Exception):
 
 class QStatusLogger(logging.Handler):
     def __init__(self, parent):
-        super(QStatusLogger, self).__init__(level=logging.WARNING)
+        super().__init__(level=logging.WARNING)
         self.widget = parent
 
     def emit(self, record):
@@ -89,27 +96,23 @@ class RootListWidget(QListWidget):
         self.owner = owner
 
     def dropEvent(self, event):
-        super(RootListWidget, self).dropEvent(event)
+        super().dropEvent(event)
         self.owner._updateParameters()
 
 
+# noinspection PyCallByClass,PyArgumentList
 class MainWindow(QMainWindow):
     def __init__(self, app, ini=None, base_dir=None):
         """
         Initialize of GUI components.
         """
-        super(MainWindow, self).__init__()
+        super().__init__()
 
         self.setWindowTitle("GetDist GUI")
         self.setWindowIcon(self._icon('Icon', False))
 
-        if base_dir is None:
-            try:
-                # If cosmomc is configured
-                from paramgrid import batchjob
-                base_dir = batchjob.getCodeRootPath()
-            except ImportError:
-                pass
+        if base_dir is None and batchjob:
+            base_dir = batchjob.getCodeRootPath()
         if base_dir:
             os.chdir(base_dir)
         self.updating = False
@@ -165,7 +168,7 @@ class MainWindow(QMainWindow):
 
         if dirs is None and last_dir:
             dirs = [last_dir]
-        elif isinstance(dirs, six.string_types):
+        elif isinstance(dirs, str):
             dirs = [dirs]  # QSettings doesn't save single item lists reliably
         if dirs is not None:
             dirs = [x for x in dirs if os.path.exists(x)]
@@ -328,7 +331,7 @@ class MainWindow(QMainWindow):
         return os.path.join(os.path.dirname(__file__), 'images', name)
 
     def _icon(self, name, large=True):
-        if pyside_version > 1 and large:
+        if large:
             name = name + '_large'
         pm = QPixmap(self._image_file('%s.png' % name))
         if hasattr(pm, 'setDevicePixelRatio'):
@@ -444,7 +447,7 @@ class MainWindow(QMainWindow):
         leftLayout.setSpacing(5)
         leftLayout.addWidget(h_stack(self.listDirectories, self.pushButtonSelect), 0, 0, 1, 4)
 
-        leftLayout.addWidget(self.comboBoxRootname, 1, 0, 1, 3)
+        leftLayout.addWidget(self.comboBoxRootname, 1, 0, 1, 4)
         leftLayout.addWidget(self.comboBoxParamTag, 1, 0, 1, 4)
         leftLayout.addWidget(self.comboBoxDataTag, 2, 0, 1, 4)
         leftLayout.addWidget(h_stack(self.listRoots, self.pushButtonRemove), 3, 0, 2, 4)
@@ -635,13 +638,14 @@ class MainWindow(QMainWindow):
             return
         filename = str(filename)
         logging.debug("Export script to %s" % filename)
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding="utf-8") as f:
             f.write(script)
 
     def reLoad(self):
         adir = self.getSettings().value('lastSearchDirectory')
         if adir is not None:
-            batchjob.resetGrid(adir)
+            if batchjob:
+                batchjob.resetGrid(adir)
             self.openDirectory(adir)
         if self.plotter:
             self.plotter.sample_analyser.reset(self.current_settings)
@@ -666,6 +670,7 @@ class MainWindow(QMainWindow):
             return
         try:
             self.showMessage("Calculating convergence stats....")
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             samples = self.getSamples(rootname)
             stats = samples.getConvergeTests(samples.converge_test_limit)
             summary = samples.getNumSampleSummaryText()
@@ -677,6 +682,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.errorReport(e, caption="Convergence stats")
         finally:
+            QApplication.restoreOverrideCursor()
             self.showMessage()
 
     def showPCA(self):
@@ -862,14 +868,14 @@ class MainWindow(QMainWindow):
             self.settingDlg = None
 
     def plotSettingsChanged(self, vals):
+        deleted = []
         try:
             settings = self.default_plot_settings
             self.custom_plot_settings = {}
-            deleted = []
-            for key, value in six.iteritems(vals):
+            for key, value in vals.items():
                 current = getattr(settings, key)
                 if str(current) != value and len(value):
-                    if isinstance(current, six.string_types):
+                    if isinstance(current, str):
                         self.custom_plot_settings[key] = value
                     else:
                         try:
@@ -891,8 +897,8 @@ class MainWindow(QMainWindow):
             # Try to update current plot script text
             script = self.textWidget.toPlainText().split("\n")
             if self.custom_plot_settings:
-                for key, value in six.iteritems(self.custom_plot_settings):
-                    if isinstance(value, six.string_types):
+                for key, value in self.custom_plot_settings.items():
+                    if isinstance(value, str):
                         value = '"' + value + '"'
                     script_set = 'g.settings.%s =' % key
                     script_line = '%s %s' % (script_set, value)
@@ -978,11 +984,10 @@ class MainWindow(QMainWindow):
                           "\nMatplotlib: " + matplotlib.__version__ +
                           "\nSciPy: " + scipy.__version__ +
                           "\nNumpy: " + np.__version__ +
-                          "\nPySide: " + PySide.__version__ +
-                          "\nQt (PySide): " + PySide.QtCore.__version__ +
-                          ("" if pyside_version == 1 else
-                           "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
-                               self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY())) +
+                          "\nPySide2: " + PySide2.__version__ +
+                          "\nQt (PySide): " + PySide2.QtCore.__version__ +
+                          "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
+                              self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY()) +
                           '\nUsing getdist at: %s' % os.path.dirname(getdist.__file__))
 
     def getDirectories(self):
@@ -1100,7 +1105,7 @@ class MainWindow(QMainWindow):
         if not len(roots):
             return
         # Get previous selection (with its renames) before we overwrite the list of tags
-        old_selection = OrderedDict([("x", []), ("y", [])])
+        old_selection = {"x": [], "y": []}
         for x_, getter in zip(old_selection, [self.getXParams, self.getYParams]):
             if not hasattr(self, "paramNames"):
                 break
@@ -1128,8 +1133,7 @@ class MainWindow(QMainWindow):
         # Create tags for list widget
         renames = self.paramNames.getRenames(keep_empty=True)
         renames_list_func = lambda x: (" (" + ", ".join(x) + ")") if x else ""
-        self.paramNamesTags = OrderedDict([
-            (p + renames_list_func(r), p) for p, r in renames.items()])
+        self.paramNamesTags = {p + renames_list_func(r): p for p, r in renames.items()}
         self._updateListParameters(list(self.paramNamesTags), self.listParametersX)
         self._updateListParameters(list(self.paramNamesTags), self.listParametersY)
         # Update selection in both boxes (needs to be done after *both* boxes have been
@@ -1511,8 +1515,8 @@ class MainWindow(QMainWindow):
                 script += "g=plots.%schain_dir=%s)\n" % (plot_func, chain_dirs)
 
             if self.custom_plot_settings:
-                for key, value in six.iteritems(self.custom_plot_settings):
-                    if isinstance(value, six.string_types):
+                for key, value in self.custom_plot_settings.items():
+                    if isinstance(value, str):
                         value = '"' + value + '"'
                     script += 'g.settings.%s = %s\n' % (key, value)
 
@@ -1699,10 +1703,8 @@ class MainWindow(QMainWindow):
             if hasattr(self, "toolbar"):
                 del self.toolbar
             self.canvas = FigureCanvas(self.plotter.fig)
-            if pyside_version > 1 or sys.platform != "darwin":
-                # for some reason the toolbar used to crash on a Mac
-                self.toolbar = NavigationToolbar(self.canvas, self)
-                self.plotWidget.layout().addWidget(self.toolbar)
+            self.toolbar = NavigationToolbar(self.canvas, self)
+            self.plotWidget.layout().addWidget(self.toolbar)
             self.plotWidget.layout().addWidget(self.canvas)
             self.plotWidget.show()
 
@@ -1739,7 +1741,7 @@ class MainWindow(QMainWindow):
             return
         filename = str(filename)
         logging.debug("Open file %s" % filename)
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8-sig') as f:
             self.script_edit = f.read()
         self.textWidget.setPlainText(self.script_edit)
 
@@ -1780,7 +1782,7 @@ class MainWindow(QMainWindow):
             localdic = {}
             exec(script_exec, globaldic, localdic)
 
-            for v in six.itervalues(localdic):
+            for v in localdic.items():
                 if isinstance(v, plots.GetDistPlotter):
                     self.updateScriptPreview(v)
                     break
@@ -1822,16 +1824,16 @@ class MainWindow(QMainWindow):
             format='png',
             edgecolor='w',
             facecolor='w',
-            dpi=96 if pyside_version == 1 else self.logicalDpiX() * self.devicePixelRatio(),
+            dpi=self.logicalDpiX() * self.devicePixelRatio(),
             bbox_extra_artists=plotter.extra_artists,
             bbox_inches='tight')
         buf.seek(0)
 
+        # noinspection PyTypeChecker
         image = QImage.fromData(buf.getvalue())
 
         pixmap = QPixmap.fromImage(image)
-        if pyside_version > 1:
-            pixmap.setDevicePixelRatio(self.devicePixelRatio())
+        pixmap.setDevicePixelRatio(self.devicePixelRatio())
         label = QLabel(self.scrollArea)
         label.setPixmap(pixmap)
 
@@ -1866,6 +1868,7 @@ class DialogTextOutput(QDialog):
 
 # ==============================================================================
 
+# noinspection PyArgumentList
 class DialogLikeStats(DialogTextOutput):
     def __init__(self, parent, stats, root):
         DialogTextOutput.__init__(self, parent, stats.likeSummary())
@@ -1915,8 +1918,9 @@ class DialogLikeStats(DialogTextOutput):
 
 # ==============================================================================
 
+# noinspection PyArgumentList
 class DialogMargeStats(QDialog):
-    def __init__(self, parent=None, stats="", root=''):
+    def __init__(self, parent=None, stats=None, root=''):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
         self.label = QLabel(self)
@@ -1977,6 +1981,7 @@ class DialogConvergeStats(DialogTextOutput):
 
         self.setLayout(layout)
         self.setWindowTitle(self.tr('Convergence stats: ' + root))
+        # noinspection PyArgumentList
         h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 1200)
         self.resize(700, h)
 
@@ -1990,12 +1995,14 @@ class DialogPCA(DialogTextOutput):
         layout.addWidget(self.text, 0, 0)
         self.setLayout(layout)
         self.setWindowTitle(self.tr('PCA constraints for: ' + root))
+        # noinspection PyArgumentList
         h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800)
         self.resize(500, h)
 
 
 # ==============================================================================
 
+# noinspection PyCallByClass
 class DialogParamTables(DialogTextOutput):
     def __init__(self, parent, tables, root):
         DialogTextOutput.__init__(self, parent)
@@ -2016,7 +2023,7 @@ class DialogParamTables(DialogTextOutput):
 
         self.setLayout(layout)
         self.tabs = [QWidget(self) for _ in range(len(tables))]
-        self.generated = [None] * len(tables)
+        self.generated = [False] * len(tables)
         for table, tab in zip(tables, self.tabs):
             self.tabWidget.addTab(tab, table.results[0].limitText(table.limit) + '%')
         self.tabChanged(0)
@@ -2029,11 +2036,10 @@ class DialogParamTables(DialogTextOutput):
     def tabChanged(self, index):
         if not self.generated[index]:
             viewWidget = QWidget(self.tabs[index])
-            dpi = None if pyside_version == 1 else self.logicalDpiX() * self.devicePixelRatio()
+            dpi = self.logicalDpiX() * self.devicePixelRatio()
             buf = self.tables[index].tablePNG(bytesIO=True, dpi=dpi)
             pixmap = QPixmap.fromImage(QImage.fromData(buf.getvalue()))
-            if pyside_version > 1:
-                pixmap.setDevicePixelRatio(self.devicePixelRatio())
+            pixmap.setDevicePixelRatio(self.devicePixelRatio())
             label = QLabel(viewWidget)
             label.setPixmap(pixmap)
             layout = QGridLayout()
@@ -2042,12 +2048,12 @@ class DialogParamTables(DialogTextOutput):
             self.generated[index] = True
 
     def copyLatex(self):
+        # noinspection PyArgumentList
         clipboard = QApplication.clipboard()
         clipboard.setText(self.tables[self.tabWidget.currentIndex()].tableTex())
 
     def saveLatex(self):
-        filename, _ = QFileDialog.getSaveFileName(
-            self, "Choose a file name", '.', "Latex (*.tex)")
+        filename, _ = QFileDialog.getSaveFileName(self, "Choose a file name", '.', "Latex (*.tex)")
         if not filename:
             return
         self.tables[self.tabWidget.currentIndex()].write(str(filename))
@@ -2055,6 +2061,7 @@ class DialogParamTables(DialogTextOutput):
 
 # ==============================================================================
 
+# noinspection PyArgumentList
 class DialogSettings(QDialog):
     def __init__(self, parent, ini, items=None, title='Analysis Settings', width=320, update=None):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)

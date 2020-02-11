@@ -1,4 +1,3 @@
 numpy
 matplotlib>=2.2.0
-six
 scipy>=1.0.0

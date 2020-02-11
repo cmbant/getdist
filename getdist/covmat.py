@@ -1,9 +1,7 @@
-from __future__ import print_function
 import numpy as np
-import io
 
 
-class CovMat(object):
+class CovMat:
     """
     Class holding a covariance matrix for some named parameters
 
@@ -30,13 +28,14 @@ class CovMat(object):
         return " ".join(self.paramNames)
 
     def loadFromFile(self, filename):
-        with open(filename) as f:
+        with open(filename, encoding="utf-8-sig") as f:
             first = f.readline().strip()
             if first.startswith('#'):
                 self.paramNames = first[1:].split()
                 self.size = len(self.paramNames)
             else:
                 raise Exception('.covmat must now have parameter names header')
+            # noinspection PyTypeChecker
             self.matrix = np.loadtxt(f)
 
     def saveToFile(self, filename):
@@ -45,7 +44,7 @@ class CovMat(object):
 
         :param filename: name of file to save to (.covmat)
         """
-        with io.open(filename, 'wb') as fout:
+        with open(filename, 'wb') as fout:
             fout.write(('# ' + self.paramNameString() + '\n').encode('UTF-8'))
             np.savetxt(fout, self.matrix, '%15.7E')
 

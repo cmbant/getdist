@@ -1,9 +1,7 @@
-from __future__ import absolute_import
 import numpy as np
 from getdist.densities import Density1D, Density2D
 from getdist.paramnames import ParamNames
 from getdist.mcsamples import MCSamples
-import six
 import copy
 
 
@@ -11,7 +9,7 @@ def make_2D_Cov(sigmax, sigmay, corr):
     return np.array([[sigmax ** 2, sigmax * sigmay * corr], [sigmax * sigmay * corr, sigmay ** 2]])
 
 
-class MixtureND(object):
+class MixtureND:
     """
     Gaussian mixture model with optional boundary ranges. Includes functions for generating samples and projecting.
     """
@@ -152,7 +150,7 @@ class MixtureND(object):
         :param no_limit_marge: if true don't raise an error if mixture has limits
         :return: marginalized 1D pdf at x
         """
-        if isinstance(index, six.string_types):
+        if isinstance(index, str):
             index = self.names.index(index)
         if not no_limit_marge:
             self.checkNoLimits([index])
@@ -177,7 +175,7 @@ class MixtureND(object):
         :param no_limit_marge: if true don't raise error if limits on other parameters
         :return: :class:`~.densities.Density1D` instance
         """
-        if isinstance(index, six.string_types):
+        if isinstance(index, str):
             index = self.names.index(index)
         if not no_limit_marge:
             self.checkNoLimits([index])
@@ -214,7 +212,7 @@ class MixtureND(object):
         if params is None:
             params = self.names
         for p in params:
-            if isinstance(p, six.string_types):
+            if isinstance(p, str):
                 indices.append(self.names.index(p))
             elif hasattr(p, 'name'):
                 indices.append(self.names.index(p.name))
@@ -380,7 +378,7 @@ class Mixture2D(MixtureND):
         :return: value of pdf at x or x,y
         """
         if y is None:
-            return super(Mixture2D, self).pdf(x)
+            return super().pdf(x)
         tot = None
         for i, (mean, icov, weight, norm) in enumerate(zip(self.means, self.invcovs, self.weights, self.norms)):
             dx = x - mean[0]
@@ -404,7 +402,7 @@ class Gaussian2D(Mixture2D):
         :param cov: 2x2 array of covariance, or list of [sigma_x, sigma_y, correlation] values
         :param kwargs: arguments passed to :class:`Mixture2D`
         """
-        super(Gaussian2D, self).__init__([mean], [cov], **kwargs)
+        super().__init__([mean], [cov], **kwargs)
 
 
 class GaussianND(MixtureND):
@@ -419,13 +417,13 @@ class GaussianND(MixtureND):
         :param is_inv_cov: set True if cov is actually an inverse covariance
         :param kwargs: arguments passed to :class:`MixtureND`
         """
-        if isinstance(mean, six.string_types):
+        if isinstance(mean, str):
             mean = np.loadtxt(mean)
-        if isinstance(cov, six.string_types):
+        if isinstance(cov, str):
             cov = np.loadtxt(cov)
         if is_inv_cov:
             cov = np.linalg.inv(cov)
-        super(GaussianND, self).__init__([mean], [cov], **kwargs)
+        super().__init__([mean], [cov], **kwargs)
 
 
 class Mixture1D(MixtureND):
@@ -468,7 +466,7 @@ class Gaussian1D(Mixture1D):
         :param sigma:  standard deviation
         :param kwargs:  arguments passed to :class:`Mixture1D`
         """
-        super(Gaussian1D, self).__init__([mean], [sigma], **kwargs)
+        super().__init__([mean], [sigma], **kwargs)
 
 
 class RandomTestMixtureND(MixtureND):
@@ -492,8 +490,8 @@ class RandomTestMixtureND(MixtureND):
         for _ in range(ncomponent):
             A = np.random.rand(ndim, ndim)
             covs.append(np.dot(A, A.T))
-        super(RandomTestMixtureND, self).__init__(np.random.rand(ncomponent, ndim), covs, weights=weights,
-                                                  lims=None, names=names, label=label)
+        super().__init__(np.random.rand(ncomponent, ndim), covs, weights=weights,
+                         lims=None, names=names, label=label)
 
 
 def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10, names=None, labels=None):
