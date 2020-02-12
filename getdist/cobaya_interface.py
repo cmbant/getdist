@@ -87,10 +87,10 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     if ignore_rows != 0 and skip != 0:
         logging.warning("You are asking for rows to be ignored (%r), but some (%r) were "
                         "already ignored in the original chain.", ignore_rows, skip)
-
-    assert set(columns[2:]) == set(info_params.keys()), (
+    var_params = [k for k, v in info_params.items() if is_sampled_param(v) or is_derived_param(v)]
+    assert set(columns[2:]) == set(var_params), (
             "Info and collection(s) are not compatible, because their parameters differ: "
-            "the collection(s) have %r and the info has %r. " % (columns[2:], list(info_params.keys())) +
+            "the collection(s) have %r and the info has %r. " % (columns[2:], var_params) +
             "Are you sure that you are using an *updated* info dictionary "
             "(i.e. the output of `cobaya.run`)?")
     # We need to use *collection* sorting, not info sorting!
