@@ -133,7 +133,7 @@ def loadNumpyTxt(fname, skiprows=None):
             if _pandas_suggestion:
                 _pandas_suggestion = False
                 logging.warning('Install pandas for faster reading from text files')
-            return np.loadtxt(fname, skiprows=skiprows or 0)
+            return np.atleast_2d(np.loadtxt(fname, skiprows=skiprows or 0))
     except ValueError:
         print('Error reading %s' % fname)
         raise
