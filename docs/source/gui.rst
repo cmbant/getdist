@@ -1,7 +1,7 @@
 GetDist GUI
 ===================
 
-Run the *getdist-gui* script to run the graphical user interface. This requires PySide2 <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
+Run the *getdist-gui* script to run the graphical user interface. This requires `PySide2 <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
 
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
