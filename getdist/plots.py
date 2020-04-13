@@ -2444,7 +2444,7 @@ class GetDistPlotter(_BaseObject):
                 if marker2 is not None:
                     self.add_y_marker(marker2, ax=ax, **marker_args)
                 self._inner_ticks(ax)
-                if i == 0:
+                if i != i2:
                     ax.set_ylim(lims[i2])
 
                 ax._shared_x_axis = self.subplots[bottom, i2]
