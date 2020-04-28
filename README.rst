@@ -7,8 +7,8 @@ GetDist
 :Source: https://github.com/cmbant/getdist
 :Reference: https://arxiv.org/abs/1910.13970
 
-.. image:: https://secure.travis-ci.org/cmbant/getdist.png?branch=master
-  :target: https://secure.travis-ci.org/cmbant/getdist
+.. image:: https://travis-ci.org/cmbant/getdist.svg?branch=master
+  :target: https://travis-ci.org/cmbant/getdist
 .. image:: https://img.shields.io/pypi/v/GetDist.svg?style=flat
         :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
@@ -44,10 +44,12 @@ Install getdist using pip::
 or from source files using::
 
     $ python setup.py install
+or
+    $ pip install -e /path/to/source/
 
 You can test if things are working using the unit test by running::
 
-    $ python setup.py test
+    $ python -m unittest getdist.tests.getdist_test
 
 Check the dependencies listed in the next section are installed. You can then use the getdist module from your scripts, or
 use the GetDist GUI (*getdist-gui* command).
