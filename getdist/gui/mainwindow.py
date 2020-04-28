@@ -12,8 +12,6 @@ import signal
 import warnings
 from io import BytesIO
 
-matplotlib.use('Qt5Agg')
-
 try:
     from PySide2 import QtCore
 except ImportError as e:
@@ -28,6 +26,8 @@ except ImportError as e:
     print('conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib PySide2')
 
     sys.exit(-1)
+
+matplotlib.use('Qt5Agg')
 
 import getdist
 from getdist import plots, IniFile
@@ -1782,7 +1782,7 @@ class MainWindow(QMainWindow):
             localdic = {}
             exec(script_exec, globaldic, localdic)
 
-            for v in localdic.items():
+            for v in localdic.values():
                 if isinstance(v, plots.GetDistPlotter):
                     self.updateScriptPreview(v)
                     break
