@@ -8,13 +8,13 @@ GetDist
 :Reference: https://arxiv.org/abs/1910.13970
 
 .. image:: https://travis-ci.org/cmbant/getdist.svg?branch=master
-  :target: https://travis-ci.org/cmbant/getdist
+   :target: https://travis-ci.org/cmbant/getdist
 .. image:: https://img.shields.io/pypi/v/GetDist.svg?style=flat
-        :target: https://pypi.python.org/pypi/GetDist/
+   :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
    :target: https://getdist.readthedocs.org/en/latest
 .. image:: https://mybinder.org/badge.svg
-  :target: https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb
+   :target: https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb
 
 Description
 ============
@@ -44,7 +44,9 @@ Install getdist using pip::
 or from source files using::
 
     $ python setup.py install
-or
+
+or::
+
     $ pip install -e /path/to/source/
 
 You can test if things are working using the unit test by running::

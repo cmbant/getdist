@@ -23,7 +23,7 @@ def find_version():
 
 
 def get_long_description():
-    with open('README.rst',  encoding="utf-8-sig") as f:
+    with open('README.rst', encoding="utf-8-sig") as f:
         lines = f.readlines()
         i = -1
         while '=====' not in lines[i]:
@@ -117,6 +117,7 @@ setup(name='GetDist',
       version=find_version(),
       description='GetDist Monte Carlo sample analysis, plotting and GUI',
       long_description=get_long_description(),
+      long_description_content_type="text/x-rst",
       author='Antony Lewis',
       url="https://getdist.readthedocs.io",
       project_urls={
