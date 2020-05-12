@@ -380,6 +380,18 @@ class ParamList:
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(str(self))
 
+    def getDerivedNames(self):
+        """
+        Get the names of all derived parameters
+        """
+        return [name.name for name in self.names if name.isDerived]
+
+    def getRunningNames(self):
+        """
+        Get the names of all running (non-derived) parameters
+        """
+        return [name.name for name in self.names if not name.isDerived]
+
 
 class ParamNames(ParamList):
     """
