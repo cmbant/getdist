@@ -906,6 +906,23 @@ class WeightedSamples:
         self.setSamples(self.samples[thin_ix, :], loglikes=None if self.loglikes is None else self.loglikes[thin_ix],
                         min_weight_ratio=-1)
 
+    def weighted_thin(self, factor):
+        """
+        Thin the samples by the given factor, preserving the weights.
+        This function also preserves separate chains.
+        :param factor: The (integer) factor to thin by
+        """
+        thin_ix = self.thin_indices(factor)
+        unique, counts = np.unique(thin_ix, return_counts=True)
+        self.setSamples(self.samples[unique, :],
+                        loglikes=None if self.loglikes is None
+                        else self.loglikes[unique],
+                        weights=counts,
+                        min_weight_ratio=-1)
+        if self.chain_offsets is not None:
+            self.chain_offsets = np.array([np.sum(unique < off)
+                                           for off in self.chain_offsets])
+
     def filter(self, where):
         """
         Filter the stored samples to keep only samples matching filter
