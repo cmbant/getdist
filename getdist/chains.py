@@ -761,6 +761,8 @@ class WeightedSamples:
         if isinstance(pars, _int_types) and pars >= 0 and where is None:
             means = self.getMeans()
             return [self.samples[:, i] - means[i] for i in range(pars)]
+        elif isinstance(pars, _int_types) and pars >= 0 and where is not None:
+            return [self.mean_diff(i, where) for i in range(pars)]
         else:
             return [self.mean_diff(i, where) for i in pars]
 
