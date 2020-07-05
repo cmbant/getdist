@@ -1792,7 +1792,7 @@ class MainWindow(QMainWindow):
         except SyntaxError as e:
             QMessageBox.critical(self, "Plot script", type(e).__name__ + ': %s\n %s' % (e, e.text))
         except Exception as e:
-            self.errorReport(e, caption="Plot script")
+            self.errorReport(e, caption="Plot script", capture=True)
         finally:
             QApplication.restoreOverrideCursor()
             plots.default_settings = oldset
