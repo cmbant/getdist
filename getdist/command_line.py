@@ -319,7 +319,7 @@ def getdist_command(args=None):
     parser.add_argument('chain_root', nargs='?',
                         help='Root name of chain to analyse (e.g. chains/test), required unless file'
                              '_root specified in ini_file')
-    parser.add_argument('--ignore_rows',
+    parser.add_argument('--ignore_rows', type=float,
                         help='set initial fraction of chains to cut as burn in (fraction of total rows'
                              ', or >1 number of rows); overrides any value in ini_file if set')
     parser.add_argument('--make_param_file',
