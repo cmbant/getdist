@@ -57,7 +57,7 @@ def make_cache_dir():
 
 
 config_ini = get_config()
-default_grid_root = config_ini.string('default_grid_root', '')
+default_grid_root = config_ini.string('default_grid_root', '') or None
 output_base_dir = config_ini.string('output_base_dir', '')
 cache_dir = config_ini.string('cache_dir', _get_cache_dir())
 default_getdist_settings = config_ini.string('default_getdist_settings', get_defaults_file())
