@@ -13,7 +13,7 @@ GetDist
    :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
    :target: https://getdist.readthedocs.org/en/latest
-.. image:: https://mybinder.org/badge.svg
+.. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb
 
 Description

@@ -1,9 +1,16 @@
 #Dockerfile for running getdist notebooks with binder
 
-FROM cmbant/cosmobox:python3
+FROM cmbant/cosmobox:gcc9
 
+
+RUN pip install --no-cache --upgrade pip && \
+    pip install --no-cache notebook
+
+ARG NB_USER
+ARG NB_UID
 ENV NB_USER jovyan
 ENV NB_UID 1000
+ENV USER ${NB_USER}
 ENV HOME /home/${NB_USER}
 
 RUN adduser --disabled-password \
@@ -17,6 +24,5 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${NB_USER}
 
 WORKDIR ${HOME}
+RUN pip install --no-cache-dir notebook==5.*
 RUN python setup.py build
-
-
