@@ -1178,19 +1178,26 @@ class Chains(WeightedSamples):
         Adds array variables obj.name1, obj.name2 etc, where
         obj.name1 is the vector of samples with name 'name1'
 
-        if a parameter name is of the form aa.bb.cc, it makes subobjects so you can reference obj.aa.bb.cc
+        if a parameter name is of the form aa.bb.cc, it makes subobjects so you can reference obj.aa.bb.cc.
+        If aa.bb and aa are both parameter names, then aa becomes obj.aa.value.
 
         :param obj: The object instance to add the parameter vectors variables
         :return: The obj after alterations.
         """
-        for i, name in enumerate(self.paramNames.names):
-            path = name.name.split('.')
-            ob = obj
-            for p in path[:-1]:
-                if not hasattr(ob, p):
-                    setattr(ob, p, ParSamples())
-                ob = getattr(ob, p)
-            setattr(ob, path[-1], self.samples[:, i])
+        for second in [False, True]:
+            for i, name in enumerate(self.paramNames.names):
+                path = name.name.split('.')
+                ob = obj
+                for p in path[:-1]:
+                    if not hasattr(ob, p):
+                        setattr(ob, p, ParSamples())
+                    ob = getattr(ob, p)
+                if second:
+                    if isinstance(getattr(ob, path[-1], None), ParSamples):
+                        setattr(getattr(ob, path[-1]), 'value', self.samples[:, i])
+                    else:
+                        setattr(ob, path[-1], self.samples[:, i])
+
         return obj
 
     def getParams(self):
