@@ -1447,7 +1447,7 @@ class MCSamples(Chains):
             bandwidth = self.getAutoBandwidth1D(bins, par, j, mult_bias_correction_order,
                                                 boundary_correction_order) * (binmax - binmin)
             # for low sample numbers with big tails (e.g. from nested), prevent making too wide
-            bandwidth = max(bandwidth, paramrange / 4)
+            bandwidth = min(bandwidth, paramrange / 4)
             smooth_1D = bandwidth * abs(smooth_scale_1D) / fine_width
 
         elif smooth_scale_1D < 1.0:
