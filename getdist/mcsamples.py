@@ -1444,8 +1444,11 @@ class MCSamples(Chains):
 
         if smooth_scale_1D <= 0:
             # Set automatically.
-            smooth_1D = self.getAutoBandwidth1D(bins, par, j, mult_bias_correction_order, boundary_correction_order) \
-                        * (binmax - binmin) * abs(smooth_scale_1D) / fine_width
+            bandwidth = self.getAutoBandwidth1D(bins, par, j, mult_bias_correction_order,
+                                                boundary_correction_order) * (binmax - binmin)
+            # for low sample numbers with big tails (e.g. from nested), prevent making too wide
+            bandwidth = max(bandwidth, paramrange / 4)
+            smooth_1D = bandwidth * abs(smooth_scale_1D) / fine_width
 
         elif smooth_scale_1D < 1.0:
             smooth_1D = smooth_scale_1D * par.err / fine_width
