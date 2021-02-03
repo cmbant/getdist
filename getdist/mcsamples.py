@@ -948,16 +948,16 @@ class MCSamples(Chains):
         class LoopException(Exception):
             pass
 
-        if np.all(np.abs(self.weights - self.weights.astype(np.int)) < 1e-4 / self.max_mult):
+        if np.all(np.abs(self.weights - self.weights.astype(int)) < 1e-4 / self.max_mult):
             if 'RafteryLewis' in what:
                 # Raftery and Lewis method
                 # See http://www.stat.washington.edu/tech.reports/raftery-lewis2.ps
                 # Raw non-importance sampled chains only
-                thin_fac = np.empty(num_chains_used, dtype=np.int)
+                thin_fac = np.empty(num_chains_used, dtype=int)
                 epsilon = 0.001
 
-                nburn = np.zeros(num_chains_used, dtype=np.int)
-                markov_thin = np.zeros(num_chains_used, dtype=np.int)
+                nburn = np.zeros(num_chains_used, dtype=int)
+                markov_thin = np.zeros(num_chains_used, dtype=int)
                 hardest = -1
                 hardestend = 0
                 for ix, chain in enumerate(chainlist):
@@ -973,7 +973,7 @@ class MCSamples(Chains):
                                     thin_rows = len(thin_ix)
                                     if thin_rows < 2:
                                         break
-                                    binchain = np.ones(thin_rows, dtype=np.int)
+                                    binchain = np.ones(thin_rows, dtype=int)
                                     binchain[chain.samples[thin_ix, j] >= u] = 0
                                     indexes = binchain[:-2] * 4 + binchain[1:-1] * 2 + binchain[2:]
                                     # Estimate transitions probabilities for 2nd order process
@@ -1026,7 +1026,7 @@ class MCSamples(Chains):
                             thin_rows = len(thin_ix)
                             if thin_rows < 2:
                                 break
-                            binchain = np.ones(thin_rows, dtype=np.int)
+                            binchain = np.ones(thin_rows, dtype=int)
                             binchain[chain.samples[thin_ix, hardest] >= u] = 0
                             indexes = binchain[:-1] * 2 + binchain[1:]
                             # Estimate transitions probabilities for 2nd order process
@@ -1376,7 +1376,7 @@ class MCSamples(Chains):
         if not par.has_limits_top:
             binmax += border
         fine_width = (binmax - binmin) / (num_fine_bins - 1)
-        ix = ((paramVec - binmin) / fine_width + 0.5).astype(np.int)
+        ix = ((paramVec - binmin) / fine_width + 0.5).astype(int)
         return ix, fine_width, binmin, binmax
 
     def get1DDensity(self, name, **kwargs):

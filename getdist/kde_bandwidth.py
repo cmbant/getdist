@@ -79,7 +79,7 @@ def bin_samples(samples, range_min=None, range_max=None, nbins=2046, edge_fac=0.
     R = range_max - range_min
     dx = R / (nbins - 1)
     bins = (samples - range_min) / dx
-    return bins.astype(np.int), R
+    return bins.astype(int), R
 
 
 def gaussian_kde_bandwidth(samples, Neff=None, range_min=None, range_max=None, nbins=2046):
