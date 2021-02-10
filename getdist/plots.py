@@ -7,8 +7,9 @@ import logging
 from types import MappingProxyType
 from typing import Mapping, Sequence, Union
 
-if 'ipykern' not in matplotlib.rcParams['backend']:
-    # default to agg unless in notebook
+if 'ipykern' not in matplotlib.rcParams['backend'] and \
+        'linux' in sys.platform and os.environ.get('DISPLAY', '') == '':
+    # default to agg if not in notebook and linux with no display
     matplotlib.use('Agg')
 
 import matplotlib.patches
