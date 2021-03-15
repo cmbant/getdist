@@ -6,7 +6,7 @@ import logging
 from numbers import Number
 import numpy as np
 import os
-from typing import Mapping
+from typing import Mapping, Sequence
 
 # Conventions
 _label = "label"
@@ -156,7 +156,15 @@ def get_info_params(info):
 def get_range(param_info):
     # Sampled
     if is_sampled_param(param_info):
-        info_lims = dict((tag, param_info[_prior].get(tag)) for tag in ["min", "max", "loc", "scale"])
+        if isinstance(param_info[_prior], Sequence) and len(param_info[_prior]) == 2:
+            param_info[_prior] = \
+                {lim: n for lim, n in zip(["min", "max"], param_info[_prior])}
+        elif not isinstance(param_info[_prior], Mapping):
+            raise ValueError(
+                "Format of prior not recognised: %r. " % param_info[_prior] +
+                "Use '[min, max]' or a dictionary following Cobaya's documentation.")
+        info_lims = dict((tag, param_info[_prior].get(tag))
+                         for tag in ["min", "max", "loc", "scale"])
         if info_lims["min"] is not None or info_lims["max"] is not None:
             lims = [param_info[_prior].get("min"), param_info[_prior].get("max")]
         elif info_lims["loc"] is not None or info_lims["scale"] is not None:
