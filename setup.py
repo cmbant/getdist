@@ -8,10 +8,6 @@ try:
 except ImportError:
     from distutils.core import setup
 
-if sys.version_info[0] == 2:
-    print('getdist no longer support Python 2, please upgrade to Python 3')
-    sys.exit(1)
-
 
 def find_version():
     version_file = open(os.path.join(os.path.dirname(__file__), 'getdist/__init__.py')).read()
