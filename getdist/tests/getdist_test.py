@@ -401,6 +401,6 @@ class CobayaTest(unittest.TestCase):
             self.assertAlmostEqual(samples.getUpper('H0'), 100, 6)
             self.assertEqual(samples.getLower('sigma8'), None)
             samples.saveAsText(r'planck_test')
-            ranges = ParamBounds('planck_test')
+            ranges = ParamBounds('planck_test.updated.yaml')
             for par in samples.paramNames.names:
-                self.assertEqual(samples.getUpper(par), ranges.getUpper(par))
+                self.assertEqual(samples.getUpper(par.name), ranges.getUpper(par.name))
