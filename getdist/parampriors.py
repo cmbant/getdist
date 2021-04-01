@@ -66,10 +66,15 @@ class ParamBounds:
         with open(fileName, 'w', encoding='utf-8') as f:
             f.write(str(self))
 
+    def _check_name(self, name):
+        if not isinstance(name, str):
+            raise ValueError('"name" must be a parameter name string not %s: %s' % (type(name), name))
+
     def setFixed(self, name, value):
         self.setRange(name, (value, value))
 
     def setRange(self, name, strings):
+        self._check_name(name)
         if strings[0] != 'N' and strings[0] is not None and strings[0] != -np.inf:
             self.lower[name] = float(strings[0])
         if strings[1] != 'N' and strings[1] is not None and strings[1] != np.inf:
@@ -82,6 +87,7 @@ class ParamBounds:
         :param name: parameter name
         :return: upper limit, or None if not specified
         """
+        self._check_name(name)
         return self.upper.get(name, None)
 
     def getLower(self, name):
@@ -89,6 +95,7 @@ class ParamBounds:
         :param name: parameter name
         :return: lower limit, or None if not specified
         """
+        self._check_name(name)
         return self.lower.get(name, None)
 
     def fixedValue(self, name):

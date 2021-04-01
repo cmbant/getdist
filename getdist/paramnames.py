@@ -111,6 +111,8 @@ class ParamInfo:
         return self
 
     def setName(self, name):
+        if not isinstance(name, str):
+            raise ValueError('"name" must be a parameter name string not %s: %s' % (type(name), name))
         if '*' in name or '?' in name or ' ' in name or '\t' in name:
             raise ValueError('Parameter names must not contain spaces, * or ?')
         self.name = name
@@ -216,6 +218,10 @@ class ParamList:
                 return par
         return None
 
+    def _check_name_str(self, name):
+        if not isinstance(name, str):
+            raise ValueError('"name" must be a parameter name string not %s: %s' % (type(name), name))
+
     def parWithName(self, name, error=False, renames=None):
         """
         Gets the :class:`ParamInfo` object for the parameter with the given name
@@ -225,6 +231,7 @@ class ParamList:
         :param renames: a dictionary that is used to provide optional name mappings
                         to the stored names
         """
+        self._check_name_str(name)
         given_names = {name}
         if renames:
             given_names.update(makeList(renames.get(name, [])))
@@ -234,7 +241,7 @@ class ParamList:
             if known_names.intersection(given_names):
                 return par
         if error:
-            raise Exception("parameter name not found: " + name)
+            raise Exception("parameter name not found: %s" % name)
         return None
 
     def numberOfName(self, name):
@@ -244,6 +251,7 @@ class ParamList:
         :param name: parameter name tag
         :return: index of the parameter, or -1 if not found
         """
+        self._check_name_str(name)
         for i, par in enumerate(self.names):
             if par.name == name:
                 return i
@@ -347,6 +355,7 @@ class ParamList:
         """
         if kwargs.get('derived') is None:
             kwargs['derived'] = True
+        self._check_name_str(name)
         kwargs['name'] = name
         self.names.append(ParamInfo(**kwargs))
         return self.names[-1]
