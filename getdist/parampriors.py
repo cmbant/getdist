@@ -37,6 +37,9 @@ class ParamBounds:
             for p, info in info_params.items():
                 if is_parameter_with_range(info):
                     self.setRange(p, get_range(info))
+        else:
+            raise ValueError('ParamBounds must be loaded from .bounds, .ranges or .yaml/.yml file, '
+                             'not %s' % fileName)
 
     def __str__(self):
         s = ''

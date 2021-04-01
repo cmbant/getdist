@@ -428,6 +428,9 @@ class ParamNames(ParamList):
             self.names += [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
                                      renames=(info or {}).get(_p_renames), derived=True)
                            for param, info in info_params.items() if is_derived_param(info)]
+        else:
+            raise ValueError('ParanNames must be loaded from .paramnames or .yaml/.yml file, '
+                             'found %s' % fileName)
 
     def loadFromKeyWords(self, keywordProvider):
         num_params_used = keywordProvider.keyWord_int('num_params_used')
