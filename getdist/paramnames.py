@@ -257,6 +257,9 @@ class ParamList:
                 return i
         return -1
 
+    def hasParam(self, name):
+        return self.numberOfName(name) != -1
+
     def parsWithNames(self, names, error=False, renames=None):
         """
         gets the list of :class:`ParamInfo` instances for given list of name strings.

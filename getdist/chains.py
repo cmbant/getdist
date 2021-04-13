@@ -844,6 +844,22 @@ class WeightedSamples:
         """
         if weights is None:
             weights = self.weights
+        return WeightedSamples.thin_indices_single_samples(factor, weights)
+
+    @staticmethod
+    def thin_indices_and_weights(factor, weights):
+        """
+        Returns indices and new weights for use when thinning samples.
+
+        :param factor: thin factor
+        :param weights: initial weight (counts) per sample point
+        :return: (unique index, counts) tuple of sample index values to keep and new weights
+        """
+        thin_ix = WeightedSamples.thin_indices_single_samples(factor, weights)
+        return np.unique(thin_ix, return_counts=True)
+
+    @staticmethod
+    def thin_indices_single_samples(factor, weights):
         numrows = len(weights)
         norm1 = np.sum(weights)
         weights = weights.astype(int)
@@ -914,8 +930,7 @@ class WeightedSamples:
         This function also preserves separate chains.
         :param factor: The (integer) factor to thin by
         """
-        thin_ix = self.thin_indices(factor)
-        unique, counts = np.unique(thin_ix, return_counts=True)
+        unique, counts = self.thin_indices_and_weights(factor, self.weights)
         self.setSamples(self.samples[unique, :],
                         loglikes=None if self.loglikes is None
                         else self.loglikes[unique],
@@ -1137,7 +1152,8 @@ class Chains(WeightedSamples):
         :return: A dict mapping the param name to the parameter index.
         """
         if self.samples is not None and len(self.paramNames.names) != self.n:
-            raise WeightedSampleError("paramNames size does not match number of parameters in samples")
+            raise WeightedSampleError("paramNames size (%s) does not match number of "
+                                      "parameters in samples (%s)" % (len(self.paramNames.names), self.n))
         index = dict()
         for i, name in enumerate(self.paramNames.names):
             index[name.name] = i
