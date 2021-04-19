@@ -14,11 +14,11 @@ from io import BytesIO
 
 try:
     from PySide2 import QtCore
-except ImportError as e:
-    if 'DLL load failed' in str(e):
+except ImportError as _e:
+    if 'DLL load failed' in str(_e):
         print('DLL load failed attempting to load PySide2: problem with your python configuration')
     else:
-        print(e)
+        print(_e)
         print("Can't import PySide2 modules, you need to install Pyside2")
     if not os.path.exists(os.path.join(sys.prefix, 'conda-meta')):
         print('Using Anaconda is probably the most reliable method')

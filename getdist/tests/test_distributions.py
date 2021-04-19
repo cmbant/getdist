@@ -215,7 +215,7 @@ class Test2DDistributions:
         return self.all
 
 
-def plot_compare_method(ax, prob, colors=('k'), sims=100, nsamp=default_nsamp,
+def plot_compare_method(ax, prob, colors=('k',), sims=100, nsamp=default_nsamp,
                         scalings=(0.3, 0.5, 0.7, 0.9, 1, 1.1, 1.3, 1.5, 1.7), test_settings=(None,), linestyles=('-',)):
     # compare Parzen estimator with higher order
     print(prob.label, ', size = ', nsamp)
