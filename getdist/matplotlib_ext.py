@@ -8,14 +8,33 @@ from bisect import bisect_left
 class SciFuncFormatter(ticker.Formatter):
     # To put full sci notation into each axis label rather than split offsetText
 
-    sFormatter = ticker.ScalarFormatter(useOffset=False, useMathText=True)
-
     def __call__(self, x, pos=None):
-        return "${}$".format(SciFuncFormatter.sFormatter._formatSciNotation('%.10e' % x))
+        return "${}$".format(self._format_sci_notation('%.10e' % x))
 
     def format_data(self, value):
         # e.g. for the navigation toolbar, no latex
         return '%-8g' % value
+
+    @staticmethod
+    def _format_sci_notation(s):
+        # adapted from old matplotlib
+        # transform 1e+004 into 1e4, for example
+        tup = s.split('e')
+        try:
+            significand = tup[0].rstrip('0').rstrip('.')
+            sign = tup[1][0].replace('+', '')
+            exponent = tup[1][1:].lstrip('0')
+            if significand == '1' and exponent != '':
+                # reformat 1x10^y as 10^y
+                significand = ''
+            if exponent:
+                exponent = '10^{%s%s}' % (sign, exponent)
+            if significand and exponent:
+                return r'%s{\times}%s' % (significand, exponent)
+            else:
+                return r'%s%s' % (significand, exponent)
+        except IndexError:
+            return s
 
 
 _min_label_len_chars = 1.35

@@ -1,6 +1,7 @@
 import os
 import random
 import numpy as np
+import re
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
 from getdist import cobaya_interface
@@ -87,24 +88,22 @@ def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
     :param chain_exclude: A list of indexes to exclude, None to include all
     :return: The list of file names
     """
-    index = -1
+
+    folder = os.path.dirname(root)
+    if root.endswith((os.sep, "/")):
+        reg_exp = re.compile('(?P<num>[0-9]+)?' + re.escape(ext))
+    else:
+        basename = os.path.basename(root)
+        reg_exp = re.compile(re.escape(basename) + '(' + re.escape(separator) + '(?P<num>[0-9]+))?' + re.escape(ext))
     files = []
-    while True:
-        index += 1
-        fname = root
-        if index > 0:
-            # deal with just-folder prefix
-            if not root.endswith((os.sep, "/")):
-                fname += separator
-            fname += str(index)
-        if not fname.endswith(ext):
-            fname += ext
-        if index > first_chain and not os.path.exists(fname) or 0 < last_chain < index:
-            break
-        if (chain_indices is None or index in chain_indices) \
-                and (chain_exclude is None or index not in chain_exclude) \
-                and index >= first_chain and os.path.exists(fname):
-            files.append(fname)
+    for f in os.listdir(folder):
+        match = reg_exp.fullmatch(f)
+        if match:
+            index = int(match.group("num") or 0)
+            if (chain_indices is None or index in chain_indices) \
+                    and (chain_exclude is None or index not in chain_exclude) \
+                    and index >= first_chain and (last_chain < 0 or index <= last_chain):
+                files.append(os.path.join(folder, f))
     return files
 
 
