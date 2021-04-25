@@ -1001,9 +1001,11 @@ class WeightedSamples:
         fixed = []
         values = []
         for i in range(self.samples.shape[1]):
-            if np.all(self.samples[:, i] == self.samples[0, i]):
-                fixed.append(i)
-                values.append(self.samples[0, i])
+            if np.isclose(self.samples[0, i], self.samples[-1, i]):
+                mean = np.average(self.samples[:, i])
+                if np.allclose(self.samples[:, i], mean, rtol=1e-12, atol=0):
+                    fixed.append(i)
+                    values.append(mean)
         self.changeSamples(np.delete(self.samples, fixed, 1))
         return fixed, values
 
@@ -1072,7 +1074,7 @@ class Chains(WeightedSamples):
         """
 
         self.chains = None
-        WeightedSamples.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.jobItem = jobItem
         self.ignore_lines = float(kwargs.get('ignore_rows', 0))
         self.root = root
@@ -1236,11 +1238,11 @@ class Chains(WeightedSamples):
         :return: ordered dictionary of parameter values
         """
         res = dict()
+        res['weight'] = self.weights[ix]
+        res['loglike'] = self.loglikes[ix]
         for i, name in enumerate(self.paramNames.names):
             if want_derived or not name.isDerived:
                 res[name.name] = self.samples[ix, i]
-        res['weight'] = self.weights[ix]
-        res['loglike'] = self.loglikes[ix]
         return res
 
     def _makeParamvec(self, par):
@@ -1250,7 +1252,7 @@ class Chains(WeightedSamples):
             par = par.name
         if isinstance(par, str):
             return self.samples[:, self.index[par]]
-        return WeightedSamples._makeParamvec(self, par)
+        return super()._makeParamvec(par)
 
     def updateChainBaseStatistics(self):
         # old name, use updateBaseStatistics
@@ -1450,17 +1452,11 @@ class Chains(WeightedSamples):
         Delete parameters that are fixed (the same value in all samples)
         """
         if self.samples is not None:
-            fixed, values = WeightedSamples.deleteFixedParams(self)
+            fixed, values = super().deleteFixedParams()
             self.chains = None
         else:
-            fixed = []
-            values = []
-            chain = self.chains[0]
-            for i in range(chain.n):
-                if np.all(chain.samples[:, i] == chain.samples[0, i]):
-                    fixed.append(i)
-                    values.append(chain.samples[0, i])
-            for chain in self.chains:
+            fixed, values = self.chains[0].deleteFixedParams()
+            for chain in self.chains[1:]:
                 chain.changeSamples(np.delete(chain.samples, fixed, 1))
         if hasattr(self, 'ranges'):
             for ix, value in zip(fixed, values):

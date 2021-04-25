@@ -60,7 +60,7 @@ class IniFile:
                     index = s.index(')')
                     var = s[:index]
                     if var in os.environ:
-                        res = res + os.environ[var]
+                        res += os.environ[var]
             else:
                 res = res + c
             index += 1

@@ -87,17 +87,20 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     if ignore_rows != 0 and skip != 0:
         logging.warning("You are asking for rows to be ignored (%r), but some (%r) were "
                         "already ignored in the original chain.", ignore_rows, skip)
-    var_params = [k for k, v in info_params.items() if is_sampled_param(v) or is_derived_param(v)]
+    var_params = [k for k, v in info_params.items() if
+                  is_sampled_param(v) or is_derived_param(v)]
     assert set(columns[2:]) == set(var_params), (
             "Info and collection(s) are not compatible, because their parameters differ: "
-            "the collection(s) have %r and the info has %r. " % (columns[2:], var_params) +
+            "the collection(s) have %r and the info has %r. " % (
+                columns[2:], var_params) +
             "Are you sure that you are using an *updated* info dictionary "
             "(i.e. the output of `cobaya.run`)?")
     # We need to use *collection* sorting, not info sorting!
     names = [p + ("*" if is_derived_param(info_params[p]) else "")
              for p in columns[2:]]
     labels = [(info_params[p] or {}).get(_p_label, p) for p in columns[2:]]
-    ranges = {p: get_range(info_params[p]) for p in info_params}  # include fixed parameters not in columns
+    ranges = {p: get_range(info_params[p]) for p in
+              info_params}  # include fixed parameters not in columns
     renames = {p: info_params.get(p, {}).get(_p_renames, []) for p in columns[2:]}
     samples = [c[c.data.columns[2:]].values for c in collections]
     weights = [c[_weight].values for c in collections]
@@ -109,6 +112,10 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
                      names=names, labels=labels, ranges=ranges, renames=renames,
                      ignore_rows=ignore_rows, name_tag=name_tag, label=label, ini=ini,
                      settings=settings)
+
+
+def str_to_list(x):
+    return [x] if isinstance(x, str) else x
 
 
 def get_info_params(info):
@@ -128,9 +135,9 @@ def get_info_params(info):
     remove = info.get(_post, {}).get("remove", {})
     for param in remove.get(_params, []) or []:
         info_params_full.pop(param, None)
-    for like in remove.get(_likelihood, []) or []:
+    for like in str_to_list(remove.get(_likelihood) or []):
         likes.remove(like)
-    for prior in remove.get(_prior, []) or []:
+    for prior in str_to_list(remove.get(_prior)) or []:
         priors.remove(prior)
     add = info.get(_post, {}).get("add", {})
     # Adding derived params and updating 1d priors
@@ -181,7 +188,8 @@ def get_range(param_info):
             value = float(value)
         except ValueError:
             # e.g. lambda function values
-            lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(param_info or {})
+            lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(
+                param_info or {})
         else:
             lims = (value, value)
     return lims[0] if lims[0] != -np.inf else None, lims[1] if lims[1] != np.inf else None
@@ -242,7 +250,8 @@ def expand_info_param(info_param):
 
 
 def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):
-    sampler = list(yaml_file_or_dict(filename_or_info).get(_sampler, [default_sampler_for_chain_type]))[0]
+    sampler = list(yaml_file_or_dict(filename_or_info).get(_sampler, [
+        default_sampler_for_chain_type]))[0]
     return {"mcmc": "mcmc", "polychord": "nested", "minimize": "minimize"}[sampler]
 
 
