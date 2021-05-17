@@ -204,6 +204,7 @@ class MixtureND:
         else:
             mixture = self
 
+        # noinspection PyProtectedMember
         return mixture._density2D(num_points=num_points, xmin=xmin, xmax=xmax, ymin=ymin,
                                   ymax=ymax, sigma_max=sigma_max)
 
@@ -220,7 +221,7 @@ class MixtureND:
                 indices.append(p)
         return indices
 
-    def marginalizedMixture(self, params, label=None, no_limit_marge=False):
+    def marginalizedMixture(self, params, label=None, no_limit_marge=False) -> 'MixtureND':
         """
         Calculates a reduced mixture model by marginalization over unwanted parameters
 

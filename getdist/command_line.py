@@ -10,7 +10,7 @@ def runScript(fname):
     subprocess.Popen(['python', fname])
 
 
-# noinspection PyUnboundLocalVariable
+# noinspection PyUnboundLocalVariable,PyProtectedMember
 def getdist_script(args, exit_on_error=True):
     def do_error(msg):
         if exit_on_error:

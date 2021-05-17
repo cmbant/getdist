@@ -19,28 +19,27 @@ class InputSyntaxError(Exception):
 # 1. Matches 1e2 as 100 (no need for dot, or sign after e),
 #    from http://stackoverflow.com/a/30462009
 def yaml_load(text_stream, Loader=yaml.Loader, file_name=None):
-    class OrderedLoader(Loader):
+    class ScientificLoader(Loader):
         pass
 
-    OrderedLoader.add_implicit_resolver(
-        u'tag:yaml.org,2002:float',
-        re.compile(u'''^(?:
-            [-+]?(?:[0-9][0-9_]*)\\.[0-9_]*(?:[eE][-+]?[0-9]+)?
-            |[-+]?(?:[0-9][0-9_]*)(?:[eE][-+]?[0-9]+)
+    ScientificLoader.add_implicit_resolver(
+        'tag:yaml.org,2002:float',
+        re.compile('''^(?:
+            [-+]?[0-9][0-9_]*\\.[0-9_]*(?:[eE][-+]?[0-9]+)?
+            |[-+]?[0-9][0-9_]*[eE][-+]?[0-9]+
             |\\.[0-9_]+(?:[eE][-+][0-9]+)?
             |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*
             |[-+]?\\.(?:inf|Inf|INF)
             |\\.(?:nan|NaN|NAN))$''', re.X),
-        list(u'-+0123456789.'))
+        list('-+0123456789.'))
 
     # Ignore python objects
     def dummy_object_loader(loader, suffix, node):
         return None
 
-    OrderedLoader.add_multi_constructor(
-        u'tag:yaml.org,2002:python/name:', dummy_object_loader)
+    ScientificLoader.add_multi_constructor('tag:yaml.org,2002:python/name:', dummy_object_loader)
     try:
-        return yaml.load(text_stream, OrderedLoader)
+        return yaml.load(text_stream, ScientificLoader)
     # Redefining the general exception to give more user-friendly information
     except yaml.YAMLError as exception:
         errstr = "Error in your input file " + ("'" + file_name + "'" if file_name else "")

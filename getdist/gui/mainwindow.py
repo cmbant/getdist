@@ -82,6 +82,7 @@ class QStatusLogger(logging.Handler):
         pass
 
 
+# noinspection PyArgumentList
 class RootListWidget(QListWidget):
     def __init__(self, widget, owner):
         QListWidget.__init__(self, widget)
@@ -332,7 +333,7 @@ class MainWindow(QMainWindow):
 
     def _icon(self, name, large=True):
         if large:
-            name = name + '_large'
+            name += '_large'
         pm = QPixmap(self._image_file('%s.png' % name))
         if hasattr(pm, 'setDevicePixelRatio'):
             pm.setDevicePixelRatio(self.devicePixelRatio())
@@ -2002,7 +2003,7 @@ class DialogPCA(DialogTextOutput):
 
 # ==============================================================================
 
-# noinspection PyCallByClass
+# noinspection PyCallByClass,PyArgumentList
 class DialogParamTables(DialogTextOutput):
     def __init__(self, parent, tables, root):
         DialogTextOutput.__init__(self, parent)

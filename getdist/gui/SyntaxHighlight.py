@@ -63,6 +63,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         r'\{', r'\}', r'\(', r'\)', r'\[', r'\]',
     ]
 
+    # noinspection PyArgumentList
     def __init__(self, document):
         QSyntaxHighlighter.__init__(self, document)
 
@@ -107,6 +108,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         ]
 
         # Build a QRegExp for each pattern
+        # noinspection PyArgumentList
         self.rules = [(QRegExp(pat), index, fmt)
                       for (pat, index, fmt) in rules]
 
