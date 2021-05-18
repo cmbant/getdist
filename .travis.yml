@@ -36,11 +36,12 @@ install:
     fi
   - python --version
   - pip install .
-  - pip install PyYAML
+  - pip install PyYAML flake8
   - getdist --help
   - git clone --depth=1 https://github.com/cmbant/getdist_testchains
 
 script:
+  - flake8 . --select=E9,F63,F7,F82 --show-source --statistics
   - python -m unittest getdist.tests.getdist_test
 
 deploy:
