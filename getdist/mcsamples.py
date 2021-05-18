@@ -25,21 +25,18 @@ class MCSamplesError(WeightedSampleError):
     """
     An Exception that is raised when there is an error inside the MCSamples class.
     """
-    pass
 
 
 class SettingError(MCSamplesError):
     """
     An Exception that indicates bad settings.
     """
-    pass
 
 
 class BandwidthError(MCSamplesError):
     """
     An Exception that indicate KDE bandwidth failure.
     """
-    pass
 
 
 def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings=None):

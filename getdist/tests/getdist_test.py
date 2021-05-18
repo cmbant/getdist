@@ -156,6 +156,7 @@ class GetDistTest(unittest.TestCase):
         mean = np.sum([s.norm * s.mean('x') for s in samps]) / np.sum([s.norm for s in samps])
         meanChains = fromChains.mean('x')
         self.assertAlmostEqual(mean, meanChains)
+        self.assertAlmostEqual(mean, float(np.mean(fromChains['x'])))
 
     def testMixtures(self):
         from getdist.gaussian_mixtures import Mixture2D, GaussianND

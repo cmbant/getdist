@@ -958,6 +958,7 @@ class WeightedSamples:
         scale = np.min(logLikes)
         if self.loglikes is not None:
             self.loglikes += logLikes
+        self.weights = np.asarray(self.weights, dtype=np.float64)
         self.weights *= np.exp(-(logLikes - scale))
         self._weightsChanged()
 
@@ -969,7 +970,8 @@ class WeightedSamples:
         """
         MaxL = np.max(self.loglikes)
         newL = self.loglikes * cool
-        self.weights = self.weights * np.exp(-(newL - self.loglikes) - (MaxL * (1 - cool)))
+        self.weights = np.asarray(self.weights, dtype=np.float64)
+        self.weights *= np.exp(-(newL - self.loglikes) - (MaxL * (1 - cool)))
         self.loglikes = newL
         self._weightsChanged()
 
@@ -1251,7 +1253,15 @@ class Chains(WeightedSamples):
         if isinstance(par, ParamInfo):
             par = par.name
         if isinstance(par, str):
-            return self.samples[:, self.index[par]]
+            index = self.index.get(par)
+            if index is not None:
+                return self.samples[:, index]
+            if par == 'weight':
+                return self.weights
+            elif par == 'loglike':
+                return self.loglikes
+            else:
+                raise ValueError('Unknown parameter %s' % par)
         return super()._makeParamvec(par)
 
     def updateChainBaseStatistics(self):
