@@ -18,8 +18,7 @@ class GetDistFileTest(unittest.TestCase):
     """test reading files, convergence routines and getdist script"""
 
     def setUp(self):
-        np.random.seed(10)
-
+        random_state = np.random.default_rng(10)
         # Simulate some chain files
         prob = Test2DDistributions().bimodal[0]
         self.tempdir = os.path.join(tempfile.gettempdir(), 'gettdist_tests')
@@ -27,7 +26,7 @@ class GetDistFileTest(unittest.TestCase):
             os.mkdir(self.tempdir)
         self.root = os.path.join(self.tempdir, 'testchain')
         for n in range(3):
-            mcsamples = prob.MCSamples(4000, logLikes=True)
+            mcsamples = prob.MCSamples(4000, logLikes=True, random_state=random_state)
             mcsamples.saveAsText(self.root, chain_index=n)
 
     def tearDown(self):
@@ -42,7 +41,7 @@ class GetDistFileTest(unittest.TestCase):
         self.assertEqual(g.samples_for_root('testchain').getTable().tableTex(),
                          samples.getTable().tableTex(), 'Inconsistent load result')
         samples.getConvergeTests(0.95)
-        self.assertAlmostEqual(0.0009368, samples.GelmanRubin, 5, 'Gelman Rubin error, got ' + str(samples.GelmanRubin))
+        self.assertAlmostEqual(0.00052997, samples.GelmanRubin, 4, 'Gelman Rubin error, got ' + str(samples.GelmanRubin))
 
         g = plots.get_single_plotter()
         g.plot_3d(samples, ['x', 'y', 'x'])
@@ -59,7 +58,7 @@ class GetDistFileTest(unittest.TestCase):
         os.chdir(self.tempdir)
         res = getdist_command([self.root])
         # Note this can fail if your local analysis defaults changes the default ignore_rows
-        self.assertTrue('-Ln(mean like)  = 2.30' in res, res)
+        self.assertTrue('-Ln(mean like)  = 2.31' in res, res)
         fname = 'testchain_pars.ini'
         getdist_command(['--make_param_file', fname])
         ini = IniFile(fname)
@@ -72,7 +71,7 @@ class GetDistFileTest(unittest.TestCase):
 
         ini.saveFile(fname)
         res = getdist_command([fname, self.root])
-        self.assertTrue('-Ln(mean like)  = 2.30' in res)
+        self.assertTrue('-Ln(mean like)  = 2.31' in res)
 
         def check_run():
             for f in ['.py', '_2D.py', '_3D.py', '_tri.py']:
@@ -91,51 +90,51 @@ class GetDistTest(unittest.TestCase):
     """test some getdist routines and plotting"""
 
     def setUp(self):
-        np.random.seed(10)
         self.testdists = Test2DDistributions()
 
     def testBestFit(self):
-        samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
+        samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True, random_state=10)
         bestSample = samples.getParamBestFitDict(best_sample=True)
         self.assertAlmostEqual(bestSample['loglike'], 1.708, 2)
 
     def testTables(self):
-        self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
+        self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True, random_state=10)
         self.assertEqual(str(self.samples.getLatex(limit=2)),
                          "(['x', 'y'], ['0.0^{+2.1}_{-2.1}', '0.0^{+1.3}_{-1.3}'])", "MCSamples.getLatex error")
         table = self.samples.getTable(columns=1, limit=1, paramList=['x'])
         self.assertTrue(r'0.0\pm 1.2' in table.tableTex(), "Table tex error")
 
     def testPCA(self):
-        samples = self.testdists.bending.MCSamples(12000, logLikes=True)
-        self.assertTrue('e-value: 0.097' in samples.PCA(['x', 'y']))
+        samples = self.testdists.bending.MCSamples(12000, logLikes=True, random_state=10)
+        self.assertTrue('e-value: 0.10' in samples.PCA(['x', 'y']))
 
     def testLimits(self):
-        samples = self.testdists.cut_correlated.MCSamples(12000, logLikes=False)
+        samples = self.testdists.cut_correlated.MCSamples(12000, logLikes=False, random_state=10)
         stats = samples.getMargeStats()
         lims = stats.parWithName('x').limits
-        self.assertAlmostEqual(lims[0].lower, 0.2205, 3)
-        self.assertAlmostEqual(lims[1].lower, 0.0491, 3)
+        self.assertAlmostEqual(lims[0].lower, 0.2077, 3)
+        self.assertAlmostEqual(lims[1].lower, 0.0574, 3)
         self.assertTrue(lims[2].onetail_lower)
 
         # check some analytics (note not very accurate actually)
-        samples = Gaussian1D(0, 1, xmax=1).MCSamples(1500000, logLikes=False)
+        samples = Gaussian1D(0, 1, xmax=1).MCSamples(1500000, logLikes=False, random_state=10)
         stats = samples.getMargeStats()
         lims = stats.parWithName('x').limits
-        self.assertAlmostEqual(lims[0].lower, -0.792815, 2)
-        self.assertAlmostEqual(lims[0].upper, 0.792815, 2)
-        self.assertAlmostEqual(lims[1].lower, -1.72718, 2)
+        self.assertAlmostEqual(lims[0].lower, -0.78828, 2)
+        self.assertAlmostEqual(lims[0].upper, 0.7954, 2)
+        self.assertAlmostEqual(lims[1].lower, -1.730, 2)
 
     def testDensitySymmetries(self):
         # check flipping samples gives flipped density
-        samps = Gaussian1D(0, 1, xmin=-1, xmax=4).MCSamples(12000)
+        samps = Gaussian1D(0, 1, xmin=-1, xmax=3).MCSamples(12000, random_state=10)
         d = samps.get1DDensity('x')
         samps.samples[:, 0] *= -1
-        samps = MCSamples(samples=samps.samples, names=['x'], ranges={'x': [-4, 1]})
+        samps = MCSamples(samples=samps.samples, names=['x'], ranges={'x': [-3, 1]})
         d2 = samps.get1DDensity('x')
         self.assertTrue(np.allclose(d.P, d2.P[::-1]))
 
-        samps = Gaussian2D([0, 0], np.diagflat([1, 2]), xmin=-1, xmax=2, ymin=0, ymax=3).MCSamples(12000)
+        samps = Gaussian2D([0, 0], np.diagflat([1, 2]), xmin=-1, xmax=2, ymin=0, ymax=3).MCSamples(12000,
+                                                                                                   random_state=10)
         d = samps.get2DDensity('x', 'y')
         samps.samples[:, 0] *= -1
         samps = MCSamples(samples=samps.samples, names=['x', 'y'], ranges={'x': [-2, 1], 'y': [0, 3]})
@@ -151,7 +150,8 @@ class GetDistTest(unittest.TestCase):
         # test initiating from multiple chain arrays
         samps = []
         for i in range(3):
-            samps.append(Gaussian2D([1.5, -2], np.diagflat([1, 2])).MCSamples(1001 + i * 10, names=['x', 'y']))
+            samps.append(Gaussian2D([1.5, -2], np.diagflat([1, 2])).MCSamples(1001 + i * 10, names=['x', 'y'],
+                                                                              random_state=10))
         fromChains = MCSamples(samples=[s.samples for s in samps], names=['x', 'y'])
         mean = np.sum([s.norm * s.mean('x') for s in samps]) / np.sum([s.norm for s in samps])
         meanChains = fromChains.mean('x')
@@ -173,7 +173,7 @@ class GetDistTest(unittest.TestCase):
         # test P(x,y) = P(y)P(x|y)
         self.assertAlmostEqual(mixture.pdf([tester, 0.15]), marge.pdf([tester]) * cond.pdf([0.15]))
 
-        samples = mixture.MCSamples(3000, label='Samples')
+        samples = mixture.MCSamples(3000, label='Samples', random_state=10)
         g = plots.get_subplot_plotter()
         g.triangle_plot([samples, mixture], filled=False)
         g.new_plot()
@@ -187,7 +187,7 @@ class GetDistTest(unittest.TestCase):
         g.triangle_plot(gauss, filled=True)
 
     def testPlots(self):
-        self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True)
+        self.samples = self.testdists.bimodal[0].MCSamples(12000, logLikes=True, random_state=10)
         g = plots.get_single_plotter(auto_close=True)
         samples = self.samples
         p = samples.getParams()
@@ -226,7 +226,7 @@ class GetDistTest(unittest.TestCase):
         g.new_plot()
         g.rectangle_plot(['x', 'y'], ['z'], roots=samples, filled=True)
         prob2 = self.testdists.bimodal[1]
-        samples2 = prob2.MCSamples(12000)
+        samples2 = prob2.MCSamples(12000, random_state=10)
         g.new_plot()
         g.triangle_plot([samples, samples2], ['x', 'y'])
         g.new_plot()
@@ -314,7 +314,7 @@ class UtilTest(unittest.TestCase):
 
     def test_specifics(self):
         testdists = Test2DDistributions()
-        samples = testdists.bimodal[0].MCSamples(1000, logLikes=True)
+        samples = testdists.bimodal[0].MCSamples(1000, logLikes=True, random_state=10)
         g = plots.get_subplot_plotter(auto_close=True)
         g.settings.prob_label = r'$P$'
         g.settings.prob_y_ticks = True

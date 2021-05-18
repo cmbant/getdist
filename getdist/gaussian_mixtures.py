@@ -46,20 +46,22 @@ class MixtureND:
         for mean, cov, weight, totmean in zip(self.means, self.covs, self.weights, self.total_mean):
             self.total_cov += weight * (cov + np.outer(mean - totmean, mean - totmean))
 
-    def sim(self, size):
+    def sim(self, size, random_state=None):
         """
         Generate an array of independent samples
 
         :param size: number of samples
+        :param random_state: random number Generator or seed
         :return: 2D array of sample values
         """
         tot = 0
         res = []
         block = None
+        random_state = np.random.default_rng(random_state)
         while True:
-            for num, mean, cov in zip(np.random.multinomial(block or size, self.weights), self.means, self.covs):
+            for num, mean, cov in zip(random_state.multinomial(block or size, self.weights), self.means, self.covs):
                 if num > 0:
-                    v = np.random.multivariate_normal(mean, cov, size=num)
+                    v = random_state.multivariate_normal(mean, cov, size=num)
                     if self.lims is not None:
                         for i, (mn, mx) in enumerate(self.lims):
                             if mn is not None:
@@ -74,12 +76,12 @@ class MixtureND:
                 block = min(max(size, 100000), int(1.1 * (size * (size - tot))) // max(tot, 1) + 1)
         samples = np.vstack(res)
         if len(res) > 1:
-            samples = np.random.permutation(samples)
+            samples = random_state.permutation(samples)
         if tot != size:
             samples = samples[:-(tot - size), :]
         return samples
 
-    def MCSamples(self, size, names=None, logLikes=False, **kwargs):
+    def MCSamples(self, size, names=None, logLikes=False, random_state=None, **kwargs):
         """
         Gets a set of independent samples from the mixture as a  :class:`.mcsamples.MCSamples` object
         ready for plotting etc.
@@ -87,9 +89,10 @@ class MixtureND:
         :param size: number of samples
         :param names: set to override existing names
         :param logLikes: if True set the sample likelihood values from the pdf, if false, don't store log likelihoods
+        :param random_state: random seed or Generator
         :return: a new :class:`.mcsamples.MCSamples` instance
         """
-        samples = self.sim(size)
+        samples = self.sim(size, random_state=random_state)
         if logLikes:
             loglikes = -np.log(self.pdf(samples))
         else:
@@ -476,22 +479,21 @@ class RandomTestMixtureND(MixtureND):
     samples from the mixture).
     """
 
-    def __init__(self, ndim=4, ncomponent=1, names=None, weights=None, seed=0, label='RandomMixture'):
+    def __init__(self, ndim=4, ncomponent=1, names=None, weights=None, seed=None, label='RandomMixture'):
         """
         :param ndim: number of dimensions
         :param ncomponent: number of components
         :param names: names for the parameters
         :param weights: weights for each component
-        :param seed:  random seed
+        :param seed:  random seed or Generator
         :param label: label for the generated mixture
         """
-        if seed:
-            np.random.seed(seed)
+        random_state = np.random.default_rng(seed)
         covs = []
         for _ in range(ncomponent):
-            A = np.random.rand(ndim, ndim)
+            A = random_state.random((ndim, ndim))
             covs.append(np.dot(A, A.T))
-        super().__init__(np.random.rand(ncomponent, ndim), covs, weights=weights,
+        super().__init__(random_state.random((ncomponent, ndim)), covs, weights=weights,
                          lims=None, names=names, label=label)
 
 
@@ -499,12 +501,10 @@ def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10
     """
     get a list of MCSamples instances with random samples from random covariances and y
     """
-    if seed:
-        np.random.seed(seed)
     if names is None:
         names = ["x%s" % i for i in range(ndim)]
     if labels is None:
         labels = ["x_{%s}" % i for i in range(ndim)]
-    return [RandomTestMixtureND(ndim, ncomponent, names).MCSamples(nsamp, labels=labels,
-                                                                   name_tag='Sim %s' % (i + 1)) for i in
-            range(nMCSamples)]
+    seed = np.random.default_rng(seed)
+    return [RandomTestMixtureND(ndim, ncomponent, names, seed=seed).MCSamples(
+        nsamp, labels=labels, name_tag='Sim %s' % (i + 1), random_state=seed) for i in range(nMCSamples)]

@@ -1,5 +1,4 @@
 import os
-import random
 import numpy as np
 import re
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
@@ -44,7 +43,7 @@ def last_modified(files):
     :param files: An iterable of file names.
     :return: The latest "last modified" time
     """
-    return max([os.path.getmtime(fname) for fname in files if os.path.exists(fname)])
+    return max(os.path.getmtime(fname) for fname in files if os.path.exists(fname))
 
 
 def slice_or_none(x, start=None, end=None):
@@ -898,18 +897,20 @@ class WeightedSamples:
 
         return thin_ix
 
-    def random_single_samples_indices(self):
+    def random_single_samples_indices(self, random_state=None):
         """
         Returns an array of sample indices that give a list of weight-one samples, by randomly
         selecting samples depending on the sample weights
 
+        :param random_state: random seed or Generator
         :return: array of sample indices
         """
+        random_state = np.random.default_rng(random_state)
         max_weight = np.max(self.weights)
         thin_ix = []
         for i in range(self.numrows):
             P = self.weights[i] / max_weight
-            if random.random() < P:
+            if random_state.random() < P:
                 thin_ix.append(i)
         return np.array(thin_ix, dtype=int)
 
@@ -1048,6 +1049,9 @@ class WeightedSamples:
         np.savetxt(root + ('' if chain_index is None else '_' + str(chain_index + 1)) + '.txt',
                    np.hstack((self.weights.reshape(-1, 1), loglikes.reshape(-1, 1), self.samples)),
                    fmt=self.precision)
+
+    def __getitem__(self, item):
+        return self._makeParamvec(item)
 
 
 # noinspection PyAttributeOutsideInit

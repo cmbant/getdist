@@ -507,7 +507,7 @@ class MCSamples(Chains):
         self._setLikeStats()
         return self
 
-    def makeSingleSamples(self, filename="", single_thin=None):
+    def makeSingleSamples(self, filename="", single_thin=None, random_state=None):
         """
         Make file of unit weight samples by choosing samples
         with probability proportional to their weight.
@@ -515,14 +515,16 @@ class MCSamples(Chains):
         :param filename: The filename to write to, leave empty if no output file is needed
         :param single_thin: factor to thin by; if not set generates as many samples as it can
                             up to self.max_scatter_points
+        :param random_state: random seed or Generator
         :return: numpy array of selected weight-1 samples if no filename
         """
         if single_thin is None:
             single_thin = max(1, self.norm / self.max_mult / self.max_scatter_points)
-        rand = np.random.random_sample(self.numrows)
+        random_state = np.random.default_rng(random_state)
+        rand = random_state.random(self.numrows)
 
         if filename:
-            with open(filename, 'w') as f:
+            with open(filename, 'w', encoding='utf-8') as f:
                 for i, r in enumerate(rand):
                     if r <= self.weights[i] / self.max_mult / single_thin:
                         f.write("%16.7E" % 1.0)
@@ -545,7 +547,7 @@ class MCSamples(Chains):
         if cool != 1:
             logging.info('Cooled thinned output with temp: %s', cool)
         MaxL = np.max(self.loglikes)
-        with open(fname, 'w') as f:
+        with open(fname, 'w', encoding='utf-8') as f:
             i = 0
             for thin in thin_ix:
                 if cool != 1:
@@ -1387,7 +1389,7 @@ class MCSamples(Chains):
         if self.needs_update:
             self.updateBaseStatistics()
         if not kwargs:
-            density = self.density1D.get(name, None)
+            density = self.density1D.get(name)
             if density is not None:
                 return density
         return self.get1DDensityGridData(name, **kwargs)
