@@ -134,7 +134,7 @@ setup(name='GetDist',
       install_requires=[
           'numpy (>=1.17.0)',
           'matplotlib (>=2.2.0)',
-          "scipy (>=1.0.0)"],
+          "scipy (>=1.5.0)"],
       # PySide2 is needed for the GUI
       # pandas optional (for faster txt chain file read)
       extras_require={'GUI': ["PySide2>=5.2"], 'txt': ["pandas>=0.14.0"]},
