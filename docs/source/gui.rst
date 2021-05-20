@@ -55,7 +55,7 @@ Install PySide2 from pip using::
 You can also use `Anaconda <https://www.anaconda.com/distribution/>`_,
 making a consistent new environment from conda-forge (which includes PySide2) using::
 
-  conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib PySide2
+  conda create -n py39forge -c conda-forge python=3.9 scipy pandas matplotlib PySide2
 
 (note that PySide2 is currently not included in the default Anaconda packages).
 

@@ -23,7 +23,7 @@ except ImportError as _e:
     if not os.path.exists(os.path.join(sys.prefix, 'conda-meta')):
         print('Using Anaconda is probably the most reliable method')
     print("E.g. make and use a new environment using conda-forge")
-    print('conda create -n py37forge -c conda-forge python=3.7 scipy pandas matplotlib PySide2')
+    print('conda create -n py39forge -c conda-forge python=3.9 scipy pandas matplotlib PySide2')
 
     sys.exit(-1)
 
@@ -133,6 +133,7 @@ class MainWindow(QMainWindow):
         self.ConfigDlg = None
         self.plotSettingDlg = None
         self.custom_plot_settings = {}
+        self.preview_settings = {'constrained_layout': True, 'direct_scaling': True}
 
         self.setAttribute(Qt.WA_DeleteOnClose)
         if os.name == 'nt':
@@ -1476,6 +1477,7 @@ class MainWindow(QMainWindow):
             items_y = self.getYParams()
             self.plotter.settings = copy.copy(self.default_plot_settings)
             self.plotter.settings.__dict__.update(self.custom_plot_settings)
+            self.plotter.settings.__dict__.update(self.preview_settings)
 
             script = "from getdist import plots\n"
             if self.script_plot_module != 'getdist.plots':
@@ -1531,8 +1533,9 @@ class MainWindow(QMainWindow):
             logging.debug("Plotting with roots = %s" % str(roots))
 
             # fudge factor of 0.8 seems to help with overlapping labels on retina Mac.
-            height = self.plotWidget.height() / self.logicalDpiX() * 0.8
-            width = self.plotWidget.width() / self.logicalDpiX() * 0.8
+            # seem to have to render at the dpi-scaled small size, as then scaled up
+            height = self.plotWidget.height() / self.logicalDpiX() / self.devicePixelRatio()
+            width = self.plotWidget.width() / self.logicalDpiX() / self.devicePixelRatio()
 
             def setSizeForN(cols, rows):
                 if self.plotter.settings.fig_width_inch is not None:
@@ -1850,6 +1853,7 @@ class MainWindow(QMainWindow):
 # ==============================================================================
 
 
+# noinspection PyArgumentList
 class DialogTextOutput(QDialog):
     def __init__(self, parent, text=None):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
@@ -1984,6 +1988,7 @@ class DialogConvergeStats(DialogTextOutput):
         self.setWindowTitle(self.tr('Convergence stats: ' + root))
         # noinspection PyArgumentList
         h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 1200)
+        # noinspection PyArgumentList
         self.resize(700, h)
 
 
@@ -1998,7 +2003,7 @@ class DialogPCA(DialogTextOutput):
         self.setWindowTitle(self.tr('PCA constraints for: ' + root))
         # noinspection PyArgumentList
         h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800)
-        self.resize(500, h)
+        self.resize(500)
 
 
 # ==============================================================================

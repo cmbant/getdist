@@ -5,7 +5,7 @@ import sys
 import warnings
 import logging
 from types import MappingProxyType
-from typing import Mapping, Sequence, Union
+from typing import Mapping, Sequence, Union, Optional
 
 if 'ipykern' not in matplotlib.rcParams['backend'] and \
         'linux' in sys.platform and os.environ.get('DISPLAY', '') == '':
@@ -67,7 +67,8 @@ class GetDistPlotSettings(_BaseObject):
     :ivar colormap: a `Matplotlib color map <https://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_ for shading
     :ivar colormap_scatter: a Matplotlib `color map <https://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_
                             for 3D scatter plots
-    :ivar constrained_layout: use matplotlib's constrained-layout to fit plots within the figure and avoid overlaps
+    :ivar constrained_layout: use matplotlib's constrained-layout to fit plots within the figure and avoid overlaps.
+                              (Note this setting has no effect in the GetDist GUI preview, as always on there)
     :ivar fig_width_inch: The width of the figure in inches
     :ivar figure_legend_frame: draw box around figure legend
     :ivar figure_legend_loc: The location for the figure legend
@@ -101,9 +102,10 @@ class GetDistPlotSettings(_BaseObject):
     :ivar progress: write out some status
     :ivar scaling: True to scale down fonts and lines for smaller subplots; False to use fixed sizes.
     :ivar scaling_max_axis_size: font sizes will only be scaled for subplot widths (in inches) smaller than this.
-    :ivar scaling_factor: factor by which to multiply the different of the axis size to the reference size when
+    :ivar scaling_factor: factor by which to multiply the difference of the axis size to the reference size when
                           scaling font sizes
     :ivar scaling_reference_size: axis width (in inches) at which font sizes are specified.
+    :ivar direct_scaling: True to directly scale the font size with the axis size for small axes (can be very small)
     :ivar scatter_size: size of points in "3D" scatter plots
     :ivar shade_level_scale: shading contour colors are put at [0:1:spacing]**shade_level_scale
     :ivar shade_meanlikes: 2D shading uses mean likelihoods rather than marginalized density
@@ -146,8 +148,9 @@ class GetDistPlotSettings(_BaseObject):
         """
         self.scaling = True
         self.scaling_reference_size = 3.5  # reference subplot size for font sizes etc.
-        self.scaling_max_axis_size = self.scaling_reference_size
+        self.scaling_max_axis_size: Optional[float] = self.scaling_reference_size
         self.scaling_factor = 2
+        self.direct_scaling = False  # if true just scale directly with the axes size
 
         self.plot_meanlikes = False
         self.prob_label = None
@@ -156,10 +159,10 @@ class GetDistPlotSettings(_BaseObject):
         self.prob_y_ticks = False
         self.norm_1d_density = False
         # : line styles/colors
-        self.line_styles = ['-k', '-r', '-b', '-g', '-m', '-c', '-y', '--k', '--r', '--b', '--g', '--m']
+        self.line_styles: Sequence[str] = ['-k', '-r', '-b', '-g', '-m', '-c', '-y', '--k', '--r', '--b', '--g', '--m']
 
         self.plot_args = None
-        self.line_dash_styles = {'--': (3, 2), '-.': (4, 1, 1, 1)}
+        self.line_dash_styles: Mapping[str, Sequence[float]] = {'--': (3, 2), '-.': (4, 1, 1, 1)}
         self.line_labels = True
         self.num_shades = 80
         self.shade_level_scale = 1.8  # contour levels at [0:1:spacing]**shade_level_scale
@@ -175,11 +178,11 @@ class GetDistPlotSettings(_BaseObject):
         self.colormap = "Blues"
         self.colormap_scatter = "jet"
         self.colorbar_tick_rotation = None
-        self.colorbar_label_pad = 0
-        self.colorbar_label_rotation = -90
-        self.colorbar_axes_fontsize = 11
+        self.colorbar_label_pad: float = 0
+        self.colorbar_label_rotation: float = -90
+        self.colorbar_axes_fontsize: float = 11
 
-        self.subplot_size_inch = subplot_size_inch
+        self.subplot_size_inch: float = subplot_size_inch
         self.subplot_size_ratio = None
 
         self.param_names_for_labels = None
@@ -187,7 +190,7 @@ class GetDistPlotSettings(_BaseObject):
         self.legend_colored_text = False
         self.legend_loc = 'best'
         self.legend_frac_subplot_margin = 0.05
-        self.legend_fontsize = 12
+        self.legend_fontsize: float = 12
         self.legend_frame = True
         self.legend_rect_border = False
 
@@ -195,37 +198,37 @@ class GetDistPlotSettings(_BaseObject):
         self.figure_legend_frame = True
         self.figure_legend_ncol = 0
 
-        self.linewidth = 1
+        self.linewidth: float = 1
         self.linewidth_contour = 0.6
         self.linewidth_meanlikes = 0.5
 
-        self.num_plot_contours = 2
+        self.num_plot_contours: int = 2
         self.solid_contour_palefactor = 0.6
         self.solid_colors = ['#006FED', '#E03424', 'gray', '#009966', '#000866', '#336600', '#006633', 'm', 'r']
         self.alpha_filled_add = 0.85
         self.alpha_factor_contour_lines = 0.5
         self.shade_meanlikes = False
 
-        self.axes_fontsize = 11
-        self.axes_labelsize = 14
+        self.axes_fontsize: float = 11
+        self.axes_labelsize: float = 14
 
         self.axis_marker_color = 'gray'
         self.axis_marker_ls = '--'
         self.axis_marker_lw = 0.5
 
-        self.axis_tick_powerlimits = (-4, 5)
-        self.axis_tick_max_labels = 7
-        self.axis_tick_step_groups = [[1, 2, 5, 10], [2.5, 3, 4, 6, 8], [1.5, 7, 9]]
-        self.axis_tick_x_rotation = 0
-        self.axis_tick_y_rotation = 0
+        self.axis_tick_powerlimits: Sequence[int] = (-4, 5)
+        self.axis_tick_max_labels: int = 7
+        self.axis_tick_step_groups: Sequence[Sequence[float]] = [[1, 2, 5, 10], [2.5, 3, 4, 6, 8], [1.5, 7, 9]]
+        self.axis_tick_x_rotation: float = 0
+        self.axis_tick_y_rotation: float = 0
 
-        self.scatter_size = 3
+        self.scatter_size: float = 3
 
-        self.fontsize = 12
+        self.fontsize: float = 12
 
-        self.title_limit = 0
+        self.title_limit: int = 0  # which limit (1,2..) to plot in the title
         self.title_limit_labels = True
-        self.title_limit_fontsize = None
+        self.title_limit_fontsize: Optional[float] = None
         self._fail_on_not_exist = True
 
     def _numerical_fontsize(self, size):
@@ -240,7 +243,10 @@ class GetDistPlotSettings(_BaseObject):
         if not self.scaling or self.scaling_max_axis_size is not None and not self.scaling_max_axis_size:
             return var
         if self.scaling_max_axis_size is None or ax_size < (self.scaling_max_axis_size or self.scaling_reference_size):
-            return max(5, var + self.scaling_factor * (ax_size - self.scaling_reference_size))
+            if self.direct_scaling:
+                return var * ax_size / self.scaling_reference_size
+            else:
+                return max(5, var + self.scaling_factor * (ax_size - self.scaling_reference_size))
         else:
             return var + 2 * (self.scaling_max_axis_size - self.scaling_reference_size)
 
@@ -1432,7 +1438,7 @@ class GetDistPlotter(_BaseObject):
         ax.yaxis.offsetText.set_visible(False)
 
     def set_axes(self, params=(), lims=None, do_xlabel=True, do_ylabel=True, no_label_no_numbers=False, pos=None,
-                 color_label_in_axes=False, ax=None, **other_args):
+                 color_label_in_axes=False, ax=None, **_other_args):
         """
         Set the axis labels and ticks, and various styles. Do not usually need to call this directly.
 
@@ -1446,7 +1452,7 @@ class GetDistPlotter(_BaseObject):
                                     the third parameter
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
-        :param other_args: Not used, just quietly ignore so that set_axes can be passed general kwargs
+        :param _other_args: Not used, just quietly ignore so that set_axes can be passed general kwargs
         :return: an :class:`~matplotlib:matplotlib.axes.Axes` instance
         """
         ax = self.get_axes(ax)
