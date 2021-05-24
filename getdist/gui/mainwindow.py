@@ -12,6 +12,9 @@ import signal
 import warnings
 from io import BytesIO
 
+# Note that on Mac you need to do "pip install getdist" (not a local pip -e install), and run getdist-gui to get the
+# menus and icons working
+
 try:
     from PySide2 import QtCore
 except ImportError as _e:
@@ -1815,9 +1818,6 @@ class MainWindow(QMainWindow):
             item = self.plotWidget2.layout().takeAt(i)
             if item is None:
                 break
-            if hasattr(item, "widget"):
-                child = item.widget()
-                del child
             del item
 
         # Save in PNG format, and display it in a QLabel
@@ -2003,7 +2003,7 @@ class DialogPCA(DialogTextOutput):
         self.setWindowTitle(self.tr('PCA constraints for: ' + root))
         # noinspection PyArgumentList
         h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800)
-        self.resize(500)
+        self.resize(500, h)
 
 
 # ==============================================================================
