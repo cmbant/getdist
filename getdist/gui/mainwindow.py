@@ -1704,6 +1704,9 @@ class MainWindow(QMainWindow):
                 item = self.plotWidget.layout().takeAt(i)
                 if item is None:
                     break
+                if hasattr(item, "widget"):
+                    child = item.widget()  # noqa
+                    del child
                 del item
             if hasattr(self, "canvas"):
                 del self.canvas
