@@ -11,6 +11,7 @@ import sys
 import signal
 import warnings
 from io import BytesIO
+from typing import Optional
 
 if sys.platform == "Windows" and sys.getwindowsversion().major >= 10:  # noqa
     import ctypes
@@ -158,7 +159,7 @@ class MainWindow(QMainWindow):
 
         # Path of root directory
         self.rootdirname = None
-        self.plotter = None
+        self.plotter: Optional[plots.GetDistPlotter] = None
         self.root_infos = {}
 
         self._resetGridData()
@@ -315,7 +316,7 @@ class MainWindow(QMainWindow):
         self.helpMenu.addAction(self.aboutAct)
 
     def dpiScale(self):
-        return self.logicalDpiX() / 96
+        return max(self.logicalDpiX() / 96, 1)
 
     def createStatusBar(self):
         """
@@ -1005,6 +1006,7 @@ class MainWindow(QMainWindow):
                           "\nQt (PySide): " + PySide2.QtCore.__version__ +
                           "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
                               self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY()) +
+                          "\nMatplotlib dpi: %s" % matplotlib.rcParams['figure.dpi'] +
                           '\nUsing getdist at: %s' % os.path.dirname(getdist.__file__))
 
     def getDirectories(self):
@@ -1547,10 +1549,14 @@ class MainWindow(QMainWindow):
 
             logging.debug("Plotting with roots = %s" % str(roots))
 
-            # fudge factor of 0.8 seems to help with overlapping labels on retina Mac.
-            # seem to have to render at the dpi-scaled small size, as then scaled up
-            height = self.plotWidget.height() / self.logicalDpiX()
-            width = self.plotWidget.width() / self.logicalDpiX()
+            # if devicePixelRatio>1, seem to have to render at the dpi-scaled small size, as then scaled up
+            height = self.plotWidget.height() / self.logicalDpiX() / self.devicePixelRatio()
+            width = self.plotWidget.width() / self.logicalDpiX() / self.devicePixelRatio()
+            if self.devicePixelRatio() > 1:
+                # fudge factor of 0.8 seems to help with overlapping labels on retina Mac.
+                height *= 0.8
+                width *= 0.8
+                self.plotter.settings.direct_scaling = True
 
             def setSizeForN(cols, rows):
                 if self.plotter.settings.fig_width_inch is not None:

@@ -5,7 +5,7 @@ import sys
 import warnings
 import logging
 from types import MappingProxyType
-from typing import Mapping, Sequence, Union, Optional
+from typing import Mapping, Sequence, Union, Optional, Iterable
 
 if 'ipykern' not in matplotlib.rcParams['backend'] and \
         'linux' in sys.platform and os.environ.get('DISPLAY', '') == '':
@@ -329,7 +329,7 @@ def get_single_plotter(ratio=None, width_inch=None, scaling=None, rc_sizes=False
 
 
 def get_subplot_plotter(subplot_size=None, width_inch=None, scaling=None, rc_sizes=False,
-                        subplot_size_ratio=None, style=None, **kwargs):
+                        subplot_size_ratio=None, style=None, **kwargs) -> 'GetDistPlotter':
     """
     Get a :class:`~.plots.GetDistPlotter` for making an array of subplots.
 
@@ -386,7 +386,7 @@ class MCSampleAnalysis(_BaseObject):
     use plotter.sample_analyser.samples_for_root(name).
     """
 
-    def __init__(self, chain_locations, settings=None):
+    def __init__(self, chain_locations: Union[str, Iterable[str]], settings: Union[str, dict, IniFile] = None):
         """
         :param chain_locations: either a directory or the path of a grid of runs;
                it can also be a list of such, which is searched in order
@@ -398,7 +398,7 @@ class MCSampleAnalysis(_BaseObject):
         self.ini = None
         self.chain_settings_have_priority = True
         if chain_locations is not None:
-            if isinstance(chain_locations, str) or not hasattr(chain_locations, '__len__'):
+            if isinstance(chain_locations, str) or not isinstance(chain_locations, Iterable):
                 chain_locations = [chain_locations]
             for chain_dir in chain_locations:
                 self.add_chain_dir(chain_dir)
@@ -657,7 +657,8 @@ class GetDistPlotter(_BaseObject):
          and derived data from a given root name tag (e.g. sample_analyser.samples_for_root('rootname'))
     """
 
-    def __init__(self, chain_dir=None, settings=None, analysis_settings=None, auto_close=False):
+    def __init__(self, chain_dir=None, settings: Optional[GetDistPlotSettings] = None,
+                 analysis_settings: Union[str, dict, IniFile] = None, auto_close=False):
         """
 
         :param chain_dir: Set this to a directory or grid directory hierarchy to search for chains
@@ -697,7 +698,7 @@ class GetDistPlotter(_BaseObject):
 
     @classmethod
     def get_subplot_plotter(cls, subplot_size=None, width_inch=None, scaling=True, rc_sizes=False,
-                            subplot_size_ratio=None, **kwargs):
+                            subplot_size_ratio=None, **kwargs) -> 'GetDistPlotter':
         plotter = cls(**kwargs)
         plotter.settings.set_with_subplot_size(subplot_size or 2, size_ratio=subplot_size_ratio)
         if scaling is not None:
