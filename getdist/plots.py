@@ -658,8 +658,10 @@ class GetDistPlotter(_BaseObject):
          and derived data from a given root name tag (e.g. sample_analyser.samples_for_root('rootname'))
     """
 
-    def __init__(self, chain_dir: Union[str, Iterable[str], None], settings: Optional[GetDistPlotSettings] = None,
-                 analysis_settings: Union[str, dict, IniFile] = None, auto_close=False):
+    def __init__(self, chain_dir: Union[str, Iterable[str], None] = None,
+                 settings: Optional[GetDistPlotSettings] = None,
+                 analysis_settings: Union[str, dict, IniFile] = None,
+                 auto_close=False):
         """
 
         :param chain_dir: Set this to a directory or grid directory hierarchy to search for chains
