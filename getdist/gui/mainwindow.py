@@ -180,7 +180,7 @@ class MainWindow(QMainWindow):
             if last_dir is not None and last_dir not in dirs and os.path.exists(last_dir):
                 dirs.insert(0, last_dir)
             self.listDirectories.addItems(dirs)
-            if last_dir is not None and os.path.exists(last_dir):
+            if last_dir and os.path.exists(last_dir):
                 self.listDirectories.setCurrentIndex(dirs.index(last_dir))
                 self.openDirectory(last_dir)
             else:
@@ -660,7 +660,7 @@ class MainWindow(QMainWindow):
 
     def reLoad(self):
         adir = self.getSettings().value('lastSearchDirectory')
-        if adir is not None:
+        if adir:
             if batchjob:
                 batchjob.resetGrid(adir)
             self.openDirectory(adir)
