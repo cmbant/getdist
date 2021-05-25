@@ -988,7 +988,7 @@ class MainWindow(QMainWindow):
 
     def openPlanck(self):
         import webbrowser
-        webbrowser.open("http://pla.esac.esa.int/pla/#cosmology")
+        webbrowser.open("https://pla.esac.esa.int/pla/#cosmology")
 
     def about(self):
         """

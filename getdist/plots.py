@@ -5,7 +5,7 @@ import sys
 import warnings
 import logging
 from types import MappingProxyType
-from typing import Mapping, Sequence, Union, Optional, Iterable
+from typing import Mapping, Sequence, Union, Optional, Iterable, Tuple
 
 if 'ipykern' not in matplotlib.rcParams['backend'] and \
         'linux' in sys.platform and os.environ.get('DISPLAY', '') == '':
@@ -41,7 +41,6 @@ class GetDistPlotError(Exception):
     """
     An exception that is raised when there is an error plotting
     """
-    pass
 
 
 class GetDistPlotSettings(_BaseObject):
@@ -136,7 +135,7 @@ class GetDistPlotSettings(_BaseObject):
                    'x_label_rotation': 'axis_tick_x_rotation'
                    }
 
-    def __init__(self, subplot_size_inch=2, fig_width_inch=None):
+    def __init__(self, subplot_size_inch: float = 2, fig_width_inch: Optional[float] = None):
         """
         If fig_width_inch set, fixed setting for fixed total figure size in inches.
         Otherwise use subplot_size_inch to determine default font sizes etc.,
@@ -215,7 +214,7 @@ class GetDistPlotSettings(_BaseObject):
         self.axis_marker_ls = '--'
         self.axis_marker_lw = 0.5
 
-        self.axis_tick_powerlimits: Sequence[int] = (-4, 5)
+        self.axis_tick_powerlimits: Tuple[int, int] = (-4, 5)
         self.axis_tick_max_labels: int = 7
         self.axis_tick_step_groups: Sequence[Sequence[float]] = [[1, 2, 5, 10], [2.5, 3, 4, 6, 8], [1.5, 7, 9]]
         self.axis_tick_x_rotation: float = 0
@@ -294,7 +293,7 @@ default_settings = GetDistPlotSettings()
 defaultSettings = default_settings
 
 
-def get_plotter(style=None, **kwargs):
+def get_plotter(style: Optional[str] = None, **kwargs):
     """
     Creates a new plotter and returns it
 
@@ -305,7 +304,8 @@ def get_plotter(style=None, **kwargs):
     return _style_manager.active_class(style)(**kwargs)
 
 
-def get_single_plotter(ratio=None, width_inch=None, scaling=None, rc_sizes=False, style=None, **kwargs):
+def get_single_plotter(ratio: Optional[float] = None, width_inch: Optional[float] = None,
+                       scaling: Optional[bool] = None, rc_sizes=False, style: Optional[str] = None, **kwargs):
     """
     Get a :class:`~.plots.GetDistPlotter` for making a single plot of fixed width.
 
@@ -328,8 +328,9 @@ def get_single_plotter(ratio=None, width_inch=None, scaling=None, rc_sizes=False
                                                                  rc_sizes=rc_sizes, **kwargs)
 
 
-def get_subplot_plotter(subplot_size=None, width_inch=None, scaling=None, rc_sizes=False,
-                        subplot_size_ratio=None, style=None, **kwargs) -> 'GetDistPlotter':
+def get_subplot_plotter(subplot_size: Optional[float] = None, width_inch: Optional[float] = None,
+                        scaling: Optional[bool] = None, rc_sizes=False, subplot_size_ratio: Optional[float] = None,
+                        style: Optional[str] = None, **kwargs) -> 'GetDistPlotter':
     """
     Get a :class:`~.plots.GetDistPlotter` for making an array of subplots.
 
@@ -367,7 +368,7 @@ class RootInfo:
     """
     __slots__ = ['root', 'batch', 'path']
 
-    def __init__(self, root, path, batch=None):
+    def __init__(self, root: str, path: str, batch=None):
         """
         :param root: The root file to use.
         :param path: The path the root file is in.
@@ -657,7 +658,7 @@ class GetDistPlotter(_BaseObject):
          and derived data from a given root name tag (e.g. sample_analyser.samples_for_root('rootname'))
     """
 
-    def __init__(self, chain_dir=None, settings: Optional[GetDistPlotSettings] = None,
+    def __init__(self, chain_dir: Union[str, Iterable[str], None], settings: Optional[GetDistPlotSettings] = None,
                  analysis_settings: Union[str, dict, IniFile] = None, auto_close=False):
         """
 
@@ -1405,7 +1406,7 @@ class GetDistPlotter(_BaseObject):
         formatter.set_powerlimits(power_limits)
         axis.set_major_formatter(formatter)
 
-    def _set_axis_properties(self, axis, rotation=0, tick_label_size=None):
+    def _set_axis_properties(self, axis, rotation: float = 0, tick_label_size=None):
         tick_label_size = self._scaled_fontsize(tick_label_size, self.settings.axes_fontsize)
         axis.set_tick_params(which='major', labelrotation=rotation, labelsize=tick_label_size)
         axis.get_offset_text().set_fontsize(tick_label_size * 3 / 4 if tick_label_size > 7 else tick_label_size)
