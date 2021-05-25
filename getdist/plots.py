@@ -68,7 +68,6 @@ class GetDistPlotSettings(_BaseObject):
     :ivar colormap_scatter: a Matplotlib `color map <https://www.scipy.org/Cookbook/Matplotlib/Show_colormaps>`_
                             for 3D scatter plots
     :ivar constrained_layout: use matplotlib's constrained-layout to fit plots within the figure and avoid overlaps.
-                              (Note this setting has no effect in the GetDist GUI preview, as always on there)
     :ivar fig_width_inch: The width of the figure in inches
     :ivar figure_legend_frame: draw box around figure legend
     :ivar figure_legend_loc: The location for the figure legend
@@ -1878,6 +1877,8 @@ class GetDistPlotter(_BaseObject):
         if figure:
             if figure_legend_outside and args.get('bbox_to_anchor') is None:
                 # this should put directly on top/below of figure
+                # TODO: once matplotlib 3.5 is out check  args['outside'] = True, outside='vertical'
+                #  for self.settings.constrained_layout
                 if legend_loc in ['best', 'center']:
                     legend_loc = 'upper center'
                 loc1, loc2 = legend_loc.split(' ')
