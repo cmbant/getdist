@@ -11,9 +11,13 @@ import sys
 import signal
 import warnings
 from io import BytesIO
+from typing import Optional
 
-# Note that on Mac you need to do "pip install getdist" (not a local pip -e install), and run getdist-gui to get the
-# menus and icons working
+if os.name == "nt" and sys.getwindowsversion().major >= 10:  # noqa
+    import ctypes
+
+    # using 2 (default in recent PySide?) does not work in higher-res non-boot laptop screen
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)  # noqa
 
 try:
     from PySide2 import QtCore
@@ -52,8 +56,8 @@ from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, Q
 
 os.environ['QT_API'] = 'pyside2'
 
-QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)  # DPI support
-QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+# works with or without this:
+# QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 
 try:
     # If cosmomc is configured
@@ -90,7 +94,7 @@ class RootListWidget(QListWidget):
     def __init__(self, widget, owner):
         QListWidget.__init__(self, widget)
         self.setDragDropMode(self.InternalMove)
-        self.setMaximumSize(QSize(16777215, 120))
+        self.setMaximumSize(QSize(16777215, 120 * owner.dpiScale()))
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setDragEnabled(True)
@@ -110,6 +114,7 @@ class MainWindow(QMainWindow):
         """
         Initialize of GUI components.
         """
+
         super().__init__()
 
         self.setWindowTitle("GetDist GUI")
@@ -136,7 +141,6 @@ class MainWindow(QMainWindow):
         self.ConfigDlg = None
         self.plotSettingDlg = None
         self.custom_plot_settings = {}
-        self.preview_settings = {'constrained_layout': True, 'direct_scaling': True}
 
         self.setAttribute(Qt.WA_DeleteOnClose)
         if os.name == 'nt':
@@ -158,7 +162,7 @@ class MainWindow(QMainWindow):
 
         # Path of root directory
         self.rootdirname = None
-        self.plotter = None
+        self.plotter: Optional[plots.GetDistPlotter] = None
         self.root_infos = {}
 
         self._resetGridData()
@@ -180,7 +184,7 @@ class MainWindow(QMainWindow):
             if last_dir is not None and last_dir not in dirs and os.path.exists(last_dir):
                 dirs.insert(0, last_dir)
             self.listDirectories.addItems(dirs)
-            if last_dir is not None and os.path.exists(last_dir):
+            if last_dir and os.path.exists(last_dir):
                 self.listDirectories.setCurrentIndex(dirs.index(last_dir))
                 self.openDirectory(last_dir)
             else:
@@ -314,6 +318,9 @@ class MainWindow(QMainWindow):
         self.helpMenu.addSeparator()
         self.helpMenu.addAction(self.aboutAct)
 
+    def dpiScale(self):
+        return self.logicalDpiX() / 96
+
     def createStatusBar(self):
         """
         Create Qt status bar.
@@ -347,10 +354,13 @@ class MainWindow(QMainWindow):
         """
         Create widgets.
         """
-        if sys.platform in ["darwin", "Windows"]:
-            self.setStyleSheet("* {font-size:9pt} QComboBox,QPushButton {height:1.3em}")
+        scale = self.dpiScale()
+        if sys.platform in ["darwin", "win32"]:
+            self.setStyleSheet(
+                "* {font-size:%spt} QComboBox,QPushButton {height:%sem}" % (9, 1.3))
         else:
-            self.setStyleSheet("* {font-size:12px} QComboBox,QPushButton {height:1.3em}")
+            self.setStyleSheet(
+                "* {font-size:%spx} QComboBox,QPushButton {height:%sem}" % (12 * scale, 1.3))
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
@@ -368,7 +378,7 @@ class MainWindow(QMainWindow):
         self.connect(self.listDirectories, SIGNAL("activated(const QString&)"), self.openDirectory)
 
         self.pushButtonSelect = QPushButton(self._icon("open"), "", self.selectWidget)
-        self.pushButtonSelect.setMaximumWidth(30)
+        self.pushButtonSelect.setFixedWidth(45 * self.dpiScale())
         self.pushButtonSelect.setToolTip("Open chain file root directory")
         self.connect(self.pushButtonSelect, SIGNAL("clicked()"), self.selectRootDirName)
 
@@ -379,7 +389,7 @@ class MainWindow(QMainWindow):
         self.pushButtonRemove = QPushButton(self._icon('remove'), "", self.selectWidget)
         self.pushButtonRemove.setToolTip("Remove a chain root")
         self.pushButtonRemove.setEnabled(False)
-        self.pushButtonRemove.setMaximumWidth(30)
+        self.pushButtonRemove.setMaximumWidth(30 * self.dpiScale())
         self.connect(self.pushButtonRemove, SIGNAL("clicked()"), self.removeRoot)
 
         self.comboBoxParamTag = QComboBox(self.selectWidget)
@@ -503,7 +513,8 @@ class MainWindow(QMainWindow):
         self.plotter_script = None
 
         self.toolBar = QToolBar()
-        self.toolBar.setIconSize(QSize(22, 22))
+        self.toolBar.setStyleSheet("background-color: lightGray; border: none")
+        self.toolBar.setIconSize(QSize(22 * self.dpiScale(), 22 * self.dpiScale()))
 
         openAct = QAction(self._icon("open"),
                           "open script", self.toolBar,
@@ -522,6 +533,7 @@ class MainWindow(QMainWindow):
         self.toolBar.addAction(clearAct)
 
         self.textWidget = QPlainTextEdit(self.editWidget)
+        self.textWidget.setStyleSheet("background-color: #FAF9F6; color: black; font-size: 10pt")
         textfont = QFont("Monospace")
         textfont.setStyleHint(QFont.TypeWriter)
         self.textWidget.setWordWrapMode(QTextOption.NoWrap)
@@ -574,10 +586,16 @@ class MainWindow(QMainWindow):
     def readSettings(self):
         settings = self.getSettings()
         screen = QApplication.desktop().screenGeometry()
-        h = min(screen.height() * 4 / 5., 700)
-        size = QSize(min(screen.width() * 4 / 5., 900), h)
+        h = min(screen.height() * 4 / 5., 700 * self.dpiScale())
+        size = QSize(min(screen.width() * 4 / 5., 900 * self.dpiScale()), h)
         pos = settings.value("pos", None)
-        savesize = settings.value("size", size)
+        savesize = settings.value("size", None)
+        if savesize is None:
+            savesize = size
+        else:
+            savesize *= self.dpiScale()
+        if pos is not None:
+            pos *= self.dpiScale()
         if savesize.width() > screen.width():
             savesize.setWidth(size.width())
         if savesize.height() > screen.height():
@@ -595,8 +613,8 @@ class MainWindow(QMainWindow):
 
     def writeSettings(self):
         settings = self.getSettings()
-        settings.setValue("pos", self.pos())
-        settings.setValue("size", self.size())
+        settings.setValue("pos", self.pos() / self.dpiScale())
+        settings.setValue("size", self.size() / self.dpiScale())
         settings.setValue('plot_module', self.plot_module)
         settings.setValue('script_plot_module', self.script_plot_module)
         splitter_settings = self.splitter.saveState()
@@ -648,7 +666,7 @@ class MainWindow(QMainWindow):
 
     def reLoad(self):
         adir = self.getSettings().value('lastSearchDirectory')
-        if adir is not None:
+        if adir:
             if batchjob:
                 batchjob.resetGrid(adir)
             self.openDirectory(adir)
@@ -975,7 +993,7 @@ class MainWindow(QMainWindow):
 
     def openPlanck(self):
         import webbrowser
-        webbrowser.open("http://pla.esac.esa.int/pla/#cosmology")
+        webbrowser.open("https://pla.esac.esa.int/pla/#cosmology")
 
     def about(self):
         """
@@ -1021,10 +1039,10 @@ class MainWindow(QMainWindow):
         title = self.tr("Choose an existing chains grid or chains folder")
         dir_name = QFileDialog.getExistingDirectory(self, title, last_dir,
                                                     QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
-        dir_name = os.path.abspath(str(dir_name))
-        logging.debug("dirName: %s" % dir_name)
         if dir_name is None or dir_name == '':
             return  # No directory selected
+        dir_name = os.path.abspath(str(dir_name))
+        logging.debug("dirName: %s" % dir_name)
 
         if self.openDirectory(dir_name, save=False):
             items = self.getDirectories()
@@ -1236,6 +1254,7 @@ class MainWindow(QMainWindow):
 
         self.updating = True
         item = QListWidgetItem(self.listRoots)
+        self._def_color = item.foreground()
         item.setText('Loading... ' + root)
         self.listRoots.addItem(item)
         self.listRoots.repaint()
@@ -1480,7 +1499,6 @@ class MainWindow(QMainWindow):
             items_y = self.getYParams()
             self.plotter.settings = copy.copy(self.default_plot_settings)
             self.plotter.settings.__dict__.update(self.custom_plot_settings)
-            self.plotter.settings.__dict__.update(self.preview_settings)
 
             script = "from getdist import plots\n"
             if self.script_plot_module != 'getdist.plots':
@@ -1535,10 +1553,13 @@ class MainWindow(QMainWindow):
 
             logging.debug("Plotting with roots = %s" % str(roots))
 
-            # fudge factor of 0.8 seems to help with overlapping labels on retina Mac.
-            # seem to have to render at the dpi-scaled small size, as then scaled up
-            height = self.plotWidget.height() / self.logicalDpiX() / self.devicePixelRatio()
-            width = self.plotWidget.width() / self.logicalDpiX() / self.devicePixelRatio()
+            # if devicePixelRatio>1, seem to have to render at the dpi-scaled small size, as then scaled up
+            # or, for some reason scaling the figure dpi this way works...
+            height = self.plotWidget.height() / self.logicalDpiX()  # / self.devicePixelRatio()
+            width = self.plotWidget.width() / self.logicalDpiX()  # / self.devicePixelRatio()
+            matplotlib.rcParams['figure.dpi'] = self.logicalDpiX() / self.devicePixelRatio()
+            if self.devicePixelRatio() > 1:
+                self.plotter.settings.direct_scaling = True
 
             def setSizeForN(cols, rows):
                 if self.plotter.settings.fig_width_inch is not None:
@@ -1714,6 +1735,7 @@ class MainWindow(QMainWindow):
                 del self.toolbar
             self.canvas = FigureCanvas(self.plotter.fig)
             self.toolbar = NavigationToolbar(self.canvas, self)
+            self.toolbar.setStyleSheet("background-color: lightGray; border: none")
             self.plotWidget.layout().addWidget(self.toolbar)
             self.plotWidget.layout().addWidget(self.canvas)
             self.plotWidget.show()
@@ -1890,7 +1912,7 @@ class DialogLikeStats(DialogTextOutput):
         self.setLayout(layout)
         self.setWindowTitle(self.tr('Sample likelihood constraints: ' + root))
 
-        self.text.setMaximumHeight(80)
+        self.text.setMaximumHeight(70 * parent.dpiScale())
         layout.addWidget(self.text, 0, 0)
 
         if stats:
@@ -1918,8 +1940,8 @@ class DialogLikeStats(DialogTextOutput):
             self.table.resizeRowsToContents()
             self.table.resizeColumnsToContents()
 
-            w = self.table.horizontalHeader().length() + 40
-            h = self.table.verticalHeader().length() + 40
+            w = self.table.horizontalHeader().length() + 40 * parent.dpiScale()
+            h = self.table.verticalHeader().length() + 40 * parent.dpiScale()
             h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, h)
             self.resize(w, h)
 
@@ -1969,8 +1991,8 @@ class DialogMargeStats(QDialog):
             self.table.resizeRowsToContents()
             self.table.resizeColumnsToContents()
 
-            w = self.table.horizontalHeader().length() + 40
-            h = self.table.verticalHeader().length() + 40
+            w = self.table.horizontalHeader().length() + 40 * parent.dpiScale()
+            h = self.table.verticalHeader().length() + 40 * parent.dpiScale()
             h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, h)
             self.resize(w, h)
 
@@ -1984,15 +2006,13 @@ class DialogConvergeStats(DialogTextOutput):
         layout.addWidget(self.text, 1, 0)
         if summary:
             self.text2 = self.getTextBox(summary)
-            self.text2.setMaximumHeight(100)
+            self.text2.setMaximumHeight(80 * parent.dpiScale())
             layout.addWidget(self.text2, 0, 0)
 
         self.setLayout(layout)
         self.setWindowTitle(self.tr('Convergence stats: ' + root))
-        # noinspection PyArgumentList
-        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 1200)
-        # noinspection PyArgumentList
-        self.resize(700, h)
+        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 1200 * parent.dpiScale())  # noqa
+        self.resize(700 * parent.dpiScale(), h)  # noqa
 
 
 # ==============================================================================
@@ -2005,8 +2025,8 @@ class DialogPCA(DialogTextOutput):
         self.setLayout(layout)
         self.setWindowTitle(self.tr('PCA constraints for: ' + root))
         # noinspection PyArgumentList
-        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800)
-        self.resize(500, h)
+        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800 * parent.dpiScale())
+        self.resize(500 * parent.dpiScale(), h)  # noqa
 
 
 # ==============================================================================
@@ -2038,8 +2058,6 @@ class DialogParamTables(DialogTextOutput):
         self.tabChanged(0)
 
         self.setWindowTitle(self.tr('Parameter tables for: ' + root))
-        # h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800)
-        # self.resize(500, h)
         self.adjustSize()
 
     def tabChanged(self, index):
@@ -2143,6 +2161,7 @@ class DialogSettings(QDialog):
         self.table.resizeColumnsToContents()
         maxh = min(parent.rect().height(),
                    (QApplication.desktop().screenGeometry().height() - parent.rect().top()) * 4 / 5)
+        width *= parent.dpiScale()
         self.resize(width, maxh)
         self.table.setColumnWidth(1, self.table.width() - self.table.columnWidth(0))
         self.table.resizeRowsToContents()
@@ -2203,7 +2222,7 @@ def run_gui():
     logging.captureWarnings(True)
 
     sys.argv[0] = 'GetDist GUI'
-    app = QApplication(sys.argv)
+    app = QApplication(sys.argv)  # noqa
     app.setApplicationName("GetDist GUI")
     mainWin = MainWindow(app, ini=args.ini)
     mainWin.show()
