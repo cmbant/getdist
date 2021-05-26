@@ -34,6 +34,11 @@ class ParamError(WeightedSampleError):
     """
 
 
+def print_load_line(message):
+    if print_load_details:
+        print(message)
+
+
 def last_modified(files):
     """
     Returns the the latest "last modified" time for the given list of files. Ignores files that do not exist.
@@ -1341,13 +1346,11 @@ class Chains(WeightedSamples):
                 files_or_samples = [files_or_samples]
             self.name_tag = self.name_tag or os.path.basename(root)
             for fname in files_or_samples:
-                if print_load_details:
-                    print(fname)
+                print_load_line(fname)
                 try:
                     self.chains.append(WeightedSamples(fname, **WSkwargs))
                 except WeightedSampleError:
-                    if print_load_details:
-                        print('Ignored file %s (likely empty)' % fname)
+                    print_load_line('Ignored file %s (likely empty)' % fname)
             nchains = len(self.chains)
             if not nchains:
                 raise WeightedSampleError('loadChains - no chains found for ' + root)

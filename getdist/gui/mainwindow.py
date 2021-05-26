@@ -37,7 +37,7 @@ except ImportError as _e:
 matplotlib.use('Qt5Agg')
 
 import getdist
-from getdist import plots, IniFile
+from getdist import plots, IniFile, chains
 from getdist.chain_grid import ChainDirGrid, file_root_to_root, get_chain_root_files, load_supported_grid
 from getdist.mcsamples import SettingError, ParamError
 
@@ -77,13 +77,13 @@ class GuiSelectionError(Exception):
 
 
 class QStatusLogger(logging.Handler):
-    def __init__(self, parent):
-        super().__init__(level=logging.WARNING)
+    def __init__(self, parent, level=logging.WARNING):
+        super().__init__(level=level)
         self.widget = parent
 
     def emit(self, record):
         msg = self.format(record)
-        self.widget.showMessage(msg, color='red')
+        self.widget.showMessage(msg, color='red' if self.level == logging.WARNING else None)
 
     def write(self, m):
         pass
@@ -170,6 +170,7 @@ class MainWindow(QMainWindow):
 
         self.log_handler = QStatusLogger(self)
         logging.getLogger().addHandler(self.log_handler)
+
         self._last_color = None
 
         dirs = self.getSettings().value('directoryList')
@@ -2248,6 +2249,13 @@ def run_gui():
     app = QApplication(sys.argv)  # noqa
     app.setApplicationName("GetDist GUI")
     mainWin = MainWindow(app, ini=args.ini)
+
+    def load_info(message):
+        print(message)
+        mainWin.showMessage(message)
+
+    chains.print_load_line = load_info
+
     mainWin.show()
     mainWin.raise_()
     sys.exit(app.exec_())
