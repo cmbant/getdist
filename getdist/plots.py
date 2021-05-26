@@ -5,7 +5,7 @@ import sys
 import warnings
 import logging
 from types import MappingProxyType
-from typing import Mapping, Sequence, Union, Optional, Iterable, Tuple
+from typing import Mapping, Sequence, Union, Optional, Iterable, Tuple, Any
 
 if 'ipykern' not in matplotlib.rcParams['backend'] and \
         'linux' in sys.platform and os.environ.get('DISPLAY', '') == '':
@@ -460,7 +460,8 @@ class MCSampleAnalysis(_BaseObject):
         self.single_samples = dict()
         self.chain_settings_have_priority = chain_settings_have_priority
 
-    def samples_for_root(self, root, file_root=None, cache=True, settings=None):
+    def samples_for_root(self, root: Union[str, MCSamples], file_root: Optional[str] = None,
+                         cache=True, settings: Optional[Mapping[str, Any]] = None):
         """
         Gets :class:`~.mcsamples.MCSamples` from root name
         (or just return root if it is already an MCSamples instance).
@@ -483,7 +484,7 @@ class MCSampleAnalysis(_BaseObject):
             file_root = root
         job_item = None
         if self.chain_settings_have_priority:
-            dist_settings = settings.copy() if settings else {}
+            dist_settings = dict(settings) if settings else {}
         else:
             dist_settings = {}
         if not file_root:

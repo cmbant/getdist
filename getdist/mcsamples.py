@@ -5,7 +5,7 @@ import copy
 import pickle
 import math
 import time
-from typing import Mapping
+from typing import Mapping, Any, Optional, Union, Iterable
 
 import numpy as np
 from scipy.stats import norm
@@ -39,7 +39,8 @@ class BandwidthError(MCSamplesError):
     """
 
 
-def loadMCSamples(file_root, ini=None, jobItem=None, no_cache=False, settings=None):
+def loadMCSamples(file_root: str, ini: Union[None, str, IniFile] = None,
+                  jobItem=None, no_cache=False, settings: Optional[Mapping[str, Any]] = None) -> 'MCSamples':
     """
     Loads a set of samples from a file or files.
 
@@ -124,8 +125,11 @@ class MCSamples(Chains):
     Kernel Density estimates, parameter ranges and custom settings.
     """
 
-    def __init__(self, root=None, jobItem=None, ini=None, settings=None, ranges=None,
-                 samples=None, weights=None, loglikes=None, **kwargs):
+    def __init__(self, root: Optional[str] = None, jobItem=None, ini=None,
+                 settings: Optional[Mapping[str, Any]] = None, ranges=None,
+                 samples: Union[np.ndarray, Iterable[np.ndarray], None] = None,
+                 weights: Union[np.ndarray, Iterable[np.ndarray], None] = None,
+                 loglikes: Union[np.ndarray, Iterable[np.ndarray], None] = None, **kwargs):
         """
         For a description of the various analysis settings and default values see
         `analysis_defaults.ini <https://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
@@ -176,28 +180,28 @@ class MCSamples(Chains):
             self.setRanges(ranges)
 
         # Other variables
-        self.range_ND_contour = 1
-        self.range_confidence = 0.001
-        self.num_bins = 128
-        self.fine_bins = 1024
-        self.num_bins_2D = 40
-        self.fine_bins_2D = 256
-        self.smooth_scale_1D = -1.
-        self.smooth_scale_2D = -1.
-        self.num_bins_ND = 12
-        self.boundary_correction_order = 1
-        self.mult_bias_correction_order = 1
-        self.max_corr_2D = 0.95
+        self.range_ND_contour: int = 1
+        self.range_confidence: float = 0.001
+        self.num_bins: int = 128
+        self.fine_bins: int = 1024
+        self.num_bins_2D: int = 40
+        self.fine_bins_2D: int = 256
+        self.smooth_scale_1D: float = -1.
+        self.smooth_scale_2D: float = -1.
+        self.num_bins_ND: int = 12
+        self.boundary_correction_order: int = 1
+        self.mult_bias_correction_order: int = 1
+        self.max_corr_2D: float = 0.95
         self.use_effective_samples_2D = False
         self.contours = np.array([0.68, 0.95])
-        self.max_scatter_points = 2000
-        self.credible_interval_threshold = 0.05
+        self.max_scatter_points: int = 2000
+        self.credible_interval_threshold: float = 0.05
 
         self.shade_likes_is_mean_loglikes = False
 
         self.likeStats = None
-        self.max_mult = 0
-        self.mean_mult = 0
+        self.max_mult: float = 0
+        self.mean_mult: float = 0
         self.plot_data_dir = ""
         if root:
             self.rootname = os.path.basename(root)
@@ -423,7 +427,8 @@ class MCSamples(Chains):
                 if line:
                     self.markers[par.name] = float(line)
 
-    def updateSettings(self, settings=None, ini=None, doUpdate=True):
+    def updateSettings(self, settings: Optional[Mapping[str, Any]] = None,
+                       ini: Union[None, str, IniFile] = None, doUpdate=True):
         """
         Updates settings from a .ini file or dictionary
 
@@ -462,8 +467,8 @@ class MCSamples(Chains):
         """
         self.loadChains(self.root, files_or_samples, weights=weights, loglikes=loglikes)
 
-        if self.ignore_frac and (
-                not self.jobItem or (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
+        if self.ignore_frac and (not self.jobItem or not hasattr(self.jobItem, "isImportanceJob")
+                                 or (not self.jobItem.isImportanceJob and not self.jobItem.isBurnRemoved())):
             self.removeBurnFraction(self.ignore_frac)
             if chains.print_load_details:
                 print('Removed %s as burn in' % self.ignore_frac)

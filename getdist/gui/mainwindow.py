@@ -52,7 +52,7 @@ from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
 from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
     QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
     QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-    QLabel, QTableWidget, QListWidgetItem, QTextEdit
+    QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox
 
 os.environ['QT_API'] = 'pyside2'
 
@@ -621,6 +621,29 @@ class MainWindow(QMainWindow):
         if splitter_settings:
             settings.setValue("splitter_settings", splitter_settings)
 
+    def create_message_box(self, title, text):
+        msg = QDialog(self, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        msg.setWindowTitle(title)
+
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttonBox.accepted.connect(msg.accept)  # noqa
+        layout = QVBoxLayout()
+        message = QLabel(text)
+        message.setStyleSheet("min-width: %spx;" % 1000)
+        message.setWordWrap(False)
+        message.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        layout.addWidget(message)
+        layout.addWidget(buttonBox)
+        msg.setLayout(layout)
+        msg.setAttribute(Qt.WA_DeleteOnClose)
+        msg.exec_()
+
+    def warning(self, title, message):
+        if len(message) < 40:
+            QMessageBox.warning(self, title, message)
+        else:
+            self.create_message_box(title, message)
+
     def export(self):
         """
         Callback for action 'Export as PDF/Image'.
@@ -639,7 +662,7 @@ class MainWindow(QMainWindow):
             filename = str(filename)
             plotter.export(filename)
         else:
-            QMessageBox.warning(self, "Export", "No plotter data to export")
+            self.warning("Export", "No plotter data to export")
 
     def saveScript(self):
         """
@@ -653,7 +676,7 @@ class MainWindow(QMainWindow):
             script = self.script_edit
 
         if script == '':
-            QMessageBox.warning(self, "Script", "No script to save")
+            self.warning("Script", "No script to save")
             return
 
         filename, _ = QFileDialog.getSaveFileName(self, "Choose a file name", '.', "Python (*.py)")
@@ -681,7 +704,7 @@ class MainWindow(QMainWindow):
         if item is not None:
             rootname = str(item.text())
         if rootname is None:
-            QMessageBox.warning(self, "Chain Stats", "Select a root name first. ")
+            self.warning("Chain Stats", "Select a root name first. ")
         return rootname
 
     def showConvergeStats(self):
@@ -793,7 +816,7 @@ class MainWindow(QMainWindow):
         samples = self.getSamples(rootname)
         stats = samples.getLikeStats()
         if stats is None:
-            QMessageBox.warning(self, "Like stats", "Samples do not likelihoods")
+            self.warning("Like stats", "Samples do not likelihoods")
             return
         dlg = DialogLikeStats(self, stats, rootname)
         dlg.show()
@@ -810,7 +833,7 @@ class MainWindow(QMainWindow):
         Callback for action 'Show settings'
         """
         if not self.plotter:
-            QMessageBox.warning(self, "Settings", "Open chains first ")
+            self.warning("Settings", "Open chains first ")
             return
         self.settingDlg = self.settingDlg or DialogSettings(self, self.current_settings)
         self.settingDlg.show()
@@ -999,19 +1022,19 @@ class MainWindow(QMainWindow):
         """
         Callback for action 'About'.
         """
-        QMessageBox.about(self, "About GetDist GUI",
-                          "GetDist GUI v " + getdist.__version__ +
-                          "\nAntony Lewis (University of Sussex) and contributors" +
-                          "\nhttps://github.com/cmbant/getdist/\n" +
-                          "\nPython: " + sys.version +
-                          "\nMatplotlib: " + matplotlib.__version__ +
-                          "\nSciPy: " + scipy.__version__ +
-                          "\nNumpy: " + np.__version__ +
-                          "\nPySide2: " + PySide2.__version__ +
-                          "\nQt (PySide): " + PySide2.QtCore.__version__ +
-                          "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
-                              self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY()) +
-                          '\nUsing getdist at: %s' % os.path.dirname(getdist.__file__))
+        self.create_message_box("About GetDist GUI",
+                                "GetDist GUI v " + getdist.__version__ +
+                                "\nAntony Lewis (University of Sussex) and contributors" +
+                                "\nhttps://github.com/cmbant/getdist/\n" +
+                                "\nPython: " + sys.version +
+                                "\nMatplotlib: " + matplotlib.__version__ +
+                                "\nSciPy: " + scipy.__version__ +
+                                "\nNumpy: " + np.__version__ +
+                                "\nPySide2: " + PySide2.__version__ +
+                                "\nQt (PySide): " + PySide2.QtCore.__version__ +
+                                "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
+                                    self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY()) +
+                                '\nUsing getdist at: %s' % os.path.dirname(getdist.__file__))
 
     def getDirectories(self):
         return [self.listDirectories.itemText(i) for i in range(self.listDirectories.count())]
@@ -1072,7 +1095,7 @@ class MainWindow(QMainWindow):
                         self.saveDirectories()
                     return True
 
-                QMessageBox.critical(self, "Open chains", "No chains or grid found in that directory")
+                self.warning("Open chains", "No chains or grid found in that directory")
                 cur_dirs = self.getDirectories()
                 if dirName in cur_dirs:
                     self.listDirectories.removeItem(cur_dirs.index(dirName))
@@ -1446,19 +1469,19 @@ class MainWindow(QMainWindow):
 
     def errorReport(self, e, caption="Error", msg="", capture=False):
         if isinstance(e, SettingError):
-            QMessageBox.critical(self, 'Setting error', str(e))
+            self.warning('Setting error', str(e))
         elif isinstance(e, ParamError):
-            QMessageBox.critical(self, 'Param error', str(e))
+            self.warning('Param error', str(e))
         elif isinstance(e, IOError):
-            QMessageBox.critical(self, 'File error', str(e))
+            self.warning('File error', str(e))
         elif isinstance(e, (GuiSelectionError, plots.GetDistPlotError)):
-            QMessageBox.critical(self, caption, str(e))
+            self.warning(caption, str(e))
         else:
             if not msg:
                 import traceback
 
                 msg = "\n".join(traceback.format_tb(sys.exc_info()[2])[-5:])
-            QMessageBox.critical(self, caption, type(e).__name__ + ': ' + str(e) + "\n\n" + msg)
+            self.warning(caption, type(e).__name__ + ': ' + str(e) + "\n\n" + msg)
             del msg
 
             if not isinstance(e, GuiSelectionError) and not capture:
@@ -1486,11 +1509,11 @@ class MainWindow(QMainWindow):
             roots = self.checkedRootNames()
             if not len(roots):
                 logging.warning("No rootname selected")
-                QMessageBox.warning(self, "Plot data", "No root selected")
+                self.warning("Plot data", "No root selected")
                 return
 
             if self.plotter is None:
-                QMessageBox.warning(self, "Plot data", "No GetDistPlotter instance")
+                self.warning("Plot data", "No GetDistPlotter instance")
                 return
             self.closePlots()
 
@@ -1704,7 +1727,7 @@ class MainWindow(QMainWindow):
                 text += "\n"
                 text += "3D plot: Select x parameter, y parameter and 'Color by' parameter\n"
                 text += "\n"
-                QMessageBox.warning(self, "Plot usage", text)
+                self.warning("Plot usage", text)
                 return
 
             script += "g.export()\n"
@@ -1822,7 +1845,7 @@ class MainWindow(QMainWindow):
             self.exportAct.setEnabled(True)
 
         except SyntaxError as e:
-            QMessageBox.critical(self, "Plot script", type(e).__name__ + ': %s\n %s' % (e, e.text))
+            self.warning("Plot script", type(e).__name__ + ': %s\n %s' % (e, e.text))
         except Exception as e:
             self.errorReport(e, caption="Plot script", capture=True)
         finally:
