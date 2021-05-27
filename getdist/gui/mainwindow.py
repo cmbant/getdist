@@ -79,11 +79,11 @@ class GuiSelectionError(Exception):
 class QStatusLogger(logging.Handler):
     def __init__(self, parent, level=logging.WARNING):
         super().__init__(level=level)
-        self.widget = parent
+        self.widget: 'MainWindow' = parent
 
     def emit(self, record):
         msg = self.format(record)
-        self.widget.showMessage(msg, color='red' if self.level == logging.WARNING else None)
+        self.widget.showMessage(msg, error=(self.level == logging.WARNING))
 
     def write(self, m):
         pass
@@ -110,7 +110,7 @@ class RootListWidget(QListWidget):
 
 # noinspection PyCallByClass,PyArgumentList
 class MainWindow(QMainWindow):
-    def __init__(self, app, ini=None, base_dir=None):
+    def __init__(self, app, ini=None, base_dir=None, plot_scale=1):
         """
         Initialize of GUI components.
         """
@@ -127,6 +127,7 @@ class MainWindow(QMainWindow):
         self.updating = False
         self.app = app
         self.base_dir = base_dir
+        self.plot_scale_fudge = plot_scale
 
         self.orig_rc = matplotlib.rcParams.copy()
         self.plot_module = 'getdist.plots'
@@ -171,7 +172,7 @@ class MainWindow(QMainWindow):
         self.log_handler = QStatusLogger(self)
         logging.getLogger().addHandler(self.log_handler)
 
-        self._last_color = None
+        self._last_msg = ("", False)
 
         dirs = self.getSettings().value('directoryList')
         last_dir = self.getSettings().value('lastSearchDirectory')
@@ -329,13 +330,14 @@ class MainWindow(QMainWindow):
         self.statusBar().setStyleSheet("height:1em")
         self.statusBar().showMessage("Ready", 2000)
 
-    def showMessage(self, msg='', color=None):
-        if not msg and not color and self._last_color:
+    def showMessage(self, msg='', error=False):
+        if (msg, error) == self._last_msg or not msg and self._last_msg[1]:
             return
-        self._last_color = color
+        self._last_msg = (error, msg)
         bar = self.statusBar()
         bar.showMessage(msg)
-        bar.setStyleSheet("color: %s" % (color or "black"))
+        bar.setStyleSheet("color: %s; " % ('red' if error else QApplication.palette().text().color().name()) +
+                          ("background-color: lightGray" if error else ""))
         if msg:
             self.statusBar().repaint()
             QCoreApplication.processEvents()
@@ -630,7 +632,6 @@ class MainWindow(QMainWindow):
         buttonBox.accepted.connect(msg.accept)  # noqa
         layout = QVBoxLayout()
         message = QLabel(text)
-        message.setStyleSheet("min-width: %spx;" % 1000)
         message.setWordWrap(False)
         message.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         layout.addWidget(message)
@@ -1579,11 +1580,15 @@ class MainWindow(QMainWindow):
 
             # if devicePixelRatio>1, seem to have to render at the dpi-scaled small size, as then scaled up
             # or, for some reason scaling the figure dpi this way works...
-            height = self.plotWidget.height() / self.logicalDpiX()  # / self.devicePixelRatio()
-            width = self.plotWidget.width() / self.logicalDpiX()  # / self.devicePixelRatio()
+            height = self.plotWidget.height() / self.logicalDpiX() * self.plot_scale_fudge  # / self.devicePixelRatio()
+            width = self.plotWidget.width() / self.logicalDpiX() * self.plot_scale_fudge  # / self.devicePixelRatio()
             matplotlib.rcParams['figure.dpi'] = self.logicalDpiX() / self.devicePixelRatio()
             if self.devicePixelRatio() > 1:
                 self.plotter.settings.direct_scaling = True
+            elif self.devicePixelRatio() == 1 and self.logicalDpiX() == 72:
+                # mac?
+                height *= 0.75
+                width *= 0.75
 
             def setSizeForN(cols, rows):
                 if self.plotter.settings.fig_width_inch is not None:
@@ -1735,6 +1740,7 @@ class MainWindow(QMainWindow):
             self.script = script
             self.exportAct.setEnabled(True)
         except Exception as e:
+            QApplication.restoreOverrideCursor()
             self.errorReport(e, caption=actionText)
         finally:
             self.showMessage()
@@ -1759,7 +1765,7 @@ class MainWindow(QMainWindow):
                 del self.toolbar
             self.canvas = FigureCanvas(self.plotter.fig)
             self.toolbar = NavigationToolbar(self.canvas, self)
-            self.toolbar.setStyleSheet("background-color: lightGray; border: none")
+            self.toolbar.setStyleSheet("QToolBar {background-color: lightGray; border: none}")
             self.plotWidget.layout().addWidget(self.toolbar)
             self.plotWidget.layout().addWidget(self.canvas)
             self.plotWidget.show()
@@ -2234,6 +2240,8 @@ def run_gui():
     parser = argparse.ArgumentParser(description='GetDist GUI')
     parser.add_argument('-v', '--verbose', help='verbose', action="store_true")
     parser.add_argument('--ini', help='Path to .ini file', default=None)
+    parser.add_argument('--plot_scale', help='fudge scaling for preview window', type=float, default=1)
+
     parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + getdist.__version__)
     args = parser.parse_args()
 
@@ -2248,7 +2256,7 @@ def run_gui():
     sys.argv[0] = 'GetDist GUI'
     app = QApplication(sys.argv)  # noqa
     app.setApplicationName("GetDist GUI")
-    mainWin = MainWindow(app, ini=args.ini)
+    mainWin = MainWindow(app, ini=args.ini, plot_scale=args.plot_scale)
 
     def load_info(message):
         print(message)
