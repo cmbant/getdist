@@ -138,7 +138,7 @@ setup(name='GetDist',
           'PyYAML (>=5.1)'],
       # PySide2 is needed for the GUI
       # pandas optional (for faster txt chain file read)
-      extras_require={'GUI': ["PySide2>=5.2"], 'txt': ["pandas>=0.14.0"]},
+      extras_require={'GUI': ["PySide2>=5.13"], 'txt': ["pandas>=0.14.0"]},
       cmdclass=cmd_class,
       classifiers=[
           'Development Status :: 5 - Production/Stable',

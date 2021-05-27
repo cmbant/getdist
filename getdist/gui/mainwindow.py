@@ -48,7 +48,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as QNavigati
 
 import PySide2
 from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
-from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication
+from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
 from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
     QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
     QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
@@ -333,7 +333,7 @@ class MainWindow(QMainWindow):
     def showMessage(self, msg='', error=False):
         if (msg, error) == self._last_msg or not msg and self._last_msg[1]:
             return
-        self._last_msg = (error, msg)
+        self._last_msg = (msg, error)
         bar = self.statusBar()
         bar.showMessage(msg)
         bar.setStyleSheet("color: %s; " % ('red' if error else QApplication.palette().text().color().name()) +
@@ -586,9 +586,12 @@ class MainWindow(QMainWindow):
     def getSettings(self):
         return QSettings('getdist', 'gui')
 
+    def getScreen(self):
+        return QApplication.screenAt(self.mapToGlobal(QPoint(self.width() / 2, 0))).availableGeometry()
+
     def readSettings(self):
         settings = self.getSettings()
-        screen = QApplication.desktop().screenGeometry()
+        screen = self.getScreen()
         h = min(screen.height() * 4 / 5., 700 * self.dpiScale())
         size = QSize(min(screen.width() * 4 / 5., 900 * self.dpiScale()), h)
         pos = settings.value("pos", None)
@@ -641,6 +644,7 @@ class MainWindow(QMainWindow):
         msg.exec_()
 
     def warning(self, title, message):
+        QApplication.restoreOverrideCursor()
         if len(message) < 40:
             QMessageBox.warning(self, title, message)
         else:
@@ -1585,10 +1589,6 @@ class MainWindow(QMainWindow):
             matplotlib.rcParams['figure.dpi'] = self.logicalDpiX() / self.devicePixelRatio()
             if self.devicePixelRatio() > 1:
                 self.plotter.settings.direct_scaling = True
-            elif self.devicePixelRatio() == 1 and self.logicalDpiX() == 72:
-                # mac?
-                height *= 0.75
-                width *= 0.75
 
             def setSizeForN(cols, rows):
                 if self.plotter.settings.fig_width_inch is not None:
@@ -1972,7 +1972,7 @@ class DialogLikeStats(DialogTextOutput):
 
             w = self.table.horizontalHeader().length() + 40 * parent.dpiScale()
             h = self.table.verticalHeader().length() + 40 * parent.dpiScale()
-            h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, h)
+            h = min(parent.getScreen().height() * 4 / 5, h)
             self.resize(w, h)
 
 
@@ -1980,7 +1980,7 @@ class DialogLikeStats(DialogTextOutput):
 
 # noinspection PyArgumentList
 class DialogMargeStats(QDialog):
-    def __init__(self, parent=None, stats=None, root=''):
+    def __init__(self, parent, stats=None, root=''):
         QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
         self.label = QLabel(self)
@@ -2023,7 +2023,7 @@ class DialogMargeStats(QDialog):
 
             w = self.table.horizontalHeader().length() + 40 * parent.dpiScale()
             h = self.table.verticalHeader().length() + 40 * parent.dpiScale()
-            h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, h)
+            h = min(parent.getScreen().height() * 4 / 5, h)
             self.resize(w, h)
 
 
@@ -2041,7 +2041,7 @@ class DialogConvergeStats(DialogTextOutput):
 
         self.setLayout(layout)
         self.setWindowTitle(self.tr('Convergence stats: ' + root))
-        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 1200 * parent.dpiScale())  # noqa
+        h = min(parent.getScreen().height() * 4 / 5, 1200 * parent.dpiScale())  # noqa
         self.resize(700 * parent.dpiScale(), h)  # noqa
 
 
@@ -2055,7 +2055,7 @@ class DialogPCA(DialogTextOutput):
         self.setLayout(layout)
         self.setWindowTitle(self.tr('PCA constraints for: ' + root))
         # noinspection PyArgumentList
-        h = min(QApplication.desktop().screenGeometry().height() * 4 / 5, 800 * parent.dpiScale())
+        h = min(parent.getScreen().height() * 4 / 5, 800 * parent.dpiScale())
         self.resize(500 * parent.dpiScale(), h)  # noqa
 
 
@@ -2190,7 +2190,7 @@ class DialogSettings(QDialog):
 
         self.table.resizeColumnsToContents()
         maxh = min(parent.rect().height(),
-                   (QApplication.desktop().screenGeometry().height() - parent.rect().top()) * 4 / 5)
+                   (parent.getScreen().height() - parent.rect().top()) * 4 / 5)
         width *= parent.dpiScale()
         self.resize(width, maxh)
         self.table.setColumnWidth(1, self.table.width() - self.table.columnWidth(0))
@@ -2203,7 +2203,7 @@ class DialogSettings(QDialog):
         if pos.x() - width > 0:
             pos.setX(pos.x() - width - 1)
             self.move(pos)
-        elif parent.frameGeometry().right() + width < QApplication.desktop().screenGeometry().width():
+        elif parent.frameGeometry().right() + width < parent.getScreen().width():
             pos.setX(parent.frameGeometry().right() + 1)
             self.move(pos)
 
