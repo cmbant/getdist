@@ -343,7 +343,7 @@ def getdist_gui():
 
         path = os.path.join(os.path.dirname(getdist.gui.__file__), 'GetDist GUI.app')
         if os.path.exists(path):
-            if subprocess.call(["/usr/bin/open", "-a", path], env=os.environ):
+            if subprocess.call(["/usr/bin/open", "-a", path, "--args"] + sys.argv[1:], env=os.environ):
                 print("Error running 'GetDist GUI.app'. This may be a Catalina issue, any ideas?\n"
                       "Attempting to run script directly, using non-unified menus.")
                 run_gui()
