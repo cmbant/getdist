@@ -1709,7 +1709,7 @@ class MCSamples(Chains):
         logging.debug('corr, rx, ry: %s, %s, %s', corr, rx, ry)
 
         if smooth_scale < 2:
-            logging.warning('fine_bins_2D not large enough for optimal density')
+            logging.warning('fine_bins_2D not large enough for optimal density: %s, %s', parx.name, pary.name)
 
         winw = int(round(2.5 * smooth_scale))
 

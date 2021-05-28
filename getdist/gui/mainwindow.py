@@ -211,6 +211,11 @@ class MainWindow(QMainWindow):
                                  statusTip="Export commands to script",
                                  triggered=self.saveScript)
 
+        self.clipboardAct = QAction("Copy image to clipboard", self,
+                                    statusTip="Copy current output to clipboard as png",
+                                    triggered=self.export_clipboard)
+        self.clipboardAct.setEnabled(False)
+
         self.reLoadAct = QAction("Re-load files", self,
                                  statusTip="Re-scan directory",
                                  triggered=self.reLoad)
@@ -287,6 +292,7 @@ class MainWindow(QMainWindow):
         self.fileMenu = menu.addMenu("&File")
         self.fileMenu.addAction(self.openChainsAct)
         self.fileMenu.addAction(self.exportAct)
+        self.fileMenu.addAction(self.clipboardAct)
         self.fileMenu.addAction(self.scriptAct)
         self.separatorAct = self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.reLoadAct)
@@ -669,6 +675,13 @@ class MainWindow(QMainWindow):
             plotter.export(filename)
         else:
             self.warning("Export", "No plotter data to export")
+
+    def export_clipboard(self):
+        """
+        Callback for action clipboard copy image'.
+        """
+        index = self.tabWidget.currentIndex()
+        self.updateScriptPreview(self.plotter if index == 0 else self.plotter_script, True)
 
     def saveScript(self):
         """
@@ -1742,6 +1755,7 @@ class MainWindow(QMainWindow):
             script += "g.export()\n"
             self.script = script
             self.exportAct.setEnabled(True)
+            self.clipboardAct.setEnabled(True)
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.errorReport(e, caption=actionText)
@@ -1853,6 +1867,7 @@ class MainWindow(QMainWindow):
                     break
 
             self.exportAct.setEnabled(True)
+            self.clipboardAct.setEnabled(True)
 
         except SyntaxError as e:
             self.warning("Plot script", type(e).__name__ + ': %s\n %s' % (e, e.text))
@@ -1865,18 +1880,17 @@ class MainWindow(QMainWindow):
             self._set_rc(oldrc)
             self.showMessage()
 
-    def updateScriptPreview(self, plotter):
+    def updateScriptPreview(self, plotter, clipboard=False):
         if plotter.fig is None:
             return
 
-        self.plotter_script = plotter
-
-        i = 0
-        while True:
-            item = self.plotWidget2.layout().takeAt(i)
-            if item is None:
-                break
-            del item
+        if not clipboard:
+            self.plotter_script = plotter
+            while True:
+                item = self.plotWidget2.layout().takeAt(0)
+                if item is None:
+                    break
+                del item
 
         # Save in PNG format, and display it in a QLabel
         buf = BytesIO()
@@ -1894,18 +1908,21 @@ class MainWindow(QMainWindow):
         # noinspection PyTypeChecker
         image = QImage.fromData(buf.getvalue())
 
-        pixmap = QPixmap.fromImage(image)
-        pixmap.setDevicePixelRatio(self.devicePixelRatio())
-        label = QLabel(self.scrollArea)
-        label.setPixmap(pixmap)
+        if clipboard:
+            QApplication.clipboard().setImage(image)
+        else:
+            pixmap = QPixmap.fromImage(image)
+            pixmap.setDevicePixelRatio(self.devicePixelRatio())
+            label = QLabel(self.scrollArea)
+            label.setPixmap(pixmap)
 
-        self.scrollArea = QScrollArea(self.plotWidget2)
-        self.scrollArea.setWidget(label)
-        self.scrollArea.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            self.scrollArea = QScrollArea(self.plotWidget2)
+            self.scrollArea.setWidget(label)
+            self.scrollArea.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
-        self.plotWidget2.layout().addWidget(self.scrollArea)
-        self.plotWidget2.layout()
-        self.plotWidget2.show()
+            self.plotWidget2.layout().addWidget(self.scrollArea)
+            self.plotWidget2.layout()
+            self.plotWidget2.show()
 
 
 # ==============================================================================
