@@ -142,6 +142,7 @@ class MainWindow(QMainWindow):
         self.ConfigDlg = None
         self.plotSettingDlg = None
         self.custom_plot_settings = {}
+        self._last_export_dir = '.'
 
         self.setAttribute(Qt.WA_DeleteOnClose)
         if os.name == 'nt':
@@ -667,12 +668,14 @@ class MainWindow(QMainWindow):
             plotter = self.plotter_script
 
         if plotter:
-            filename, _ = QFileDialog.getSaveFileName(
-                self, "Choose a file name", '.', "PDF (*.pdf);; Image (*.png *.jpg)")
+            filename, _ = QFileDialog.getSaveFileName(self, "Choose a file name", self._last_export_dir,
+                                                      "PDF (*.pdf);; Image (*.png *.jpg)")
             if not filename:
                 return
+            self._last_export_dir = os.path.dirname(filename)
             filename = str(filename)
             plotter.export(filename)
+
         else:
             self.warning("Export", "No plotter data to export")
 
@@ -698,13 +701,15 @@ class MainWindow(QMainWindow):
             self.warning("Script", "No script to save")
             return
 
-        filename, _ = QFileDialog.getSaveFileName(self, "Choose a file name", '.', "Python (*.py)")
+        filename, _ = QFileDialog.getSaveFileName(self, "Choose a file name",
+                                                  self._last_export_dir, "Python (*.py)")
         if not filename:
             return
         filename = str(filename)
-        logging.debug("Export script to %s" % filename)
+        logging.debug("Export script to %s", filename)
         with open(filename, 'w', encoding="utf-8") as f:
             f.write(script)
+        self._last_export_dir = os.path.dirname(filename)
 
     def reLoad(self):
         adir = self.getSettings().value('lastSearchDirectory')
@@ -1815,7 +1820,7 @@ class MainWindow(QMainWindow):
 
     def openScript(self):
         filename, _ = QFileDialog.getOpenFileName(
-            self, "Choose a file name", '.', "Python (*.py)")
+            self, "Choose a file name", self._last_export_dir, "Python (*.py)", )
         if not filename:
             return
         filename = str(filename)
@@ -1823,6 +1828,7 @@ class MainWindow(QMainWindow):
         with open(filename, 'r', encoding='utf-8-sig') as f:
             self.script_edit = f.read()
         self.textWidget.setPlainText(self.script_edit)
+        self._last_export_dir = os.path.dirname(filename)
 
     def clearScript(self):
         self.textWidget.clear()
@@ -1894,13 +1900,15 @@ class MainWindow(QMainWindow):
 
         # Save in PNG format, and display it in a QLabel
         buf = BytesIO()
-
+        dpi = self.logicalDpiX() * self.devicePixelRatio()
+        if clipboard:
+            dpi = max(100, dpi)
         plotter.fig.savefig(
             buf,
             format='png',
             edgecolor='w',
             facecolor='w',
-            dpi=self.logicalDpiX() * self.devicePixelRatio(),
+            dpi=dpi,
             bbox_extra_artists=plotter.extra_artists,
             bbox_inches='tight')
         buf.seek(0)
@@ -2130,9 +2138,11 @@ class DialogParamTables(DialogTextOutput):
         clipboard.setText(self.tables[self.tabWidget.currentIndex()].tableTex())
 
     def saveLatex(self):
-        filename, _ = QFileDialog.getSaveFileName(self, "Choose a file name", '.', "Latex (*.tex)")
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Choose a file name", self._last_export_dir, "Latex (*.tex)")
         if not filename:
             return
+        self._last_export_dir = os.path.dirname(filename)
         self.tables[self.tabWidget.currentIndex()].write(str(filename))
 
 
