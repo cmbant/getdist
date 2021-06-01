@@ -515,6 +515,9 @@ class MCSamples(Chains):
         Make file of unit weight samples by choosing samples
         with probability proportional to their weight.
 
+        If you just want the indices of the samples use
+        :meth:`~.chains.WeightedSamples.random_single_samples_indices` instead.
+
         :param filename: The filename to write to, leave empty if no output file is needed
         :param single_thin: factor to thin by; if not set generates as many samples as it can
                             up to self.max_scatter_points
