@@ -900,15 +900,23 @@ class WeightedSamples:
 
         return thin_ix
 
-    def random_single_samples_indices(self, random_state=None, thin: int = 1):
+    def random_single_samples_indices(self, random_state=None, thin: Optional[float] = None,
+                                      max_samples: Optional[int] = None):
         """
         Returns an array of sample indices that give a list of weight-one samples, by randomly
         selecting samples depending on the sample weights
 
         :param random_state: random seed or Generator
-        :param thin: additional integer thinning factor (to get fewer samples)
+        :param thin: additional thinning factor (>1 to get fewer samples)
+        :param max_samples: optional parameter to thin to get a specified mean maximum number of samples
         :return: array of sample indices
         """
+        if max_samples is None:
+            thin = thin or 1
+        else:
+            if thin is not None:
+                raise WeightedSampleError('Cannot set thin and max_samples')
+            thin = max(1, self.norm / np.max(self.weights) / max_samples)
         random_state = np.random.default_rng(random_state)
         max_weight = np.max(self.weights)
         rand = random_state.random(self.numrows)

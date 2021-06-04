@@ -1,5 +1,5 @@
 __author__ = 'Antony Lewis'
-__version__ = "1.2.3"
+__version__ = "1.3.0"
 __url__ = "https://getdist.readthedocs.io"
 
 from getdist.inifile import IniFile

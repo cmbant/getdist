@@ -37,6 +37,15 @@ from getdist._base import _BaseObject
 empty_dict = MappingProxyType({})
 
 
+def extend_list_zip(*args):
+    vals = [(list(arg) if isinstance(arg, (list, tuple)) else [arg]) for arg in args]
+    for i in range(len(args[0])):
+        res = []
+        for v in vals:
+            res.append(v[i if i < len(v) else -1])
+        yield res
+
+
 class GetDistPlotError(Exception):
     """
     An exception that is raised when there is an error plotting
@@ -1125,7 +1134,7 @@ class GetDistPlotter(_BaseObject):
         :param colormap: color map, default to settings.colormap (see :class:`GetDistPlotSettings`)
         :param density: optional user-provided :class:`~.densities.Density2D` to plot rather than
                         the auto-generated density from the samples
-         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
+        :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
         :param kwargs: keyword arguments for :func:`~matplotlib:matplotlib.pyplot.contourf`
         """
@@ -1278,7 +1287,7 @@ class GetDistPlotter(_BaseObject):
            :include-source:
 
             from getdist import plots, gaussian_mixtures
-            samples= gaussian_mixtures.randomTestMCSamples(ndim=2, nMCSamples=1)
+            samples = gaussian_mixtures.randomTestMCSamples(ndim=2, nMCSamples=1)
             g = plots.get_single_plotter(width_inch=4)
             g.plot_2d(samples, ['x0','x1'], filled=True);
             g.add_y_bands(0, 1)
@@ -1501,10 +1510,22 @@ class GetDistPlotter(_BaseObject):
         :param param: the :class:`~.paramnames.ParamInfo` for the y axis parameter
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
-        :param kwargs: opional extra arguments for Axes set_ylabel
+        :param kwargs: optional extra arguments for Axes set_ylabel
         """
         ax = self.get_axes(ax)
         ax.set_ylabel(param.latexLabel(), fontsize=self._scaled_fontsize(self.settings.axes_labelsize), **kwargs)
+
+    def set_zlabel(self, param, ax=None, **kwargs):
+        """
+        Sets the label for the z axis.
+
+        :param param: the :class:`~.paramnames.ParamInfo` for the y axis parameter
+        :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
+                   to add to (defaults to current plot or the first/main plot if none)
+        :param kwargs: optional extra arguments for Axes set_zlabel
+        """
+        ax = self.get_axes(ax)
+        ax.set_zlabel(param.latexLabel(), fontsize=self._scaled_fontsize(self.settings.axes_labelsize), **kwargs)
 
     def plot_1d(self, roots, param, marker=None, marker_color=None, label_right=False, title_limit=None,
                 no_ylabel=False, no_ytick=False, no_zero=False, normalized=False, param_renames=None, ax=None,
@@ -1763,7 +1784,7 @@ class GetDistPlotter(_BaseObject):
             return names.names
         # Fail only for parameters for which a string was passed
         if isinstance(params, str):
-            error = True
+            return names.parsWithNames(params, error=True, renames=renames)
         else:
             is_param_info = [isinstance(param, ParamInfo) for param in params]
             error = [not a for a in is_param_info]
@@ -1774,9 +1795,10 @@ class GetDistPlotter(_BaseObject):
                 renames = mergeRenames(renames, renames_from_param_info)
             else:
                 renames = renames_from_param_info
-            params = [getattr(param, "name", param) for param in params]
-        old = [(old if isinstance(old, ParamInfo) else ParamInfo(old)) for old in params]
-        return [new or old for new, old in zip(names.parsWithNames(params, error=error, renames=renames), old)]
+            params_names = [getattr(param, "name", param) for param in params]
+            old = [(old if isinstance(old, ParamInfo) else ParamInfo(old)) for old in params]
+            return [new or old for new, old in zip(names.parsWithNames(params_names,
+                                                                       error=error, renames=renames), old)]
 
     def _check_param(self, root, param, renames=None):
         """
@@ -2661,7 +2683,8 @@ class GetDistPlotter(_BaseObject):
         """
         self._set_axis_properties(self.get_axes(ax).yaxis, rotation, labelsize)
 
-    def add_colorbar(self, param, orientation='vertical', mappable=None, ax=None, **ax_args):
+    def add_colorbar(self, param, orientation='vertical', mappable=None, ax=None,
+                     colorbar_args: Mapping = empty_dict, **ax_args):
         """
         Adds a color bar to the given plot.
 
@@ -2669,12 +2692,15 @@ class GetDistPlotter(_BaseObject):
         :param orientation: The orientation of the color bar (default: 'vertical')
         :param mappable: the thing to color, defaults to current scatter
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance to add to (defaults to current plot)
+        :param colorbar_args: optional arguments for :func:`~matplotlib:matplotlib.pyplot.colorbar`
         :param ax_args: extra arguments -
 
                **color_label_in_axes** - if True, label is not added (insert as text label in plot instead)
         :return: The new :class:`~matplotlib:matplotlib.colorbar.Colorbar` instance
         """
-        cb = self.fig.colorbar(mappable, orientation=orientation, ax=self.get_axes(ax))
+        kwargs = {'orientation': orientation}
+        kwargs.update(colorbar_args)
+        cb = self.fig.colorbar(mappable, ax=self.get_axes(ax), **kwargs)
         cb.set_alpha(1)
         if not ax_args.get('color_label_in_axes'):
             self.add_colorbar_label(cb, param)
@@ -2741,6 +2767,7 @@ class GetDistPlotter(_BaseObject):
                        ax=None, alpha_samples=False, **kwargs):
         """
         Low-level function to add a 3D scatter plot to the current axes (or ax if specified).
+        Here 3D means a 2D plot, with samples colored by a third parameter.
 
         :param root: The root name of the samples to use
         :param params:  list of parameters to plot
@@ -2764,13 +2791,13 @@ class GetDistPlotter(_BaseObject):
             weights = 1
             mcsamples = None
         names = self.param_names_for_root(root)
-        fixed_color = kwargs.get('fixed_color')  # if actually just a plain scatter plot
         samples = []
         for param in params:
             if hasattr(param, 'getDerived'):
                 samples.append(param.getDerived(self._make_param_object(names, pts)))
             else:
                 samples.append(pts[:, names.numberOfName(param.name)])
+        fixed_color = kwargs.get('fixed_color')  # if actually just a plain scatter plot
         if mcsamples:
             # use most samples, but alpha with weight
             from matplotlib.cm import ScalarMappable
@@ -2966,6 +2993,190 @@ class GetDistPlotter(_BaseObject):
         param_x, param_y = self.get_param_array(roots[0], [param_x, param_y])
         sets = [[param_x, param_y, z] for z in param_z if z != param_x and z != param_y]
         return self.plots_3d(roots, sets, **kwargs)
+
+    def add_4d_scatter(self, root, params, ax, color_bar=False, max_scatter_points: Optional[int] = None,
+                       lims=empty_dict, fixed_color=None, colorbar_args: Mapping = empty_dict, **kwargs):
+        samps = self.sample_analyser.samples_for_root(root)
+        params = self.get_param_array(root, params)
+        ix = samps.random_single_samples_indices(max_samples=max_scatter_points or samps.max_scatter_points)
+        if len(params) == 3:
+            fixed_color = fixed_color or 'k'
+        if len(params) < 3 + (0 if fixed_color else 1):
+            raise GetDistPlotError('4d plot must provide list of three or four parameters')
+
+        for name, lim in lims.items():
+            if not isinstance(lim, Sequence) or len(lim) != 2:
+                raise GetDistPlotError('lims for 4d plot must be dictionary of names and upper/lower tuples')
+            if lim[0] is not None:
+                ix = ix[samps[name][ix] > lim[0]]
+            if lim[1] is not None:
+                ix = ix[samps[name][ix] < lim[1]]
+
+        samples = []
+        for param in params:
+            if hasattr(param, 'getDerived'):
+                samples.append(param.getDerived(self._make_param_object(
+                    self.param_names_for_root(root), samps.samples[ix, :])))
+            else:
+                samples.append(samps[param.name][ix])
+
+        x, y, z = samples[:3]
+        colors = fixed_color or samples[3]
+
+        opts = dict({'marker': 'o', 'cmap': self.settings.colormap_scatter,
+                     's': self.settings.scatter_size}, **kwargs)
+        ax.scatter(x, y, z, c=colors, depthshade=True, **opts)
+
+        if color_bar and not fixed_color:
+            mappable = cm.ScalarMappable(plt.Normalize(colors.min(), colors.max()), cmap=opts['cmap'])
+            mappable.set_array(colors)
+            self.last_colorbar = self.add_colorbar(params[3], mappable=mappable,
+                                                   ax=ax, colorbar_args=colorbar_args)
+
+        return x, y, z
+
+    def plot_4d(self, roots, params, color_bar=True, colorbar_args: Mapping = empty_dict,
+                ax=None, lims=empty_dict, azim: Optional[float] = 15, elev: Optional[float] = None, dist: float = 12,
+                alpha: Union[float, Sequence[float]] = 0.5, marker='o', max_scatter_points: Optional[int] = None,
+                shadow_color=None, shadow_alpha=0.1, fixed_color=None, compare_colors=None,
+                animate=False, anim_angle_degrees=360, anim_step_degrees=0.6, anim_fps=15,
+                mp4_filename: Optional[str] = None, mp4_bitrate=-1, **kwargs):
+        """
+        Make a 3d x-y-z scatter plot colored by the value of a fourth parameter.
+        If animate is True, it will rotate, and can be saved to an mp4 video file by setting
+        mp4_filename (you must have ffmpeg installed). Note animations can be quite slow to render.
+
+        :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for
+                      the samples to plot
+        :param params: list with the three parameter names to plot and color (x, y, x, color); can also set
+                    fixed_color and specify just three parameters
+        :param color_bar: True if should include a color bar
+        :param colorbar_args: extra arguments for colorbar
+        :param ax: optional :class:`~matplotlib:mpl_toolkits.mplot3d.axes3d.Axes3D` instance
+                   to add to (defaults to current plot or the first/main plot if none)
+        :param lims: dictionary of optional limits, e.g. {'param1':(min1, max1),'param2':(min2,max2)}.
+                      If this include parameters that are not plotted, the samples outside the limits will still be
+                      removed
+        :param azim: azimuth for initial view
+        :param elev: elevation for initial view
+        :param dist: distance for view (make larger if labels out of area)
+        :param alpha: alpha, or list of alphas for each root, to use for scatter samples
+        :param marker:  marker, or list of markers for each root
+        :param max_scatter_points: if set, maximum number of points to plots from each root
+        :param shadow_color: if not None, a color value (or list of color values) to use for plotting axes-projected
+                             samples; or True to plot gray shadows
+        :param shadow_alpha: if not None, separate alpha or list of alpha for shadows
+        :param fixed_color: if not None, a fixed color for the the first-root scatter plot rather than a 4th parameter
+                            value
+        :param compare_colors: if not None, fixed scatter color for second-and-higher roots rather than using 4th
+                            parameter value
+        :param animate: if True, rotate the plot
+        :param anim_angle_degrees: total angle for animation rotation
+        :param anim_step_degrees: angle per frame
+        :param anim_fps: animation frames per second
+        :param mp4_filename: if animating, optional filename to produce mp4 video
+        :param mp4_bitrate: bitrate
+        :param kwargs: additional optional arguments for :meth:`~matplotlib:mpl_toolkits.mplot3d.axes3d.Axes3D.scatter`
+
+        .. plot::
+           :include-source:
+
+            from getdist import plots, gaussian_mixtures
+
+            samples1, samples2 = gaussian_mixtures.randomTestMCSamples(ndim=4, nMCSamples=2)
+            samples1.samples[:, 0] *= 5  # stretch out in one direction
+            g = plots.get_single_plotter()
+            g.plot_4d([samples1, samples2], ['x0', 'x1', 'x2', 'x3'],
+                      cmap='viridis', color_bar=False,
+                      alpha=[0.3, 0.1],  shadow_color=False, compare_colors=['k'])
+
+        .. plot::
+           :include-source:
+
+            from getdist import plots, gaussian_mixtures
+
+            samples1 = gaussian_mixtures.randomTestMCSamples(ndim=4)
+            samples1.samples[:, 0] *= 5  # stretch out in one direction
+            g = plots.get_single_plotter()
+            g.plot_4d(samples1, ['x0', 'x1', 'x2', 'x3'], cmap='jet',
+                      alpha=0.4, shadow_alpha=0.05, shadow_color=True,
+                      max_scatter_points=6000,
+                      lims={'x2': (-3, 3), 'x3': (-3, 3)},
+                      colorbar_args={'shrink': 0.6})
+
+        Generate an mp4 video (in jupyter, using a notebook rather than inline matplotlib)::
+
+            g.plot_4d([samples1, samples2], ['x0', 'x1', 'x2', 'x3'], cmap='viridis',
+              alpha = [0.3,0.1], shadow_alpha=[0.1,0.005], shadow_color=False,
+              compare_colors=['k'],
+              animate=True, mp4_filename='sample_rotation.mp4', mp4_bitrate=1024, anim_fps=20)
+
+        See `sample output video <https://cdn.cosmologist.info/antony/sample_rotation.mp4>`_.
+        """
+        roots = makeList(roots)
+        if not params:
+            raise GetDistPlotError('No parameters for plot_4d!')
+        params = self.get_param_array(roots[0], params)
+        from mpl_toolkits.mplot3d import Axes3D
+        if not ax:
+            if not self.fig:
+                self.make_figure()
+            ax = self.subplots[0, 0] = Axes3D(self.fig)
+            ax.dist = dist
+        pts = []
+        for i, (root, alph, mark) in enumerate(extend_list_zip(roots, alpha, marker)):
+            pts.append(self.add_4d_scatter(root, params, ax, color_bar=not i and color_bar,
+                                           fixed_color=(fixed_color if not i else (compare_colors[i - 1]
+                                                                                   if compare_colors is not None
+                                                                                   else None)),
+                                           lims=lims, alpha=alph, marker=mark,
+                                           max_scatter_points=max_scatter_points,
+                                           colorbar_args=colorbar_args, **kwargs))
+
+        axes = ax.xaxis, ax.yaxis, ax.zaxis
+        lim_x, lim_y, lim_z = [(tuple((_cur_lim if _lim is None else _lim) for _lim, _cur_lim in
+                                      zip(lims.get(par.name, (None, None)), axis.get_view_interval()))) for par, axis in
+                               zip(params, axes)]
+        for axis in axes:
+            self._set_main_axis_properties(axis, True)
+        ax.set_xlim(*lim_x)
+        ax.set_ylim(*lim_y)
+        ax.set_zlim(*lim_z)
+
+        if shadow_color:
+            if shadow_color is True:
+                shadow_color = ['gray']
+                if len(roots) > 1 and compare_colors is not None:
+                    shadow_color.extend(compare_colors)
+            if shadow_alpha is None:
+                shadow_alpha = alpha
+            for (x, y, z), shadow, alph, mark in extend_list_zip(pts, shadow_color, shadow_alpha, marker):
+                if shadow is not None:
+                    opts = dict(marker=mark or 'o', zorder=-1,
+                                s=kwargs.get('s', self.settings.scatter_size), alpha=alph)
+                    ax.scatter(x, y, zs=lim_z[0], c=shadow, **opts)
+                    ax.scatter(y, z, zdir='x', zs=lim_x[0], c=shadow, **opts)
+                    ax.scatter(x, z, zdir='y', zs=lim_y[0], c=shadow, **opts)
+
+        self.set_xlabel(params[0], ax)
+        self.set_ylabel(params[1], ax)
+        self.set_zlabel(params[2], ax)
+        ax.view_init(azim=azim, elev=elev)
+
+        if animate:
+            from matplotlib import animation
+
+            def rotate(angle):
+                ax.view_init(azim=azim + angle)
+
+            # note this is slow in notebook when using low thin factors
+            self.fig.rot_animation = animation.FuncAnimation(
+                self.fig, rotate, frames=np.arange(0, anim_angle_degrees, anim_step_degrees),  # noqa
+                interval=1000 / anim_fps)
+            if mp4_filename:
+                # need ffmpeg installed
+                writer = animation.writers['ffmpeg'](fps=anim_fps, bitrate=mp4_bitrate)
+                self.fig.rot_animation.save(mp4_filename, writer=writer)
 
     def add_text(self, text_label, x=0.95, y=0.06, ax=None, **kwargs):
         """

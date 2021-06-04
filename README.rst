@@ -15,7 +15,7 @@ GetDist
    :target: https://getdist.readthedocs.org/en/latest
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb
-.. image:: https://img.shields.io/badge/arXiv-1910.13970-b31b1b.svg
+.. image:: https://img.shields.io/badge/arXiv-1910.13970-b31b1b.svg?color=0B6523
    :target: https://arxiv.org/abs/1910.13970
 
 Description

@@ -448,6 +448,16 @@ class MainWindow(QMainWindow):
         self.comboBoxColor.clear()
         self.comboBoxColor.setEnabled(False)
 
+        self.toggleZ = QRadioButton("Z-axis:", self.selectWidget)
+        self.connect(self.toggleZ, SIGNAL("toggled(bool)"), self.statusPlotType)
+        self.comboBoxZ = QComboBox(self)
+        self.comboBoxZ.clear()
+        self.comboBoxZ.setEnabled(False)
+
+        self.checkShadow = QCheckBox("Shadows", self.selectWidget)
+        self.checkShadow.setCheckState(Qt.Unchecked)
+        self.checkShadow.setVisible(False)
+
         self.toggleFilled.setChecked(True)
 
         self.trianglePlot = QCheckBox("Triangle Plot", self.selectWidget)
@@ -479,17 +489,24 @@ class MainWindow(QMainWindow):
 
         leftLayout.addWidget(self.selectAllX, 5, 0, 1, 2)
         leftLayout.addWidget(self.selectAllY, 5, 2, 1, 2)
-        leftLayout.addWidget(self.listParametersX, 6, 0, 5, 2)
+        leftLayout.addWidget(self.listParametersX, 6, 0, 6, 2)
         leftLayout.addWidget(self.listParametersY, 6, 2, 1, 2)
+
         leftLayout.addWidget(self.toggleFilled, 7, 2, 1, 1)
         leftLayout.addWidget(self.checkInsideLegend, 7, 3, 1, 1)
         leftLayout.addWidget(self.toggleLine, 8, 2, 1, 1)
         leftLayout.addWidget(self.checkShade, 8, 3, 1, 1)
-        leftLayout.addWidget(self.toggleColor, 9, 2, 1, 1)
-        leftLayout.addWidget(self.comboBoxColor, 9, 3, 1, 1)
-        leftLayout.addWidget(self.trianglePlot, 10, 2, 1, 2)
 
-        leftLayout.addWidget(self.pushButtonPlot, 12, 0, 1, 4)
+        leftLayout.addWidget(self.toggleZ, 9, 2, 1, 1)
+        leftLayout.addWidget(self.comboBoxZ, 9, 3, 1, 1)
+
+        leftLayout.addWidget(self.toggleColor, 10, 2, 1, 1)
+        leftLayout.addWidget(self.comboBoxColor, 10, 3, 1, 1)
+
+        leftLayout.addWidget(self.trianglePlot, 11, 2, 1, 1)
+        leftLayout.addWidget(self.checkShadow, 11, 3, 1, 1)
+
+        leftLayout.addWidget(self.pushButtonPlot, 13, 0, 1, 4)
 
         self.selectWidget.setLayout(leftLayout)
 
@@ -1211,7 +1228,8 @@ class MainWindow(QMainWindow):
         self._updateListParametersSelection(old_selection["x"], self.listParametersX)
         self._updateListParametersSelection(old_selection["y"], self.listParametersY)
 
-        self._updateComboBoxColor(self.paramNames.list())
+        self._updateComboBoxParam(self.comboBoxColor, self.paramNames.list())
+        self._updateComboBoxParam(self.comboBoxZ, list(self.paramNamesTags))
 
     def _resetPlotData(self):
         # Script
@@ -1434,6 +1452,9 @@ class MainWindow(QMainWindow):
         return [self.paramNamesTags[tag]
                 for tag in self.getCheckedParams(self.listParametersY)]
 
+    def getZParam(self):
+        return self.paramNamesTags[str(self.comboBoxZ.currentText())]
+
     def statusSelectAllX(self):
         """
         Slot function called when selectAllX is modified.
@@ -1459,7 +1480,11 @@ class MainWindow(QMainWindow):
     def statusPlotType(self, checked):
         # radio buttons changed
         self.checkShade.setEnabled(self.toggleLine.isChecked())
-        self.comboBoxColor.setEnabled(self.toggleColor.isChecked())
+        self.comboBoxColor.setEnabled(self.toggleColor.isChecked() or self.toggleZ.isChecked())
+        self.comboBoxZ.setEnabled(self.toggleZ.isChecked())
+        if self.toggleZ.isChecked():
+            self.trianglePlot.setCheckState(Qt.Unchecked)
+        self.checkShadow.setVisible(self.toggleZ.isChecked())
 
     def statusTriangle(self, checked):
         self.checkInsideLegend.setVisible(
@@ -1472,16 +1497,16 @@ class MainWindow(QMainWindow):
             self.trianglePlot.checkState() != Qt.Checked)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
-    def _updateComboBoxColor(self, listOfParams):
+    def _updateComboBoxParam(self, combo, listOfParams):
         if self.rootdirname and os.path.isdir(self.rootdirname):
-            param_old = str(self.comboBoxColor.currentText())
+            param_old = str(combo.currentText())
             param_old_new_name = getattr(
                 self.paramNames.parWithName(param_old), "name", None)
-            self.comboBoxColor.clear()
-            self.comboBoxColor.addItems(listOfParams)
-            idx = self.comboBoxColor.findText(param_old_new_name, Qt.MatchExactly)
+            combo.clear()
+            combo.addItems(listOfParams)
+            idx = combo.findText(param_old_new_name, Qt.MatchExactly)
             if idx != -1:
-                self.comboBoxColor.setCurrentIndex(idx)
+                combo.setCurrentIndex(idx)
 
     def checkedRootNames(self):
         items = []
@@ -1659,7 +1684,26 @@ class MainWindow(QMainWindow):
                     script += ")\n"
                 else:
                     raise GuiSelectionError("Select more than 1 x parameter for triangle plot")
-
+            elif self.toggleZ.isChecked():
+                z_param = self.getZParam()
+                if len(items_x) == 1 and len(items_y) == 1 and z_param:
+                    params = [items_x[0], items_y[0], z_param]
+                    if color_param:
+                        params.append(color_param)
+                    logging.debug("4d plot with params = %s" % str(params))
+                    script += "params = %s\n" % str(params)
+                    setSizeForN(1, 1)
+                    cols = [c[-1] for c in self.plotter.settings.line_styles[:len(roots) - 1]]
+                    self.plotter.plot_4d(roots, params, color_bar=z_param, compare_colors=cols,
+                                         shadow_color=self.checkShadow.isChecked())
+                    script += "g.plot_4d(roots, params, color_bar=True%s%s)\n" % ("" if len(roots) == 1 else
+                                                                                  ", compare_colors=%r" % cols,
+                                                                                  ", shadow_color=True" if
+                                                                                  self.checkShadow.isChecked() else "")
+                    self.updatePlot()
+                else:
+                    raise GuiSelectionError("For an x-y-z plot select one parameter of each, and optionally a "
+                                            "parameter to color by")
             elif len(items_x) > 0 and len(items_y) == 0:
                 # 1D plot
                 actionText = "1D plot"

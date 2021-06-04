@@ -499,12 +499,16 @@ class RandomTestMixtureND(MixtureND):
 
 def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10, names=None, labels=None):
     """
-    get a list of MCSamples instances with random samples from random covariances and y
+    get a MCSamples instance, or list of MCSamples instances with random samples from random covariances and y
     """
     if names is None:
         names = ["x%s" % i for i in range(ndim)]
     if labels is None:
         labels = ["x_{%s}" % i for i in range(ndim)]
     seed = np.random.default_rng(seed)
-    return [RandomTestMixtureND(ndim, ncomponent, names, seed=seed).MCSamples(
+    result = [RandomTestMixtureND(ndim, ncomponent, names, seed=seed).MCSamples(
         nsamp, labels=labels, name_tag='Sim %s' % (i + 1), random_state=seed) for i in range(nMCSamples)]
+    if nMCSamples > 1:
+        return result
+    else:
+        return result[0]
