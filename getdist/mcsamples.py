@@ -1920,7 +1920,6 @@ class MCSamples(Chains):
         :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
         :param maxlikes: calculate the profile likelihoods in addition to the others (returned as array in density.maxlikes)
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
-               
         :return: a :class:`~.densities.DensityND` instance
         """
 
