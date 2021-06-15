@@ -1598,7 +1598,7 @@ class MCSamples(Chains):
     def _make2Dhist(self, ixs, iys, xsize, ysize):
         flatix = ixs + iys * xsize
         # note arrays are indexed y,x
-        
+
         return np.bincount(flatix, weights=self.weights,
                            minlength=xsize * ysize).reshape((ysize, xsize)), flatix
 
@@ -1648,7 +1648,7 @@ class MCSamples(Chains):
 
         self._initParamRanges(j)
         self._initParamRanges(j2)
-        
+
         base_fine_bins_2D = kwargs.get('fine_bins_2D', self.fine_bins_2D)
         boundary_correction_order = kwargs.get('boundary_correction_order', self.boundary_correction_order)
         mult_bias_correction_order = kwargs.get('mult_bias_correction_order', self.mult_bias_correction_order)
@@ -1681,10 +1681,10 @@ class MCSamples(Chains):
 
         ixs, finewidthx, xbinmin, xbinmax = self._binSamples(self.samples[:, j], parx, fine_bins_2D)
         iys, finewidthy, ybinmin, ybinmax = self._binSamples(self.samples[:, j2], pary, fine_bins_2D)
-        
+
         xsize = fine_bins_2D
         ysize = fine_bins_2D
-        
+
         histbins, flatix = self._make2Dhist(ixs, iys, xsize, ysize)
 
         if meanlikes:
@@ -1820,8 +1820,8 @@ class MCSamples(Chains):
 
 
 
-   
-    
+
+
     def _setRawEdgeMaskND(self, parv, prior_mask):
         ndim = len(parv)
         vrap = parv[::-1]
@@ -1848,7 +1848,7 @@ class MCSamples(Chains):
         ndim = len(ixs)
 
         q = ixs[0]
-        
+
         for i in range(1, ndim):
             q = q + np.prod(xsizes[0:i]) * ixs[i]
 
@@ -1859,13 +1859,13 @@ class MCSamples(Chains):
         ndim = len(xsizes)
 
         ixs = list([np.array(q) for i in range(ndim)])
-            
+
         if ndim == 1:
             ixs[0] = q
             return ixs
 
         ixs[ndim - 1] = q // np.prod(xsizes[0:ndim - 1])
-        
+
         acc = 0
         for k in range(ndim - 2, -1, -1):
             acc = acc + ixs[k + 1] * np.prod(xsizes[0:k + 1])
@@ -1873,16 +1873,16 @@ class MCSamples(Chains):
                 ixs[k] = (q - acc) // np.prod(xsizes[0:k])
             else:
                 ixs[k] = q - acc
-                
+
         return ixs
 
     def _makeNDhist(self, ixs, xsizes):
 
         if len(ixs) != len(xsizes):
             raise ValueError('index and size arrays are of unequal length')
-        
+
         flatixv = self._flattenValues(ixs, xsizes)
-        
+
         # python API change catcher...
         if np.count_nonzero(np.asarray(ixs) - self._unflattenValues(flatixv, xsizes)) != 0:
             raise ValueError('ARG!!! flatten/unflatten screwed')
@@ -1928,28 +1928,28 @@ class MCSamples(Chains):
             self.updateBaseStatistics()
 
         ndim = len(js)
-        
+
         jv, parv = zip(*[self._parAndNumber(j) for j in js])
 
         if None in jv:
             return None
-        
+
         for j in jv:
             self._initParamRanges(j)
-        
+
         boundary_correction_order = kwargs.get('boundary_correction_order', self.boundary_correction_order)
         has_prior = np.any([parv[i].has_limits for i in range(ndim)])
-        
+
         nbinsND = kwargs.get('num_bins_ND', self.num_bins_ND)
 
         ixv, widthv, xminv, xmaxv = zip(*[self._binSamples(self.samples[:, jv[i]],
                                                            parv[i], nbinsND) for i in range(ndim)])
-        
+
         # could also be non-equals over the dimensions
         xsizev = nbinsND * np.ones(ndim, dtype=np.int)
-        
+
         binsND, flatixv = self._makeNDhist(ixv, xsizev)
-        
+
         if has_prior and boundary_correction_order >= 0:
             # Correct for edge effects
             prior_mask = np.ones(xsizev[::-1])
@@ -2007,7 +2007,7 @@ class MCSamples(Chains):
 
             postfile = self.rootname + "_posterior" + "_%sD.dat" % (ndim)
             contfile = self.rootname + "_posterior" + "_%sD_cont.dat" % (ndim)
-            
+
             allND = [np.array(binsND) for i in range(ndim + 1)]
             allND[0] = np.ravel(binsND, order='C')
             for i in range(ndim):
@@ -2034,7 +2034,7 @@ class MCSamples(Chains):
 
         return density
 
-    
+
 
     def _setLikeStats(self):
         """
