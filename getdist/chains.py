@@ -1329,7 +1329,7 @@ class Chains(WeightedSamples):
         :param root: Root name
         :param files_or_samples: list of file names or list of arrays of samples, or single array of samples
         :param weights: if loading from arrays of samples, corresponding list of arrays of weights
-        :param loglikes: if loading from arrays of samples, corresponding list of arrays of -2 log(likelihood)
+        :param loglikes: if loading from arrays of samples, corresponding list of arrays of -log(likelihood)
         :param ignore_lines: Amount of lines at the start of the file to ignore, None if should not ignore
         :return: True if loaded successfully, False if none loaded
         """

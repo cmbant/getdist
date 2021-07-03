@@ -463,7 +463,7 @@ class MCSamples(Chains):
 
         :param files_or_samples: The list of file names to read, samples or list of samples
         :param weights: array of weights if setting from arrays
-        :param loglikes: array of -2 log(likelihood) if setting from arrays
+        :param loglikes: array of -log(likelihood) if setting from arrays
         :return: self.
         """
         self.loadChains(self.root, files_or_samples, weights=weights, loglikes=loglikes)
@@ -1818,10 +1818,6 @@ class MCSamples(Chains):
 
         return density
 
-
-
-
-
     def _setRawEdgeMaskND(self, parv, prior_mask):
         ndim = len(parv)
         vrap = parv[::-1]
@@ -1887,7 +1883,6 @@ class MCSamples(Chains):
         if np.count_nonzero(np.asarray(ixs) - self._unflattenValues(flatixv, xsizes)) != 0:
             raise ValueError('ARG!!! flatten/unflatten screwed')
 
-
         # note arrays are indexed y,x
         return np.bincount(flatixv, weights=self.weights,
                            minlength=np.prod(xsizes)).reshape(xsizes[::-1], order='C'), flatixv
@@ -1908,6 +1903,7 @@ class MCSamples(Chains):
             density.normalize(in_place=True)
         return density
 
+    # noinspection PyTypeChecker
     def getRawNDDensityGridData(self, js, writeDataToFile=False, num_plot_contours=None, get_density=False,
                                 meanlikes=False, maxlikes=False, **kwargs):
         """
@@ -1980,7 +1976,8 @@ class MCSamples(Chains):
 
         # density.normalize('integral', in_place=True)
         density.normalize('max', in_place=True)
-        if get_density: return density
+        if get_density:
+            return density
 
         ncontours = len(self.contours)
         if num_plot_contours: ncontours = min(num_plot_contours, ncontours)
@@ -2032,8 +2029,6 @@ class MCSamples(Chains):
                 np.savetxt(filename, np.transpose(allND), "%16.7E")
 
         return density
-
-
 
     def _setLikeStats(self):
         """
