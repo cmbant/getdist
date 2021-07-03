@@ -41,7 +41,8 @@ class GetDistFileTest(unittest.TestCase):
         self.assertEqual(g.samples_for_root('testchain').getTable().tableTex(),
                          samples.getTable().tableTex(), 'Inconsistent load result')
         samples.getConvergeTests(0.95)
-        self.assertAlmostEqual(0.00052997, samples.GelmanRubin, 4, 'Gelman Rubin error, got ' + str(samples.GelmanRubin))
+        self.assertAlmostEqual(0.00052997, samples.GelmanRubin, 4,
+                               'Gelman Rubin error, got ' + str(samples.GelmanRubin))
 
         g = plots.get_single_plotter()
         g.plot_3d(samples, ['x', 'y', 'x'])
@@ -146,21 +147,19 @@ class GetDistTest(unittest.TestCase):
         d2 = samps.get2DDensity('x', 'y')
         self.assertTrue(np.allclose(d.P, d2.P[::-1, ::], atol=1e-5))
 
-
     def testNDDensity(self):
         # test that getRawNDDensity is close to get2DDensity (Note
         # that RawND has no smoothing and this is not expected to be
         # machine-precision accurate)
 
         samps = Gaussian2D([0, 0], np.diagflat([1, 1]), xmin=-2, xmax=2, ymin=-2, ymax=2).MCSamples(1000000,
-                                                                                                   random_state=10)
-        #not too much bins to get enough stat on RawNDDensity
-        d2D = samps.get2DDensity('x', 'y',fine_bins_2D=10,smooth_scale_2D=1,boundary_correction_order=1)
-        dND = samps.getRawNDDensity(['x','y'],num_bins_ND=10,boundary_correction_order=1)
-        
-        self.assertTrue(np.allclose(d2D.P, dND.P,atol=1e-5))
+                                                                                                    random_state=10)
+        # not too much bins to get enough stat on RawNDDensity
+        d2D = samps.get2DDensity('x', 'y', fine_bins_2D=10, smooth_scale_2D=1, boundary_correction_order=1)
+        dND = samps.getRawNDDensity(['x', 'y'], num_bins_ND=10, boundary_correction_order=1)
 
-        
+        self.assertTrue(np.allclose(d2D.P, dND.P, atol=1e-5))
+
     def testLoads(self):
         # test initiating from multiple chain arrays
         samps = []
