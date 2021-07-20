@@ -102,9 +102,9 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     ranges = {p: get_range(info_params[p]) for p in
               info_params}  # include fixed parameters not in columns
     renames = {p: info_params.get(p, {}).get(_p_renames, []) for p in columns[2:]}
-    samples = [c[c.data.columns[2:]].values for c in collections]
-    weights = [c[_weight].values for c in collections]
-    loglikes = [c[_minuslogpost].values for c in collections]
+    samples = [c[c.data.columns[2:]].values.astype(np.float64) for c in collections]
+    weights = [c[_weight].values.astype(np.float64) for c in collections]
+    loglikes = [c[_minuslogpost].values.astype(np.float64) for c in collections]
     sampler = get_sampler_type(info)
     label = get_sample_label(info)
     from getdist.mcsamples import MCSamples

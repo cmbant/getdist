@@ -2041,11 +2041,13 @@ class MCSamples(Chains):
         bestfit_ix = np.argmin(self.loglikes)
         maxlike = self.loglikes[bestfit_ix]
         m.logLike_sample = maxlike
-        if np.max(self.loglikes) - maxlike < 30:
-            m.logMeanInvLike = np.log(self.mean(np.exp(self.loglikes - maxlike))) + maxlike
-        else:
-            m.logMeanInvLike = None
-
+        try:
+            if np.max(self.loglikes) - maxlike < 30:
+                m.logMeanInvLike = np.log(self.mean(np.exp(self.loglikes - maxlike))) + maxlike
+            else:
+                m.logMeanInvLike = None
+        except:
+            raise
         m.meanLogLike = self.mean_loglike
         m.logMeanLike = -np.log(self.mean(np.exp(-(self.loglikes - maxlike)))) + maxlike
         # assuming maxlike is well determined
