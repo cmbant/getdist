@@ -811,9 +811,11 @@ class GetDistPlotter(_BaseObject):
                 while i < len(res) and res[i] in ['-', '.', ':']:
                     i += 1
                 return res[:i], res[i:]
-            else:
+            elif isinstance(res, Sequence):
                 # assume tuple of line style and color
                 return res[0], res[1]
+            else:
+                raise ValueError('Unknown format for color [%s]' % res)
         except IndexError:
             print('Error adding line ' + str(plotno) + ': Add more default line stype entries to settings.line_styles')
             raise

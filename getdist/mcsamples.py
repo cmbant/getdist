@@ -1827,7 +1827,7 @@ class MCSamples(Chains):
             raise ValueError("parv and prior_mask or different sizes!")
 
         # create a slice object iterating over everything
-        mskSlices = [slice(None) for i in range(ndim)]
+        mskSlices: Any = [slice(None) for _ in range(ndim)]
 
         for i in range(ndim):
             if vrap[i].has_limits_bot:
@@ -1854,7 +1854,7 @@ class MCSamples(Chains):
 
         ndim = len(xsizes)
 
-        ixs = list([np.array(q) for i in range(ndim)])
+        ixs = [np.array(q) for _ in range(ndim)]
 
         if ndim == 1:
             ixs[0] = q
@@ -1884,6 +1884,7 @@ class MCSamples(Chains):
             raise ValueError('ARG!!! flatten/unflatten screwed')
 
         # note arrays are indexed y,x
+        # noinspection PyTypeChecker
         return np.bincount(flatixv, weights=self.weights,
                            minlength=np.prod(xsizes)).reshape(xsizes[::-1], order='C'), flatixv
 
@@ -1911,10 +1912,13 @@ class MCSamples(Chains):
         density and optional additional plot data.
 
         :param js: vector of names or indices of the x_i parameters
+        :param writeDataToFile: save outputs to file
         :param num_plot_contours: number of contours to calculate and return in density.contours
         :param get_density: only get the ND marginalized density, no additional plot data, no contours.
-        :param meanlikes: calculate mean likelihoods as well as marginalized density (returned as array in density.likes)
-        :param maxlikes: calculate the profile likelihoods in addition to the others (returned as array in density.maxlikes)
+        :param meanlikes: calculate mean likelihoods as well as marginalized density
+                          (returned as array in density.likes)
+        :param maxlikes: calculate the profile likelihoods in addition to the others
+                         (returned as array in density.maxlikes)
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
         :return: a :class:`~.densities.DensityND` instance
         """
@@ -1980,7 +1984,8 @@ class MCSamples(Chains):
             return density
 
         ncontours = len(self.contours)
-        if num_plot_contours: ncontours = min(num_plot_contours, ncontours)
+        if num_plot_contours:
+            ncontours = min(num_plot_contours, ncontours)
         contours = self.contours[:ncontours]
 
         # Get contour containing contours(:) of the probability
@@ -2001,10 +2006,10 @@ class MCSamples(Chains):
         if writeDataToFile:
             # note store things in confusing transpose form
 
-            postfile = self.rootname + "_posterior" + "_%sD.dat" % (ndim)
-            contfile = self.rootname + "_posterior" + "_%sD_cont.dat" % (ndim)
+            postfile = self.rootname + "_posterior" + "_%sD.dat" % ndim
+            contfile = self.rootname + "_posterior" + "_%sD_cont.dat" % ndim
 
-            allND = [np.array(binsND) for i in range(ndim + 1)]
+            allND = [np.array(binsND) for _ in range(ndim + 1)]
             allND[0] = np.ravel(binsND, order='C')
             for i in range(ndim):
                 # [index[::-1] for column-major order
@@ -2018,13 +2023,13 @@ class MCSamples(Chains):
 
             if meanlikes:
                 allND[0] = np.ravel(binNDlikes, order='C')
-                likefile = self.rootname + "_meanlike" + "_%sD.dat" % (ndim)
+                likefile = self.rootname + "_meanlike" + "_%sD.dat" % ndim
                 filename = os.path.join(self.plot_data_dir, likefile)
                 np.savetxt(filename, np.transpose(allND), "%16.7E")
 
             if maxlikes:
                 allND[0] = np.ravel(binNDmaxlikes, order='C')
-                likefile = self.rootname + "_maxlike" + "_%sD.dat" % (ndim)
+                likefile = self.rootname + "_maxlike" + "_%sD.dat" % ndim
                 filename = os.path.join(self.plot_data_dir, likefile)
                 np.savetxt(filename, np.transpose(allND), "%16.7E")
 

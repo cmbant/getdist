@@ -497,7 +497,7 @@ class BestFit(ParamResults):
         if setParamNameFile is not None:
             self.setLabelsFromParamNames(setParamNameFile)
 
-    def getColumnLabels(self, **kwargs):
+    def getColumnLabels(self, **_kwargs):
         return ['Best fit']
 
     def loadFromFile(self, filename, want_fixed=False):
@@ -565,7 +565,7 @@ class BestFit(ParamResults):
                 return val.chisq
         return None
 
-    def texValues(self, formatter, p, **kwargs):
+    def texValues(self, formatter, p, **_kwargs):
         param = self.parWithName(p.name)
         if param is not None:
             return [formatter.numberFormatter.formatNumber(param.best_fit)]

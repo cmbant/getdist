@@ -34,7 +34,7 @@ def yaml_load(text_stream, Loader=yaml.Loader, file_name=None):
         list('-+0123456789.'))
 
     # Ignore python objects
-    def dummy_object_loader(loader, suffix, node):
+    def dummy_object_loader(_loader, _suffix, _node):
         return None
 
     ScientificLoader.add_multi_constructor('tag:yaml.org,2002:python/name:', dummy_object_loader)
