@@ -83,8 +83,11 @@ Details of kernel density estimation (KDE) algorithms and references are give in
 Samples file format
 ===================
 
-The GetDist GUI (and getdist.loadMCSamples function) read parameter sample/chain files in plain text format.
-In general there are a set of plain text files of the form::
+GetDist can be used in scripts and interactively with standard numpy arrays
+(as in the `examples <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_).
+Scripts and the `GetDist GUI <http://getdist.readthedocs.org/en/latest/gui.html>`_ can also read parameter sample/chain files in plain text format
+(or in the format output by the `Cobaya <https://cobaya.readthedocs.org>`_ sampling program).
+In general plain text files of the form::
 
   xxx_1.txt
   xxx_2.txt
