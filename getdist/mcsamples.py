@@ -267,7 +267,8 @@ class MCSamples(Chains):
             self.properties.params['burn_removed'] = True
 
         if samples is not None:
-            self.readChains(samples, weights, loglikes)
+            self.readChains(samples, weights, loglikes,
+                            ignore_temperature=self.ini.bool('ignore_temperature', False))
 
     def copy(self, label=None, settings=None):
         """
@@ -456,7 +457,7 @@ class MCSamples(Chains):
         if doUpdate and self.samples is not None:
             self.updateBaseStatistics()
 
-    def readChains(self, files_or_samples, weights=None, loglikes=None):
+    def readChains(self, files_or_samples, weights=None, loglikes=None, ignore_temperature=False):
         """
         Loads samples from a list of files or array(s), removing burn in,
         deleting fixed parameters, and combining into one self.samples array
@@ -464,6 +465,8 @@ class MCSamples(Chains):
         :param files_or_samples: The list of file names to read, samples or list of samples
         :param weights: array of weights if setting from arrays
         :param loglikes: array of -log(likelihood) if setting from arrays
+        :param ignore_temperature: if False, and chain metadata says generated at tempeature > 1,
+          automatically cool to unit temperature; if True no cooling is applied
         :return: self.
         """
         self.loadChains(self.root, files_or_samples, weights=weights, loglikes=loglikes)
@@ -481,9 +484,29 @@ class MCSamples(Chains):
         if self.chains is not None:
             self.makeSingle()
 
+        if not ignore_temperature:
+            temperature = self.properties.float('temperature', 1)
+            if temperature != 1:
+                self.cool(temperature)
+
         self.updateBaseStatistics()
 
         return self
+
+    def cool(self, cool):
+        """
+        Cools the samples, i.e. multiples log likelihoods by cool factor and re-weights accordingly
+
+        :param cool: cool factor
+        """
+        if cool == 1:
+            return
+        if self.properties.float('cooled', 1) != 1:
+            logging.warning('Chain has already been cooled by %s', self.properties.float('cooled'))
+        super().cool(cool)
+        self.properties.params['cooled'] = cool
+        if self.properties.hasKey('temperature'):
+            self.properties.params['temperature'] = self.properties.float('temperature') / cool
 
     def updateBaseStatistics(self):
         """
