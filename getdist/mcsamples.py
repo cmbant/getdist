@@ -465,7 +465,7 @@ class MCSamples(Chains):
         :param files_or_samples: The list of file names to read, samples or list of samples
         :param weights: array of weights if setting from arrays
         :param loglikes: array of -log(likelihood) if setting from arrays
-        :param ignore_temperature: if False, and chain metadata says generated at tempeature > 1,
+        :param ignore_temperature: if False, and chain metadata says generated at temperature > 1,
           automatically cool to unit temperature; if True no cooling is applied
         :return: self.
         """
