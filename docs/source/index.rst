@@ -53,3 +53,9 @@ Other main modules:
    :target: https://erc.europa.eu/
    :height: 170px
    :width: 170px
+
+.. image:: https://cdn.cosmologist.info/antony/STFC_white.svg
+   :alt: Science and Technology Facilities Council
+   :target: https://stfc.ukri.org/
+   :height: 170px
+   :width: 170px
