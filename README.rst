@@ -7,8 +7,8 @@ GetDist
 :Source: https://github.com/cmbant/getdist
 :Reference: https://arxiv.org/abs/1910.13970
 
-.. image:: https://travis-ci.org/cmbant/getdist.svg?branch=master
-   :target: https://travis-ci.org/cmbant/getdist
+.. image:: https://travis-ci.com/cmbant/getdist.svg?branch=master
+   :target: https://travis-ci.com/cmbant/getdist
 .. image:: https://img.shields.io/pypi/v/GetDist.svg?style=flat
    :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
