@@ -1049,7 +1049,7 @@ class MainWindow(QMainWindow):
 
     def openHelpDocs(self):
         import webbrowser
-        webbrowser.open("https://getdist.readthedocs.org/")
+        webbrowser.open("https://getdist.readthedocs.io/")
 
     def openGitHub(self):
         import webbrowser

@@ -12,7 +12,7 @@ GetDist
 .. image:: https://img.shields.io/pypi/v/GetDist.svg?style=flat
    :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
-   :target: https://getdist.readthedocs.org/en/latest
+   :target: https://getdist.readthedocs.io/en/latest
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb
 .. image:: https://img.shields.io/badge/arXiv-1910.13970-b31b1b.svg?color=0B6523
@@ -31,9 +31,9 @@ from Markov Chain Monte Carlo (MCMC).
 * **Convergence diagnostics** - including correlation length and diagonalized Gelman-Rubin statistics
 * **LaTeX tables** for marginalized 1D constraints
 
-See the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_
+See the `Plot Gallery and tutorial <http://getdist.readthedocs.io/en/latest/plot_gallery.html>`_
 (`run online <https://mybinder.org/v2/gh/cmbant/getdist/master?filepath=docs%2Fplot_gallery.ipynb>`_)
-and `GetDist Documentation <http://getdist.readthedocs.org/en/latest/index.html>`_.
+and `GetDist Documentation <http://getdist.readthedocs.io/en/latest/index.html>`_.
 
 
 Getting Started
@@ -59,7 +59,7 @@ Check the dependencies listed in the next section are installed. You can then us
 use the GetDist GUI (*getdist-gui* command).
 
 Once installed, the best way to get up to speed is probably to read through
-the `Plot Gallery and tutorial <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_.
+the `Plot Gallery and tutorial <http://getdist.readthedocs.io/en/latest/plot_gallery.html>`_.
 
 Dependencies
 =============
@@ -84,9 +84,9 @@ Samples file format
 ===================
 
 GetDist can be used in scripts and interactively with standard numpy arrays
-(as in the `examples <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_).
-Scripts and the `GetDist GUI <http://getdist.readthedocs.org/en/latest/gui.html>`_ can also read parameter sample/chain files in plain text format
-(or in the format output by the `Cobaya <https://cobaya.readthedocs.org>`_ sampling program).
+(as in the `examples <http://getdist.readthedocs.io/en/latest/plot_gallery.html>`_).
+Scripts and the `GetDist GUI <http://getdist.readthedocs.io/en/latest/gui.html>`_ can also read parameter sample/chain files in plain text format
+(or in the format output by the `Cobaya <https://cobaya.readthedocs.io>`__ sampling program).
 In general plain text files of the form::
 
   xxx_1.txt
@@ -147,7 +147,7 @@ from two chains with root names *xxx* and *yyy*::
 
 
 MCSamples objects can also be constructed directly from numpy arrays in memory, see the example
-in the `Plot Gallery <http://getdist.readthedocs.org/en/latest/plot_gallery.html>`_.
+in the `Plot Gallery <https://getdist.readthedocs.io/en/latest/plot_gallery.html>`_.
 
 GetDist script
 ===================
@@ -194,7 +194,7 @@ GetDist GUI
 
 Run *getdist-gui* to run the graphical user interface. This requires PySide2, but will run on Windows, Linux and Mac.
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
-See the `GUI Readme <http://getdist.readthedocs.org/en/latest/gui.html>`_.
+See the `GUI Readme <http://getdist.readthedocs.io/en/latest/gui.html>`_.
 
 
 Using with CosmoMC and Cobaya

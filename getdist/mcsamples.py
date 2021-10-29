@@ -51,7 +51,7 @@ def loadMCSamples(file_root: str, ini: Union[None, str, IniFile] = None,
     and (optionally) **file_root.ranges** gives hard prior parameter ranges.
 
     For a description of the various analysis settings and default values see
-    `analysis_defaults.ini <https://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
+    `analysis_defaults.ini <https://getdist.readthedocs.io/en/latest/analysis_settings.html>`_.
 
     :param file_root: The root name of the files to read (no extension)
     :param ini: The name of a .ini file with analysis settings to use
@@ -133,7 +133,7 @@ class MCSamples(Chains):
                  loglikes: Union[np.ndarray, Iterable[np.ndarray], None] = None, **kwargs):
         """
         For a description of the various analysis settings and default values see
-        `analysis_defaults.ini <https://getdist.readthedocs.org/en/latest/analysis_settings.html>`_.
+        `analysis_defaults.ini <https://getdist.readthedocs.io/en/latest/analysis_settings.html>`_.
 
 
         :param root: A root file name when loading from file
