@@ -1341,7 +1341,7 @@ class MCSamples(Chains):
             par.sigma_range = min(par.err, scale)
         if self.range_ND_contour >= 0 and self.likeStats:
             if self.range_ND_contour >= par.ND_limit_bot.size:
-                raise SettingError("range_ND_contour should be -1 (off), or 0, 1 for first or second contour level")
+                raise SettingError("range_ND_contour should be -1 (off), or an index into the computed contour levels")
             par.range_min = min(max(par.range_min - par.err, par.ND_limit_bot[self.range_ND_contour]), par.range_min)
             par.range_max = max(max(par.range_max + par.err, par.ND_limit_top[self.range_ND_contour]), par.range_max)
 
@@ -2063,12 +2063,15 @@ class MCSamples(Chains):
         # get N-dimensional confidence region
         indexes = self.loglikes.argsort()
         cumsum = np.cumsum(self.weights[indexes])
-        m.ND_cont1, m.ND_cont2 = np.searchsorted(cumsum, self.norm * self.contours[0:2])
+        ncontours = len(self.contours)
+        m.ND_contours = np.searchsorted(cumsum, self.norm * self.contours[0:ncontours])
         for j, par in enumerate(self.paramNames.names):
-            region1 = self.samples[indexes[:m.ND_cont1], j]
-            region2 = self.samples[indexes[:m.ND_cont2], j]
-            par.ND_limit_bot = np.array([np.min(region1), np.min(region2)])
-            par.ND_limit_top = np.array([np.max(region1), np.max(region2)])
+            par.ND_limit_bot = np.empty(ncontours)
+            par.ND_limit_top = np.empty(ncontours)
+            for i, cont in enumerate(m.ND_contours):
+                region = self.samples[indexes[:cont], j]
+                par.ND_limit_bot[i] = np.min(region)
+                par.ND_limit_bot[i] = np.max(region)
             par.bestfit_sample = self.samples[bestfit_ix][j]
 
         self.likeStats = m

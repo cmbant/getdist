@@ -871,6 +871,8 @@ class LikeStats(ParamResults):
             text += "\n"
             text += self.headerLine()
             for j, par in enumerate(self.names):
+                if par.ND_limit_bot.size < 2:
+                    raise Exception('Likestats output assumes at least two contour levels')
                 text += parForm % (self.name(j, True))
                 text += '%15.7E%15.7E%15.7E%15.7E%15.7E   %s\n' % (par.bestfit_sample,
                                                                    par.ND_limit_bot[0], par.ND_limit_top[0],
