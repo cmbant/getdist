@@ -1945,7 +1945,7 @@ class MCSamples(Chains):
                                                            parv[i], nbinsND) for i in range(ndim)])
 
         # could also be non-equals over the dimensions
-        xsizev = nbinsND * np.ones(ndim, dtype=np.int)
+        xsizev = nbinsND * np.ones(ndim, dtype=int)
 
         binsND, flatixv = self._makeNDhist(ixv, xsizev)
 
