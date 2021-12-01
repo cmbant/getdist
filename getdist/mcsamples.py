@@ -1660,6 +1660,7 @@ class MCSamples(Chains):
         corr = self.getCorrelationMatrix()[j2][j]
         if corr == 1:
             logging.warning('Parameters are 100%% correlated: %s, %s', parx.name, pary.name)
+            corr = self.max_corr_2D
 
         logging.debug('Doing 2D: %s - %s', parx.name, pary.name)
         logging.debug('sample x_err, y_err, correlation: %s, %s, %s', parx.err, pary.err, corr)
