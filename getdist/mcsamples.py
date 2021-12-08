@@ -491,7 +491,6 @@ class MCSamples(Chains):
 
         :return: self
         """
-        self.means = None
         super().updateBaseStatistics()
         mult_max = (self.mean_mult * self.numrows) / min(self.numrows // 2, 500)
         outliers = np.sum(self.weights > mult_max)

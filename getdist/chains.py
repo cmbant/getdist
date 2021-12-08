@@ -1300,6 +1300,7 @@ class Chains(WeightedSamples):
 
         :return: self after updating statistics.
         """
+        self.setMeans()
         self.getVars()
         self.mean_mult = self.norm / self.numrows
         self.max_mult = np.max(self.weights)
