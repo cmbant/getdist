@@ -133,7 +133,7 @@ setup(name='GetDist',
       package_data=package_data,
       install_requires=[
           'numpy (>=1.17.0)',
-          'matplotlib (>=2.2.0)',
+          'matplotlib (>=2.2.0,!=3.5.0)',
           'scipy (>=1.5.0)',
           'PyYAML (>=5.1)'],
       # PySide2 is needed for the GUI
