@@ -1657,9 +1657,9 @@ class MCSamples(Chains):
         has_prior = parx.has_limits or pary.has_limits
 
         corr = self.getCorrelationMatrix()[j2][j]
-        if abs(corr - 1.0) <= 1e-8:
+        if abs(abs(corr) - 1.0) <= 1e-8:
             logging.warning('Parameters are 100%% correlated: %s, %s', parx.name, pary.name)
-            corr = self.max_corr_2D
+            corr = np.sign(corr) * self.max_corr_2D
 
         logging.debug('Doing 2D: %s - %s', parx.name, pary.name)
         logging.debug('sample x_err, y_err, correlation: %s, %s, %s', parx.err, pary.err, corr)
