@@ -1657,7 +1657,7 @@ class MCSamples(Chains):
         has_prior = parx.has_limits or pary.has_limits
 
         corr = self.getCorrelationMatrix()[j2][j]
-        if corr == 1:
+        if abs(corr - 1.0) <= 1e-8:
             logging.warning('Parameters are 100%% correlated: %s, %s', parx.name, pary.name)
             corr = self.max_corr_2D
 
@@ -1717,7 +1717,6 @@ class MCSamples(Chains):
             logging.warning('fine_bins_2D not large enough for optimal density: %s, %s', parx.name, pary.name)
 
         winw = int(round(2.5 * smooth_scale))
-
         Cinv = np.linalg.inv(np.array([[ry ** 2, rx * ry * corr], [rx * ry * corr, rx ** 2]]))
         ix1, ix2 = np.mgrid[-winw:winw + 1, -winw:winw + 1]
         Win = np.exp(-(ix1 ** 2 * Cinv[0, 0] + ix2 ** 2 * Cinv[1, 1] + 2 * Cinv[1, 0] * ix1 * ix2) / 2)
