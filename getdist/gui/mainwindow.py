@@ -611,7 +611,10 @@ class MainWindow(QMainWindow):
         return QSettings('getdist', 'gui')
 
     def getScreen(self):
-        return QApplication.screenAt(self.mapToGlobal(QPoint(self.width() / 2, 0))).availableGeometry()
+        try:
+            return self.screen().availableGeometry()
+        except:
+            return QApplication.screenAt(self.mapToGlobal(QPoint(self.width() / 2, 0))).availableGeometry()
 
     def readSettings(self):
         settings = self.getSettings()
