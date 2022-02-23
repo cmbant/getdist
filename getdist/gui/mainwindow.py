@@ -1360,7 +1360,7 @@ class MainWindow(QMainWindow):
         """
         self.newRootItem(str(strParamName))
 
-    def updateListRoots(self, item):
+    def updateListRoots(self, _item):
         if self.updating:
             return
         self._updateParameters()
@@ -1439,7 +1439,7 @@ class MainWindow(QMainWindow):
         return [checklist.item(i).text() for i in range(checklist.count()) if
                 fulllist or checklist.item(i).checkState() == Qt.Checked]
 
-    def getXParams(self, fulllist=False, error=True):
+    def getXParams(self, fulllist=False):
         """
         Returns a list of selected parameter names (not tags) in the X-axis box.
 
@@ -1480,7 +1480,7 @@ class MainWindow(QMainWindow):
         for i in range(self.listParametersY.count()):
             self.listParametersY.item(i).setCheckState(state)
 
-    def statusPlotType(self, checked):
+    def statusPlotType(self, _checked):
         # radio buttons changed
         self.checkShade.setEnabled(self.toggleLine.isChecked())
         self.comboBoxColor.setEnabled(self.toggleColor.isChecked() or self.toggleZ.isChecked())
@@ -1494,7 +1494,7 @@ class MainWindow(QMainWindow):
             not checked and len(self.getXParams()) == 1 and len(self.getYParams()) == 1)
         self.checkInsideLegend.setEnabled(self.checkInsideLegend.isVisible())
 
-    def itemCheckChange(self, item):
+    def itemCheckChange(self, _item):
         self.checkInsideLegend.setVisible(
             len(self.getXParams()) == 1 and len(self.getYParams()) == 1 and
             self.trianglePlot.checkState() != Qt.Checked)
@@ -1696,11 +1696,11 @@ class MainWindow(QMainWindow):
                     logging.debug("4d plot with params = %s" % str(params))
                     script += "params = %s\n" % str(params)
                     setSizeForN(1, 1)
-                    cols = [c[-1] for c in self.plotter.settings.line_styles[:len(roots) - 1]]
-                    self.plotter.plot_4d(roots, params, color_bar=z_param, compare_colors=cols,
+                    colors = [c[-1] for c in self.plotter.settings.line_styles[:len(roots) - 1]]
+                    self.plotter.plot_4d(roots, params, color_bar=z_param, compare_colors=colors,
                                          shadow_color=self.checkShadow.isChecked())
                     script += "g.plot_4d(roots, params, color_bar=True%s%s)\n" % ("" if len(roots) == 1 else
-                                                                                  ", compare_colors=%r" % cols,
+                                                                                  ", compare_colors=%r" % colors,
                                                                                   ", shadow_color=True" if
                                                                                   self.checkShadow.isChecked() else "")
                     self.updatePlot()
@@ -1791,7 +1791,7 @@ class MainWindow(QMainWindow):
                         self.updatePlot()
             else:
                 text = ""
-                text += "Wrong parameters selection. Specify parameters such as:\n"
+                text += "Wrong parameter selection. Specify parameters such as:\n"
                 text += "\n"
                 text += "Triangle plot: Click on 'Triangle plot' and select more than 1 x parameters\n"
                 text += "\n"

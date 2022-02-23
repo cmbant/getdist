@@ -41,7 +41,7 @@ def print_load_line(message):
 
 def last_modified(files):
     """
-    Returns the the latest "last modified" time for the given list of files. Ignores files that do not exist.
+    Returns the latest "last modified" time for the given list of files. Ignores files that do not exist.
 
     :param files: An iterable of file names.
     :return: The latest "last modified" time
@@ -338,7 +338,7 @@ class WeightedSamples:
 
     def getCov(self, nparam=None, pars=None):
         """
-        Get covariance matrix of the parameters. By default uses all parameters, or can limit to max number or list.
+        Get covariance matrix of the parameters. By default, uses all parameters, or can limit to max number or list.
 
         :param nparam: if specified, only use the first nparam parameters
         :param pars: if specified, a list of parameter indices (0,1,2..) to include
@@ -424,7 +424,7 @@ class WeightedSamples:
         """
         Gets auto-correlation of an array of parameter values (e.g. for correlated samples from MCMC)
 
-        By default uses weight units (i.e. standard units for separate samples from original chain).
+        By default, uses weight units (i.e. standard units for separate samples from original chain).
         If samples are made from multiple chains, neglects edge effects.
 
         :param paramVec: an array of parameter values, or the int index of the parameter in stored samples to use
@@ -486,7 +486,7 @@ class WeightedSamples:
         For bias-corrected KDE only need very rough estimate to use in rule of thumb for bandwidth.
 
         In the limit h-> 0 (but still >0) answer should be correct (then just includes MCMC rejection duplicates).
-        In reality correct result for practical h should depends on shape of the correlation function.
+        In reality correct result for practical h should depend on shape of the correlation function.
 
         If self.sampler is 'nested' or 'uncorrelated' return result for uncorrelated samples.
 
@@ -954,7 +954,7 @@ class WeightedSamples:
 
     def reweightAddingLogLikes(self, logLikes):
         """
-        Importance sample the samples, by adding logLike (array of -log(likelihood values) to the currently
+        Importance sample the samples, by adding logLike (array of -log(likelihood values)) to the currently
         stored likelihoods, and re-weighting accordingly, e.g. for adding a new data constraint
 
         :param logLikes: array of -log(likelihood) for each sample to adjust
@@ -1220,10 +1220,10 @@ class Chains(WeightedSamples):
 
     def setParams(self, obj):
         """
-        Adds array variables obj.name1, obj.name2 etc, where
+        Adds array variables obj.name1, obj.name2 etc., where
         obj.name1 is the vector of samples with name 'name1'
 
-        if a parameter name is of the form aa.bb.cc, it makes subobjects so you can reference obj.aa.bb.cc.
+        if a parameter name is of the form aa.bb.cc, it makes subobjects so that you can reference obj.aa.bb.cc.
         If aa.bb and aa are both parameter names, then aa becomes obj.aa.value.
 
         :param obj: The object instance to add the parameter vectors variables
@@ -1331,7 +1331,7 @@ class Chains(WeightedSamples):
         :param files_or_samples: list of file names or list of arrays of samples, or single array of samples
         :param weights: if loading from arrays of samples, corresponding list of arrays of weights
         :param loglikes: if loading from arrays of samples, corresponding list of arrays of -log(likelihood)
-        :param ignore_lines: Amount of lines at the start of the file to ignore, None if should not ignore
+        :param ignore_lines: Amount of lines at the start of the file to ignore, None not to ignore any
         :return: True if loaded successfully, False if none loaded
         """
         self.chains = []
@@ -1390,7 +1390,7 @@ class Chains(WeightedSamples):
                     self.paramNames = ParamNames(default=self.chains[0].n)
                 nchains = len(self.chains)
             else:
-                raise ValueError('samples or files must be array of samples, or a list of arrays or files')
+                raise ValueError('samples or files must be an array of samples, or a list of arrays or files')
         self._weightsChanged()
         return nchains > 0
 

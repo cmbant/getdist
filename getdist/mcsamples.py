@@ -141,7 +141,7 @@ class MCSamples(Chains):
         :param ini: a .ini file to use for custom analysis settings
         :param settings: a dictionary of custom analysis settings
         :param ranges: a dictionary giving any additional hard prior bounds for parameters,
-                       eg. {'x':[0, 1], 'y':[None,2]}
+                       e.g. {'x':[0, 1], 'y':[None,2]}
         :param samples: if not loading from file, array of parameter values for each sample, passed
                         to :meth:`setSamples`, or list of arrays if more than one chain
         :param weights: array of weights for samples, or list of arrays if more than one chain
@@ -433,10 +433,10 @@ class MCSamples(Chains):
         """
         Updates settings from a .ini file or dictionary
 
-        :param settings: The a dict containing settings to set, taking preference over any values in ini
+        :param settings: A dict containing settings to set, taking preference over any values in ini
         :param ini: The name of .ini file to get settings from, or an :class:`~.inifile.IniFile` instance; by default
                     uses current settings
-        :param doUpdate: True if should update internal computed values, False otherwise (e.g. if want to make
+        :param doUpdate: True if we should update internal computed values, False otherwise (e.g. if you want to make
                          other changes first)
         """
         assert (settings is None or isinstance(settings, Mapping))
@@ -487,7 +487,7 @@ class MCSamples(Chains):
 
     def updateBaseStatistics(self):
         """
-        Updates basic computed statistics (y, covariance etc), e.g. after a change in samples or weights
+        Updates basic computed statistics (y, covariance etc.), e.g. after a change in samples or weights
 
         :return: self
         """
@@ -606,7 +606,7 @@ class MCSamples(Chains):
         Calculates the indices of weights that split the weights into sets of equal 1/n fraction of the total weight
 
         :param weights: array of weights
-        :param n: number of groups to split in to
+        :param n: number of groups to split into
         :return: array of indices of the boundary rows in the weights array
         """
         cumsum = np.cumsum(weights)
@@ -617,17 +617,17 @@ class MCSamples(Chains):
     def PCA(self, params, param_map=None, normparam=None, writeDataToFile=False, filename=None,
             conditional_params=(), n_best_only=None):
         """
-        Perform principle component analysis (PCA). In other words,
+        Perform principal component analysis (PCA). In other words,
         get eigenvectors and eigenvalues for normalized variables
         with optional (log modulus) mapping to find power law fits.
 
         :param params: List of names of the parameters to use
         :param param_map: A transformation to apply to parameter values;  A list or string containing
                           either N (no transformation) or L (for log transform) for each parameter.
-                          By default uses log if no parameter values cross zero
+                          By default, uses log if no parameter values cross zero
 
         :param normparam: optional name of parameter to normalize result (i.e. this parameter will have unit power)
-        :param writeDataToFile: True if should write the output to file.
+        :param writeDataToFile: True to write the output to file.
         :param filename: The filename to write, by default root_name.PCA.
         :param conditional_params: optional list of parameters to treat as fixed,
                i.e. for PCA conditional on fixed values of these parameters
@@ -750,7 +750,7 @@ class MCSamples(Chains):
                 PCdata[i, :] = np.exp(PCdata[i, :])
 
         PCAtext += '\n'
-        PCAtext += 'Principle components\n'
+        PCAtext += 'Principal components\n'
         PCAmodeTexts = []
         for i in range(n):
             isort = isorted[i]
@@ -769,7 +769,7 @@ class MCSamples(Chains):
                     if doexp:
                         summary += '[%f]   exp((%s-%f)/%s)\n' % (u[i][j], label, PCmean[j], expo)
                     else:
-                        summary += '[%f]   (%s-%f)/%s)\n' % (u[i][j], label, PCmean[j], expo)
+                        summary += '[%f]   (%s-%f)/%s\n' % (u[i][j], label, PCmean[j], expo)
             newmean[i] = self.mean(PCdata[:, i])
             newsd[i] = np.sqrt(self.mean((PCdata[:, i] - newmean[i]) ** 2))
             summary += '          = %f +- %f\n' % (newmean[i], newsd[i])
@@ -778,7 +778,7 @@ class MCSamples(Chains):
             PCAtext += summary
 
         # Find out how correlated these components are with other parameters
-        PCAtext += 'Correlations of principle components\n'
+        PCAtext += 'Correlations of principal components\n'
         comps = ["%8i" % i for i in range(1, n + 1)]
         PCAtext += '%s\n' % ("".join(comps))
 
@@ -834,7 +834,7 @@ class MCSamples(Chains):
         Do convergence tests.
 
         :param test_confidence: confidence limit to test for convergence (two-tail, only applies to some tests)
-        :param writeDataToFile: True if should write output to a file
+        :param writeDataToFile: True t6 write output to a file
         :param what: The tests to run. Should be a list of any of the following:
 
             - 'MeanVar': Gelman-Rubin sqrt(var(chain mean)/mean(chain var)) test in individual parameters (multiple chains only)
@@ -2180,7 +2180,7 @@ class MCSamples(Chains):
         Creates and returns a :class:`~.types.ResultTable` instance. See also :func:`~MCSamples.getInlineLatex`.
 
         :param columns: number of columns in the table
-        :param include_bestfit: True if should include the bestfit parameter values (assuming set)
+        :param include_bestfit: True to include the bestfit parameter values (assuming set)
         :param kwargs: arguments for :class:`~.types.ResultTable` constructor.
         :return: A :class:`~.types.ResultTable` instance
         """
@@ -2411,9 +2411,10 @@ class MCSamples(Chains):
     def getCombinedSamplesWithSamples(self, samps2, sample_weights=(1, 1)):
         """
         Make a new  :class:`MCSamples` instance by appending samples from samps2 for parameters which are in common.
-        By default they are weighted so that the probability mass of each set of samples is the same,
-        independent of tha actual sample sizes. The Weights parameter can be adjusted to change the
+        By defaultm they are weighted so that the probability mass of each set of samples is the same,
+        independent of tha actual sample sizes. The sample_weights parameter can be adjusted to change the
         relative weighting.
+
         :param samps2:  :class:`MCSamples` instance to merge
         :param sample_weights: relative weights for combining the samples. Set to None to just directly append samples.
         :return: a new  :class:`MCSamples` instance with the combined samples

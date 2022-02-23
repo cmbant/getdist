@@ -230,7 +230,7 @@ def is_derived_param(info_param):
 
 def expand_info_param(info_param):
     """
-    Expands the info of a parameter, from the user friendly, shorter format
+    Expands the info of a parameter, from the user-friendly, shorter format
     to a more unambiguous one.
     """
     if not isinstance(info_param, Mapping):

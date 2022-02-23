@@ -106,7 +106,7 @@ def getdist_script(args, exit_on_error=True):
     out_root = ini.string('out_root', '')
     if out_root:
         rootname = out_root
-        doprint('producing files with with root ', out_root)
+        doprint('producing files with root ', out_root)
     mc.rootname = rootname
 
     rootdirname = os.path.join(out_dir, rootname)

@@ -147,7 +147,7 @@ class GetDistPlotSettings(_BaseObject):
     def __init__(self, subplot_size_inch: float = 2, fig_width_inch: Optional[float] = None):
         """
         If fig_width_inch set, fixed setting for fixed total figure size in inches.
-        Otherwise use subplot_size_inch to determine default font sizes etc.,
+        Otherwise, use subplot_size_inch to determine default font sizes etc.,
         and figure will then be as wide as necessary to show all subplots at specified size.
 
         :param subplot_size_inch: Determines the size of subplots, and hence default font sizes
@@ -953,7 +953,7 @@ class GetDistPlotter(_BaseObject):
         :param root: The root name of the samples
         :param param: The parameter name
         :param plotno: The index of the line being added to the plot
-        :param normalized: True if areas under lines should match, False if normalized to unit maximum.
+        :param normalized: True if areas under the curves should match, False if normalized to unit maximum.
                            Default from settings.norm_1d_density.
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
@@ -1028,11 +1028,11 @@ class GetDistPlotter(_BaseObject):
         :param param1: x parameter
         :param param2: y parameter
         :param plotno: The index of the contour lines being added
-        :param of: the total number of contours being added (this is line plotno of of)
+        :param of: the total number of contours being added (this is line plotno of ``of``)
         :param cols: optional list of colors to use for contours, by default uses default for this plotno
         :param contour_levels: levels at which to plot the contours, by default given by contours array in
                                the analysis settings
-        :param add_legend_proxy: True if should add a proxy to the legend of this plot.
+        :param add_legend_proxy: True to add a proxy to the legend of this plot.
         :param param_pair: an [x,y] parameter name pair if you prefer to provide this rather than param1 and param2
         :param density: optional :class:`~.densities.Density2D` to plot rather than that computed automatically
                         from the samples
@@ -1170,7 +1170,7 @@ class GetDistPlotter(_BaseObject):
 
     def add_2d_covariance(self, means, cov, xvals=None, yvals=None, def_width=4.0, samples_per_std=50., **kwargs):
         """
-        Plot 2D Gaussian ellipse. By default plots contours for 1 and 2 sigma.
+        Plot 2D Gaussian ellipse. By default, plots contours for 1 and 2 sigma.
         Specify contour_levels argument to plot other contours (for density normalized to peak at unity).
 
         :param means: array of y
@@ -1347,7 +1347,7 @@ class GetDistPlotter(_BaseObject):
         :param res: The current limits
         :param xlims: The new lims for x
         :param ylims: The new lims for y.
-        :param do_resize: True if should resize, False otherwise.
+        :param do_resize: True to resize, False otherwise.
         :return: The newly calculated limits.
         """
         if res is None:
@@ -1437,7 +1437,7 @@ class GetDistPlotter(_BaseObject):
         Sets axis properties.
 
         :param axis: The axis to set properties to.
-        :param x: True if x axis, False for y axis
+        :param x: True if x-axis, False for y-axis
         """
         self._set_axis_formatter(axis, x)
         self._set_axis_properties(axis, self.settings.axis_tick_x_rotation if x else self.settings.axis_tick_y_rotation)
@@ -1459,8 +1459,8 @@ class GetDistPlotter(_BaseObject):
 
         :param params: [x,y] list of the :class:`~.paramnames.ParamInfo` for the x and y parameters to use for labels
         :param lims: optional [xmin, xmax, ymin, ymax] to fix specific limits for the axes
-        :param do_xlabel: True if should include label for x axis.
-        :param do_ylabel: True if should include label for y axis.
+        :param do_xlabel: True to include label for x-axis.
+        :param do_ylabel: True to include label for y-axis.
         :param no_label_no_numbers: True to hide tick labels
         :param pos: optional position of the axes ['left' | 'bottom' | 'width' | 'height']
         :param color_label_in_axes: If True, and params has at last three entries, puts text in the axis to label
@@ -1494,9 +1494,9 @@ class GetDistPlotter(_BaseObject):
 
     def set_xlabel(self, param, ax=None):
         """
-        Sets the label for the x axis.
+        Sets the label for the x-axis.
 
-        :param param: the :class:`~.paramnames.ParamInfo` for the x axis parameter
+        :param param: the :class:`~.paramnames.ParamInfo` for the x-axis parameter
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
         """
@@ -1507,9 +1507,9 @@ class GetDistPlotter(_BaseObject):
 
     def set_ylabel(self, param, ax=None, **kwargs):
         """
-        Sets the label for the y axis.
+        Sets the label for the y-axis.
 
-        :param param: the :class:`~.paramnames.ParamInfo` for the y axis parameter
+        :param param: the :class:`~.paramnames.ParamInfo` for the y-axis parameter
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
         :param kwargs: optional extra arguments for Axes set_ylabel
@@ -1521,7 +1521,7 @@ class GetDistPlotter(_BaseObject):
         """
         Sets the label for the z axis.
 
-        :param param: the :class:`~.paramnames.ParamInfo` for the y axis parameter
+        :param param: the :class:`~.paramnames.ParamInfo` for the y-axis parameter
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
         :param kwargs: optional extra arguments for Axes set_zlabel
@@ -1540,11 +1540,11 @@ class GetDistPlotter(_BaseObject):
         :param param: the parameter name to plot
         :param marker: If set, places a marker at given coordinate.
         :param marker_color: If set, sets the marker color.
-        :param label_right: If True, label the y axis on the right rather than the left
+        :param label_right: If True, label the y-axis on the right rather than the left
         :param title_limit: If not None, a maginalized limit (1,2..) of the first root to print as the title of the plot
-        :param no_ylabel: If True excludes the label on the y axis
+        :param no_ylabel: If True excludes the label on the y-axis
         :param no_ytick: If True show no y ticks
-        :param no_zero: If true does not show tick label at zero on y axis
+        :param no_zero: If true does not show tick label at zero on y-axis
         :param normalized: plot normalized densities (if False, densities normalized to peak at 1)
         :param param_renames: optional dictionary mapping input parameter names to equivalent names used by the samples
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
@@ -1643,7 +1643,7 @@ class GetDistPlotter(_BaseObject):
         :param param2:  y parameter name
         :param param_pair: An [x,y] pair of params; can be set instead of param1 and param2
         :param shaded: True if plot should be a shaded density plot (for the first samples plotted)
-        :param add_legend_proxy: True if should add to the legend proxy
+        :param add_legend_proxy: True to add to the legend proxy
         :param line_offset: line_offset if not adding first contours to plot
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
@@ -2054,7 +2054,7 @@ class GetDistPlotter(_BaseObject):
                       plots param[i] using roots[i] (where roots[i] is the list of sample root names to use for
                       plotting parameter i).  This is useful for example for  plotting one-parameter extensions of a
                       baseline model, each with various data combinations.
-        :param share_y: True for subplots to share a common y axis with no horizontal space between subplots
+        :param share_y: True for subplots to share a common y-axis with no horizontal space between subplots
         :param markers: optional dict giving vertical marker values indexed by parameter, or a list of marker values
                         for each parameter plotted
         :param title_limit: if not None, a maginalized limit (1,2..) of the first root to print as the title
@@ -2715,8 +2715,8 @@ class GetDistPlotter(_BaseObject):
         """
         Adds a line to the given axes, using :class:`~matplotlib:matplotlib.lines.Line2D`
 
-        :param xdata: pair of x coordinates
-        :param ydata: pair of y coordinates
+        :param xdata: a pair of x coordinates
+        :param ydata: a pair of y coordinates
         :param zorder: Z-order for Line2D
         :param color: The color of the line, uses settings.axis_marker_color by default
         :param ls: The line style to be used, uses settings.axis_marker_ls by default
@@ -2748,7 +2748,7 @@ class GetDistPlotter(_BaseObject):
 
     def add_2d_scatter(self, root, x, y, color='k', alpha=1, extra_thin=1, scatter_size=None, ax=None):
         """
-        Low-level function to adds a 2D sample scatter plot to the current axes (or ax if specified).
+        Low-level function to add a 2D sample scatter plot to the current axes (or ax if specified).
 
         :param root: The root name of the samples to use
         :param x: name of x parameter
@@ -2861,7 +2861,7 @@ class GetDistPlotter(_BaseObject):
         :param param2: name of y parameter
         :param color: color to plot the samples
         :param line_offset: The line index offset for added contours
-        :param add_legend_proxy: True if should add a legend proxy
+        :param add_legend_proxy: True to add a legend proxy
         :param kwargs: additional optional arguments:
 
                 * **filled**: True for filled contours for second and later items in roots
@@ -2889,9 +2889,9 @@ class GetDistPlotter(_BaseObject):
         :param params: list with the three parameter names to plot (x, y, color)
         :param params_for_plots: list of parameter triplets to plot for each root plotted; more general
                                  alternative to params
-        :param color_bar: True if should include a color bar
+        :param color_bar: True to include a color bar
         :param line_offset: The line index offset for added contours
-        :param add_legend_proxy: True if should add a legend proxy
+        :param add_legend_proxy: True to add a legend proxy
         :param alpha_samples: if True, use alternative scatter style where all samples are plotted alphaed by
                               their weights
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
@@ -3217,7 +3217,7 @@ class GetDistPlotter(_BaseObject):
         Exports given figure to a file. If the filename is not specified, saves to a file with the same
         name as the calling script (useful for plot scripts where the script name matches the output figure).
 
-        :param fname: The filename to export to. The extension (.pdf, .png, etc) determines the file type
+        :param fname: The filename to export to. The extension (.pdf, .png, etc.) determines the file type
         :param adir: The directory to save to
         :param watermark: a watermark text, e.g. to make the plot with some pre-final version number
         :param tag: A suffix to add to the filename.
