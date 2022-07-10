@@ -2660,7 +2660,7 @@ class GetDistPlotter(_BaseObject):
         if roots:
             legend_labels = self._default_legend_labels(legend_labels, roots)
         self.finish_plot(legend_labels=legend_labels, label_order=label_order,
-                         legend_ncol=legend_ncol or self.settings.figure_legend_ncol or len(legend_labels))
+                         legend_ncol=legend_ncol or self.settings.figure_legend_ncol or len(legend_labels or []))
         return ax_arr
 
     def rotate_xticklabels(self, ax=None, rotation=90, labelsize=None):
