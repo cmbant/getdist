@@ -3005,6 +3005,8 @@ class GetDistPlotter(_BaseObject):
             fixed_color = fixed_color or 'k'
         if len(params) < 3 + (0 if fixed_color else 1):
             raise GetDistPlotError('4d plot must provide list of three or four parameters')
+        if fixed_color:
+            params = params[:3]
 
         for name, lim in lims.items():
             if not isinstance(lim, Sequence) or len(lim) != 2:
