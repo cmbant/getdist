@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#!/usr/bin/env python
+# !/usr/bin/env python
 
 import os
 import copy
@@ -67,6 +67,7 @@ except ImportError:
         QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
         QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
         QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox, QAction, QShortcut
+
     os.environ['QT_API'] = 'pyside2'
 
 # works with or without this:

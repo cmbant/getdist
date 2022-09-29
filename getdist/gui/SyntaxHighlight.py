@@ -160,7 +160,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         # As long as there's a delimiter match on this line...
         while start >= 0:
             # Look for the ending delimiter
-            match = delimiter.match(text, start+add)
+            match = delimiter.match(text, start + add)
             end = match.capturedStart()
             # Ending delimiter on this line?
             if end >= add:
