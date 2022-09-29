@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#!/usr/bin/env python
 
 import os
 import copy
@@ -20,21 +21,25 @@ if os.name == "nt" and sys.getwindowsversion().major >= 10:  # noqa
     ctypes.windll.shcore.SetProcessDpiAwareness(1)  # noqa
 
 try:
-    from PySide2 import QtCore
+    try:
+        from PySide6 import QtCore
+
+    except:
+        matplotlib.use('Qt5Agg')
+        from PySide2 import QtCore
 except ImportError as _e:
     if 'DLL load failed' in str(_e):
-        print('DLL load failed attempting to load PySide2: problem with your python configuration')
+        print('DLL load failed attempting to load PySide: problem with your python configuration')
     else:
         print(_e)
-        print("Can't import PySide2 modules, you need to install Pyside2")
+        print("Can't import PySide modules, you need to install PySide6 or PySide2")
     if not os.path.exists(os.path.join(sys.prefix, 'conda-meta')):
         print('Using Anaconda is probably the most reliable method')
-    print("E.g. make and use a new environment using conda-forge")
-    print('conda create -n py39forge -c conda-forge python=3.9 scipy pandas matplotlib PySide2')
+    print("E.g. make and use a new environment")
+    print('conda create -n py10side python=3.10 scipy pandas matplotlib')
+    print("then 'pip install PySide6'")
 
     sys.exit(-1)
-
-matplotlib.use('Qt5Agg')
 
 import getdist
 from getdist import plots, IniFile, chains
@@ -43,18 +48,26 @@ from getdist.mcsamples import SettingError, ParamError
 
 from getdist.gui.SyntaxHighlight import PythonHighlighter
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as QNavigationToolbar
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as QNavigationToolbar
 
-import PySide2
-from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
-from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
-from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, QAction, \
-    QTabWidget, QWidget, QComboBox, QPushButton, QShortcut, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
-    QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-    QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox
-
-os.environ['QT_API'] = 'pyside2'
+try:
+    import PySide6 as PySide
+    from PySide6.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage, QAction, QShortcut
+    from PySide6.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
+    from PySide6.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, \
+        QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
+        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
+        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox
+except ImportError:
+    import PySide2 as PySide
+    from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
+    from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
+    from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, \
+        QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
+        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
+        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox, QAction, QShortcut
+    os.environ['QT_API'] = 'pyside2'
 
 # works with or without this:
 # QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -375,7 +388,7 @@ class MainWindow(QMainWindow):
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
         self.tabWidget.setTabPosition(QTabWidget.South)
-        self.connect(self.tabWidget, SIGNAL("currentChanged(int)"), self.tabChanged)
+        self.tabWidget.currentChanged.connect(self.tabChanged)
         self.setCentralWidget(self.tabWidget)
 
         # First tab: Gui Selection
@@ -385,12 +398,12 @@ class MainWindow(QMainWindow):
         self.selectWidget = QWidget(self.firstWidget)
 
         self.listDirectories = QComboBox(self.selectWidget)
-        self.connect(self.listDirectories, SIGNAL("activated(const QString&)"), self.openDirectory)
+        self.listDirectories.activated.connect(self.listDirectoryChanged)
 
         self.pushButtonSelect = QPushButton(self._icon("open"), "", self.selectWidget)
         self.pushButtonSelect.setFixedWidth(45 * self.dpiScale())
         self.pushButtonSelect.setToolTip("Open chain file root directory")
-        self.connect(self.pushButtonSelect, SIGNAL("clicked()"), self.selectRootDirName)
+        self.pushButtonSelect.clicked.connect(self.selectRootDirName)
 
         self.listRoots = RootListWidget(self.selectWidget, self)
         self.connect(self.listRoots, SIGNAL("itemChanged(QListWidgetItem *)"), self.updateListRoots)
@@ -404,15 +417,15 @@ class MainWindow(QMainWindow):
 
         self.comboBoxParamTag = QComboBox(self.selectWidget)
         self.comboBoxParamTag.clear()
-        self.connect(self.comboBoxParamTag, SIGNAL("activated(const QString&)"), self.setParamTag)
+        self.comboBoxParamTag.activated.connect(self.setParamTag)
 
         self.comboBoxDataTag = QComboBox(self.selectWidget)
         self.comboBoxDataTag.clear()
-        self.connect(self.comboBoxDataTag, SIGNAL("activated(const QString&)"), self.setDataTag)
+        self.comboBoxDataTag.activated.connect(self.setDataTag)
 
         self.comboBoxRootname = QComboBox(self.selectWidget)
         self.comboBoxRootname.clear()
-        self.connect(self.comboBoxRootname, SIGNAL("activated(const QString&)"), self.setRootname)
+        self.comboBoxRootname.activated.connect(self.setRootname)
 
         self.listParametersX = QListWidget(self.selectWidget)
         self.listParametersX.clear()
@@ -602,6 +615,9 @@ class MainWindow(QMainWindow):
 
         self.canvas = None
         self.readSettings()
+
+    def listDirectoryChanged(self):
+        self.openDirectory(self.listDirectories.currentText())
 
     def closeEvent(self, event):
         self.writeSettings()
@@ -1074,8 +1090,8 @@ class MainWindow(QMainWindow):
                                 "\nMatplotlib: " + matplotlib.__version__ +
                                 "\nSciPy: " + scipy.__version__ +
                                 "\nNumpy: " + np.__version__ +
-                                "\nPySide2: " + PySide2.__version__ +
-                                "\nQt (PySide): " + PySide2.QtCore.__version__ +
+                                "\nPySide: " + PySide.__version__ +
+                                "\nQt (PySide): " + QtCore.__version__ +
                                 "\n\nPix ratio: %s; Logical dpi: %s, %s" % (
                                     self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY()) +
                                 '\nUsing getdist at: %s' % os.path.dirname(getdist.__file__))
@@ -1260,7 +1276,7 @@ class MainWindow(QMainWindow):
             self.pushButtonRemove.show()
             self.comboBoxParamTag.clear()
             self.comboBoxParamTag.addItems(sorted(self.batch.base_dir_names))
-            self.setParamTag(self.comboBoxParamTag.itemText(0))
+            self.setParamTag()
             self.comboBoxParamTag.show()
             self.comboBoxDataTag.show()
             return True
@@ -1292,7 +1308,7 @@ class MainWindow(QMainWindow):
         self.pushButtonRemove.show()
         self.comboBoxParamTag.clear()
         self.comboBoxParamTag.addItems(sorted(self.grid_paramtag_jobItems.keys()))
-        self.setParamTag(self.comboBoxParamTag.itemText(0))
+        self.setParamTag()
         self.comboBoxParamTag.show()
         self.comboBoxDataTag.show()
 
@@ -1309,7 +1325,7 @@ class MainWindow(QMainWindow):
             self.comboBoxRootname.setCurrentIndex(-1)
         elif len(baseRoots):
             self.comboBoxRootname.setCurrentIndex(0)
-            self.setRootname(self.comboBoxRootname.itemText(0))
+            self.setRootname()
 
     def newRootItem(self, root):
 
@@ -1354,13 +1370,13 @@ class MainWindow(QMainWindow):
             self.updating = False
             self.selListRoots()
 
-    def setRootname(self, strParamName):
+    def setRootname(self):
         """
         Slot function called on change of comboBoxRootname.
         """
-        self.newRootItem(str(strParamName))
+        self.newRootItem(self.comboBoxRootname.currentText())
 
-    def updateListRoots(self, _item):
+    def updateListRoots(self):
         if self.updating:
             return
         self._updateParameters()
@@ -1386,11 +1402,11 @@ class MainWindow(QMainWindow):
             self._updateParameters()
             self.updating = False
 
-    def setParamTag(self, strParamTag):
+    def setParamTag(self):
         """
         Slot function called on change of comboBoxParamTag.
         """
-        self.paramTag = str(strParamTag)
+        self.paramTag = self.comboBoxParamTag.currentText()
         logging.debug("Param: %s" % self.paramTag)
 
         self.comboBoxDataTag.clear()
@@ -1402,15 +1418,16 @@ class MainWindow(QMainWindow):
         self.comboBoxDataTag.setCurrentIndex(-1)
         self.comboBoxDataTag.show()
 
-    def setDataTag(self, strDataTag):
+    def setDataTag(self):
         """
         Slot function called on change of comboBoxDataTag.
         """
+        strDataTag = self.comboBoxDataTag.currentText()
         if isinstance(self.batch, ChainDirGrid):
-            self.newRootItem(str(strDataTag))
+            self.newRootItem(strDataTag)
         else:
             logging.debug("Data: %s" % strDataTag)
-            self.newRootItem(self.paramTag + '_' + str(strDataTag))
+            self.newRootItem(self.paramTag + '_' + strDataTag)
 
     def _updateListParameters(self, items, listParameters):
         listParameters.clear()
@@ -1839,11 +1856,11 @@ class MainWindow(QMainWindow):
             self.plotWidget.layout().addWidget(self.canvas)
             self.plotWidget.show()
 
-    def tabChanged(self, index):
+    def tabChanged(self):
         """
         Update script text editor when entering 'gui' tab.
         """
-
+        index = self.tabWidget.currentIndex()
         # Enable menu options for main tab only
         self.reLoadAct.setEnabled(index == 0)
         self.openChainsAct.setEnabled(index == 0)
@@ -2144,13 +2161,13 @@ class DialogParamTables(DialogTextOutput):
         self.root = root
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.North)
-        self.connect(self.tabWidget, SIGNAL("currentChanged(int)"), self.tabChanged)
+        self.tabWidget.currentChanged.connect(self.tabChanged)
         layout = QGridLayout()
         layout.addWidget(self.tabWidget, 1, 0, 1, 2)
         self.copyButton = QPushButton(QIcon(""), "Copy latex")
         self.saveButton = QPushButton(QIcon(""), "Save latex")
-        self.connect(self.copyButton, SIGNAL("clicked()"), self.copyLatex)
-        self.connect(self.saveButton, SIGNAL("clicked()"), self.saveLatex)
+        self.copyButton.clicked.connect(self.copyLatex)
+        self.saveButton.clicked.connect(self.saveLatex)
 
         layout.addWidget(self.copyButton, 2, 0)
         layout.addWidget(self.saveButton, 2, 1)
@@ -2160,12 +2177,13 @@ class DialogParamTables(DialogTextOutput):
         self.generated = [False] * len(tables)
         for table, tab in zip(tables, self.tabs):
             self.tabWidget.addTab(tab, table.results[0].limitText(table.limit) + '%')
-        self.tabChanged(0)
+        self.tabChanged()
 
         self.setWindowTitle(self.tr('Parameter tables for: ' + root))
         self.adjustSize()
 
-    def tabChanged(self, index):
+    def tabChanged(self):
+        index = self.tabWidget.currentIndex()
         if not self.generated[index]:
             viewWidget = QWidget(self.tabs[index])
             dpi = self.logicalDpiX() * self.devicePixelRatio()
@@ -2186,10 +2204,10 @@ class DialogParamTables(DialogTextOutput):
 
     def saveLatex(self):
         filename, _ = QFileDialog.getSaveFileName(
-            self, "Choose a file name", self._last_export_dir, "Latex (*.tex)")
+            self, "Choose a file name", self.parent()._last_export_dir, "Latex (*.tex)")
         if not filename:
             return
-        self._last_export_dir = os.path.dirname(filename)
+        self.parent()._last_export_dir = os.path.dirname(filename)
         self.tables[self.tabWidget.currentIndex()].write(str(filename))
 
 

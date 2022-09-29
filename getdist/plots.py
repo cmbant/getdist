@@ -1891,6 +1891,14 @@ class GetDistPlotter(_BaseObject):
                 lines.append(matplotlib.lines.Line2D([0, 1], [0, 1], **args))
         else:
             lines = self.contours_added
+            for i, contour in enumerate(lines):
+                if contour is None:
+                    # for things that only appear in 1D plots
+                    args = self.lines_added.get(i)
+                    if args:
+                        args.pop('filled', None)
+                        lines[i] = matplotlib.lines.Line2D([0, 1], [0, 1], **args)
+
         args = kwargs.copy()
         args['ncol'] = legend_ncol
         args['prop'] = {'size': self._scaled_fontsize(fontsize or self.settings.legend_fontsize
@@ -2306,8 +2314,8 @@ class GetDistPlotter(_BaseObject):
         :param contour_args: optional dict (or list of dict) with arguments for each 2D plot
                             (e.g. specifying color, alpha, etc)
         :param contour_colors: list of colors for plotting contours (for each root)
-        :param contour_ls: list of Line styles for contours (for each root)
-        :param contour_lws: list of Line widths for contours (for each root)
+        :param contour_ls: list of Line styles for 2D unfilled contours (for each root)
+        :param contour_lws: list of Line widths for 2D unfilled contours (for each root)
         :param line_args: dict (or list of dict) with arguments for each 2D plot (e.g. specifying ls, lw, color, etc)
         :param label_order: minus one to show legends in reverse order that lines were added, or a list giving
                             specific order of line indices

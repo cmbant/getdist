@@ -36,9 +36,12 @@ if sys.platform == "darwin":
     # Mac wrapper .app bundle
     try:
         # Just check for errors, and skip if no valid PySide
-        from PySide2 import QtCore
+        try:
+            from PySide6 import QtCore
+        except:
+            from PySide2 import QtCore
     except ImportError as e:
-        print("Cannot load PySide2 - skipping MacOS GetDist GUI app %s" % e)
+        print("Cannot load PySide - skipping MacOS GetDist GUI app %s" % e)
     else:
         sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -136,9 +139,9 @@ setup(name='GetDist',
           'matplotlib (>=2.2.0,!=3.5.0)',
           'scipy (>=1.5.0)',
           'PyYAML (>=5.1)'],
-      # PySide2 is needed for the GUI
+      # PySide is needed for the GUI
       # pandas optional (for faster txt chain file read)
-      extras_require={'GUI': ["PySide2>=5.13"], 'txt': ["pandas>=0.14.0"]},
+      extras_require={'GUI': ["PySide6>=6.10"], 'txt': ["pandas>=1.0"]},
       cmdclass=cmd_class,
       classifiers=[
           'Development Status :: 5 - Production/Stable',

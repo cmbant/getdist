@@ -66,12 +66,12 @@ Dependencies
 * Python 3.6+
 * matplotlib 2.2+ (3.1+ recommended)
 * scipy
-* PySide2 - optional, only needed for GUI
+* PySide6 or PySide2 - optional, only needed for GUI
 * Working LaTeX installation (not essential, only for some plotting/table functions)
 
 Python distributions like Anaconda have most of what you need (except for LaTeX).
 
-To use the `GUI <https://getdist.readthedocs.io/en/latest/gui.html>`_ you need PySide2.
+To use the `GUI <https://getdist.readthedocs.io/en/latest/gui.html>`_ you need PySide.
 See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installation>`_ for suggestions on how to install.
 
 Algorithm details
@@ -192,7 +192,7 @@ to produce the setting file distparams.ini, edit it, then run with your custom s
 GetDist GUI
 ===================
 
-Run *getdist-gui* to run the graphical user interface. This requires PySide2, but will run on Windows, Linux and Mac.
+Run *getdist-gui* to run the graphical user interface. This requires PySide, but will run on Windows, Linux and Mac.
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 See the `GUI Readme <http://getdist.readthedocs.io/en/latest/gui.html>`_.
 
