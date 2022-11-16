@@ -3,8 +3,9 @@ try:
     from PySide6.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
 except ImportError:
-
+    # noinspection PyUnresolvedReferences
     from PySide2.QtCore import QRegularExpression
+    # noinspection PyUnresolvedReferences
     from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
 

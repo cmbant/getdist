@@ -26,6 +26,7 @@ try:
 
     except:
         matplotlib.use('Qt5Agg')
+        # noinspection PyUnresolvedReferences
         from PySide2 import QtCore
 except ImportError as _e:
     if 'DLL load failed' in str(_e):
@@ -60,9 +61,13 @@ try:
         QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
         QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox
 except ImportError:
+    # noinspection PyUnresolvedReferences
     import PySide2 as PySide
+    # noinspection PyUnresolvedReferences
     from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
+    # noinspection PyUnresolvedReferences
     from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
+    # noinspection PyUnresolvedReferences
     from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, \
         QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
         QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
@@ -135,6 +140,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(self._icon('Icon', False))
 
         if base_dir is None and batchjob:
+            # noinspection PyUnresolvedReferences
             base_dir = batchjob.getCodeRootPath()
         if base_dir:
             os.chdir(base_dir)
@@ -414,7 +420,7 @@ class MainWindow(QMainWindow):
         self.pushButtonRemove.setToolTip("Remove a chain root")
         self.pushButtonRemove.setEnabled(False)
         self.pushButtonRemove.setMaximumWidth(30 * self.dpiScale())
-        self.connect(self.pushButtonRemove, SIGNAL("clicked()"), self.removeRoot)
+        self.pushButtonRemove.clicked.connect(self.removeRoot)
 
         self.comboBoxParamTag = QComboBox(self.selectWidget)
         self.comboBoxParamTag.clear()
@@ -430,23 +436,23 @@ class MainWindow(QMainWindow):
 
         self.listParametersX = QListWidget(self.selectWidget)
         self.listParametersX.clear()
-        self.connect(self.listParametersX, SIGNAL("itemChanged(QListWidgetItem *)"), self.itemCheckChange)
+        self.listParametersX.itemChanged.connect(self.itemCheckChange)
 
         self.listParametersY = QListWidget(self.selectWidget)
         self.listParametersY.clear()
-        self.connect(self.listParametersY, SIGNAL("itemChanged(QListWidgetItem *)"), self.itemCheckChange)
+        self.listParametersY.itemChanged.connect(self.itemCheckChange)
 
         self.selectAllX = QCheckBox("Select All", self.selectWidget)
         self.selectAllX.setCheckState(Qt.Unchecked)
-        self.connect(self.selectAllX, SIGNAL("clicked()"), self.statusSelectAllX)
+        self.selectAllX.clicked.connect(self.statusSelectAllX)
 
         self.selectAllY = QCheckBox("Select All", self.selectWidget)
         self.selectAllY.setCheckState(Qt.Unchecked)
-        self.connect(self.selectAllY, SIGNAL("clicked()"), self.statusSelectAllY)
+        self.selectAllX.clicked.connect(self.statusSelectAllY)
 
         self.toggleFilled = QRadioButton("Filled")
         self.toggleLine = QRadioButton("Line")
-        self.connect(self.toggleLine, SIGNAL("toggled(bool)"), self.statusPlotType)
+        self.toggleLine.toggled.connect(self.statusPlotType)
 
         self.checkShade = QCheckBox("Shaded", self.selectWidget)
         self.checkShade.setEnabled(False)
@@ -456,14 +462,14 @@ class MainWindow(QMainWindow):
         self.checkInsideLegend.setVisible(False)
 
         self.toggleColor = QRadioButton("Color by:")
-        self.connect(self.toggleColor, SIGNAL("toggled(bool)"), self.statusPlotType)
+        self.toggleColor.toggled.connect(self.statusPlotType)
 
         self.comboBoxColor = QComboBox(self)
         self.comboBoxColor.clear()
         self.comboBoxColor.setEnabled(False)
 
         self.toggleZ = QRadioButton("Z-axis:", self.selectWidget)
-        self.connect(self.toggleZ, SIGNAL("toggled(bool)"), self.statusPlotType)
+        self.toggleZ.toggled.connect(self.statusPlotType)
         self.comboBoxZ = QComboBox(self)
         self.comboBoxZ.clear()
         self.comboBoxZ.setEnabled(False)
@@ -476,10 +482,10 @@ class MainWindow(QMainWindow):
 
         self.trianglePlot = QCheckBox("Triangle Plot", self.selectWidget)
         self.trianglePlot.setCheckState(Qt.Unchecked)
-        self.connect(self.trianglePlot, SIGNAL("toggled(bool)"), self.statusTriangle)
+        self.trianglePlot.toggled.connect(self.statusTriangle)
 
         self.pushButtonPlot = QPushButton("Make plot", self.selectWidget)
-        self.connect(self.pushButtonPlot, SIGNAL("clicked()"), self.plotData)
+        self.pushButtonPlot.clicked.connect(self.plotData)
 
         def h_stack(*items):
             widget = QWidget(self.selectWidget)
@@ -583,9 +589,9 @@ class MainWindow(QMainWindow):
 
         self.pushButtonPlot2 = QPushButton("Make plot", self.editWidget)
         self.pushButtonPlot2.setToolTip("Ctrl+Return")
-        self.connect(self.pushButtonPlot2, SIGNAL("clicked()"), self.plotData2)
+        self.pushButtonPlot2.clicked.connect(self.plotData2)
         shortcut = QShortcut(QKeySequence(self.tr("Ctrl+Return")), self)
-        self.connect(shortcut, SIGNAL("activated()"), self.plotData2)
+        shortcut.activated.connect(self.plotData2)
 
         layoutEdit = QVBoxLayout()
         layoutEdit.addWidget(self.toolBar)
@@ -752,6 +758,7 @@ class MainWindow(QMainWindow):
         adir = self.getSettings().value('lastSearchDirectory')
         if adir:
             if batchjob:
+                # noinspection PyUnresolvedReferences
                 batchjob.resetGrid(adir)
             self.openDirectory(adir)
         if self.plotter:
