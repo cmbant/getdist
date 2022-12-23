@@ -37,7 +37,7 @@ def convolve2D(x, y, mode, largest_size=0, cache=None, cache_args=(1, 2)):
 # noinspection PyUnboundLocalVariable
 def convolveFFT(x, y, mode='same', yfft=None, xfft=None, largest_size=0, cache=None, cache_args=(1, 2)):
     """
-    convolution of x with y; fft cans be cached.
+    convolution of x with y; ffts can be cached.
     Be careful with caches, key uses id which can be reused for different object if object is freed.
     """
     size = x.size + y.size - 1

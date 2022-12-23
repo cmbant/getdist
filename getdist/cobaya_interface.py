@@ -163,21 +163,22 @@ def get_info_params(info):
 def get_range(param_info):
     # Sampled
     if is_sampled_param(param_info):
-        if isinstance(param_info[_prior], Sequence) and len(param_info[_prior]) == 2:
-            param_info[_prior] = \
-                {lim: n for lim, n in zip(["min", "max"], param_info[_prior])}
-        elif not isinstance(param_info[_prior], Mapping):
+        prior = param_info[_prior]
+        if isinstance(prior, Sequence) and len(prior) == 2:
+            prior = {lim: n for lim, n in zip(["min", "max"], prior)}
+        elif not isinstance(prior, Mapping):
             raise ValueError(
-                "Format of prior not recognised: %r. " % param_info[_prior] +
+                "Format of prior not recognised: %r. " % prior +
                 "Use '[min, max]' or a dictionary following Cobaya's documentation.")
-        info_lims = dict((tag, param_info[_prior].get(tag))
+        info_lims = dict((tag, prior.get(tag))
                          for tag in ["min", "max", "loc", "scale"])
         if info_lims["min"] is not None or info_lims["max"] is not None:
-            lims = [param_info[_prior].get("min"), param_info[_prior].get("max")]
+            lims = [prior.get("min"), prior.get("max")]
         elif info_lims["loc"] is not None or info_lims["scale"] is not None:
-            dist = param_info[_prior].pop(_p_dist, "uniform")
+            args = prior.copy()
+            dist = args.pop(_p_dist, "uniform")
             pdf_dist = getattr(import_module("scipy.stats", dist), dist)
-            lims = pdf_dist.interval(1, **param_info[_prior])
+            lims = pdf_dist.interval(1, **args)
     # Derived
     elif is_derived_param(param_info):
         lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(param_info or {})
