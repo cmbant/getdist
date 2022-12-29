@@ -177,7 +177,7 @@ class MCSamples(Chains):
             self.batch_path = ''
 
         self._readRanges()
-        if ranges:
+        if ranges is not None:
             self.setRanges(ranges)
 
         # Other variables
@@ -293,6 +293,9 @@ class MCSamples(Chains):
         :param ranges: A list or a tuple of [min,max] values for each parameter,
                        or a dictionary giving [min,max] values for specific parameter names
         """
+        if isinstance(ranges, np.ndarray):
+            if len(ranges.shape) == 2 and ranges.shape[1] == 2:
+                ranges = ranges.tolist()
         if isinstance(ranges, (list, tuple)):
             for i, minmax in enumerate(ranges):
                 self.ranges.setRange(self.parName(i), minmax)
