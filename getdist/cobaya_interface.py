@@ -107,11 +107,21 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     loglikes = [c[_minuslogpost].values.astype(np.float64) for c in collections]
     sampler = get_sampler_type(info)
     label = get_sample_label(info)
+    temperature = getattr(collections[0], "temperature", 1)
+    if temperature != 1:
+        logging.warning("You have loaded a sample with non-unit temperature. "
+                        "Use the 'MCSamples.cool()' method to turn it into a sample from "
+                        "the original posterior before performing statistical analyses, "
+                        "but maybe after thinning the sample with method "
+                        "'MCSamples.thin_indices()'.")
+    inferred_settings = {"temperature": temperature}
+    if settings is not None:
+        inferred_settings.update(settings)
     from getdist.mcsamples import MCSamples
     return MCSamples(samples=samples, weights=weights, loglikes=loglikes, sampler=sampler,
                      names=names, labels=labels, ranges=ranges, renames=renames,
                      ignore_rows=ignore_rows, name_tag=name_tag, label=label, ini=ini,
-                     settings=settings)
+                     settings=inferred_settings)
 
 
 def str_to_list(x):

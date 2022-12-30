@@ -488,6 +488,26 @@ class MCSamples(Chains):
 
         return self
 
+    def cool(self, cool=None):
+        """
+        Cools the samples, i.e. multiples log likelihoods by cool factor and re-weights accordingly
+        :param cool: cool factor, optional if the sample has a temperature specified.
+        """
+        if cool is None:
+            if self.properties.hasKey('temperature'):
+                cool = self.properties.float('temperature')
+            else:
+                raise ValueError(
+                    "Pass a cooling temperature, since the sample does not have one specified")
+        if cool == 1:
+            return
+        if self.properties.float('cooled', 1) != 1:
+            logging.warning('Chain has already been cooled by %s', self.properties.float('cooled'))
+        super().cool(cool)
+        self.properties.params['cooled'] = cool
+        if self.properties.hasKey('temperature'):
+            self.properties.params['temperature'] = self.properties.float('temperature') / cool
+
     def updateBaseStatistics(self):
         """
         Updates basic computed statistics (y, covariance etc.), e.g. after a change in samples or weights
