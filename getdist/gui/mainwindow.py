@@ -113,7 +113,7 @@ class QStatusLogger(logging.Handler):
 class RootListWidget(QListWidget):
     def __init__(self, widget, owner):
         QListWidget.__init__(self, widget)
-        self.setDragDropMode(self.InternalMove)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setMaximumSize(QSize(16777215, 120 * owner.dpiScale()))
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
