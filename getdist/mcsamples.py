@@ -1260,6 +1260,7 @@ class MCSamples(Chains):
             cov = self.getCov(pars=[i, j])
             S = np.linalg.cholesky(cov)
             ichol = np.linalg.inv(S)
+
             S *= ichol[0, 0]
             r = ichol[1, :] / ichol[0, 0]
             p1 = self.samples[:, i]
@@ -1657,6 +1658,7 @@ class MCSamples(Chains):
         has_prior = parx.has_limits or pary.has_limits
 
         corr = self.getCorrelationMatrix()[j2][j]
+        actual_corr = corr
         if abs(abs(corr) - 1.0) <= 1e-8:
             logging.warning('Parameters are 100%% correlated: %s, %s', parx.name, pary.name)
             corr = np.sign(corr) * self.max_corr_2D
@@ -1696,7 +1698,7 @@ class MCSamples(Chains):
         # smooth_x and smooth_y should be in rotated bin units
         if smooth_scale_2D < 0:
 
-            rx, ry, corr = self.getAutoBandwidth2D(histbins, parx, pary, j, j2, corr, xbinmax - xbinmin,
+            rx, ry, corr = self.getAutoBandwidth2D(histbins, parx, pary, j, j2, actual_corr, xbinmax - xbinmin,
                                                    ybinmax - ybinmin,
                                                    base_fine_bins_2D,
                                                    mult_bias_correction_order=mult_bias_correction_order)
@@ -1716,8 +1718,7 @@ class MCSamples(Chains):
         if smooth_scale < 2:
             logging.warning('fine_bins_2D not large enough for optimal density: %s, %s', parx.name, pary.name)
 
-        winw = int(round(2.5 * smooth_scale))
-
+        winw = max(1, int(round(2.5 * smooth_scale)))
         Cinv = np.linalg.inv(np.array([[ry ** 2, rx * ry * corr], [rx * ry * corr, rx ** 2]]))
         ix1, ix2 = np.mgrid[-winw:winw + 1, -winw:winw + 1]
         Win = np.exp(-(ix1 ** 2 * Cinv[0, 0] + ix2 ** 2 * Cinv[1, 1] + 2 * Cinv[1, 0] * ix1 * ix2) / 2)

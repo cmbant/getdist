@@ -1045,7 +1045,7 @@ class MainWindow(QMainWindow):
         ini.params['plot_module'] = self.plot_module
         ini.params['script_plot_module'] = self.script_plot_module
         ini.comments['plot_module'] = [
-            "stylw module used by the GUI (e.g. change to getdist.styles.planck, getdist.styles.tab10)"]
+            "style module used by the GUI (e.g. change to getdist.styles.planck, getdist.styles.tab10)"]
         ini.comments['script_plot_module'] = ["module used by saved plot scripts  (e.g. getdist.styles.planck)"]
         self.ConfigDlg = self.ConfigDlg or DialogConfigSettings(self, ini, list(ini.params.keys()), title='Plot Config')
         self.ConfigDlg.show()
@@ -1562,7 +1562,7 @@ class MainWindow(QMainWindow):
             self.warning(caption, type(e).__name__ + ': ' + str(e) + "\n\n" + msg)
             del msg
 
-            if not isinstance(e, GuiSelectionError) and not capture:
+            if not capture:
                 raise
 
     def closePlots(self):
