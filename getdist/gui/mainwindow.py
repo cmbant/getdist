@@ -38,7 +38,7 @@ except ImportError as _e:
     if not os.path.exists(os.path.join(sys.prefix, 'conda-meta')):
         print('Using Anaconda is probably the most reliable method')
     print("E.g. make and use a new environment")
-    print('conda create -n py10side python=3.10 scipy pandas matplotlib')
+    print('conda create -n py10side python=3.10 scipy matplotlib')
     print("then 'pip install PySide6'")
 
     sys.exit(-1)

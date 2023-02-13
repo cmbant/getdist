@@ -51,7 +51,7 @@ To run the GUI you need PySide. This is not included in default dependencies, bu
 
 You can also use PySide2, e.g. using `Anaconda <https://www.anaconda.com/distribution/>`_ to make a consistent new environment from conda-forge (which includes PySide2)  e.g. ::
 
-  conda create -n py39forge -c conda-forge python=3.9 scipy pandas matplotlib PyYAML PySide2
+  conda create -n py39forge -c conda-forge python=3.9 scipy matplotlib PyYAML PySide2
 
 Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
 On a Mac the installation will also make a GetDist GUI Mac app, which you can find using Spotlight.

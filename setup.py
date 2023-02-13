@@ -140,8 +140,7 @@ setup(name='GetDist',
           'scipy (>=1.5.0)',
           'PyYAML (>=5.1)'],
       # PySide is needed for the GUI
-      # pandas optional (for faster txt chain file read)
-      extras_require={'GUI': ["PySide6>=6.10"], 'txt': ["pandas>=1.0"]},
+      extras_require={'GUI': ["PySide6>=6.10"]},
       cmdclass=cmd_class,
       classifiers=[
           'Development Status :: 5 - Production/Stable',
@@ -152,7 +151,8 @@ setup(name='GetDist',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
-          'Programming Language :: Python :: 3.10'
+          'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11'
       ],
       python_requires='>=3.6',
       keywords=['MCMC', 'KDE', 'sample', 'density estimation', 'plot', 'figure']

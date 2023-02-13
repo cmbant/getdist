@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import re
+from packaging import version
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
 from getdist import cobaya_interface
@@ -15,11 +16,6 @@ print_load_details = True
 
 _int_types = (int, np.integer)
 ParamConfidenceData = namedtuple("ParamConfidenceData", ("paramVec", "norm", "indexes", "cumsum"))
-
-try:
-    import pandas
-except ImportError:
-    pandas = None
 
 
 class WeightedSampleError(Exception):
@@ -113,28 +109,28 @@ def hasChainFiles(file_root, ext='.txt'):
     return any(chainFiles(file_root, ext=ext, separator=sep, last_chain=1) for sep in ['_', '.'])
 
 
-_pandas_suggestion = True
-
-
 def loadNumpyTxt(fname, skiprows=None):
     """
     Utility routine to loads numpy array from file.
-    Uses faster pandas read routine if pandas is installed, or falls back to numpy's loadtxt otherwise
 
     :param fname: The file to load
     :param skiprows: The number of rows to skip at the begging of the file
     :return: numpy array of the data values
     """
+
+    if not hasattr(loadNumpyTxt, 'pandas'):
+        loadNumpyTxt.pandas = None
+        try:
+            if version.parse(np.__version__) < version.parse('1.23'):
+                import pandas
+                loadNumpyTxt.pandas = pandas
+        except ImportError:
+            logging.warning('Install pandas or numpy 1.23+ for faster reading from text files')
     try:
-        if pandas:
-            return pandas.read_csv(fname, delim_whitespace=True, header=None, dtype=np.float64,
-                                   skiprows=skiprows, comment='#').values
-        else:
-            global _pandas_suggestion
-            if _pandas_suggestion:
-                _pandas_suggestion = False
-                logging.warning('Install pandas for faster reading from text files')
-            return np.atleast_2d(np.loadtxt(fname, skiprows=skiprows or 0))
+        if loadNumpyTxt.pandas:
+            return loadNumpyTxt.pandas.read_csv(fname, delim_whitespace=True, header=None, dtype=np.float64,
+                                                skiprows=skiprows, comment='#').values
+        return np.atleast_2d(np.loadtxt(fname, skiprows=skiprows or 0))
     except ValueError:
         print('Error reading %s' % fname)
         raise
