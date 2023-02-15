@@ -122,7 +122,7 @@ def loadNumpyTxt(fname, skiprows=None):
         loadNumpyTxt.pandas = None
         try:
             if version.parse(np.__version__) < version.parse('1.23'):
-                import pandas
+                import pandas  # noqa
                 loadNumpyTxt.pandas = pandas
         except ImportError:
             logging.warning('Install pandas or numpy 1.23+ for faster reading from text files')
@@ -273,7 +273,7 @@ class WeightedSamples:
         """
         Sets the samples from numpy arrays
 
-        :param samples: The samples values, n_samples x n_parameters numpy array, or can be a list of parameter vectors
+        :param samples: The sample values, n_samples x n_parameters numpy array, or can be a list of parameter vectors
         :param weights: Array of weights for each sample. Defaults to 1 for all samples if unspecified.
         :param loglikes: Array of -log(Likelihood) values for each sample
         :param min_weight_ratio: remove samples with weight less than min_weight_ratio of the maximum
@@ -964,7 +964,7 @@ class WeightedSamples:
 
     def cool(self, cool):
         """
-        Cools the samples, i.e. multiples log likelihoods by cool factor and re-weights accordingly
+        Cools the samples, i.e. multiplies log likelihoods by cool factor and re-weights accordingly
 
         :param cool: cool factor
         """

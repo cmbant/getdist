@@ -3062,12 +3062,12 @@ class GetDistPlotter(_BaseObject):
                       the samples to plot
         :param params: list with the three parameter names to plot and color (x, y, x, color); can also set
                     fixed_color and specify just three parameters
-        :param color_bar: True if should include a color bar
+        :param color_bar: True if you want to include a color bar
         :param colorbar_args: extra arguments for colorbar
         :param ax: optional :class:`~matplotlib:mpl_toolkits.mplot3d.axes3d.Axes3D` instance
                    to add to (defaults to current plot or the first/main plot if none)
         :param lims: dictionary of optional limits, e.g. {'param1':(min1, max1),'param2':(min2,max2)}.
-                      If this include parameters that are not plotted, the samples outside the limits will still be
+                      If this includes parameters that are not plotted, the samples outside the limits will still be
                       removed
         :param azim: azimuth for initial view
         :param elev: elevation for initial view
@@ -3078,7 +3078,7 @@ class GetDistPlotter(_BaseObject):
         :param shadow_color: if not None, a color value (or list of color values) to use for plotting axes-projected
                              samples; or True to plot gray shadows
         :param shadow_alpha: if not None, separate alpha or list of alpha for shadows
-        :param fixed_color: if not None, a fixed color for the the first-root scatter plot rather than a 4th parameter
+        :param fixed_color: if not None, a fixed color for the first-root scatter plot rather than a 4th parameter
                             value
         :param compare_colors: if not None, fixed scatter color for second-and-higher roots rather than using 4th
                             parameter value

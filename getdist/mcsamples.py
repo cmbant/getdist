@@ -497,7 +497,7 @@ class MCSamples(Chains):
 
     def cool(self, cool=None):
         """
-        Cools the samples, i.e. multiples log likelihoods by cool factor and re-weights accordingly
+        Cools the samples, i.e. multiplies log likelihoods by cool factor and re-weights accordingly
         :param cool: cool factor, optional if the sample has a temperature specified.
         """
         if cool is None:
@@ -864,7 +864,7 @@ class MCSamples(Chains):
         Do convergence tests.
 
         :param test_confidence: confidence limit to test for convergence (two-tail, only applies to some tests)
-        :param writeDataToFile: True t6 write output to a file
+        :param writeDataToFile: True to write output to a file
         :param what: The tests to run. Should be a list of any of the following:
 
             - 'MeanVar': Gelman-Rubin sqrt(var(chain mean)/mean(chain var)) test in individual parameters (multiple chains only)
