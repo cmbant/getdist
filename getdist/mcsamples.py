@@ -130,7 +130,8 @@ class MCSamples(Chains):
                  settings: Optional[Mapping[str, Any]] = None, ranges=None,
                  samples: Union[np.ndarray, Iterable[np.ndarray], None] = None,
                  weights: Union[np.ndarray, Iterable[np.ndarray], None] = None,
-                 loglikes: Union[np.ndarray, Iterable[np.ndarray], None] = None, **kwargs):
+                 loglikes: Union[np.ndarray, Iterable[np.ndarray], None] = None,
+                 temperature: Optional[float] = None, **kwargs):
         """
         For a description of the various analysis settings and default values see
         `analysis_defaults.ini <https://getdist.readthedocs.io/en/latest/analysis_settings.html>`_.
@@ -146,6 +147,8 @@ class MCSamples(Chains):
                         to :meth:`setSamples`, or list of arrays if more than one chain
         :param weights: array of weights for samples, or list of arrays if more than one chain
         :param loglikes: array of -log(Likelihood) for samples, or list of arrays if more than one chain
+        :param temperatute: temperature of the sample. If not specified will be read from the
+                            root.properties.ini file if it exists and otherwise default to 1.
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from
                        sample arrays in memory:
 
@@ -177,7 +180,7 @@ class MCSamples(Chains):
             self.batch_path = ''
 
         self._readRanges()
-        if ranges:
+        if ranges is not None:
             self.setRanges(ranges)
 
         # Other variables
@@ -263,6 +266,10 @@ class MCSamples(Chains):
                 if 'sampler' not in kwargs:
                     self.setSampler(cobaya_interface.get_sampler_type(self.paramNames.info_dict))
                 self.properties.params['sampler'] = self.sampler
+                if temperature is None:
+                    temperature = cobaya_interface.get_sampler_temperature(self.paramNames.info_dict)
+            if temperature is not None and temperature != 1:
+                self.properties.params['temperature'] = temperature
         if self.ignore_frac or self.ignore_rows:
             self.properties.params['burn_removed'] = True
 
@@ -293,6 +300,9 @@ class MCSamples(Chains):
         :param ranges: A list or a tuple of [min,max] values for each parameter,
                        or a dictionary giving [min,max] values for specific parameter names
         """
+        if isinstance(ranges, np.ndarray):
+            if len(ranges.shape) == 2 and ranges.shape[1] == 2:
+                ranges = ranges.tolist()
         if isinstance(ranges, (list, tuple)):
             for i, minmax in enumerate(ranges):
                 self.ranges.setRange(self.parName(i), minmax)
@@ -484,6 +494,26 @@ class MCSamples(Chains):
         self.updateBaseStatistics()
 
         return self
+
+    def cool(self, cool=None):
+        """
+        Cools the samples, i.e. multiples log likelihoods by cool factor and re-weights accordingly
+        :param cool: cool factor, optional if the sample has a temperature specified.
+        """
+        if cool is None:
+            if self.properties.hasKey('temperature'):
+                cool = self.properties.float('temperature')
+            else:
+                raise ValueError(
+                    "Pass a cooling temperature, since the sample does not have one specified")
+        if cool == 1:
+            return
+        if self.properties.float('cooled', 1) != 1:
+            logging.warning('Chain has already been cooled by %s', self.properties.float('cooled'))
+        super().cool(cool)
+        self.properties.params['cooled'] = cool
+        if self.properties.hasKey('temperature'):
+            self.properties.params['temperature'] = self.properties.float('temperature') / cool
 
     def updateBaseStatistics(self):
         """

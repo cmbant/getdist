@@ -106,12 +106,19 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     weights = [c[_weight].values.astype(np.float64) for c in collections]
     loglikes = [c[_minuslogpost].values.astype(np.float64) for c in collections]
     sampler = get_sampler_type(info)
+    temperature = get_sampler_temperature(info)
     label = get_sample_label(info)
+    if temperature != 1:
+        logging.warning("You have loaded a sample with non-unit temperature. "
+                        "Use the 'MCSamples.cool()' method to turn it into a sample from "
+                        "the original posterior before performing statistical analyses, "
+                        "but maybe after thinning the sample with method "
+                        "'MCSamples.thin_indices()'.")
     from getdist.mcsamples import MCSamples
     return MCSamples(samples=samples, weights=weights, loglikes=loglikes, sampler=sampler,
                      names=names, labels=labels, ranges=ranges, renames=renames,
                      ignore_rows=ignore_rows, name_tag=name_tag, label=label, ini=ini,
-                     settings=settings)
+                     temperature=temperature, settings=settings)
 
 
 def str_to_list(x):
@@ -250,10 +257,19 @@ def expand_info_param(info_param):
     return info_param
 
 
-def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):
-    sampler = list(yaml_file_or_dict(filename_or_info).get(_sampler, [
+def get_sampler_key(filename_or_info, default_sampler_for_chain_type="mcmc"):
+    return list(yaml_file_or_dict(filename_or_info).get(_sampler, [
         default_sampler_for_chain_type]))[0]
+
+
+def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):
+    sampler = get_sampler_key(filename_or_info, default_sampler_for_chain_type)
     return {"mcmc": "mcmc", "polychord": "nested", "minimize": "minimize"}[sampler]
+
+
+def get_sampler_temperature(filename_or_info):
+    sampler = get_sampler_key(filename_or_info)
+    return yaml_file_or_dict(filename_or_info)["sampler"][sampler].get("temperature")
 
 
 def get_sample_label(filename_or_info):
