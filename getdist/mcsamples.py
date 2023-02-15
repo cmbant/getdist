@@ -130,7 +130,8 @@ class MCSamples(Chains):
                  settings: Optional[Mapping[str, Any]] = None, ranges=None,
                  samples: Union[np.ndarray, Iterable[np.ndarray], None] = None,
                  weights: Union[np.ndarray, Iterable[np.ndarray], None] = None,
-                 loglikes: Union[np.ndarray, Iterable[np.ndarray], None] = None, **kwargs):
+                 loglikes: Union[np.ndarray, Iterable[np.ndarray], None] = None,
+                 temperature: Optional[float] = None, **kwargs):
         """
         For a description of the various analysis settings and default values see
         `analysis_defaults.ini <https://getdist.readthedocs.io/en/latest/analysis_settings.html>`_.
@@ -146,6 +147,8 @@ class MCSamples(Chains):
                         to :meth:`setSamples`, or list of arrays if more than one chain
         :param weights: array of weights for samples, or list of arrays if more than one chain
         :param loglikes: array of -log(Likelihood) for samples, or list of arrays if more than one chain
+        :param temperatute: temperature of the sample. If not specified will be read from the
+                            root.properties.ini file if it exists and otherwise default to 1.
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from
                        sample arrays in memory:
 
@@ -263,6 +266,10 @@ class MCSamples(Chains):
                 if 'sampler' not in kwargs:
                     self.setSampler(cobaya_interface.get_sampler_type(self.paramNames.info_dict))
                 self.properties.params['sampler'] = self.sampler
+                if temperature is None:
+                    temperature = cobaya_interface.get_sampler_temperature(self.paramNames.info_dict)
+            if temperature is not None and temperature != 1:
+                self.properties.params['temperature'] = temperature
         if self.ignore_frac or self.ignore_rows:
             self.properties.params['burn_removed'] = True
 
