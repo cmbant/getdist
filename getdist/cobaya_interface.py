@@ -264,16 +264,17 @@ def get_sampler_key(filename_or_info, default_sampler_for_chain_type="mcmc"):
 
 def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):
     sampler = get_sampler_key(filename_or_info, default_sampler_for_chain_type)
-    return {"mcmc": "mcmc", "polychord": "nested", "minimize": "minimize"}[sampler]
+    return "nested" if sampler == "polychord" else sampler
 
 
 def get_sampler_temperature(filename_or_info):
-    sampler = get_sampler_key(filename_or_info)
-    return yaml_file_or_dict(filename_or_info)["sampler"][sampler].get("temperature")
+    info = yaml_file_or_dict(filename_or_info)
+    sampler = get_sampler_key(info)
+    return info[_sampler][sampler].get("temperature") if _sampler in info else None
 
 
 def get_sample_label(filename_or_info):
-    return yaml_file_or_dict(filename_or_info).get(_label, None)
+    return yaml_file_or_dict(filename_or_info).get(_label)
 
 
 def get_burn_removed(filename_or_info):

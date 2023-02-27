@@ -638,7 +638,7 @@ class MainWindow(QMainWindow):
         try:
             return self.screen().availableGeometry()
         except:
-            return QApplication.screenAt(self.mapToGlobal(QPoint(self.width() / 2, 0))).availableGeometry()
+            return QApplication.screenAt(self.mapToGlobal(QPoint(self.width() // 2, 0))).availableGeometry()
 
     def readSettings(self):
         settings = self.getSettings()
