@@ -108,7 +108,7 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     sampler = get_sampler_type(info)
     temperature = get_sampler_temperature(info)
     label = get_sample_label(info)
-    if temperature != 1:
+    if temperature is not None and temperature != 1:
         logging.warning("You have loaded a sample with non-unit temperature. "
                         "Use the 'MCSamples.cool()' method to turn it into a sample from "
                         "the original posterior before performing statistical analyses, "
@@ -269,8 +269,9 @@ def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):
 
 def get_sampler_temperature(filename_or_info):
     info = yaml_file_or_dict(filename_or_info)
-    sampler = get_sampler_key(info)
-    return info[_sampler][sampler].get("temperature") if _sampler in info else None
+    if _sampler not in info:
+        return None
+    return info[_sampler][get_sampler_key(info)].get("temperature")
 
 
 def get_sample_label(filename_or_info):
