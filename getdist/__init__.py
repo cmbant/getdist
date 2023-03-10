@@ -2,12 +2,13 @@ __author__ = 'Antony Lewis'
 __version__ = "1.4.2"
 __url__ = "https://getdist.readthedocs.io"
 
+import os
+import sys
+from getdist import gtypes as types
 from getdist.inifile import IniFile
 from getdist.paramnames import ParamInfo, ParamNames
 from getdist.chains import WeightedSamples
 from getdist.mcsamples import MCSamples, loadMCSamples
-import os
-import sys
 
 if sys.version_info < (3, 7):
     import platform

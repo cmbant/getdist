@@ -6,11 +6,11 @@ import pickle
 import math
 import time
 from typing import Mapping, Any, Optional, Union, Iterable
-
 import numpy as np
 from scipy.stats import norm
 import getdist
-from getdist import chains, types, covmat, ParamInfo, IniFile, ParamNames, cobaya_interface
+from getdist import gtypes as types
+from getdist import chains, covmat, ParamInfo, IniFile, ParamNames, cobaya_interface
 from getdist.densities import Density1D, Density2D, DensityND
 from getdist.densities import getContourLevels as getImportContourLevels
 from getdist.chains import Chains, chainFiles, last_modified, WeightedSampleError, ParamError

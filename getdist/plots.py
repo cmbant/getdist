@@ -4,8 +4,8 @@ import matplotlib
 import sys
 import warnings
 import logging
-from types import MappingProxyType
 from typing import Mapping, Sequence, Union, Optional, Iterable, Tuple, Any
+import numpy as np
 
 if 'ipykern' not in matplotlib.rcParams['backend'] and \
         'linux' in sys.platform and os.environ.get('DISPLAY', '') == '':
@@ -21,7 +21,6 @@ from matplotlib import cm, rcParams
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 from matplotlib.font_manager import font_scalings
-import numpy as np
 import getdist
 from getdist import MCSamples, loadMCSamples, ParamNames, ParamInfo, IniFile
 from getdist.chain_grid import is_grid_object, get_chain_root_files, ChainDirGrid, load_supported_grid
@@ -31,10 +30,9 @@ from getdist.densities import Density2D
 from getdist.gaussian_mixtures import MixtureND
 from getdist.matplotlib_ext import BoundedMaxNLocator, SciFuncFormatter
 from getdist._base import _BaseObject
+from getdist.gtypes import empty_dict
 
 """Plotting scripts for GetDist outputs"""
-
-empty_dict = MappingProxyType({})
 
 
 def extend_list_zip(*args):
@@ -1240,6 +1238,27 @@ class GetDistPlotter(_BaseObject):
         if lw is None:
             lw = self.settings.axis_marker_lw
         self.get_axes(ax).axhline(marker, ls=ls, color=color, lw=lw, **kwargs)
+
+    def add_param_markers(self, param_value_dict: Mapping, *, color=None, ls=None, lw=None):
+        """
+        Adds vertical and horizontal lines marking some parameter values.
+
+        :param param_value_dict: dictionary of parameter names and values to mark
+        :param color: optional color of the marker
+        :param ls: optional line style of the marker
+        :param lw: optional line width.
+        """
+        for ax in self.subplots.reshape(-1):
+            par: Optional[list] = getattr(ax, 'getdist_params', None)
+            if par is not None:
+                par = self._par_name_list(par)
+                xval = param_value_dict.get(par[0], None)
+                if xval is not None:
+                    self.add_x_marker(xval, color=color, ls=ls, lw=lw, ax=ax)
+                if len(par) > 1:
+                    yval = param_value_dict.get(par[1], None)
+                    if yval is not None:
+                        self.add_y_marker(yval, color=color, ls=ls, lw=lw, ax=ax)
 
     def add_x_bands(self, x, sigma, color='gray', ax=None, alpha1=0.15, alpha2=0.1, **kwargs):
         """
@@ -3037,6 +3056,8 @@ class GetDistPlotter(_BaseObject):
 
         opts = dict({'marker': 'o', 'cmap': self.settings.colormap_scatter,
                      's': self.settings.scatter_size}, **kwargs)
+        if fixed_color:
+            del opts['cmap']
         ax.scatter(x, y, z, c=colors, depthshade=True, **opts)
 
         if color_bar and not fixed_color:
@@ -3129,11 +3150,11 @@ class GetDistPlotter(_BaseObject):
         if not params:
             raise GetDistPlotError('No parameters for plot_4d!')
         params = self.get_param_array(roots[0], params)
-        from mpl_toolkits.mplot3d import Axes3D
+
         if not ax:
             if not self.fig:
                 self.make_figure()
-            ax = self.subplots[0, 0] = Axes3D(self.fig)
+            ax = self._subplot(0, 0, pars=(p.name for p in params[:3]), projection='3d')
             ax.dist = dist
         pts = []
         for i, (root, alph, mark) in enumerate(extend_list_zip(roots, alpha, marker)):
@@ -3249,6 +3270,10 @@ class GetDistPlotter(_BaseObject):
 
         self.fig.savefig(fname, bbox_extra_artists=self.extra_artists, bbox_inches='tight')
 
+    @staticmethod
+    def _par_name_list(par_list):
+        return [p.name if isinstance(p, ParamInfo) else p for p in par_list]
+
     def get_axes_for_params(self, *pars, **kwargs):
         """
         Get axes corresponding to given parameters
@@ -3258,7 +3283,7 @@ class GetDistPlotter(_BaseObject):
         :return: axes instance or None if not found
         """
         ordered = kwargs.get('ordered', True)
-        par_list = [p.name if isinstance(p, ParamInfo) else p for p in pars]
+        par_list = self._par_name_list(pars)
         if not ordered:
             par_list = set(par_list)
             func = set
@@ -3267,8 +3292,7 @@ class GetDistPlotter(_BaseObject):
         for ax in self.subplots.reshape(-1):
             if ax:
                 params = getattr(ax, 'getdist_params', None)
-                if params is not None and \
-                        func([p.name if isinstance(p, ParamInfo) else p for p in params]) == par_list:
+                if params is not None and func(self._par_name_list(params)) == par_list:
                     self._last_ax = ax
                     return ax
         return None

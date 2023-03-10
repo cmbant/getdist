@@ -2,8 +2,11 @@ import decimal
 import os
 from io import BytesIO
 import numpy as np
-from getdist.paramnames import ParamInfo, ParamList
 import tempfile
+from getdist.paramnames import ParamInfo, ParamList
+from types import MappingProxyType
+
+empty_dict = MappingProxyType({})
 
 _sci_tolerance = 4
 
@@ -192,7 +195,7 @@ class TableFormatter:
         part = self.majorDividor + (" c" + self.minorDividor) * (colsPerResult - 1) + ' c'
         return '\\begin{tabular} {' + self.border + " l " + part * numResults + (
                 self.colDividor + " l " + part * numResults) * (
-                       ncol - 1) + self.border + '}'
+                ncol - 1) + self.border + '}'
 
     def endTable(self):
         return '\\end{tabular}'
