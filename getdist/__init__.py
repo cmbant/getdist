@@ -1,10 +1,10 @@
 __author__ = 'Antony Lewis'
-__version__ = "1.4.2"
+__version__ = "1.4.3"
 __url__ = "https://getdist.readthedocs.io"
 
 import os
 import sys
-from getdist import gtypes as types
+from getdist import gtypes as types  # to avoid Pycharm debugging issues with import of system types module
 from getdist.inifile import IniFile
 from getdist.paramnames import ParamInfo, ParamNames
 from getdist.chains import WeightedSamples

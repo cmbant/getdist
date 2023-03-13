@@ -4,7 +4,7 @@ import matplotlib
 import sys
 import warnings
 import logging
-from typing import Mapping, Sequence, Union, Optional, Iterable, Tuple, Any
+from typing import Mapping, Sequence, Union, Optional, Iterable, Tuple, Any, Dict
 import numpy as np
 
 if 'ipykern' not in matplotlib.rcParams['backend'] and \
@@ -849,7 +849,8 @@ class GetDistPlotter(_BaseObject):
         """
         return self._get_line_styles(plotno, **kwargs)['color']
 
-    def _get_color_at_index(self, colors, i=None):
+    @staticmethod
+    def _get_color_at_index(colors, i=None):
         """
          Get color at index
 
@@ -1199,7 +1200,7 @@ class GetDistPlotter(_BaseObject):
         density = mixture.marginalizedMixture(params=[param1, param2]).density2D()
         return self.add_2d_density_contours(density, **kwargs)
 
-    def add_x_marker(self, marker, color=None, ls=None, lw=None, ax=None, **kwargs):
+    def add_x_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
         """
         Adds a vertical line marking some x value. Optional arguments can override default settings.
 
@@ -1219,7 +1220,7 @@ class GetDistPlotter(_BaseObject):
             lw = self.settings.axis_marker_lw
         self.get_axes(ax).axvline(marker, ls=ls, color=color, lw=lw, **kwargs)
 
-    def add_y_marker(self, marker, color=None, ls=None, lw=None, ax=None, **kwargs):
+    def add_y_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
         """
         Adds a horizontal line marking some y value. Optional arguments can override default settings.
 
@@ -1239,11 +1240,12 @@ class GetDistPlotter(_BaseObject):
             lw = self.settings.axis_marker_lw
         self.get_axes(ax).axhline(marker, ls=ls, color=color, lw=lw, **kwargs)
 
-    def add_param_markers(self, param_value_dict: Mapping, *, color=None, ls=None, lw=None):
+    def add_param_markers(self, param_value_dict: Dict[str, Union[Iterable[float], float]], *,
+                          color=None, ls=None, lw=None):
         """
-        Adds vertical and horizontal lines marking some parameter values.
+        Adds vertical and horizontal lines on all subplots marking some parameter values.
 
-        :param param_value_dict: dictionary of parameter names and values to mark
+        :param param_value_dict: dictionary of parameter names and values to mark (number or list)
         :param color: optional color of the marker
         :param ls: optional line style of the marker
         :param lw: optional line width.
@@ -1251,14 +1253,9 @@ class GetDistPlotter(_BaseObject):
         for ax in self.subplots.reshape(-1):
             par: Optional[list] = getattr(ax, 'getdist_params', None)
             if par is not None:
-                par = self._par_name_list(par)
-                xval = param_value_dict.get(par[0], None)
-                if xval is not None:
-                    self.add_x_marker(xval, color=color, ls=ls, lw=lw, ax=ax)
-                if len(par) > 1:
-                    yval = param_value_dict.get(par[1], None)
-                    if yval is not None:
-                        self.add_y_marker(yval, color=color, ls=ls, lw=lw, ax=ax)
+                for p, op in zip(self._par_name_list(par), [self.add_x_marker, self.add_y_marker]):
+                    for paramval in [x for x in makeList(param_value_dict.get(p, None)) if x is not None]:
+                        op(paramval, color=color, ls=ls, lw=lw, ax=ax)
 
     def add_x_bands(self, x, sigma, color='gray', ax=None, alpha1=0.15, alpha2=0.1, **kwargs):
         """
