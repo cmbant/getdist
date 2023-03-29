@@ -30,7 +30,7 @@ from getdist.densities import Density2D
 from getdist.gaussian_mixtures import MixtureND
 from getdist.matplotlib_ext import BoundedMaxNLocator, SciFuncFormatter
 from getdist._base import _BaseObject
-from getdist.gtypes import empty_dict
+from getdist.types import empty_dict
 
 """Plotting scripts for GetDist outputs"""
 
