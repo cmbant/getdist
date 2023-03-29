@@ -271,6 +271,9 @@ def get_sampler_temperature(filename_or_info):
     info = yaml_file_or_dict(filename_or_info)
     if _sampler not in info:
         return None
+    # post-processed chains have always already been cooled
+    if _post in info:
+        return 1
     return info[_sampler][get_sampler_key(info)].get("temperature")
 
 
