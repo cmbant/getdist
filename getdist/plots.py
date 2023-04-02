@@ -3240,7 +3240,7 @@ class GetDistPlotter(_BaseObject):
         args.update(kwargs)
         self.add_text(text_label, x, y, ax, **args)
 
-    def export(self, fname=None, adir=None, watermark=None, tag=None):
+    def export(self, fname=None, adir=None, watermark=None, tag=None, **kwargs):
         """
         Exports given figure to a file. If the filename is not specified, saves to a file with the same
         name as the calling script (useful for plot scripts where the script name matches the output figure).
@@ -3265,7 +3265,7 @@ class GetDistPlotter(_BaseObject):
             self.fig.text(0.45, 0.5, escapeLatex(watermark), fontsize=30, color='gray',
                           ha='center', va='center', alpha=0.2)
 
-        self.fig.savefig(fname, bbox_extra_artists=self.extra_artists, bbox_inches='tight')
+        self.fig.savefig(fname, bbox_extra_artists=self.extra_artists, bbox_inches='tight', **kwargs)
 
     @staticmethod
     def _par_name_list(par_list):
