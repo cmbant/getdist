@@ -1085,6 +1085,12 @@ class GetDistPlotter(_BaseObject):
             _args.pop('lw', None)
             return _args
 
+        args = self._get_line_styles(plotno, **kwargs)
+        linestyles = [args['ls']]
+        try:
+            lws = args['lw']  # not linewidth_contour is only used for filled contours
+        except:
+            lws = None
         if kwargs.get('filled'):
             if cols is None:
                 color = kwargs.get('color')
@@ -1100,14 +1106,12 @@ class GetDistPlotter(_BaseObject):
             if proxy_ix >= 0:
                 self.contours_added[proxy_ix] = (
                     matplotlib.patches.Rectangle((0, 0), 1, 1, fc=matplotlib.colors.to_rgb(cs.tcolors[-1][0])))
-            ax.contour(density.x, density.y, density.P, levels[:1], colors=cs.tcolors[-1],
-                       linewidths=self._scaled_linewidth(self.settings.linewidth_contour),
+            if lws is None: lws = self._scaled_linewidth(self.settings.linewidth_contour)
+            ax.contour(density.x, density.y, density.P, levels[:1], colors=cs.tcolors[-1], linestyles=linestyles,
+                       linewidths=lws,
                        alpha=alpha * self.settings.alpha_factor_contour_lines, **clean_args(kwargs))
         else:
-            args = self._get_line_styles(plotno, **kwargs)
-            linestyles = [args['ls']]
             cols = [args['color']]
-            lws = args['lw']  # not linewidth_contour is only used for filled contours
             kwargs = self._get_plot_args(plotno, **kwargs)
             kwargs['alpha'] = alpha
             cs = ax.contour(density.x, density.y, density.P, sorted(contour_levels), colors=cols, linestyles=linestyles,
