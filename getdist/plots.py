@@ -1097,7 +1097,8 @@ class GetDistPlotter(_BaseObject):
                 self.contours_added[proxy_ix] = (
                     matplotlib.patches.Rectangle((0, 0), 1, 1, fc=matplotlib.colors.to_rgb(cs.tcolors[-1][0])))
             ax.contour(density.x, density.y, density.P, levels[:1], colors=cs.tcolors[-1],
-                       linewidths=self._scaled_linewidth(kwargs.get('lw', self.settings.linewidth_contour)),
+                       linewidths=self._scaled_linewidth(self.settings.linewidth_contour
+                                                         if kwargs.get('lw') is None else kwargs['lw']),
                        linestyles=kwargs.get('ls'),
                        alpha=alpha * self.settings.alpha_factor_contour_lines, **clean_args(kwargs))
         else:
