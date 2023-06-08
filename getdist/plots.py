@@ -114,7 +114,6 @@ class GetDistPlotSettings(_BaseObject):
     :ivar scatter_size: size of points in "3D" scatter plots
     :ivar shade_level_scale: shading contour colors are put at [0:1:spacing]**shade_level_scale
     :ivar shade_meanlikes: 2D shading uses mean likelihoods rather than marginalized density
-    :ivar shade_root_index: The index of the samples for which the 2D shading is applied
     :ivar solid_colors: List of default colors for filled 2D plots or the name of a colormap (e.g. tab10).  If a list,
                         each element is either a color, or a tuple of values for different contour levels.
     :ivar solid_contour_palefactor: factor by which to make 2D outer filled contours paler when only specifying
@@ -172,7 +171,6 @@ class GetDistPlotSettings(_BaseObject):
         self.line_labels = True
         self.num_shades = 80
         self.shade_level_scale = 1.8  # contour levels at [0:1:spacing]**shade_level_scale
-        self.shade_root_index = 0
 
         self.progress = False
 
@@ -1658,7 +1656,9 @@ class GetDistPlotter(_BaseObject):
         :param param1: x parameter name
         :param param2:  y parameter name
         :param param_pair: An [x,y] pair of params; can be set instead of param1 and param2
-        :param shaded: True if plot should be a shaded density plot (for the first samples plotted unless changed with shade_root_index)
+        :param shaded: True or integer if plot should be a shaded density plot, where the integer specifies
+                       the index of which contour is shaded (first samples shaded if True provided instead
+                       of an integer)
         :param add_legend_proxy: True to add to the legend proxy
         :param line_offset: line_offset if not adding first contours to plot
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
@@ -1694,8 +1694,14 @@ class GetDistPlotter(_BaseObject):
         ax = self.get_axes(ax, pars=param_pair)
         if self.settings.progress:
             print('plotting: ', [param.name for param in param_pair])
-        if shaded and not kwargs.get('filled'):
-            i = self.settings.shade_root_index
+        if type(shaded) is not bool:
+            shaded_bool = True
+            shade_root_index = shaded
+        else:
+            shaded_bool = shaded
+            shade_root_index = 0
+        if shaded_bool and not kwargs.get('filled'):
+            i = shade_root_index
             self.add_2d_shading(roots[i], param_pair[0], param_pair[1], ax=ax)
         xbounds, ybounds = None, None
         contour_args = self._make_contour_args(len(roots), **kwargs)
@@ -2153,7 +2159,7 @@ class GetDistPlotter(_BaseObject):
         :param label_order: minus one to show legends in reverse order that lines were added, or a list giving
                             specific order of line indices
         :param filled: True to plot filled contours
-        :param shaded: True to shade by the density for the first root plotted (unless changed with shade_root_index)
+        :param shaded: True to shade by the density for the first root plotted (unless specified otherwise)
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d`
         :return: The plot_col, plot_row subplot dimensions of the new figure
 
@@ -2327,7 +2333,7 @@ class GetDistPlotter(_BaseObject):
         :param plot_3d_with_param: for the 2D plots, make sample scatter plot, with samples colored by this parameter
                                    name (to make a '3D' plot)
         :param filled: True for filled contours
-        :param shaded: plot shaded density for first root (cannot be used with filled) unless changing the root with shade_root_index
+        :param shaded: plot shaded density for first root (cannot be used with filled) unless specified otherwise
         :param contour_args: optional dict (or list of dict) with arguments for each 2D plot
                             (e.g. specifying color, alpha, etc)
         :param contour_colors: list of colors for plotting contours (for each root)
