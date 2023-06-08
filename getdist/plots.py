@@ -1694,15 +1694,8 @@ class GetDistPlotter(_BaseObject):
         ax = self.get_axes(ax, pars=param_pair)
         if self.settings.progress:
             print('plotting: ', [param.name for param in param_pair])
-        if type(shaded) is not bool:
-            shaded_bool = True
-            shade_root_index = shaded
-        else:
-            shaded_bool = shaded
-            shade_root_index = 0
-        if shaded_bool and not kwargs.get('filled'):
-            i = shade_root_index
-            self.add_2d_shading(roots[i], param_pair[0], param_pair[1], ax=ax)
+        if shaded is not False and not kwargs.get('filled'):
+            self.add_2d_shading(roots[0 if shaded is True else shaded], *param_pair, ax=ax)
         xbounds, ybounds = None, None
         contour_args = self._make_contour_args(len(roots), **kwargs)
         for i, root in enumerate(roots):
