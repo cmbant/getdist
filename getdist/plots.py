@@ -1656,7 +1656,9 @@ class GetDistPlotter(_BaseObject):
         :param param1: x parameter name
         :param param2:  y parameter name
         :param param_pair: An [x,y] pair of params; can be set instead of param1 and param2
-        :param shaded: True if plot should be a shaded density plot (for the first samples plotted)
+        :param shaded: True or integer if plot should be a shaded density plot, where the integer specifies
+                       the index of which contour is shaded (first samples shaded if True provided instead
+                       of an integer)
         :param add_legend_proxy: True to add to the legend proxy
         :param line_offset: line_offset if not adding first contours to plot
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
@@ -1692,8 +1694,8 @@ class GetDistPlotter(_BaseObject):
         ax = self.get_axes(ax, pars=param_pair)
         if self.settings.progress:
             print('plotting: ', [param.name for param in param_pair])
-        if shaded and not kwargs.get('filled'):
-            self.add_2d_shading(roots[0], param_pair[0], param_pair[1], ax=ax)
+        if shaded is not False and not kwargs.get('filled'):
+            self.add_2d_shading(roots[0 if shaded is True else shaded], *param_pair, ax=ax)
         xbounds, ybounds = None, None
         contour_args = self._make_contour_args(len(roots), **kwargs)
         for i, root in enumerate(roots):
@@ -2150,7 +2152,7 @@ class GetDistPlotter(_BaseObject):
         :param label_order: minus one to show legends in reverse order that lines were added, or a list giving
                             specific order of line indices
         :param filled: True to plot filled contours
-        :param shaded: True to shade by the density for the first root plotted
+        :param shaded: True to shade by the density for the first root plotted (unless specified otherwise)
         :param kwargs: optional keyword arguments for :func:`~GetDistPlotter.plot_2d`
         :return: The plot_col, plot_row subplot dimensions of the new figure
 
@@ -2324,7 +2326,7 @@ class GetDistPlotter(_BaseObject):
         :param plot_3d_with_param: for the 2D plots, make sample scatter plot, with samples colored by this parameter
                                    name (to make a '3D' plot)
         :param filled: True for filled contours
-        :param shaded: plot shaded density for first root (cannot be used with filled)
+        :param shaded: plot shaded density for first root (cannot be used with filled) unless specified otherwise
         :param contour_args: optional dict (or list of dict) with arguments for each 2D plot
                             (e.g. specifying color, alpha, etc)
         :param contour_colors: list of colors for plotting contours (for each root)
