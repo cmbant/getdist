@@ -1216,7 +1216,9 @@ class GetDistPlotter(_BaseObject):
             ls = self.settings.axis_marker_ls
         if lw is None:
             lw = self.settings.axis_marker_lw
-        self.get_axes(ax).axvline(marker, ls=ls, color=color, lw=lw, **kwargs)
+        if not(isinstance(marker,list)): marker = [marker]
+        for m in marker:
+            self.get_axes(ax).axvline(m, ls=ls, color=color, lw=lw, **kwargs)
 
     def add_y_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
         """
@@ -1236,7 +1238,9 @@ class GetDistPlotter(_BaseObject):
             ls = self.settings.axis_marker_ls
         if lw is None:
             lw = self.settings.axis_marker_lw
-        self.get_axes(ax).axhline(marker, ls=ls, color=color, lw=lw, **kwargs)
+        if not(isinstance(marker,list)): marker = [marker]
+        for m in marker:
+            self.get_axes(ax).axhline(m, ls=ls, color=color, lw=lw, **kwargs)
 
     def add_param_markers(self, param_value_dict: Dict[str, Union[Iterable[float], float]], *,
                           color=None, ls=None, lw=None):
