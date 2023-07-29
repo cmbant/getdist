@@ -1200,9 +1200,9 @@ class GetDistPlotter(_BaseObject):
 
     def add_x_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
         """
-        Adds vertical lines marking some x value. Optional arguments can override default settings.
+        Adds vertical lines marking x values. Optional arguments can override default settings.
 
-        :param marker: The x coordinate of the location the marker line, or a list for multiple lines
+        :param marker: The x coordinate of the location of the marker line, or a list for multiple lines
         :param color: optional color of the marker
         :param ls: optional line style of the marker
         :param lw: optional line width
@@ -1222,9 +1222,9 @@ class GetDistPlotter(_BaseObject):
 
     def add_y_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
         """
-        Adds horizontal lines marking some y value. Optional arguments can override default settings.
+        Adds horizontal lines marking y values. Optional arguments can override default settings.
 
-        :param marker: The y coordinate of the location the marker line, or a list for multiple lines
+        :param marker: The y coordinate of the location of the marker line, or a list for multiple lines
         :param color: optional color of the marker
         :param ls: optional line style of the marker
         :param lw: optional line width.
