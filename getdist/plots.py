@@ -1200,9 +1200,9 @@ class GetDistPlotter(_BaseObject):
 
     def add_x_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
         """
-        Adds a vertical line marking some x value. Optional arguments can override default settings.
+        Adds vertical lines marking x values. Optional arguments can override default settings.
 
-        :param marker: The x coordinate of the location the marker line
+        :param marker: The x coordinate of the location of the marker line, or a list for multiple lines
         :param color: optional color of the marker
         :param ls: optional line style of the marker
         :param lw: optional line width
@@ -1216,13 +1216,15 @@ class GetDistPlotter(_BaseObject):
             ls = self.settings.axis_marker_ls
         if lw is None:
             lw = self.settings.axis_marker_lw
-        self.get_axes(ax).axvline(marker, ls=ls, color=color, lw=lw, **kwargs)
+        marker = makeList(marker)
+        for m in marker:
+            self.get_axes(ax).axvline(m, ls=ls, color=color, lw=lw, **kwargs)
 
     def add_y_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
         """
-        Adds a horizontal line marking some y value. Optional arguments can override default settings.
+        Adds horizontal lines marking y values. Optional arguments can override default settings.
 
-        :param marker: The y coordinate of the location the marker line
+        :param marker: The y coordinate of the location of the marker line, or a list for multiple lines
         :param color: optional color of the marker
         :param ls: optional line style of the marker
         :param lw: optional line width.
@@ -1236,7 +1238,9 @@ class GetDistPlotter(_BaseObject):
             ls = self.settings.axis_marker_ls
         if lw is None:
             lw = self.settings.axis_marker_lw
-        self.get_axes(ax).axhline(marker, ls=ls, color=color, lw=lw, **kwargs)
+        marker = makeList(marker)
+        for m in marker:
+            self.get_axes(ax).axhline(m, ls=ls, color=color, lw=lw, **kwargs)
 
     def add_param_markers(self, param_value_dict: Dict[str, Union[Iterable[float], float]], *,
                           color=None, ls=None, lw=None):
