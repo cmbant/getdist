@@ -982,7 +982,7 @@ class GetDistPlotter(_BaseObject):
         if kwargs.get('dashes'):
             l.set_dashes(kwargs['dashes'])
         if self.settings.plot_meanlikes:
-            kwargs['lw'] = self._scaled_linewidth(self.settings.linewidth_likes)
+            kwargs['lw'] = self._scaled_linewidth(self.settings.linewidth_meanlikes)
             ax.plot(density.x, density.likes, **kwargs)
         if title_limit:
             if isinstance(root, MixtureND):
@@ -1198,7 +1198,7 @@ class GetDistPlotter(_BaseObject):
         density = mixture.marginalizedMixture(params=[param1, param2]).density2D()
         return self.add_2d_density_contours(density, **kwargs)
 
-    def add_x_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
+    def add_x_marker(self, marker: Union[float, Sequence[float]], color=None, ls=None, lw=None, ax=None, **kwargs):
         """
         Adds vertical lines marking x values. Optional arguments can override default settings.
 
@@ -1220,7 +1220,7 @@ class GetDistPlotter(_BaseObject):
         for m in marker:
             self.get_axes(ax).axvline(m, ls=ls, color=color, lw=lw, **kwargs)
 
-    def add_y_marker(self, marker: float, color=None, ls=None, lw=None, ax=None, **kwargs):
+    def add_y_marker(self, marker: Union[float, Iterable[float]], color=None, ls=None, lw=None, ax=None, **kwargs):
         """
         Adds horizontal lines marking y values. Optional arguments can override default settings.
 
@@ -1556,7 +1556,7 @@ class GetDistPlotter(_BaseObject):
         :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for
                       the samples to plot
         :param param: the parameter name to plot
-        :param marker: If set, places a marker at given coordinate.
+        :param marker: If set, places a marker at given coordinate (or list of coordinates).
         :param marker_color: If set, sets the marker color.
         :param label_right: If True, label the y-axis on the right rather than the left
         :param title_limit: If not None, a maginalized limit (1,2..) of the first root to print as the title of the plot
