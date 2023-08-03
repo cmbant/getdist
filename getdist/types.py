@@ -3,7 +3,7 @@ import os
 from io import BytesIO
 import numpy as np
 import tempfile
-from getdist.paramnames import ParamInfo, ParamList
+from getdist.paramnames import ParamInfo, ParamList, makeList
 from types import MappingProxyType
 
 empty_dict = MappingProxyType({})
@@ -272,7 +272,7 @@ class ResultTable:
         """
         :param ncol: number of columns
         :param results: a :class:`MargeStats` or :class:`BestFit` instance, or a list of them for
-                        comparing different results
+                        comparing different results, or an MCSamples instance for white getMargeStats() will be called.
         :param limit: which limit to include (1 is first limit calculated, usually 68%, 2 the second, usually 95%)
         :param tableParamNames: optional :class:`~.paramnames.ParamNames` instance listing particular
                                 parameters to include
@@ -285,7 +285,10 @@ class ResultTable:
         :param shiftSigma_indep: show parameter shifts in sigma assuming data are independent
         :param shiftSigma_subset: show parameter shifts in sigma assuming data are a subset of each other
         """
-        # results is a margeStats or bestFit table
+        results = list(makeList(results))
+        for i, res in enumerate(results):
+            if getMargeStats := getattr(res, "getMargeStats", None):
+                results[i] = getMargeStats()
         self.lines = []
         if formatter is None:
             self.format = NoLineTableFormatter()

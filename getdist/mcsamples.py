@@ -2103,7 +2103,7 @@ class MCSamples(Chains):
             for i, cont in enumerate(m.ND_contours):
                 region = self.samples[indexes[:cont], j]
                 par.ND_limit_bot[i] = np.min(region)
-                par.ND_limit_bot[i] = np.max(region)
+                par.ND_limit_top[i] = np.max(region)
             par.bestfit_sample = self.samples[bestfit_ix][j]
 
         self.likeStats = m
