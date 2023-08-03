@@ -287,7 +287,8 @@ class ResultTable:
         """
         results = list(makeList(results))
         for i, res in enumerate(results):
-            if getMargeStats := getattr(res, "getMargeStats", None):
+            getMargeStats = getattr(res, "getMargeStats", None)
+            if getMargeStats is not None:
                 results[i] = getMargeStats()
         self.lines = []
         if formatter is None:
