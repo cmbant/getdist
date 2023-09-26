@@ -141,7 +141,7 @@ setup(name='GetDist',
           'PyYAML (>=5.1)',
           'packaging'],
       # PySide is needed for the GUI
-      extras_require={'GUI': ["PySide6>=6.10"], 'docs': ["sphinx>=4.0"]},
+      extras_require={'GUI': ["PySide6>=6.10"], 'docs': ["sphinx>=4.0", "sphinx_rtd_theme", "sphinxcontrib-jquery"]},
       cmdclass=cmd_class,
       classifiers=[
           'Development Status :: 5 - Production/Stable',
