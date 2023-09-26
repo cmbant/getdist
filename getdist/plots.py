@@ -2865,7 +2865,7 @@ class GetDistPlotter(_BaseObject):
             self.last_scatter = ax.scatter(samples[0], samples[1], edgecolors='none',
                                            s=scatter_size or self.settings.scatter_size,
                                            c=fixed_color or samples[2],
-                                           cmap=self.settings.colormap_scatter, alpha=alpha)
+                                           cmap=None if fixed_color else self.settings.colormap_scatter, alpha=alpha)
 
         if color_bar and not fixed_color:
             self.last_colorbar = self.add_colorbar(params[2], mappable=self.last_scatter, ax=ax, **kwargs)
