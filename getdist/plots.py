@@ -1093,10 +1093,12 @@ class GetDistPlotter(_BaseObject):
                     cols = color
             levels = sorted(np.append([density.P.max() + 1], contour_levels))
             cs = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
+
+            fc = tuple(cs.to_rgba(cs.cvalues[-1], cs.alpha))
             if proxy_ix >= 0:
                 self.contours_added[proxy_ix] = (
-                    matplotlib.patches.Rectangle((0, 0), 1, 1, fc=matplotlib.colors.to_rgb(cs.tcolors[-1][0])))
-            ax.contour(density.x, density.y, density.P, levels[:1], colors=cs.tcolors[-1],
+                    matplotlib.patches.Rectangle((0, 0), 1, 1, fc=fc))
+            ax.contour(density.x, density.y, density.P, levels[:1], colors=(fc,),
                        linewidths=self._scaled_linewidth(self.settings.linewidth_contour
                                                          if kwargs.get('lw') is None else kwargs['lw']),
                        linestyles=kwargs.get('ls'),
