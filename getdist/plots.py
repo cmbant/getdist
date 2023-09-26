@@ -2389,13 +2389,13 @@ class GetDistPlotter(_BaseObject):
         def _axis_y_limit_changed(_ax):
             _lims = _ax.get_ylim()
             other = _ax._shared_x_axis
-            if _lims != other.get_xlim():
+            if other is not None and _lims != other.get_xlim():
                 other.set_xlim(_lims)
 
         def _axis_x_limit_changed(_ax):
             _lims = _ax.get_xlim()
             other = _ax._shared_y_axis
-            if _lims != other.get_ylim():
+            if other is not None and  _lims != other.get_ylim():
                 other.set_ylim(_lims)
 
         def def_line_args(cont_args, cont_colors):
