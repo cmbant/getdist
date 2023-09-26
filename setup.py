@@ -2,6 +2,7 @@
 import re
 import os
 import sys
+import shutil
 
 try:
     from setuptools import setup
@@ -52,7 +53,6 @@ if sys.platform == "darwin":
         from setuptools.command.install import install
         from setuptools.command.build_py import build_py
         import subprocess
-        from distutils import dir_util
 
         file_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'getdist/gui')
         app_name = 'GetDist GUI.app'
@@ -60,8 +60,8 @@ if sys.platform == "darwin":
 
         def make_app():
             # Put python command into app script so it can be run from spotlight etc.
-            dir_util.copy_tree(os.path.join(file_dir, 'mac_app'),
-                               os.path.join(file_dir, app_name))
+            shutil.copytree(os.path.join(file_dir, 'mac_app'),
+                            os.path.join(file_dir, app_name))
             fname = os.path.join(file_dir, app_name + '/Contents/MacOS/GetDistGUI')
             out = []
             with open(fname, 'r') as f:
