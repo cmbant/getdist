@@ -171,7 +171,7 @@ class MCSamples(Chains):
                   will be read from the root.properties.ini file if it exists and otherwise default to "mcmc".
 
         """
-        Chains.__init__(self, root, jobItem=jobItem, **kwargs)
+        super().__init__(root, jobItem=jobItem, **kwargs)
 
         self.version = pickle_version
 
