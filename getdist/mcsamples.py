@@ -42,7 +42,7 @@ class BandwidthError(MCSamplesError):
 
 def loadMCSamples(file_root: str, ini: Union[None, str, IniFile] = None,
                   jobItem=None, no_cache=False, settings: Optional[Mapping[str, Any]] = None,
-                  chain_exclude = None) -> 'MCSamples':
+                  chain_exclude=None) -> 'MCSamples':
     """
     Loads a set of samples from a file or files.
 
