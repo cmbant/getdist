@@ -33,6 +33,12 @@ class GetDistFileTest(unittest.TestCase):
         os.chdir(tempfile.gettempdir())
         shutil.rmtree(self.tempdir)
 
+    def testFileLoad(self):
+        samples = loadMCSamples(self.root)
+        self.assertEqual(samples.samples.size, 24_000, "Inconsistent chain size")
+        samples = loadMCSamples(self.root, chain_exclude=[1, 2])
+        self.assertEqual(samples.samples.size, 8000, "Inconsistent chain size")
+
     def testFileLoadPlot(self):
         samples = loadMCSamples(self.root, settings={'ignore_rows': 0.1})
         g = plots.get_single_plotter(chain_dir=self.tempdir, analysis_settings={'ignore_rows': 0.1})

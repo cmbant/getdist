@@ -41,7 +41,8 @@ class BandwidthError(MCSamplesError):
 
 
 def loadMCSamples(file_root: str, ini: Union[None, str, IniFile] = None,
-                  jobItem=None, no_cache=False, settings: Optional[Mapping[str, Any]] = None) -> 'MCSamples':
+                  jobItem=None, no_cache=False, settings: Optional[Mapping[str, Any]] = None,
+                  chain_exclude=None) -> 'MCSamples':
     """
     Loads a set of samples from a file or files.
 
@@ -58,11 +59,14 @@ def loadMCSamples(file_root: str, ini: Union[None, str, IniFile] = None,
     :param jobItem: an optional grid jobItem instance for a CosmoMC grid output
     :param no_cache: Indicates whether or not we should cache loaded samples in a pickle
     :param settings: dictionary of analysis settings to override defaults
+    :param chain_exclude: A list of indexes to exclude, None to include all
     :return: The :class:`MCSamples` instance
     """
-    files = chainFiles(file_root)
+    if chain_exclude:
+        no_cache = True
+    files = chainFiles(file_root, chain_exclude=chain_exclude)
     if not files:  # try new Cobaya format
-        files = chainFiles(file_root, separator='.')
+        files = chainFiles(file_root, separator='.', chain_exclude=chain_exclude)
     path, name = os.path.split(file_root)
     cache_dir = getdist.make_cache_dir()
     if cache_dir:
