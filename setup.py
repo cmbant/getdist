@@ -1,37 +1,23 @@
-#!/usr/bin/env python
 import re
 import os
 import sys
 import shutil
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
-
-def find_version():
-    version_file = open(os.path.join(os.path.dirname(__file__), 'getdist/__init__.py')).read()
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
-
-
-def get_long_description():
-    with open('README.rst', encoding="utf-8-sig") as f:
-        lines = f.readlines()
-        i = -1
-        while '=====' not in lines[i]:
-            i -= 1
-        return "".join(lines[:i])
-
+from setuptools import setup
 
 cmd_class = {}
 install_msg = None
 package_data = {'getdist': ['analysis_defaults.ini', 'distparam_template.ini'],
                 'getdist.gui': ['images/*.png'],
                 'getdist.styles': ['*.paramnames', '*.sty']}
+
+
+def find_version():
+    version_file = open(os.path.join(os.path.dirname(__file__), 'getdist', '__init__.py')).read()
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 if sys.platform == "darwin":
     # Mac wrapper .app bundle
@@ -111,51 +97,8 @@ if sys.platform == "darwin":
             'build_py': BuildCommand
         }
 
-setup(name='GetDist',
-      version=find_version(),
-      description='GetDist Monte Carlo sample analysis, plotting and GUI',
-      long_description=get_long_description(),
-      long_description_content_type="text/x-rst",
-      author='Antony Lewis',
-      url="https://getdist.readthedocs.io",
-      project_urls={
-          'Source': 'https://github.com/cmbant/getdist',
-          'Tracker': 'https://github.com/cmbant/getdist/issues',
-          'Reference': 'https://arxiv.org/abs/1910.13970',
-          'Licensing': 'https://github.com/cmbant/getdist/blob/master/LICENCE.txt'
-      },
-      zip_safe=False,
-      packages=['getdist', 'getdist.gui', 'getdist.tests', 'getdist.styles'],
-      platforms="any",
-      entry_points={
-          'console_scripts': [
-              'getdist=getdist.command_line:getdist_command',
-              'getdist-gui=getdist.command_line:getdist_gui',
-          ]},
-      test_suite='getdist.tests',
+setup(zip_safe=False,
       package_data=package_data,
-      install_requires=[
-          'numpy (>=1.17.0)',
-          'matplotlib (>=2.2.0,!=3.5.0)',
-          'scipy (>=1.5.0)',
-          'PyYAML (>=5.1)',
-          'packaging'],
-      # PySide is needed for the GUI
-      extras_require={'GUI': ["PySide6>=6.10"], 'docs': ["sphinx", "sphinx_rtd_theme>=1", "sphinxcontrib-jquery"]},
-      cmdclass=cmd_class,
-      classifiers=[
-          'Development Status :: 5 - Production/Stable',
-          'Operating System :: OS Independent',
-          'Intended Audience :: Science/Research',
-          'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.6',
-          'Programming Language :: Python :: 3.7',
-          'Programming Language :: Python :: 3.8',
-          'Programming Language :: Python :: 3.9',
-          'Programming Language :: Python :: 3.10',
-          'Programming Language :: Python :: 3.11',
-          'Programming Language :: Python :: 3.12'
-      ],
-      python_requires='>=3.6',
-      keywords=['MCMC', 'KDE', 'sample', 'density estimation', 'plot', 'figure']
-      )
+      packages=["getdist", "getdist.gui", "getdist.tests", "getdist.styles"],
+      test_suite="getdist.tests",
+      cmdclass=cmd_class)

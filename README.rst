@@ -227,8 +227,20 @@ and references therein as appropriate.
 
 ===================
 
-.. raw:: html
+.. image:: https://raw.githubusercontent.com/CobayaSampler/cobaya/master/img/Sussex_white.svg
+   :alt: University of Sussex
+   :target: https://www.sussex.ac.uk/astronomy/
+   :height: 200px
+   :width: 200px
 
-    <a href="https://www.sussex.ac.uk/astronomy/"><img src="https://cdn.cosmologist.info/antony/Sussex_white.svg" style="height:200px" height="200px"></a>
-    <a href="https://erc.europa.eu/"><img src="https://cdn.cosmologist.info/antony/ERC_white.svg" style="height:200px" height="200px"></a>
-    <a href="https://stfc.ukri.org/"><img src="https://cdn.cosmologist.info/antony/STFC_white.svg" style="height:200px" height="200px"></a>
+.. image:: https://raw.githubusercontent.com/CobayaSampler/cobaya/master/img/ERC_white.svg
+   :alt: European Research Council
+   :target: https://erc.europa.eu/
+   :height: 200px
+   :width: 200px
+
+.. image:: https://cdn.cosmologist.info/antony/STFC_white.svg
+   :alt: STFC
+   :target: https://stfc.ukri.org/
+   :height: 200px
+   :width: 200px

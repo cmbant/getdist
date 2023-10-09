@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "getdist"
+authors = [
+    { name = "Antony Lewis" },
+]
+description = "GetDist Monte Carlo sample analysis, plotting and GUI"
+readme = "README.rst"
+license = { file = "LICENCE.txt" }
+dynamic = ["version"]
+keywords = ["MCMC", "KDE", "sample", "density estimation", "plot", "figure"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+requires-python = ">=3.7.0"
+dependencies = [
+    "numpy>=1.17.0", "matplotlib (>=2.2.0,!=3.5.0)", "scipy>=1.5", "PyYAML>=5.1", "packaging"
+]
+
+[project.optional-dependencies]
+GUI = ["PySide6>=6.1"]
+docs = ["sphinx", "sphinx_rtd_theme>=1.0", "sphinxcontrib-jquery"]
+
+[project.scripts]
+getdist = "getdist.command_line:getdist_command"
+getdist-gui = "getdist.command_line:getdist_gui"
+
+[project.urls]
+Homepage = "https://getdist.readthedocs.io"
+Documentation = "https://getdist.readthedocs.io"
+Source = "https://github.com/cmbant/getdist"
+Tracker = "https://github.com/cmbant/getdist/issues"
+Licensing = "https://github.com/cmbant/getdist/blob/master/LICENCE.txt"
+
+[tool.setuptools.dynamic]
+version = {attr = "getdist.__version__"}

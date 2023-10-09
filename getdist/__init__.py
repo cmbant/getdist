@@ -9,12 +9,6 @@ from getdist.paramnames import ParamInfo, ParamNames
 from getdist.chains import WeightedSamples
 from getdist.mcsamples import MCSamples, loadMCSamples
 
-if sys.version_info < (3, 7):
-    import platform
-
-    if platform.python_implementation() not in ['CPython', 'PyPy']:
-        raise ValueError('Only CPython and PyPy is supported on Python 3.6')
-
 
 def get_defaults_file(name='analysis_defaults.ini'):
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), name)
