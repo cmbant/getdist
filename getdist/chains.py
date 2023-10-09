@@ -968,7 +968,9 @@ class WeightedSamples:
 
         :param cool: cool factor
         """
-        MaxL = np.max(self.loglikes)
+        if self.loglikes is None:
+            raise WeightedSampleError('Samples have no likelihood values, required to cool')
+        MaxL = np.min(self.loglikes)
         newL = self.loglikes * cool
         self.weights = np.asarray(self.weights, dtype=np.float64)
         self.weights *= np.exp(-(newL - self.loglikes) - (MaxL * (1 - cool)))

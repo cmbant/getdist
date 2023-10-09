@@ -280,7 +280,7 @@ class MCSamples(Chains):
         if samples is not None:
             self.readChains(samples, weights, loglikes)
 
-    def copy(self, label=None, settings=None):
+    def copy(self, label=None, settings=None) -> 'MCSamples':
         """
         Create a copy of this sample object
 

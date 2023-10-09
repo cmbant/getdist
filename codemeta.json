@@ -3,7 +3,7 @@
     "@type": "SoftwareSourceCode",
     "name": "GetDist: Monte Carlo sample analysis, plotting and GUI",
     "description": "Analysis and plotting of Monte Carlo (and other) samples, including correlated samples from Markov Chain Monte Carlo (MCMC). It offers a point and click GUI for selecting chain files, viewing plots, marginalized constraints, and LaTeX tables, and includes a plotting library for making custom publication-ready 1D, 2D, 3D-scatter, triangle and other plots. Its convergence diagnostics include correlation length and diagonalized Gelman-Rubin statistics, and the optimized kernel density estimation provides an automated optimal bandwidth choice for 1D and 2D densities with boundary and bias correction.",
-    "identifier": "http://dx.doi.org/10.5281/zenodo.3522420",
+    "identifier": "https://dx.doi.org/10.5281/zenodo.3522420",
     "author": [
         {
             "@type": "Person",

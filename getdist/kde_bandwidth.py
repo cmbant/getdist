@@ -103,7 +103,7 @@ def gaussian_kde_bandwidth_binned(data, Neff, a=None):
      Uses Improved Sheather-Jones algorithm from
      Kernel density estimation via diffusion: Z. I. Botev, J. F. Grotowski, and D. P. Kroese (2010)
      Annals of Statistics, Volume 38, Number 5, pages 2916-2957.
-     http://arxiv.org/abs/1011.2602
+     https://arxiv.org/abs/1011.2602
     """
     I = np.arange(1, data.size) ** 2
     logI = np.log(I)
