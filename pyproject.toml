@@ -48,3 +48,6 @@ Licensing = "https://github.com/cmbant/getdist/blob/master/LICENCE.txt"
 
 [tool.setuptools.dynamic]
 version = {attr = "getdist.__version__"}
+
+[tool.setuptools.packages.find]
+exclude = ["docs"]

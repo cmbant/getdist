@@ -28,7 +28,7 @@ if sys.platform == "darwin":
         except:
             from PySide2 import QtCore
     except ImportError as e:
-        print("Cannot load PySide - skipping MacOS GetDist GUI app %s" % e)
+        print("Cannot load PySide2 or PySide6 - skipping MacOS GetDist GUI app: %s" % e)
     else:
         sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -98,6 +98,7 @@ if sys.platform == "darwin":
         }
 
 setup(zip_safe=False,
+      platforms="any",
       package_data=package_data,
       packages=["getdist", "getdist.gui", "getdist.tests", "getdist.styles"],
       test_suite="getdist.tests",

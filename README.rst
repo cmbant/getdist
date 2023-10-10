@@ -63,8 +63,8 @@ the `Plot Gallery and tutorial <http://getdist.readthedocs.io/en/latest/plot_gal
 
 Dependencies
 =============
-* Python 3.6+
-* matplotlib 2.2+ (3.1+ recommended)
+* Python 3.7+
+* matplotlib
 * scipy
 * PySide6 or PySide2 - optional, only needed for GUI
 * Working LaTeX installation (not essential, only for some plotting/table functions)
