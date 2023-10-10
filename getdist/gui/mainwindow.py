@@ -2370,7 +2370,10 @@ def run_gui():
 
     mainWin.show()
     mainWin.raise_()
-    sys.exit(app.exec_())
+    if os.environ['QT_API'] == 'pyside2':
+        sys.exit(app.exec_())
+    else:
+        sys.exit(app.exec())
 
 
 if __name__ == "__main__":
