@@ -21,81 +21,71 @@ def find_version():
 
 if sys.platform == "darwin":
     # Mac wrapper .app bundle
-    try:
-        # Just check for errors, and skip if no valid PySide
-        try:
-            from PySide6 import QtCore
-        except:
-            from PySide2 import QtCore
-    except ImportError as e:
-        print("Cannot load PySide2 or PySide6 - skipping MacOS GetDist GUI app: %s" % e)
-    else:
-        sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+    sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-        package_data['getdist.gui'] += ['GetDist GUI.app/Contents/Info.plist',
-                                        'GetDist GUI.app/Contents/MacOS/*',
-                                        'GetDist GUI.app/Contents/Resources/*']
-        from setuptools.command.develop import develop
-        from setuptools.command.install import install
-        from setuptools.command.build_py import build_py
-        import subprocess
+    package_data['getdist.gui'] += ['GetDist GUI.app/Contents/Info.plist',
+                                    'GetDist GUI.app/Contents/MacOS/*',
+                                    'GetDist GUI.app/Contents/Resources/*']
+    from setuptools.command.develop import develop
+    from setuptools.command.install import install
+    from setuptools.command.build_py import build_py
+    import subprocess
 
-        file_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'getdist/gui')
-        app_name = 'GetDist GUI.app'
+    file_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'getdist/gui')
+    app_name = 'GetDist GUI.app'
 
 
-        def make_app():
-            # Put python command into app script so it can be run from spotlight etc.
-            shutil.copytree(os.path.join(file_dir, 'mac_app'),
-                            os.path.join(file_dir, app_name))
-            fname = os.path.join(file_dir, app_name + '/Contents/MacOS/GetDistGUI')
-            out = []
-            with open(fname, 'r') as f:
-                for line in f.readlines():
-                    if 'python=' in line:
-                        out.append('python="%s"' % sys.executable)
-                    else:
-                        out.append(line.strip())
-            with open(fname, 'w') as f:
-                f.write("\n".join(out))
-            subprocess.call('chmod +x "%s"' % fname, shell=True)
-            fname = os.path.join(file_dir, app_name + '/Contents/Info.plist')
-            with open(fname, 'r') as f:
-                plist = f.read().replace('1.0.0', find_version())
-            with open(fname, 'w') as f:
-                f.write(plist)
+    def make_app():
+        # Put python command into app script so it can be run from spotlight etc.
+        shutil.copytree(os.path.join(file_dir, 'mac_app'),
+                        os.path.join(file_dir, app_name), dirs_exist_ok=True)
+        fname = os.path.join(file_dir, app_name + '/Contents/MacOS/GetDistGUI')
+        out = []
+        with open(fname, 'r') as f:
+            for line in f.readlines():
+                if 'python=' in line:
+                    out.append('python="%s"' % sys.executable)
+                else:
+                    out.append(line.strip())
+        with open(fname, 'w') as f:
+            f.write("\n".join(out))
+        subprocess.call('chmod +x "%s"' % fname, shell=True)
+        fname = os.path.join(file_dir, app_name + '/Contents/Info.plist')
+        with open(fname, 'r') as f:
+            plist = f.read().replace('1.0.0', find_version())
+        with open(fname, 'w') as f:
+            f.write(plist)
 
 
-        def clean():
-            import shutil
-            shutil.rmtree(os.path.join(file_dir, app_name), ignore_errors=True)
+    def clean():
+        shutil.rmtree(os.path.join(file_dir, app_name), ignore_errors=True)
 
 
-        class DevelopCommand(develop):
+    class DevelopCommand(develop):
 
-            def run(self):
-                make_app()
-                develop.run(self)
-
-
-        class InstallCommand(install):
-            def run(self):
-                make_app()
-                install.run(self)
-                clean()
+        def run(self):
+            make_app()
+            develop.run(self)
 
 
-        class BuildCommand(build_py):
-            def run(self):
-                make_app()
-                build_py.run(self)
+    class InstallCommand(install):
+        def run(self):
+            make_app()
+            install.run(self)
+            clean()
 
 
-        cmd_class = {
-            'develop': DevelopCommand,
-            'install': InstallCommand,
-            'build_py': BuildCommand
-        }
+    class BuildCommand(build_py):
+        def run(self):
+            make_app()
+            build_py.run(self)
+
+
+    cmd_class = {
+        'develop': DevelopCommand,
+        'install': InstallCommand,
+        'build_py': BuildCommand
+    }
 
 setup(zip_safe=False,
       platforms="any",
