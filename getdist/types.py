@@ -855,7 +855,8 @@ class LikeStats(ParamResults):
         self.meanLogLike = results.get('mean(-Ln(like))', None)
         self.logMeanLike = results.get('-Ln(mean like)', None)
         self.complexity = results.get('complexity', None)
-
+        self.dimensionality = results.get('dimensionality', None)
+        
         # TODO: load N-D limits
 
     def likeSummary(self):
