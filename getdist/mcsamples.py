@@ -2093,6 +2093,7 @@ class MCSamples(Chains):
         m.logMeanLike = -np.log(self.mean(np.exp(-(self.loglikes - maxlike)))) + maxlike
         # assuming maxlike is well determined
         m.complexity = 2 * (self.mean_loglike - maxlike)
+        m.varLogLike = self.mean(self.loglikes**2) - self.mean_loglike**2
 
         m.names = self.paramNames.names
 
