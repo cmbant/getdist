@@ -855,7 +855,7 @@ class LikeStats(ParamResults):
         self.meanLogLike = results.get('mean(-Ln(like))', None)
         self.logMeanLike = results.get('-Ln(mean like)', None)
         self.complexity = results.get('complexity', None)
-        self.varLogLike = results.get('Var(Ln(like))',None)
+        self.varLogLike = results.get('Var(Ln(like))', None)
 
         # TODO: load N-D limits
 
