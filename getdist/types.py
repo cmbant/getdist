@@ -5,6 +5,7 @@ import numpy as np
 import tempfile
 from getdist.paramnames import ParamInfo, ParamList, makeList
 from types import MappingProxyType
+from typing import Optional
 
 empty_dict = MappingProxyType({})
 
@@ -850,12 +851,12 @@ class LikeStats(ParamResults):
                 break
             name, value = [x.strip() for x in line.split('=')]
             results[name] = float(value)
-        self.logLike_sample = results.get('Best fit sample -log(Like)', None)
-        self.logMeanInvLike = results.get('Ln(mean 1/like)', None)
-        self.meanLogLike = results.get('mean(-Ln(like))', None)
-        self.logMeanLike = results.get('-Ln(mean like)', None)
-        self.complexity = results.get('complexity', None)
-        twiceVarLogLike = results.get('2*Var(Ln(like))', None)
+        self.logLike_sample = results.get('Best fit sample -log(Like)')
+        self.logMeanInvLike = results.get('Ln(mean 1/like)')
+        self.meanLogLike = results.get('mean(-Ln(like))')
+        self.logMeanLike = results.get('-Ln(mean like)')
+        self.complexity = results.get('complexity')
+        twiceVarLogLike = results.get('2*Var(Ln(like))')
         if twiceVarLogLike is not None:
             self.varLogLike = 0.5 * twiceVarLogLike
         else:

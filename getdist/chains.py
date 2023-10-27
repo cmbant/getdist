@@ -816,6 +816,8 @@ class WeightedSamples:
         else:
             target = d.norm * (1 - limfrac)
         ix = np.searchsorted(d.cumsum, target)
+        if not d.indexes.shape[0]:
+            return np.nan
         return d.paramVec[d.indexes[np.minimum(ix, d.indexes.shape[0] - 1)]]
 
     def getSignalToNoise(self, params, noise=None, R=None, eigs_only=False):
@@ -962,7 +964,7 @@ class WeightedSamples:
         self.weights *= np.exp(-(logLikes - scale))
         self._weightsChanged()
 
-    def cool(self, cool):
+    def cool(self, cool: float):
         """
         Cools the samples, i.e. multiplies log likelihoods by cool factor and re-weights accordingly
 

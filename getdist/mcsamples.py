@@ -2093,7 +2093,7 @@ class MCSamples(Chains):
         m.logMeanLike = -np.log(self.mean(np.exp(-(self.loglikes - maxlike)))) + maxlike
         # assuming maxlike is well determined
         m.complexity = 2 * (self.mean_loglike - maxlike)
-        m.varLogLike = self.mean(self.loglikes**2) - self.mean_loglike**2
+        m.varLogLike = self.mean(self.loglikes ** 2) - self.mean_loglike ** 2
 
         m.names = self.paramNames.names
 
@@ -2101,11 +2101,11 @@ class MCSamples(Chains):
         indexes = self.loglikes.argsort()
         cumsum = np.cumsum(self.weights[indexes])
         ncontours = len(self.contours)
-        m.ND_contours = np.searchsorted(cumsum, self.norm * self.contours[0:ncontours])
+        n_d_contours: np.ndarray = np.searchsorted(cumsum, self.norm * self.contours[0:ncontours])
         for j, par in enumerate(self.paramNames.names):
             par.ND_limit_bot = np.empty(ncontours)
             par.ND_limit_top = np.empty(ncontours)
-            for i, cont in enumerate(m.ND_contours):
+            for i, cont in enumerate(n_d_contours):
                 region = self.samples[indexes[:cont], j]
                 par.ND_limit_bot[i] = np.min(region)
                 par.ND_limit_top[i] = np.max(region)
@@ -2621,16 +2621,18 @@ def getRootFileName(rootdir):
     :param rootdir: The directory to check
     :return: The root file name.
     """
-    rootFileName = ""
-    pattern = os.path.join(rootdir, '*_*.txt')
-    chain_files = glob.glob(pattern)
-    chain_files.sort()
-    if chain_files:
-        chain_file0 = chain_files[0]
-        rindex = chain_file0.rindex('_')
-        rootFileName = chain_file0[:rindex]
-    return rootFileName
+    root_file_name = ""
+    for sep in ('_', '.'):
+        pattern = os.path.join(rootdir, '*' + sep + '*.txt')
+        chain_files = glob.glob(pattern)
+        if chain_files:
+            chain_file0 = chain_files[0]
+            rindex = chain_file0.rindex(sep)
+            root_file_name = chain_file0[:rindex]
+            break
+    return root_file_name
 
 
 def _dummy_usage():
+    # prevent not-used warnings
     assert MCSamplesFromCobaya and ParamError
