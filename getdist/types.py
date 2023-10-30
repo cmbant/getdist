@@ -922,5 +922,5 @@ class ConvergeStats(ParamResults):
             print('Error reading: ' + filename)
             raise
 
-    def worstR(self):
-        return self.R_eigs[len(self.R_eigs) - 1]
+    def worstR(self, default=None):
+        return self.R_eigs[len(self.R_eigs) - 1] if self.R_eigs else default

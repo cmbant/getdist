@@ -20,7 +20,8 @@ def get_chain_root_files(rootdir):
     files = [os.path.splitext(f)[0] for f in glob.glob(pattern)]
     ending = 'updated.yaml'
     pattern = os.path.join(rootdir, "*" + ending)
-    files += [f[:-len(ending)].rstrip("_.") for f in glob.glob(pattern)]
+    files += [f[:-len(ending)].rstrip("_.") for f in glob.glob(pattern)
+              if '.minimize.' not in f]
     files = [f for f in files if hasChainFiles(os.path.join(rootdir, f))]
     files.sort()
     return files
@@ -34,15 +35,24 @@ def is_grid_object(obj):
 def load_supported_grid(chain_dir):
     if is_grid_object(chain_dir):
         return chain_dir
-    try:
-        # If cosmomc is installed, e.g. to allow use of old Planck grids
-        # The 2018 final Planck grid should be OK with getdist default chain grid below
-        from paramgrid import gridconfig, batchjob
-        if gridconfig.pathIsGrid(chain_dir):
-            return batchjob.readobject(chain_dir)
-    except ImportError:
-        pass
-    return None
+    config_file = os.path.join(chain_dir, 'config', 'config.ini')
+    if os.path.exists(config_file):
+        grid_settings = IniFile(config_file)
+        if grid_settings.hasKey('cobaya_version'):
+            try:
+                from cobaya.grid_tools import batchjob
+                return batchjob.readobject(chain_dir)
+            except ImportError:
+                return None
+        else:
+            try:
+                # If cosmomc is installed, e.g. to allow use of old Planck grids
+                # The 2018 final Planck grid should be OK with getdist default chain grid below
+                from paramgrid import gridconfig, batchjob
+                if gridconfig.pathIsGrid(chain_dir):
+                    return batchjob.readobject(chain_dir)
+            except ImportError:
+                return None
 
 
 class ChainItem:
@@ -84,7 +94,8 @@ class ChainDirGrid:
         self._make_unique()
 
     def normed_name(self, root):
-        return '_'.join(sorted(root.replace('__', '_').replace('_post', '').split('_')))
+        return '_'.join(sorted(root.replace('__', '_')
+                               .replace('_post', '').replace('.post.', '_').split('_')))
 
     def _add(self, dir_tag, dirname, roots):
         self.base_dir_names.add(dir_tag)
