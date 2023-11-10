@@ -18,9 +18,9 @@ jobs:
     - name: "3.8 with focal"
       dist: focal
       python: "3.8"
-    - name: "3.11 with jammy"
+    - name: "3.12 with jammy"
       dist: jammy
-      python: "3.11"
+      python: "3.12"
 
 
 install:

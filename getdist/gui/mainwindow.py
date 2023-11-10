@@ -112,7 +112,7 @@ class QStatusLogger(logging.Handler):
 # noinspection PyArgumentList
 class RootListWidget(QListWidget):
     def __init__(self, widget, owner):
-        QListWidget.__init__(self, widget)
+        super().__init__(widget)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setMaximumSize(QSize(16777215, 120 * owner.dpiScale()))
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -2012,7 +2012,7 @@ class MainWindow(QMainWindow):
 # noinspection PyArgumentList
 class DialogTextOutput(QDialog):
     def __init__(self, parent, text=None):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        super().__init__(parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.textfont = QFont("Monospace")
         self.textfont.setStyleHint(QFont.TypeWriter)
         if text:
@@ -2032,7 +2032,7 @@ class DialogTextOutput(QDialog):
 # noinspection PyArgumentList
 class DialogLikeStats(DialogTextOutput):
     def __init__(self, parent, stats, root):
-        DialogTextOutput.__init__(self, parent, stats.likeSummary())
+        super().__init__(parent, stats.likeSummary())
 
         self.label = QLabel(self)
         self.table = QTableWidget(self)
@@ -2082,7 +2082,7 @@ class DialogLikeStats(DialogTextOutput):
 # noinspection PyArgumentList
 class DialogMargeStats(QDialog):
     def __init__(self, parent, stats=None, root=''):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        super().__init__(parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
         self.label = QLabel(self)
         self.table = QTableWidget(self)
@@ -2132,7 +2132,7 @@ class DialogMargeStats(QDialog):
 
 class DialogConvergeStats(DialogTextOutput):
     def __init__(self, parent, stats, summary, root):
-        DialogTextOutput.__init__(self, parent, stats)
+        super().__init__(parent, stats)
         layout = QGridLayout()
         layout.addWidget(self.text, 1, 0)
         if summary:
@@ -2150,7 +2150,7 @@ class DialogConvergeStats(DialogTextOutput):
 
 class DialogPCA(DialogTextOutput):
     def __init__(self, parent, PCA_text, root):
-        DialogTextOutput.__init__(self, parent, PCA_text)
+        super().__init__(parent, PCA_text)
         layout = QGridLayout()
         layout.addWidget(self.text, 0, 0)
         self.setLayout(layout)
@@ -2165,7 +2165,7 @@ class DialogPCA(DialogTextOutput):
 # noinspection PyCallByClass,PyArgumentList
 class DialogParamTables(DialogTextOutput):
     def __init__(self, parent, tables, root):
-        DialogTextOutput.__init__(self, parent)
+        super().__init__(parent)
         self.tables = tables
         self.root = root
         self.tabWidget = QTabWidget(self)
@@ -2225,7 +2225,7 @@ class DialogParamTables(DialogTextOutput):
 # noinspection PyArgumentList
 class DialogSettings(QDialog):
     def __init__(self, parent, ini, items=None, title='Analysis Settings', width=320, update=None):
-        QDialog.__init__(self, parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        super().__init__(parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
 
         self.update = update
         self.table = QTableWidget(self)

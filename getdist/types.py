@@ -5,7 +5,6 @@ import numpy as np
 import tempfile
 from getdist.paramnames import ParamInfo, ParamList, makeList
 from types import MappingProxyType
-from typing import Optional
 
 empty_dict = MappingProxyType({})
 
@@ -232,7 +231,7 @@ class TableFormatter:
 
 class OpenTableFormatter(TableFormatter):
     def __init__(self):
-        TableFormatter.__init__(self)
+        super().__init__()
         self.border = ''
         self.aboveTitles = r'\noalign{\vskip 3pt}' + self.hline + r'\noalign{\vskip 1.5pt}' \
                            + self.hline + r'\noalign{\vskip 5pt}'
@@ -248,7 +247,7 @@ class OpenTableFormatter(TableFormatter):
 
 class NoLineTableFormatter(OpenTableFormatter):
     def __init__(self):
-        OpenTableFormatter.__init__(self)
+        super().__init__()
         self.aboveHeader = ''
         # self.belowHeader = r'\noalign{\vskip 5pt}'
         self.minorDividor = ''
@@ -498,7 +497,7 @@ class BestFit(ParamResults):
         :param max_posterior: whether the file is a maximum posterior (default) or maximum likelihood
         """
 
-        ParamResults.__init__(self)
+        super().__init__()
         self.max_posterior = max_posterior
         if fileName is not None:
             self.loadFromFile(fileName, want_fixed=want_fixed)

@@ -354,7 +354,7 @@ class Mixture2D(MixtureND):
                 mats.append(make_2D_Cov(*cov))
             else:
                 mats.append(cov)
-        MixtureND.__init__(self, means, mats, weights, limits, names=names, **kwargs)
+        super().__init__(means, mats, weights, limits, names=names, **kwargs)
 
     def _updateLimits(self, lims, xmin=None, xmax=None, ymin=None, ymax=None):
         xmin = xmin if xmin is not None else lims[0][0]
@@ -453,7 +453,7 @@ class Mixture1D(MixtureND):
             limits = [(xmin, xmax)]
         covs = [np.atleast_2d(sigma ** 2) for sigma in sigmas]
         means = [[mean] for mean in means]
-        MixtureND.__init__(self, means, covs, weights, limits, names=[name], **kwargs)
+        super().__init__(means, covs, weights, limits, names=[name], **kwargs)
 
     def pdf(self, x):
         return self.pdf_marged(0, x)
