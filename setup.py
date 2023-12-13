@@ -37,8 +37,10 @@ if sys.platform == "darwin":
 
     def make_app():
         # Put python command into app script so it can be run from spotlight etc.
-        shutil.copytree(os.path.join(file_dir, 'mac_app'),
-                        os.path.join(file_dir, app_name), dirs_exist_ok=True)
+        app_dir = os.path.join(file_dir, app_name)
+        if os.path.exists(app_dir):
+            shutil.rmtree(app_dir)
+        shutil.copytree(os.path.join(file_dir, 'mac_app'), app_dir)
         fname = os.path.join(file_dir, app_name + '/Contents/MacOS/GetDistGUI')
         out = []
         with open(fname, 'r') as f:

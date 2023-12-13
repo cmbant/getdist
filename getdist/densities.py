@@ -164,7 +164,7 @@ class Density1D(GridDensity):
 
         :param x: x value
         :param derivative: optional order of derivative to calculate (default: no derivative)
-        :return: P(x) density value
+        :return: P(x) density value (or array if x is an array)
         """
         if self.spl is None:
             self._initSpline()
