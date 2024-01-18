@@ -287,7 +287,7 @@ class Density2D(GridDensity):
         :param y: y value or array
         :param grid: whether to make a grid, see :class:`~scipy:scipy.interpolate.RectBivariateSpline`. Default False.
         """
-        self.__call__(x, y, grid=grid)
+        return self.__call__(x, y, grid=grid)
 
     def __call__(self, *args, **kwargs):
         if self.spl is None:
