@@ -89,7 +89,8 @@ if sys.platform == "darwin":
         'build_py': BuildCommand
     }
 
-setup(zip_safe=False,
+setup(name="getdist",
+      zip_safe=False,
       platforms="any",
       package_data=package_data,
       packages=["getdist", "getdist.gui", "getdist.tests", "getdist.styles"],
