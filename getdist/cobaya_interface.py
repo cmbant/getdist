@@ -274,7 +274,7 @@ def get_sampler_temperature(filename_or_info):
     # post-processed chains have always already been cooled
     if _post in info:
         return 1
-    return info[_sampler][get_sampler_key(info)].get("temperature")
+    return (info[_sampler][get_sampler_key(info)] or {}).get("temperature")
 
 
 def get_sample_label(filename_or_info):
