@@ -1853,6 +1853,7 @@ class GetDistPlotter(_BaseObject):
                         used by the samples
         :return: a :class:`~.paramnames.ParamInfo` instance, or None if name not found
         """
+
         if isinstance(param, ParamInfo):
             name = param.name
             if hasattr(param, 'renames'):
@@ -1862,6 +1863,15 @@ class GetDistPlotter(_BaseObject):
                     renames = {name: list(param.renames)}
         else:
             name = param
+        if isinstance(root, (list, tuple)):
+            if isinstance(param, ParamInfo):
+                root = root[0]
+            else:
+                for a_root in root:
+                    par = self.param_names_for_root(a_root).parWithName(name, error=a_root is root[-1], renames=renames)
+                    if par is not None:
+                        return par
+
         # NB: If a parameter is not found, errors only if param is a ParamInfo instance
         return self.param_names_for_root(root).parWithName(name, error=(name == param), renames=renames)
 
@@ -2204,7 +2214,7 @@ class GetDistPlotter(_BaseObject):
                 raise GetDistPlotError('No parameter or parameter pairs for 2D plot')
         else:
             for pair in param_pairs:
-                pairs.append((self._check_param(roots[0], pair[0]), self._check_param(roots[0], pair[1])))
+                pairs.append((self._check_param(roots, pair[0]), self._check_param(roots, pair[1])))
         if filled and shaded:
             raise GetDistPlotError("Plots cannot be both filled and shaded")
         plot_col, plot_row = self.make_figure(len(pairs), nx=nx)
