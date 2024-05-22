@@ -1696,7 +1696,7 @@ class GetDistPlotter(_BaseObject):
             param_pair = param1
             param1 = None
         _no_finish = kwargs.pop('_no_finish', False)
-        param_pair = self.get_param_array(roots[0], param_pair or [param1, param2])
+        param_pair = self.get_param_array(roots, param_pair or [param1, param2])
         ax = self.get_axes(ax, pars=param_pair)
         if self.settings.progress:
             print('plotting: ', [param.name for param in param_pair])
@@ -1709,14 +1709,13 @@ class GetDistPlotter(_BaseObject):
                                        add_legend_proxy=add_legend_proxy and root not in proxy_root_exclude,
                                        **contour_args[i])
             xbounds, ybounds = self._update_limits(res, xbounds, ybounds)
-        if xbounds is None:
-            return
-        if 'lims' not in kwargs:
+        if xbounds is not None and 'lims' not in kwargs:
             lim1 = self._check_param_ranges(roots[0], param_pair[0].name, xbounds[0], xbounds[1])
             lim2 = self._check_param_ranges(roots[0], param_pair[1].name, ybounds[0], ybounds[1])
             kwargs['lims'] = [lim1[0], lim1[1], lim2[0], lim2[1]]
-
         self.set_axes(param_pair, ax=ax, **kwargs)
+        if xbounds is None:
+            return
         if not _no_finish and len(self.fig.axes) == 1:
             self.finish_plot()
         return xbounds, ybounds
@@ -1781,7 +1780,7 @@ class GetDistPlotter(_BaseObject):
         self.subplots[:, :] = None
         return self.plot_col, self.plot_row
 
-    def get_param_array(self, root, params: Union[None, str, Sequence] = None, renames: Mapping = None):
+    def get_param_array(self, roots, params: Union[None, str, Sequence] = None, renames: Mapping = None):
         """
         Gets an array of :class:`~.paramnames.ParamInfo` for named params
         in the given `root`.
@@ -1789,12 +1788,13 @@ class GetDistPlotter(_BaseObject):
         If a parameter is not found in `root`, returns the original ParamInfo if ParamInfo
         was passed, or fails otherwise.
 
-        :param root: The root name of the samples to use
-        :param params: the parameter names (if not specified, get all)
+        :param root: The root name of the samples to use, or list of roots
+        :param params: the parameter names (if not specified, get all in first root)
         :param renames: optional dictionary mapping input names and equivalent names
                         used by the samples
         :return: list of :class:`~.paramnames.ParamInfo` instances for the parameters
         """
+        root, roots = (roots[0], roots) if isinstance(roots, (list, tuple)) else (roots, [roots])
         if hasattr(root, 'param_names'):
             names = root.param_names
         elif hasattr(root, 'paramNames'):
@@ -1821,8 +1821,24 @@ class GetDistPlotter(_BaseObject):
                 renames = renames_from_param_info
             params_names = [getattr(param, "name", param) for param in params]
             old = [(old if isinstance(old, ParamInfo) else ParamInfo(old)) for old in params]
-            return [new or old for new, old in zip(names.parsWithNames(params_names,
-                                                                       error=error, renames=renames), old)]
+
+            if len(roots) == 1:
+                return [new or old for new, old in zip(names.parsWithNames(params_names,
+                                                                           error=error, renames=renames), old)]
+            # check if requesting parameter that is not in the first root
+            has_names = [i for i, param_name in enumerate(params_names) if names.hasParam(param_name)]
+            not_names = [i for i in range(len(params)) if i not in has_names]
+            if not not_names:
+                return names.parsWithNames(params_names, renames=renames)
+
+            first_params = names.parsWithNames([params_names[i] for i in has_names], renames=renames)
+            extra_params = self.get_param_array(roots[1:], [params[i] for i in not_names], renames)
+            result = list(params)
+            for i, j in enumerate(has_names):
+                result[j] = first_params[i]
+            for i, j in enumerate(not_names):
+                result[j] = extra_params[i]
+            return result
 
     def _check_param(self, root, param, renames=None):
         """
@@ -2107,9 +2123,9 @@ class GetDistPlotter(_BaseObject):
         """
         roots = makeList(roots)
         if roots_per_param:
-            params = [self._check_param(root[0], param, param_renames) for root, param in zip(roots, params)]
+            params = [self._check_param(root, param, param_renames) for root, param in zip(roots, params)]
         else:
-            params = self.get_param_array(roots[0], params, param_renames)
+            params = self.get_param_array(roots, params, param_renames)
         if param_list is None:
             param_list = kwargs.pop('paramList', None)
         if param_list is not None:
@@ -2179,8 +2195,8 @@ class GetDistPlotter(_BaseObject):
             param1 = param1[0]
         if param_pairs is None:
             if param1 is not None:
-                param1 = self._check_param(roots[0], param1)
-                params2 = self.get_param_array(roots[0], params2)
+                param1 = self._check_param(roots, param1)
+                params2 = self.get_param_array(roots, params2)
                 for param in params2:
                     if param.name != param1.name:
                         pairs.append((param1, param))
@@ -2376,7 +2392,7 @@ class GetDistPlotter(_BaseObject):
 
         """
         roots = makeList(roots)
-        params = self.get_param_array(roots[0], params)
+        params = self.get_param_array(roots, params)
         plot_col = len(params)
         if plot_3d_with_param is not None:
             col_param = self._check_param(roots[0], plot_3d_with_param)
