@@ -1766,15 +1766,12 @@ class GetDistPlotter(_BaseObject):
             self.fig = plt.figure(figsize=figsize)
         self.gridspec = matplotlib.gridspec.GridSpec(nrows=self.plot_row, ncols=self.plot_col, figure=self.fig)
 
-        if sharey:
-            self._share_kwargs = {'w_pad': 0, 'wspace': 0}
-        else:
-            self._share_kwargs = {}
+        self._share_kwargs = {'w_pad': 0, 'wspace': 0} if sharey else {}
         if sharex:
             self._share_kwargs.update({'h_pad': 0, 'hspace': 0})
 
         if self.settings.constrained_layout and self._share_kwargs:
-            self.fig.set_constrained_layout_pads(**self._share_kwargs)
+            self.fig.get_layout_engine().set(**self._share_kwargs)
 
         self.subplots = np.ndarray((self.plot_row, self.plot_col), dtype=object)
         self.subplots[:, :] = None
@@ -1788,7 +1785,7 @@ class GetDistPlotter(_BaseObject):
         If a parameter is not found in `root`, returns the original ParamInfo if ParamInfo
         was passed, or fails otherwise.
 
-        :param root: The root name of the samples to use, or list of roots
+        :param roots: The root name of the samples to use, or list of roots
         :param params: the parameter names (if not specified, get all in first root)
         :param renames: optional dictionary mapping input names and equivalent names
                         used by the samples
