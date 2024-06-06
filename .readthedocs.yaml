@@ -12,5 +12,7 @@ python:
       extra_requirements:
         - docs
 
+formats: all
+
 sphinx:
   configuration: docs/source/conf.py
