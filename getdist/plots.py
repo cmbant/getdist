@@ -2349,7 +2349,7 @@ class GetDistPlotter(_BaseObject):
                       upper_kwargs=empty_dict, upper_label_right=False, diag1d_kwargs=empty_dict, markers=None,
                       marker_args=empty_dict, param_limits=empty_dict, **kwargs):
         """
-        Make a trianglular array of 1D and 2D plots.
+        Make a trianglular array of 1D and 2D plots. Also known as corner plot.
 
         A triangle plot is an array of subplots with 1D plots along the diagonal, and 2D plots in the lower corner.
         The upper triangle can also be used by setting upper_roots.
