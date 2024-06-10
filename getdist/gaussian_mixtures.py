@@ -12,6 +12,8 @@ def make_2D_Cov(sigmax, sigmay, corr):
 class MixtureND:
     """
     Gaussian mixture model with optional boundary ranges. Includes functions for generating samples and projecting.
+    MixtureND instances can be used to plot theoretical smooth contours instead of samples (e.g. for Fisher forecasts).
+    For a simple Gaussian, can use GaussianND inherited class.
     """
 
     def __init__(self, means, covs, weights=None, lims=None, names=None, label='', labels=None):

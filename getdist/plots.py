@@ -1018,12 +1018,18 @@ class GetDistPlotter(_BaseObject):
         """
         return self.add_2d_contours(None, density=density, **kwargs)
 
+    def _is_color_like(self, color):
+        try:
+            return matplotlib.colors.is_color_like(color)
+        except:
+            return False
+
     def add_2d_contours(self, root, param1=None, param2=None, plotno=0, of=None, cols=None, contour_levels=None,
                         add_legend_proxy=True, param_pair=None, density=None, alpha=None, ax=None, **kwargs):
         """
         Low-level function to add 2D contours to plot for samples with given root name and parameters
 
-        :param root: The root name of samples to use or a MixtureND gaussian mixture
+        :param root: The root name of samples to use or a :class:`~.gaussian_mixtures.MixtureND` gaussian mixture
         :param param1: x parameter
         :param param2: y parameter
         :param plotno: The index of the contour lines being added
@@ -1087,7 +1093,8 @@ class GetDistPlotter(_BaseObject):
                 if color is None:
                     color = self._get_color_at_index(self.settings.solid_colors,
                                                      (of - plotno - 1) if of is not None else plotno)
-                if isinstance(color, str) or matplotlib.colors.is_color_like(color):
+
+                if isinstance(color, str) or self._is_color_like(color):
                     cols = self._get_paler_colors(color, len(contour_levels))
                 else:
                     cols = color
@@ -2348,7 +2355,8 @@ class GetDistPlotter(_BaseObject):
         The upper triangle can also be used by setting upper_roots.
 
         :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for
-                      the samples to plot
+                      the samples to plot. Can also contain a theory :class:`~.gaussian_mixtures.MixtureND`
+                      (e.g. GaussianND, useful for Fisher forecasts)
         :param params: list of parameters to plot (default: all, can also use glob patterns to match groups of
                        parameters)
         :param legend_labels: list of legend labels

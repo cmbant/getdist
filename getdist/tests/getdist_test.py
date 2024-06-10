@@ -254,6 +254,9 @@ class GetDistTest(unittest.TestCase):
         g.new_plot()
         g.plots_2d([samples, samples2], 'x', ['z', 'y'])
         g.new_plot()
+        g.plot_2d([samples, samples2], 'x', 'y', filled=True,
+                  colors=['green', ('#F7BAA6', '#E03424')], lims=[-4, 7, -5, 5])
+        g.new_plot()
         self.assertEqual([name.name for name in samples.paramNames.parsWithNames('x.*')], ['x.yx', 'x.2'])
         g.triangle_plot(samples, 'x.*')
         samples.updateSettings({'contours': '0.68 0.95 0.99'})
