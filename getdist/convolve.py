@@ -74,6 +74,7 @@ def convolveFFTn(in1, in2, mode="same", largest_size=0, cache=None, yfft=None, x
     s2 = np.array(in2.shape)
     size = s1 + s2 - 1
     fsize = nearestFFTnumber(np.maximum(largest_size, size))
+    axes = list(range(-len(fsize), 0))
     if cache is not None:
         if xfft is None and 1 in cache_args:
             key = (tuple(fsize), tuple(in1.shape), id(in1))
@@ -82,16 +83,17 @@ def convolveFFTn(in1, in2, mode="same", largest_size=0, cache=None, yfft=None, x
             key2 = (tuple(fsize), tuple(in2.shape), id(in2))
             yfft = cache.get(key2)
     if xfft is None:
-        xfft = np.fft.rfftn(in1, fsize)
+        xfft = np.fft.rfftn(in1, fsize, axes)
+
         if cache is not None and 1 in cache_args:
             cache[key] = xfft
     if yfft is None:
-        yfft = np.fft.rfftn(in2, fsize)
+        yfft = np.fft.rfftn(in2, fsize, axes)
         if cache is not None and 2 in cache_args:
             cache[key2] = yfft
 
     fslice = tuple([slice(0, int(sz)) for sz in size])
-    ret = np.fft.irfftn(xfft * yfft, fsize)[fslice]
+    ret = np.fft.irfftn(xfft * yfft, fsize, axes)[fslice]
 
     if mode == "full":
         return ret

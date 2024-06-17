@@ -230,7 +230,7 @@ class BoundedMaxNLocator(ticker.MaxNLocator):
         raw_step = max(label_len, _range / ((nbins - 2) if nbins > 2 else 1))
         raw_step1 = _range / max(1, (nbins - (0 if self.bounded_prune else 1)))
         best = []
-        best_score = -np.infty
+        best_score = -np.inf
         for step_ix, (_steps, _offsets) in enumerate(zip(self._step_groups, self._offsets)):
 
             steps = _steps * scale
