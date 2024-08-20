@@ -94,5 +94,4 @@ setup(name="getdist",
       platforms="any",
       package_data=package_data,
       packages=["getdist", "getdist.gui", "getdist.tests", "getdist.styles"],
-      test_suite="getdist.tests",
       cmdclass=cmd_class)

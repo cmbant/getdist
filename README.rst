@@ -7,8 +7,8 @@ GetDist
 :Source: https://github.com/cmbant/getdist
 :Reference: https://arxiv.org/abs/1910.13970
 
-.. image:: https://img.shields.io/travis/com/cmbant/getdist
-   :target: https://app.travis-ci.com/cmbant/getdist
+.. image:: https://github.com/cmbant/getdist/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/cmbant/getdist/actions/workflows/tests.yml
 .. image:: https://img.shields.io/pypi/v/GetDist.svg?style=flat
    :target: https://pypi.python.org/pypi/GetDist/
 .. image:: https://readthedocs.org/projects/getdist/badge/?version=latest
@@ -63,7 +63,7 @@ the `Plot Gallery and tutorial <http://getdist.readthedocs.io/en/latest/plot_gal
 
 Dependencies
 =============
-* Python 3.7+
+* Python 3.8+
 * matplotlib
 * scipy
 * PySide6 or PySide2 - optional, only needed for GUI

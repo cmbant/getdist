@@ -118,18 +118,7 @@ def loadNumpyTxt(fname, skiprows=None):
     :return: numpy array of the data values
     """
 
-    if not hasattr(loadNumpyTxt, 'pandas'):
-        loadNumpyTxt.pandas = None
-        try:
-            if version.parse(np.__version__) < version.parse('1.23'):
-                import pandas  # noqa
-                loadNumpyTxt.pandas = pandas
-        except ImportError:
-            logging.warning('Install pandas or numpy 1.23+ for faster reading from text files')
     try:
-        if loadNumpyTxt.pandas:
-            return loadNumpyTxt.pandas.read_csv(fname, delim_whitespace=True, header=None, dtype=np.float64,
-                                                skiprows=skiprows, comment='#').values
         return np.atleast_2d(np.loadtxt(fname, skiprows=skiprows or 0))
     except ValueError:
         print('Error reading %s' % fname)

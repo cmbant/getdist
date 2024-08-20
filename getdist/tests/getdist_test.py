@@ -395,8 +395,8 @@ class CobayaTest(unittest.TestCase):
         if not os.path.exists(self.tempdir):
             os.mkdir(self.tempdir)
         os.chdir(self.tempdir)
-        self.path = os.getenv('TRAVIS_BUILD_DIR', os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-        self.path = os.path.normpath(os.path.join(self.path, 'getdist_testchains', 'cobaya'))
+        path = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+        self.path = os.path.normpath(os.path.join(path, 'getdist_testchains', 'cobaya'))
 
     def tearDown(self):
         os.chdir(tempfile.gettempdir())
