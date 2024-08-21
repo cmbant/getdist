@@ -1,12 +1,10 @@
 import os
 import numpy as np
 import re
-from packaging import version
 from getdist.paramnames import ParamNames, ParamInfo, escapeLatex
 from getdist.convolve import autoConvolve
 from getdist import cobaya_interface
 import pickle
-import logging
 from copy import deepcopy
 from collections import namedtuple
 from typing import Sequence, Any, Optional, Union, List

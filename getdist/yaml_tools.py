@@ -17,7 +17,7 @@ class InputSyntaxError(Exception):
 
 # Better loader for YAML
 # 1. Matches 1e2 as 100 (no need for dot, or sign after e),
-#    from http://stackoverflow.com/a/30462009
+#    from https://stackoverflow.com/a/30462009
 def yaml_load(text_stream, Loader=yaml.Loader, file_name=None):
     class ScientificLoader(Loader):
         pass

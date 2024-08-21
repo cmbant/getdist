@@ -179,7 +179,6 @@ class GetDistPlotSettings(_BaseObject):
         self.constrained_layout = False
         self.no_triangle_axis_labels = True
 
-        # see http://www.scipy.org/Cookbook/Matplotlib/Show_colormaps
         self.colormap = "Blues"
         self.colormap_scatter = "jet"
         self.colorbar_tick_rotation = None

@@ -31,7 +31,7 @@ def times_ten_power(exponent):
 
 
 def float_to_decimal(f):
-    # http://docs.python.org/library/decimal.html#decimal-faq
+    # https://docs.python.org/library/decimal.html#decimal-faq
     """Convert a floating point number to a Decimal with no loss of information"""
     n, d = f.as_integer_ratio()
     numerator, denominator = decimal.Decimal(n), decimal.Decimal(d)
@@ -46,7 +46,7 @@ def float_to_decimal(f):
 
 # noinspection PyUnboundLocalVariable
 def numberFigs(number, sigfig, sci=False):
-    # http://stackoverflow.com/questions/2663612/nicely-representing-a-floating-point-number-in-python/2663623#2663623
+    # https://stackoverflow.com/questions/2663612/nicely-representing-a-floating-point-number-in-python/2663623#2663623
     assert (sigfig > 0)
     try:
         d = decimal.Decimal(number)
@@ -110,7 +110,7 @@ class NumberFormatter:
         if sci:
             # First, call without knowing sig figs, to get the exponent
             exponent = self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]
-            if exponent:
+            if exponent = self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]:
                 value, limplus, limminus = [
                     (lambda x: decimal.getcontext().multiply(
                         float_to_decimal(x), float_to_decimal(10. ** -exponent)))(lim)

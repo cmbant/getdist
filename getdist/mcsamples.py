@@ -874,7 +874,7 @@ class MCSamples(Chains):
             - 'MeanVar': Gelman-Rubin sqrt(var(chain mean)/mean(chain var)) test in individual parameters (multiple chains only)
             - 'GelmanRubin':  Gelman-Rubin test for the worst orthogonalized parameter (multiple chains only)
             - 'SplitTest': Crude test for variation in confidence limits when samples are split up into subsets
-            - 'RafteryLewis': `Raftery-Lewis test <http://www.stat.washington.edu/tech.reports/raftery-lewis2.ps>`_ (integer weight samples only)
+            - 'RafteryLewis': `Raftery-Lewis test <https://stat.uw.edu/sites/default/files/files/reports/1991/tr212.pdf>`_ (integer weight samples only)
             - 'CorrLengths': Sample correlation lengths
         :param filename: The filename to write to, default is file_root.converge
         :param feedback: If set to True, Prints the output as well as returning it.
@@ -1218,8 +1218,8 @@ class MCSamples(Chains):
             m = max(m, 1)
         if m:
             # higher order method
-            # e.g.  http://biomet.oxfordjournals.org/content/82/2/327.full.pdf+html
-            # some prefactors given in  http://eprints.whiterose.ac.uk/42950/6/taylorcc2%5D.pdf
+            # e.g.  https://doi.org/10.1093/biomet/82.2.327
+            # some prefactors given in  https://eprints.whiterose.ac.uk/42950/6/taylorcc2%5D.pdf
             # Here we just take unit prefactor relative to Gaussian
             # and rescale the optimal h for standard KDE to accounts for higher order scaling
             # Should be about 1.3 x larger for Gaussian, but smaller in some other cases
@@ -1359,7 +1359,7 @@ class MCSamples(Chains):
         paramConfid = paramConfid or self.initParamConfidenceData(paramVec)
         # sigma_range is estimate related to shape of structure in the distribution = std dev for Gaussian
         # search for peaks using quantiles,
-        # e.g. like simplified version of Janssen 95 (http://dx.doi.org/10.1080/10485259508832654)
+        # e.g. like simplified version of Janssen 95 (https://dx.doi.org/10.1080/10485259508832654)
         confid_points = np.linspace(0.1, 0.9, 9)
         confids = self.confidence(paramConfid,
                                   np.array([self.range_confidence, 1 - self.range_confidence] + list(confid_points)))
@@ -1555,7 +1555,7 @@ class MCSamples(Chains):
                 raise SettingError('Unknown boundary_correction_order (expected 0, 1, 2)')
         elif boundary_correction_order == 2:
             # higher order kernel
-            # eg. see http://www.jstor.org/stable/2965571
+            # eg. see https://www.jstor.org/stable/2965571
             xWin2 = kernel.Win * kernel.x ** 2
             x2P = convolve1D(bins, xWin2, 'same', cache=cache)
             a2 = np.sum(xWin2)
@@ -1573,7 +1573,7 @@ class MCSamples(Chains):
             a0 = convolve1D(prior_mask, kernel.Win, 'same', cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
                 # estimate using flattened samples to remove second order biases
-                # mostly good performance, see http://www.jstor.org/stable/2965571 method 3,1 for first order
+                # mostly good performance, see https://www.jstor.org/stable/2965571 method 3,1 for first order
                 prob1 = density1D.P.copy()
                 prob1[prob1 == 0] = 1
                 fine = bins / prob1

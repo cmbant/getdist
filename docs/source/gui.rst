@@ -7,9 +7,10 @@ It allows you to open a folder of chain files, then easily select, open, plot an
 
 .. image:: https://cdn.cosmologist.info/antony/getdist/gui_planck2018.png
 
-It can open chain files under a selected directory structure (and also `paramgrid <https://cosmologist.info/cosmomc/readme_grids.html>`_ directories as show above).
+It can open chain files under a selected directory structure (and also `paramgrid <https://cosmologist.info/cosmomc/readme_grids.html>`_ directories as show above,
+or `Cobaya grids <https://cobaya.readthedocs.io/en/latest/grids.html>`_).
 See the `intro <https://getdist.readthedocs.io/en/latest/intro.html>`_ for a description of chain file formats.  A grid of sample chains files can be
-downloaded `here <http://pla.esac.esa.int/pla/#cosmology>`_, after downloading a file just unzip and open the main directory in the GUI.
+downloaded `here <https://pla.esac.esa.int/pla/#cosmology>`_, after downloading a file just unzip and open the main directory in the GUI.
 
 After opening a directory, you can select each chain root name you want to plot. It is then added to the list box below.
 The selected chains can be dragged and dropped to change the order if needed.  Then select the parameter names to plot in the checkboxes below that,
@@ -49,11 +50,11 @@ To run the GUI you need PySide. This is not included in default dependencies, bu
 
    pip install PySide6
 
-You can also use PySide2, e.g. using `Anaconda <https://www.anaconda.com/distribution/>`_ to make a consistent new environment from conda-forge (which includes PySide2)  e.g. ::
+If you have conflicts, with Anaconda/miniconda you can make a consistent new environment
+from conda-forge (which includes PySide6),  e.g. ::
 
-  conda create -n py39forge -c conda-forge python=3.9 scipy matplotlib PyYAML PySide2
+  conda create -n myenv -c conda-forge scipy matplotlib PyYAML PySide6
 
 Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
 On a Mac the installation will also make a GetDist GUI Mac app, which you can find using Spotlight.
 
-If you don't want to install dependencies locally, you can also use a pre-configured `virtual environment <https://cosmologist.info/CosmoBox/>`_.
