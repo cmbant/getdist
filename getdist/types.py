@@ -109,8 +109,7 @@ class NumberFormatter:
             err_sf = 1
         if sci:
             # First, call without knowing sig figs, to get the exponent
-            exponent = self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]
-            if exponent = self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]:
+            if exponent := self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]:
                 value, limplus, limminus = [
                     (lambda x: decimal.getcontext().multiply(
                         float_to_decimal(x), float_to_decimal(10. ** -exponent)))(lim)
@@ -287,8 +286,7 @@ class ResultTable:
         """
         results = list(makeList(results))
         for i, res in enumerate(results):
-            getMargeStats = getattr(res, "getMargeStats", None)
-            if getMargeStats is not None:
+            if (getMargeStats := getattr(res, "getMargeStats", None)) is not None:
                 results[i] = getMargeStats()
         self.lines = []
         if formatter is None:
