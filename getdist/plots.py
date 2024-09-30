@@ -2343,7 +2343,7 @@ class GetDistPlotter(_BaseObject):
     def _add_marker_list(self, markers, ax, marker_args, y=False, color=None):
         add_proc = self.add_y_marker if y else self.add_x_marker
         if isinstance(marker_args, (list, tuple)):
-            for marker, marker_arg in zip(markers, marker_args):
+            for marker, marker_arg in zip(makeList(markers), marker_args):
                 if color:
                     marker_arg['color'] = color
                 add_proc(marker, ax=ax, **marker_arg)
