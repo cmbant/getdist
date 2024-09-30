@@ -44,7 +44,7 @@ def last_modified(files):
 
 
 def slice_or_none(x, start=None, end=None):
-    return getattr(x, "__getitem__", lambda _: None)(slice(start, end))
+    return x[start:end] if hasattr(x, "__getitem__") else None
 
 
 def findChainFileRoot(chain_dir, root, search_subdirectories=True):
