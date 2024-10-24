@@ -2406,7 +2406,7 @@ class MCSamples(Chains):
 
     def getParamBestFitDict(self, best_sample=False, want_derived=True, want_fixed=True, max_posterior=True):
         """
-        Gets an ordered dictionary of parameter values for the best fit point,
+        Gets a dictionary of parameter values for the best fit point,
         assuming calculated results from mimimization runs in .minimum (max posterior) .bestfit (max likelihood)
         files exists.
 
@@ -2418,7 +2418,7 @@ class MCSamples(Chains):
         :param want_fixed: also include values of any fixed parameters
         :param max_posterior: whether to get maximum posterior (from .minimum file) or maximum likelihood
                              (from .bestfit file)
-        :return: ordered dictionary of parameter values
+        :return: dictionary of parameter values
         """
         if best_sample:
             if not max_posterior:
@@ -2437,7 +2437,7 @@ class MCSamples(Chains):
         :param ix: index of the sample to return (zero based)
         :param want_derived: include derived parameters
         :param want_fixed: also include values of any fixed parameters
-        :return: ordered dictionary of parameter values
+        :return: dictionary of parameter values
         """
         res = super().getParamSampleDict(ix, want_derived=want_derived)
         if want_fixed:

@@ -1249,7 +1249,7 @@ class Chains(WeightedSamples):
 
         :param ix: sample index
         :param want_derived: include derived parameters
-        :return: ordered dictionary of parameter values
+        :return: dictionary of parameter values
         """
         res = dict()
         res['weight'] = self.weights[ix]

@@ -2003,7 +2003,7 @@ class GetDistPlotter(_BaseObject):
             for rect in self.legend.get_patches():
                 rect.set_edgecolor(rect.get_facecolor())
         if colored_text:
-            for h, text in zip(self.legend.legendHandles, self.legend.get_texts()):
+            for h, text in zip(self.legend.legend_handles, self.legend.get_texts()):
                 h.set_visible(False)
                 if isinstance(h, matplotlib.lines.Line2D):
                     c = h.get_color()
