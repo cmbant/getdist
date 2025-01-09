@@ -92,7 +92,7 @@ def chainFiles(root, chain_indices=None, ext='.txt', separator="_",
         basename = os.path.basename(root)
         reg_exp = re.compile(re.escape(basename) + '(' + re.escape(separator) + '(?P<num>[0-9]+))?' + re.escape(ext))
     files = []
-    for f in os.listdir(folder):
+    for f in sorted(os.listdir(folder)):
         if match := reg_exp.fullmatch(f):
             index = int(match.group("num") or 0)
             if (chain_indices is None or index in chain_indices) \
