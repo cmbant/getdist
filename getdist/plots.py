@@ -1095,6 +1095,7 @@ class GetDistPlotter(_BaseObject):
         def clean_args(_args):
             return {k: v for k, v in _args.items() if k not in ('color', 'ls', 'lw')}
 
+        z = density.P if density.mask is None else np.ma.masked_where(density.mask, density.P)
         if kwargs.get('filled'):
             if cols is None:
                 color = kwargs.get('color')
@@ -1107,7 +1108,6 @@ class GetDistPlotter(_BaseObject):
                 else:
                     cols = color
             levels = sorted(np.append([density.P.max() + 1], contour_levels))
-            z = density.P if density.mask is None else np.ma.masked_where(density.mask, density.P)
             cs = ax.contourf(density.x, density.y, z, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
 
             fc = tuple(cs.to_rgba(cs.cvalues[-1], cs.alpha))
@@ -1126,7 +1126,7 @@ class GetDistPlotter(_BaseObject):
             lws = args['lw']  # note linewidth_contour is only used for filled contours
             kwargs = self._get_plot_args(plotno, **kwargs)
             kwargs['alpha'] = alpha
-            cs = ax.contour(density.x, density.y, density.P, sorted(contour_levels), colors=cols, linestyles=linestyles,
+            cs = ax.contour(density.x, density.y, z, sorted(contour_levels), colors=cols, linestyles=linestyles,
                             linewidths=lws, **clean_args(kwargs))
             dashes = args.get('dashes')
             if dashes:
