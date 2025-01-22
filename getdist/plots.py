@@ -1061,7 +1061,7 @@ class GetDistPlotter(_BaseObject):
             if mask_function is not None:
                 samples = self.samples_for_root(root)
                 density = samples.get2DDensityGridData(param1.name, param2.name,
-                                                       mask_function = mask_function,
+                                                       mask_function=mask_function,
                                                        num_plot_contours=self.settings.num_plot_contours,
                                                        meanlikes=self.settings.shade_meanlikes)
             elif isinstance(root, MixtureND):
