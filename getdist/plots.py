@@ -1024,7 +1024,8 @@ class GetDistPlotter(_BaseObject):
             return False
 
     def add_2d_contours(self, root, param1=None, param2=None, plotno=0, of=None, cols=None, contour_levels=None,
-                        add_legend_proxy=True, param_pair=None, density=None, alpha=None, ax=None, **kwargs):
+                        add_legend_proxy=True, param_pair=None, density=None, alpha=None, ax=None,
+                        mask_function: callable = None, **kwargs):
         """
         Low-level function to add 2D contours to plot for samples with given root name and parameters
 
@@ -1043,6 +1044,8 @@ class GetDistPlotter(_BaseObject):
         :param alpha: alpha for the contours added
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
+        :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
+                which which sets mask to zero for values of parameter name parx, pary that are excluded by prior.
         :param kwargs: optional keyword arguments:
 
                - **filled**: True to make filled contours
@@ -1055,7 +1058,13 @@ class GetDistPlotter(_BaseObject):
         if density is None:
             param1, param2 = self.get_param_array(root, param_pair or [param1, param2])
             ax.getdist_params = (param1, param2)
-            if isinstance(root, MixtureND):
+            if mask_function is not None:
+                samples = self.samples_for_root(root)
+                density = samples.get2DDensityGridData(param1.name, param2.name,
+                                                       mask_function = mask_function,
+                                                       num_plot_contours=self.settings.num_plot_contours,
+                                                       meanlikes=self.settings.shade_meanlikes)
+            elif isinstance(root, MixtureND):
                 density = root.marginalizedMixture(params=[param1, param2]).density2D()
             else:
                 density = self.sample_analyser.get_density_grid(root, param1, param2,
@@ -1098,13 +1107,14 @@ class GetDistPlotter(_BaseObject):
                 else:
                     cols = color
             levels = sorted(np.append([density.P.max() + 1], contour_levels))
-            cs = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
+            z = density.P if density.mask is None else np.ma.masked_where(density.mask, density.P)
+            cs = ax.contourf(density.x, density.y, z, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
 
             fc = tuple(cs.to_rgba(cs.cvalues[-1], cs.alpha))
             if proxy_ix >= 0:
                 self.contours_added[proxy_ix] = (
                     matplotlib.patches.Rectangle((0, 0), 1, 1, fc=fc))
-            ax.contour(density.x, density.y, density.P, levels[:1], colors=(fc,),
+            ax.contour(density.x, density.y, z, levels[:1], colors=(fc,),
                        linewidths=self._scaled_linewidth(self.settings.linewidth_contour
                                                          if kwargs.get('lw') is None else kwargs['lw']),
                        linestyles=kwargs.get('ls'),

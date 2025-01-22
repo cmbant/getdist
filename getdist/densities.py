@@ -253,17 +253,19 @@ class Density2D(GridDensity):
     You can call it like a :class:`~scipy:scipy.interpolate.RectBivariateSpline` object to get interpolated values.
     """
 
-    def __init__(self, x, y, P=None, view_ranges=None):
+    def __init__(self, x, y, P=None, view_ranges=None, mask=None):
         """
         :param x: array of x values
         :param y: array of y values
         :param P: 2D array of density values at x, y
         :param view_ranges: optional ranges for viewing density
+        :param mask: optional 2D boolean array for non-trivial mask
         """
         self.x = x
         self.y = y
         self.axes = [y, x]
         self.view_ranges = view_ranges
+        self.mask = mask
         self.spacing = (self.x[1] - self.x[0]) * (self.y[1] - self.y[0])
         self.setP(P)
 

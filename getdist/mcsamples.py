@@ -1655,7 +1655,8 @@ class MCSamples(Chains):
         return density
 
     # noinspection PyUnboundLocalVariable
-    def get2DDensityGridData(self, j, j2, num_plot_contours=None, get_density=False, meanlikes=False, **kwargs):
+    def get2DDensityGridData(self, j, j2, num_plot_contours=None, get_density=False, meanlikes=False,
+                             mask_function: callable = None, **kwargs):
         """
         Low-level function to get 2D plot marginalized density and optional additional plot data.
 
@@ -1665,6 +1666,9 @@ class MCSamples(Chains):
         :param get_density: only get the 2D marginalized density, don't calculate confidence level members
         :param meanlikes: calculate mean likelihoods as well as marginalized density
                           (returned as array in density.likes)
+        :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
+                which which sets mask to zero for values of parameters  that are excluded by prior. Note this is not
+                needed for standard min, max bounds aligned with axes, as they are handled by default.
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
 
             - **fine_bins_2D**
@@ -1689,7 +1693,7 @@ class MCSamples(Chains):
         mult_bias_correction_order = kwargs.get('mult_bias_correction_order', self.mult_bias_correction_order)
         smooth_scale_2D = float(kwargs.get('smooth_scale_2D', self.smooth_scale_2D))
 
-        has_prior = parx.has_limits or pary.has_limits
+        has_prior = parx.has_limits or pary.has_limits or mask_function
 
         corr = self.getCorrelationMatrix()[j2][j]
         actual_corr = corr
@@ -1761,7 +1765,7 @@ class MCSamples(Chains):
         logging.debug('time 2D binning and bandwidth: %s ; bins: %s', time.time() - start, fine_bins_2D)
         start = time.time()
         cache = {}
-        convolvesize = xsize + 2 * winw + Win.shape[0]
+        convolvesize = xsize + 2 * winw + Win.shape[0]  # larger than needed for selecting fft pixel count
         bins2D = convolve2D(histbins, Win, 'same', largest_size=convolvesize, cache=cache)
 
         if meanlikes:
@@ -1782,12 +1786,18 @@ class MCSamples(Chains):
         if has_prior and boundary_correction_order >= 0:
             # Correct for edge effects
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
+            if mask_function:
+                mask_function(xbinmin - winw * finewidthx, ybinmin - winw * finewidthy, finewidthx, finewidthy,
+                              prior_mask)
             self._setEdgeMask2D(parx, pary, prior_mask, winw)
             a00 = convolve2D(prior_mask, Win, 'valid', largest_size=convolvesize, cache=cache)
             ix = a00 * bins2D > np.max(bins2D) * 1e-8
             a00 = a00[ix]
             normed = bins2D[ix] / a00
-            if boundary_correction_order == 1:
+            if boundary_correction_order == 0 or mask_function:
+                # simple boundary correction by normalization
+                bins2D[ix] = normed
+            elif boundary_correction_order == 1:
                 # linear boundary correction
                 indexes = np.arange(-winw, winw + 1)
                 y = np.empty(Win.shape)
@@ -1811,13 +1821,10 @@ class MCSamples(Chains):
                 Ay = a01 * a20 - a10 * a11
                 corrected = (bins2D[ix] * A + xP * Ax + yP * Ay) / denom
                 bins2D[ix] = normed * np.exp(np.minimum(corrected / normed, 4) - 1)
-            elif boundary_correction_order == 0:
-                # simple boundary correction by normalization
-                bins2D[ix] = normed
             else:
                 raise SettingError('unknown boundary_correction_order (expected 0 or 1)')
 
-        if mult_bias_correction_order:
+        if mult_bias_correction_order and not mask_function:
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
             self._setEdgeMask2D(parx, pary, prior_mask, winw, alledge=True)
             a00 = convolve2D(prior_mask, Win, 'valid', largest_size=convolvesize, cache=cache, cache_args=[2])
@@ -1830,7 +1837,8 @@ class MCSamples(Chains):
 
         x = np.linspace(xbinmin, xbinmax, xsize)
         y = np.linspace(ybinmin, ybinmax, ysize)
-        density = Density2D(x, y, bins2D,
+        density = Density2D(x, y, bins2D, mask=(None if not mask_function
+                                                else np.asarray(prior_mask[winw:-winw, winw:-winw] < 1e-8)),
                             view_ranges=[(parx.range_min, parx.range_max), (pary.range_min, pary.range_max)])
         density.normalize('max', in_place=True)
         if get_density:
