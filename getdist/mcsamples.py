@@ -1797,6 +1797,9 @@ class MCSamples(Chains):
             if boundary_correction_order == 0 or mask_function:
                 # simple boundary correction by normalization
                 bins2D[ix] = normed
+                if mask_function:
+                    bool_mask = prior_mask[winw:-winw, winw:-winw] < 1e-8
+                    bins2D[bool_mask] = 0
             elif boundary_correction_order == 1:
                 # linear boundary correction
                 indexes = np.arange(-winw, winw + 1)
@@ -1837,8 +1840,7 @@ class MCSamples(Chains):
 
         x = np.linspace(xbinmin, xbinmax, xsize)
         y = np.linspace(ybinmin, ybinmax, ysize)
-        density = Density2D(x, y, bins2D, mask=(None if not mask_function
-                                                else np.asarray(prior_mask[winw:-winw, winw:-winw] < 1e-8)),
+        density = Density2D(x, y, bins2D, mask=None if not mask_function else np.asarray(bool_mask),
                             view_ranges=[(parx.range_min, parx.range_max), (pary.range_min, pary.range_max)])
         density.normalize('max', in_place=True)
         if get_density:
