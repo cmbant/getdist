@@ -1616,10 +1616,10 @@ class MCSamples(Chains):
             prior_mask[-winw:, :] = 0
 
     def _setAllEdgeMask2D(self, prior_mask, winw):
-            prior_mask[:, :winw] = 0
-            prior_mask[:, -winw:] = 0
-            prior_mask[:winw:] = 0
-            prior_mask[-winw:, :] = 0
+        prior_mask[:, :winw] = 0
+        prior_mask[:, -winw:] = 0
+        prior_mask[:winw:] = 0
+        prior_mask[-winw:, :] = 0
 
     def _getScaleForParam(self, par):
         # Also ensures that the 1D limits are initialized

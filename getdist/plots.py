@@ -1676,7 +1676,7 @@ class GetDistPlotter(_BaseObject):
         :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for
                       the samples to plot
         :param param1: x parameter name
-        :param param2:  y parameter name
+        :param param2: y parameter name
         :param param_pair: An [x,y] pair of params; can be set instead of param1 and param2
         :param shaded: True or integer if plot should be a shaded density plot, where the integer specifies
                        the index of which contour is shaded (first samples shaded if True provided instead
@@ -1686,8 +1686,14 @@ class GetDistPlotter(_BaseObject):
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
-       :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
-                which which sets mask to zero for values of parameter name parx, pary that are excluded by prior.
+        :param mask_function: Function that defines regions in the 2D parameter space to exclude from the plot.
+                Must have signature mask_function(minx, miny, stepx, stepy, mask), where:
+                - minx, miny: minimum values of x and y parameters
+                - stepx, stepy: step sizes in x and y directions
+                - mask: 2D boolean numpy array (modified in-place)
+                The function should set mask values to 0 where points should be excluded by the prior.
+                Useful for implementing non-rectangular prior boundaries not aligned with parameter axes.
+                Should not include simple axis-aligned range priors that are accounted for separately.
         :param kwargs: additional optional arguments:
 
                 * **filled**: True for filled contours
