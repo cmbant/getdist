@@ -1668,7 +1668,8 @@ class GetDistPlotter(_BaseObject):
             self.finish_plot()
 
     def plot_2d(self, roots, param1=None, param2=None, param_pair=None, shaded=False,
-                add_legend_proxy=True, line_offset=0, proxy_root_exclude=(), ax=None, **kwargs):
+                add_legend_proxy=True, line_offset=0, proxy_root_exclude=(), ax=None,
+                mask_function: callable = None, **kwargs):
         """
         Create a single 2D line, contour or filled plot.
 
@@ -1685,6 +1686,8 @@ class GetDistPlotter(_BaseObject):
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
+       :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
+                which which sets mask to zero for values of parameter name parx, pary that are excluded by prior.
         :param kwargs: additional optional arguments:
 
                 * **filled**: True for filled contours
@@ -1721,6 +1724,7 @@ class GetDistPlotter(_BaseObject):
         contour_args = self._make_contour_args(len(roots), **kwargs)
         for i, root in enumerate(roots):
             res = self.add_2d_contours(root, param_pair[0], param_pair[1], line_offset + i, of=len(roots), ax=ax,
+                                       mask_function=mask_function,
                                        add_legend_proxy=add_legend_proxy and root not in proxy_root_exclude,
                                        **contour_args[i])
             xbounds, ybounds = self._update_limits(res, xbounds, ybounds)

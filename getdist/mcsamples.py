@@ -1601,7 +1601,7 @@ class MCSamples(Chains):
 
         return density1D
 
-    def _setEdgeMask2D(self, parx, pary, prior_mask, winw, alledge=False):
+    def _setEdgeMask2D(self, parx, pary, prior_mask, winw):
         if parx.has_limits_bot:
             prior_mask[:, winw] /= 2
             prior_mask[:, :winw] = 0
@@ -1614,7 +1614,8 @@ class MCSamples(Chains):
         if pary.has_limits_top:
             prior_mask[-(winw + 1), :] /= 2
             prior_mask[-winw:, :] = 0
-        if alledge:
+
+    def _setAllEdgeMask2D(self, prior_mask, winw):
             prior_mask[:, :winw] = 0
             prior_mask[:, -winw:] = 0
             prior_mask[:winw:] = 0
@@ -1783,12 +1784,15 @@ class MCSamples(Chains):
         else:
             bin2Dlikes = None
 
-        if has_prior and boundary_correction_order >= 0:
-            # Correct for edge effects
+        if has_prior and boundary_correction_order >= 0 or mult_bias_correction_order or mask_function:
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
             if mask_function:
                 mask_function(xbinmin - winw * finewidthx, ybinmin - winw * finewidthy, finewidthx, finewidthy,
                               prior_mask)
+                bool_mask = prior_mask[winw:-winw, winw:-winw] < 1e-8
+
+        if has_prior and boundary_correction_order >= 0:
+            # Correct for edge effects
             self._setEdgeMask2D(parx, pary, prior_mask, winw)
             a00 = convolve2D(prior_mask, Win, 'valid', largest_size=convolvesize, cache=cache)
             ix = a00 * bins2D > np.max(bins2D) * 1e-8
@@ -1824,20 +1828,21 @@ class MCSamples(Chains):
             else:
                 raise SettingError('unknown boundary_correction_order (expected 0 or 1)')
 
-        if mask_function:
-            bool_mask = prior_mask[winw:-winw, winw:-winw] < 1e-8
-            bins2D[bool_mask] = 0
-
-        if mult_bias_correction_order and not mask_function:
-            prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
-            self._setEdgeMask2D(parx, pary, prior_mask, winw, alledge=True)
+        if mult_bias_correction_order:
+            self._setAllEdgeMask2D(prior_mask, winw)
             a00 = convolve2D(prior_mask, Win, 'valid', largest_size=convolvesize, cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
                 box = histbins.copy()
                 ix2 = bins2D > np.max(bins2D) * 1e-8
                 box[ix2] /= bins2D[ix2]
                 bins2D *= convolve2D(box, Win, 'same', largest_size=convolvesize, cache=cache, cache_args=[2])
-                bins2D /= a00
+                if mask_function:
+                    bins2D[~bool_mask] /= a00[~bool_mask]
+                else:
+                    bins2D /= a00
+
+        if mask_function:
+            bins2D[bool_mask] = 0
 
         x = np.linspace(xbinmin, xbinmax, xsize)
         y = np.linspace(ybinmin, ybinmax, ysize)
