@@ -1794,12 +1794,9 @@ class MCSamples(Chains):
             ix = a00 * bins2D > np.max(bins2D) * 1e-8
             a00 = a00[ix]
             normed = bins2D[ix] / a00
-            if boundary_correction_order == 0 or mask_function:
+            if boundary_correction_order == 0:
                 # simple boundary correction by normalization
                 bins2D[ix] = normed
-                if mask_function:
-                    bool_mask = prior_mask[winw:-winw, winw:-winw] < 1e-8
-                    bins2D[bool_mask] = 0
             elif boundary_correction_order == 1:
                 # linear boundary correction
                 indexes = np.arange(-winw, winw + 1)
@@ -1826,6 +1823,10 @@ class MCSamples(Chains):
                 bins2D[ix] = normed * np.exp(np.minimum(corrected / normed, 4) - 1)
             else:
                 raise SettingError('unknown boundary_correction_order (expected 0 or 1)')
+
+        if mask_function:
+            bool_mask = prior_mask[winw:-winw, winw:-winw] < 1e-8
+            bins2D[bool_mask] = 0
 
         if mult_bias_correction_order and not mask_function:
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
