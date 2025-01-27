@@ -1689,9 +1689,11 @@ class GetDistPlotter(_BaseObject):
                    to add to (defaults to current plot or the first/main plot if none)
         :param mask_function: Function that defines regions in the 2D parameter space to exclude from the plot.
                 Must have signature mask_function(minx, miny, stepx, stepy, mask), where:
-                - minx, miny: minimum values of x and y parameters
-                - stepx, stepy: step sizes in x and y directions
-                - mask: 2D boolean numpy array (modified in-place)
+
+                * minx, miny: minimum values of x and y parameters
+                * stepx, stepy: step sizes in x and y directions
+                * mask: 2D boolean numpy array (modified in-place)
+
                 The function should set mask values to 0 where points should be excluded by the prior.
                 Useful for implementing non-rectangular prior boundaries not aligned with parameter axes,
                 - see the example in the plot gallery.
