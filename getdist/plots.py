@@ -1024,7 +1024,8 @@ class GetDistPlotter(_BaseObject):
             return False
 
     def add_2d_contours(self, root, param1=None, param2=None, plotno=0, of=None, cols=None, contour_levels=None,
-                        add_legend_proxy=True, param_pair=None, density=None, alpha=None, ax=None, **kwargs):
+                        add_legend_proxy=True, param_pair=None, density=None, alpha=None, ax=None,
+                        mask_function: callable = None, **kwargs):
         """
         Low-level function to add 2D contours to plot for samples with given root name and parameters
 
@@ -1043,6 +1044,9 @@ class GetDistPlotter(_BaseObject):
         :param alpha: alpha for the contours added
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
+        :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
+                which which sets mask to zero for values of parameter name that are excluded by prior.
+                See the example in the plot gallery.
         :param kwargs: optional keyword arguments:
 
                - **filled**: True to make filled contours
@@ -1055,7 +1059,13 @@ class GetDistPlotter(_BaseObject):
         if density is None:
             param1, param2 = self.get_param_array(root, param_pair or [param1, param2])
             ax.getdist_params = (param1, param2)
-            if isinstance(root, MixtureND):
+            if mask_function is not None:
+                samples = self.samples_for_root(root)
+                density = samples.get2DDensityGridData(param1.name, param2.name,
+                                                       mask_function=mask_function,
+                                                       num_plot_contours=self.settings.num_plot_contours,
+                                                       meanlikes=self.settings.shade_meanlikes)
+            elif isinstance(root, MixtureND):
                 density = root.marginalizedMixture(params=[param1, param2]).density2D()
             else:
                 density = self.sample_analyser.get_density_grid(root, param1, param2,
@@ -1086,6 +1096,7 @@ class GetDistPlotter(_BaseObject):
         def clean_args(_args):
             return {k: v for k, v in _args.items() if k not in ('color', 'ls', 'lw')}
 
+        z = density.P if density.mask is None else np.ma.masked_where(density.mask, density.P)
         if kwargs.get('filled'):
             if cols is None:
                 color = kwargs.get('color')
@@ -1098,13 +1109,13 @@ class GetDistPlotter(_BaseObject):
                 else:
                     cols = color
             levels = sorted(np.append([density.P.max() + 1], contour_levels))
-            cs = ax.contourf(density.x, density.y, density.P, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
+            cs = ax.contourf(density.x, density.y, z, levels, colors=cols, alpha=alpha, **clean_args(kwargs))
 
             fc = tuple(cs.to_rgba(cs.cvalues[-1], cs.alpha))
             if proxy_ix >= 0:
                 self.contours_added[proxy_ix] = (
                     matplotlib.patches.Rectangle((0, 0), 1, 1, fc=fc))
-            ax.contour(density.x, density.y, density.P, levels[:1], colors=(fc,),
+            ax.contour(density.x, density.y, z, levels[:1], colors=(fc,),
                        linewidths=self._scaled_linewidth(self.settings.linewidth_contour
                                                          if kwargs.get('lw') is None else kwargs['lw']),
                        linestyles=kwargs.get('ls'),
@@ -1116,7 +1127,7 @@ class GetDistPlotter(_BaseObject):
             lws = args['lw']  # note linewidth_contour is only used for filled contours
             kwargs = self._get_plot_args(plotno, **kwargs)
             kwargs['alpha'] = alpha
-            cs = ax.contour(density.x, density.y, density.P, sorted(contour_levels), colors=cols, linestyles=linestyles,
+            cs = ax.contour(density.x, density.y, z, sorted(contour_levels), colors=cols, linestyles=linestyles,
                             linewidths=lws, **clean_args(kwargs))
             dashes = args.get('dashes')
             if dashes:
@@ -1658,14 +1669,15 @@ class GetDistPlotter(_BaseObject):
             self.finish_plot()
 
     def plot_2d(self, roots, param1=None, param2=None, param_pair=None, shaded=False,
-                add_legend_proxy=True, line_offset=0, proxy_root_exclude=(), ax=None, **kwargs):
+                add_legend_proxy=True, line_offset=0, proxy_root_exclude=(), ax=None,
+                mask_function: callable = None, **kwargs):
         """
         Create a single 2D line, contour or filled plot.
 
         :param roots: root name or :class:`~.mcsamples.MCSamples` instance (or list of any of either of these) for
                       the samples to plot
         :param param1: x parameter name
-        :param param2:  y parameter name
+        :param param2: y parameter name
         :param param_pair: An [x,y] pair of params; can be set instead of param1 and param2
         :param shaded: True or integer if plot should be a shaded density plot, where the integer specifies
                        the index of which contour is shaded (first samples shaded if True provided instead
@@ -1675,6 +1687,15 @@ class GetDistPlotter(_BaseObject):
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
+        :param mask_function: Function that defines regions in the 2D parameter space to exclude from the plot.
+                Must have signature mask_function(minx, miny, stepx, stepy, mask), where:
+                - minx, miny: minimum values of x and y parameters
+                - stepx, stepy: step sizes in x and y directions
+                - mask: 2D boolean numpy array (modified in-place)
+                The function should set mask values to 0 where points should be excluded by the prior.
+                Useful for implementing non-rectangular prior boundaries not aligned with parameter axes,
+                - see the example in the plot gallery.
+                Note it should not include simple axis-aligned range priors that are accounted for automatically.
         :param kwargs: additional optional arguments:
 
                 * **filled**: True for filled contours
@@ -1711,6 +1732,7 @@ class GetDistPlotter(_BaseObject):
         contour_args = self._make_contour_args(len(roots), **kwargs)
         for i, root in enumerate(roots):
             res = self.add_2d_contours(root, param_pair[0], param_pair[1], line_offset + i, of=len(roots), ax=ax,
+                                       mask_function=mask_function,
                                        add_legend_proxy=add_legend_proxy and root not in proxy_root_exclude,
                                        **contour_args[i])
             xbounds, ybounds = self._update_limits(res, xbounds, ybounds)
