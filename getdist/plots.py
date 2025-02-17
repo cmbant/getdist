@@ -1046,6 +1046,7 @@ class GetDistPlotter(_BaseObject):
                    to add to (defaults to current plot or the first/main plot if none)
         :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
                 which which sets mask to zero for values of parameter name that are excluded by prior.
+                This is used to correctly estimate densities near the boundary.
                 See the example in the plot gallery.
         :param kwargs: optional keyword arguments:
 
@@ -1687,7 +1688,10 @@ class GetDistPlotter(_BaseObject):
         :param proxy_root_exclude: any root names not to include when adding to the legend proxy
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
-        :param mask_function: Function that defines regions in the 2D parameter space to exclude from the plot.
+        :param mask_function: Function that defines regions in the 2D parameter space that are excluded by a prior,
+                which is needed to correctly estimate kernel densities near the sharp boundary defined by the mask
+                function.
+
                 Must have signature mask_function(minx, miny, stepx, stepy, mask), where:
 
                 * minx, miny: minimum values of x and y parameters
