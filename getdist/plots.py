@@ -1130,10 +1130,12 @@ class GetDistPlotter(_BaseObject):
             kwargs['alpha'] = alpha
             cs = ax.contour(density.x, density.y, z, sorted(contour_levels), colors=cols, linestyles=linestyles,
                             linewidths=lws, **clean_args(kwargs))
-            dashes = args.get('dashes')
-            if dashes:
-                for c in cs.collections:
-                    c.set_dashes([(0, dashes)])
+            if dashes := args.get('dashes'):
+                if hasattr(cs, 'collections'):
+                    for c in cs.collections:
+                        c.set_dashes([(0, dashes)])
+                else:  # matplotlib 3.8+
+                    cs.set_dashes([(0, dashes)] * len(cs.levels))
             if proxy_ix >= 0:
                 line = matplotlib.lines.Line2D([0, 1], [0, 1], ls=linestyles[0], lw=lws, color=cols[0],
                                                alpha=args.get('alpha'))
