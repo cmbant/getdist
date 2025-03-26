@@ -1866,7 +1866,7 @@ class MainWindow(QMainWindow):
                 del self.toolbar
             self.canvas = FigureCanvas(self.plotter.fig)
             self.toolbar = NavigationToolbar(self.canvas, self)
-            self.toolbar.setStyleSheet("QToolBar {background-color: palette(window); border: none}")
+            self.toolbar.setStyleSheet("QToolBar {border: none}")
             self.plotWidget.layout().addWidget(self.toolbar)
             self.plotWidget.layout().addWidget(self.canvas)
             self.plotWidget.show()

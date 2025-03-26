@@ -50,9 +50,10 @@ STYLES_dark = {
     'numbers': txformat(QColor(206, 145, 120)),  # organge
 }
 
+
 def is_dark():
     app = QApplication.instance()
-    if hasattr(app, 'styleHints'):
+    if hasattr(app, 'styleHints') and hasattr(app.styleHints, 'colorScheme'):
         return app.styleHints().colorScheme().value == 2
     return False
 
