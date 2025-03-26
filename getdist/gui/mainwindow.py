@@ -12,7 +12,7 @@ import warnings
 from io import BytesIO
 from typing import Optional
 
-os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=0"  # Force light mode
+# os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=0"  # Force light mode
 
 
 if os.name == "nt" and sys.getwindowsversion().major >= 10:  # noqa
