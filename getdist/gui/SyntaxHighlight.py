@@ -1,22 +1,29 @@
 try:
     from PySide6.QtCore import QRegularExpression
     from PySide6.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
-
+    from PySide6.QtWidgets import QApplication
 except ImportError:
     # noinspection PyUnresolvedReferences
     from PySide2.QtCore import QRegularExpression
     # noinspection PyUnresolvedReferences
     from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+    # noinspection PyUnresolvedReferences
+    from PySide2.QtWidgets import QApplication
 
 
 def txformat(color, style=''):
-    """Return a QTextCharFormat with the given attributes.
-    """
-    _color = QColor()
-    _color.setNamedColor(color)
-
+    """Return a QTextCharFormat with the given attributes."""
     _format = QTextCharFormat()
-    _format.setForeground(_color)
+
+    if isinstance(color, str):
+        # Handle named colors (fallback)
+        _color = QColor()
+        _color.setNamedColor(color)
+        _format.setForeground(_color)
+    else:
+        # Assume color is a QColor or palette role
+        _format.setForeground(color)
+
     if 'bold' in style:
         _format.setFontWeight(QFont.Bold)
     if 'italic' in style:
@@ -25,18 +32,29 @@ def txformat(color, style=''):
     return _format
 
 
-# Syntax styles that can be shared by all languages
-STYLES = {
+STYLES_light = {
     'keyword': txformat('navy', 'bold'),
-    'operator': txformat('black'),
-    'brace': txformat('black'),
     'defclass': txformat('black', 'bold'),
     'string': txformat('green', 'bold'),
     'string2': txformat('green'),
     'comment': txformat('darkGray', 'italic'),
-    'self': txformat('black', 'italic'),
-    'numbers': txformat('brown'),
+    'numbers': txformat('brown')
 }
+
+STYLES_dark = {
+    'keyword': txformat(QColor(88, 156, 214), 'bold'),  # Blue
+    'defclass': txformat(QColor(78, 201, 176), 'bold'),  # Teal
+    'string': txformat(QColor(106, 153, 85)),
+    'string2': txformat(QColor(106, 153, 85)),
+    'comment': txformat(QColor(181, 206, 168), 'italic'),  # Grey-green
+    'numbers': txformat(QColor(206, 145, 120)),  # organge
+}
+
+def is_dark():
+    app = QApplication.instance()
+    if hasattr(app, 'styleHints'):
+        return app.styleHints().colorScheme().value == 2
+    return False
 
 
 class PythonHighlighter(QSyntaxHighlighter):
@@ -52,27 +70,11 @@ class PythonHighlighter(QSyntaxHighlighter):
         'None', 'True', 'False', 'as',
     ]
 
-    # Python operators
-    operators = [
-        '=',
-        # Comparison
-        '==', '!=', '<', '<=', '>', '>=',
-        # Arithmetic
-        r'\+', '-', r'\*', '/', '//', r'\%', r'\*\*',
-        # In-place
-        r'\+=', r'-=', r'\*=', r'/=', r'\%=',
-        # Bitwise
-        r'\^', r'\|', r'\&', r'\~', '>>', '<<',
-    ]
-
-    # Python braces
-    braces = [
-        r'\{', r'\}', r'\(', r'\)', r'\[', r'\]',
-    ]
-
     # noinspection PyArgumentList
     def __init__(self, document):
         super().__init__(document)
+
+        STYLES = STYLES_dark if is_dark() else STYLES_light
 
         # Multi-line strings (expression, flag, style)
         # FIXME: The triple-quotes in these two lines will mess up the
@@ -85,16 +87,9 @@ class PythonHighlighter(QSyntaxHighlighter):
         # Keyword, operator, and brace rules
         rules += [(r'\b%s\b' % w, 0, STYLES['keyword'])
                   for w in PythonHighlighter.keywords]
-        rules += [(r'%s' % o, 0, STYLES['operator'])
-                  for o in PythonHighlighter.operators]
-        rules += [(r'%s' % b, 0, STYLES['brace'])
-                  for b in PythonHighlighter.braces]
 
         # All other rules
         rules += [
-            # 'self'
-            (r'\bself\b', 0, STYLES['self']),
-
             # Double-quoted string, possibly containing escape sequences
             (r'"[^"\\]*(\\.[^"\\]*)*"', 0, STYLES['string']),
             # Single-quoted string, possibly containing escape sequences

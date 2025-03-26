@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-
-# !/usr/bin/env python
-
 import os
 import copy
 import logging
@@ -14,6 +11,9 @@ import signal
 import warnings
 from io import BytesIO
 from typing import Optional
+
+os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=0"  # Force light mode
+
 
 if os.name == "nt" and sys.getwindowsversion().major >= 10:  # noqa
     import ctypes
@@ -38,8 +38,8 @@ except ImportError as _e:
     if not os.path.exists(os.path.join(sys.prefix, 'conda-meta')):
         print('Using Anaconda is probably the most reliable method')
     print("E.g. make and use a new environment")
-    print('conda create -n py10side python=3.10 scipy matplotlib')
-    print("then 'pip install PySide6'")
+    print('conda create -n pyside python=3.12 scipy matplotlib')
+    print("then after activating pyside envifornment 'pip install PySide6'")
 
     sys.exit(-1)
 
@@ -48,7 +48,7 @@ from getdist import plots, IniFile, chains
 from getdist.chain_grid import ChainDirGrid, file_root_to_root, get_chain_root_files, load_supported_grid
 from getdist.mcsamples import SettingError, ParamError
 
-from getdist.gui.SyntaxHighlight import PythonHighlighter
+from getdist.gui.SyntaxHighlight import PythonHighlighter, is_dark
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as QNavigationToolbar
@@ -561,7 +561,7 @@ class MainWindow(QMainWindow):
         self.plotter_script = None
 
         self.toolBar = QToolBar()
-        self.toolBar.setStyleSheet("background-color: lightGray; border: none")
+        self.toolBar.setStyleSheet("background-color: %s; border: none" % ('gray' if is_dark() else 'lightGray'))
         self.toolBar.setIconSize(QSize(22 * self.dpiScale(), 22 * self.dpiScale()))
 
         openAct = QAction(self._icon("open"),
@@ -581,7 +581,13 @@ class MainWindow(QMainWindow):
         self.toolBar.addAction(clearAct)
 
         self.textWidget = QPlainTextEdit(self.editWidget)
-        self.textWidget.setStyleSheet("background-color: #FAF9F6; color: black; font-size: 10pt")
+        self.textWidget.setStyleSheet("""
+            QPlainTextEdit {
+                font-size: 10pt;
+                background-color: palette(base);
+                color: palette(text);
+            }
+        """)
         textfont = QFont("Monospace")
         textfont.setStyleHint(QFont.TypeWriter)
         self.textWidget.setWordWrapMode(QTextOption.NoWrap)
@@ -1860,7 +1866,7 @@ class MainWindow(QMainWindow):
                 del self.toolbar
             self.canvas = FigureCanvas(self.plotter.fig)
             self.toolbar = NavigationToolbar(self.canvas, self)
-            self.toolbar.setStyleSheet("QToolBar {background-color: lightGray; border: none}")
+            self.toolbar.setStyleSheet("QToolBar {background-color: palette(window); border: none}")
             self.plotWidget.layout().addWidget(self.toolbar)
             self.plotWidget.layout().addWidget(self.canvas)
             self.plotWidget.show()
