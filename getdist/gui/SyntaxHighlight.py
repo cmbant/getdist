@@ -1,14 +1,6 @@
-try:
-    from PySide6.QtCore import QRegularExpression
-    from PySide6.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
-    from PySide6.QtWidgets import QApplication
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    from PySide2.QtCore import QRegularExpression
-    # noinspection PyUnresolvedReferences
-    from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
-    # noinspection PyUnresolvedReferences
-    from PySide2.QtWidgets import QApplication
+from PySide6.QtCore import QRegularExpression
+from PySide6.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+from PySide6.QtWidgets import QApplication
 
 
 def txformat(color, style=''):
@@ -47,7 +39,7 @@ STYLES_dark = {
     'string': txformat(QColor(106, 153, 85)),
     'string2': txformat(QColor(106, 153, 85)),
     'comment': txformat(QColor(181, 206, 168), 'italic'),  # Grey-green
-    'numbers': txformat(QColor(206, 145, 120)),  # organge
+    'numbers': txformat(QColor(206, 145, 120)),  # orange
 }
 
 

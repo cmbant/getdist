@@ -349,7 +349,7 @@ def getdist_gui():
                 run_gui()
         else:
             print('GetDist GUI.app not found; not running getdist-gui, getdist package not installed '
-                  'or no valid PySide2 or PySide6 found when setup was run. Running script...')
+                  'or no valid PySide6 found when setup was run. Running script...')
             run_gui()
     else:
         run_gui()

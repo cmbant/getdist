@@ -62,7 +62,7 @@ Dependencies
 * Python 3.8+
 * matplotlib
 * scipy
-* PySide6 or PySide2 - optional, only needed for GUI
+* PySide6 - optional, only needed for GUI
 * Working LaTeX installation (not essential, only for some plotting/table functions)
 
 Python distributions like Anaconda have most of what you need (except for LaTeX).

@@ -2413,7 +2413,7 @@ class GetDistPlotter(_BaseObject):
         :param label_order: minus one to show legends in reverse order that lines were added, or a list giving
                             specific order of line indices
         :param legend_ncol: The number of columns for the legend
-        :param legend_loc: The location for the legend
+        :param legend_loc: The location for the legend (e.g. 'upper center', etc.)
         :param title_limit: if not None, a maginalized limit (1,2..) to print as the title of the first root on the
                             diagonal 1D plots
         :param upper_roots: set to fill the upper triangle with subplots using this list of sample root names

@@ -14,27 +14,14 @@ from typing import Optional
 
 # os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=0"  # Force light mode
 
-
-if os.name == "nt" and sys.getwindowsversion().major >= 10:  # noqa
-    import ctypes
-
-    # using 2 (default in recent PySide?) does not work in higher-res non-boot laptop screen
-    ctypes.windll.shcore.SetProcessDpiAwareness(1)  # noqa
-
 try:
-    try:
-        from PySide6 import QtCore
-
-    except:
-        matplotlib.use('Qt5Agg')
-        # noinspection PyUnresolvedReferences
-        from PySide2 import QtCore
+    from PySide6 import QtCore
 except ImportError as _e:
     if 'DLL load failed' in str(_e):
         print('DLL load failed attempting to load PySide: problem with your python configuration')
     else:
         print(_e)
-        print("Can't import PySide modules, you need to install PySide6 or PySide2")
+        print("Can't import PySide modules, you need to install PySide6")
     if not os.path.exists(os.path.join(sys.prefix, 'conda-meta')):
         print('Using Anaconda is probably the most reliable method')
     print("E.g. make and use a new environment")
@@ -48,33 +35,18 @@ from getdist import plots, IniFile, chains
 from getdist.chain_grid import ChainDirGrid, file_root_to_root, get_chain_root_files, load_supported_grid
 from getdist.mcsamples import SettingError, ParamError
 
-from getdist.gui.SyntaxHighlight import PythonHighlighter, is_dark
+from getdist.gui.SyntaxHighlight import PythonHighlighter
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as QNavigationToolbar
 
-try:
-    import PySide6 as PySide
-    from PySide6.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage, QAction, QShortcut
-    from PySide6.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
-    from PySide6.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, \
-        QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
-        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import PySide2 as PySide
-    # noinspection PyUnresolvedReferences
-    from PySide2.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage
-    # noinspection PyUnresolvedReferences
-    from PySide2.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
-    # noinspection PyUnresolvedReferences
-    from PySide2.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, \
-        QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
-        QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-        QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox, QAction, QShortcut
-
-    os.environ['QT_API'] = 'pyside2'
+import PySide6 as PySide
+from PySide6.QtGui import QIcon, QKeySequence, QFont, QTextOption, QPixmap, QImage, QAction, QShortcut
+from PySide6.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoint
+from PySide6.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, \
+    QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
+    QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
+    QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox
 
 # works with or without this:
 # QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -408,7 +380,7 @@ class MainWindow(QMainWindow):
         self.listDirectories = QComboBox(self.selectWidget)
         self.listDirectories.activated.connect(self.listDirectoryChanged)
 
-        self.pushButtonSelect = QPushButton(self._icon("open"), "", self.selectWidget)
+        self.pushButtonSelect = QPushButton("📂", self.selectWidget)
         self.pushButtonSelect.setFixedWidth(45 * self.dpiScale())
         self.pushButtonSelect.setToolTip("Open chain file root directory")
         self.pushButtonSelect.clicked.connect(self.selectRootDirName)
@@ -417,7 +389,7 @@ class MainWindow(QMainWindow):
         self.connect(self.listRoots, SIGNAL("itemChanged(QListWidgetItem *)"), self.updateListRoots)
         self.connect(self.listRoots, SIGNAL("itemSelectionChanged()"), self.selListRoots)
 
-        self.pushButtonRemove = QPushButton(self._icon('remove'), "", self.selectWidget)
+        self.pushButtonRemove = QPushButton("✕", self.selectWidget)
         self.pushButtonRemove.setToolTip("Remove a chain root")
         self.pushButtonRemove.setEnabled(False)
         self.pushButtonRemove.setMaximumWidth(30 * self.dpiScale())
@@ -561,21 +533,18 @@ class MainWindow(QMainWindow):
         self.plotter_script = None
 
         self.toolBar = QToolBar()
-        self.toolBar.setStyleSheet("background-color: %s; border: none" % ('gray' if is_dark() else 'lightGray'))
-        self.toolBar.setIconSize(QSize(22 * self.dpiScale(), 22 * self.dpiScale()))
+        self.toolBar.setStyleSheet("border: none; font-size: 12pt; padding-bottom: 2px")
+        self.toolBar.setToolButtonStyle(Qt.ToolButtonTextOnly)
 
-        openAct = QAction(self._icon("open"),
-                          "open script", self.toolBar,
-                          statusTip="Open script",
-                          triggered=self.openScript)
-        saveAct = QAction(self._icon("save"),
-                          "Save script", self.toolBar,
-                          statusTip="Save script",
-                          triggered=self.saveScript)
-        clearAct = QAction(self._icon("delete"),
-                           "Clear", self.toolBar,
-                           statusTip="Clear",
-                           triggered=self.clearScript)
+        openAct = QAction("📂", self, triggered=self.openScript)
+        openAct.setToolTip("Open script")
+
+        saveAct = QAction("💾", self, triggered=self.saveScript)
+        saveAct.setToolTip("Save script")
+
+        clearAct = QAction("🗑️", self, triggered=self.clearScript)
+        clearAct.setToolTip("Clear")
+
         self.toolBar.addAction(openAct)
         self.toolBar.addAction(saveAct)
         self.toolBar.addAction(clearAct)
@@ -1866,7 +1835,7 @@ class MainWindow(QMainWindow):
                 del self.toolbar
             self.canvas = FigureCanvas(self.plotter.fig)
             self.toolbar = NavigationToolbar(self.canvas, self)
-            self.toolbar.setStyleSheet("QToolBar {border: none}")
+            self.toolbar.setStyleSheet("QToolBar {border: none, background-color: palette(base)}")
             self.plotWidget.layout().addWidget(self.toolbar)
             self.plotWidget.layout().addWidget(self.canvas)
             self.plotWidget.show()
@@ -2376,10 +2345,7 @@ def run_gui():
 
     mainWin.show()
     mainWin.raise_()
-    if os.environ.get('QT_API') == 'pyside2':
-        sys.exit(app.exec_())
-    else:
-        sys.exit(app.exec())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
