@@ -448,7 +448,7 @@ class MCSampleAnalysis(_BaseObject):
         :param chain_settings_have_priority: whether to prioritize settings saved with the chain
         """
         self.analysis_settings = {}
-        if isinstance(settings, IniFile):
+        if isinstance(settings, IniFile) or settings.__class__.__name__ == 'IniFile':
             ini = settings
         elif isinstance(settings, Mapping):
             ini = IniFile(getdist.default_getdist_settings)
@@ -2323,7 +2323,7 @@ class GetDistPlotter(_BaseObject):
         :return: an :class:`~matplotlib:matplotlib.axes.Axes` instance for the subplot axes
         """
         ax = self.subplots[y, x]
-        if not ax:
+        if not ax or 'projection' in kwargs:
             self.subplots[y, x] = ax = self.fig.add_subplot(self.gridspec[y, x], **kwargs)
         if pars is not None:
             ax.getdist_params = pars
@@ -3132,6 +3132,7 @@ class GetDistPlotter(_BaseObject):
 
         opts = dict({'marker': 'o', 'cmap': self.settings.colormap_scatter,
                      's': self.settings.scatter_size}, **kwargs)
+
         if fixed_color:
             del opts['cmap']
         ax.scatter(x, y, z, c=colors, depthshade=True, **opts)
