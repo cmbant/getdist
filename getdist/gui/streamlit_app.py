@@ -7,6 +7,7 @@ import copy
 import time
 import matplotlib.pyplot as plt
 import json
+import traceback
 from io import BytesIO
 import getdist
 from getdist import plots, IniFile
@@ -42,8 +43,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-
-import traceback
 
 
 def track_session_reload():
@@ -84,7 +83,7 @@ def parse_command_line_args():
                 # Directory is the next argument
                 dir_path = os.path.abspath(args[i + 1])
                 break
-    except (ValueError, IndexError) as e:
+    except (ValueError, IndexError):
         # -- not found or other parsing error
         # This handles the case when streamlit passes arguments directly to the script
         args = sys.argv
@@ -972,10 +971,10 @@ def generate_plot():
 
         # Format exactly like original mainwindow.py
         script_lines.append(f"params=[{params_str}]")
-        script_lines.append(f"g.plots_1d(roots, params=params)")
+        script_lines.append("g.plots_1d(roots, params=params)")
 
         try:
-            logging.info(f"Using existing plotter for 1D plot")
+            logging.info("Using existing plotter for 1D plot")
             logging.info(
                 f"Calling plots_1d with roots={st.session_state.selected_roots}, params={st.session_state.x_params}, normalized={normalized}")
 
@@ -1043,11 +1042,11 @@ def generate_plot():
                 params.append(color_by)
 
             # Format exactly like original mainwindow.py
-            script_lines.append(f"params = {params}")
+            script_lines.append(f"params = {str(params)}")
 
             # Add colors for multiple chains - match original format exactly
             if len(st.session_state.selected_roots) > 1:
-                script_lines.append(f"colors = [c[-1] for c in g.settings.line_styles[:len(roots) - 1]]")
+                script_lines.append("colors = [c[-1] for c in g.settings.line_styles[:len(roots) - 1]]")
                 shadow_str = ", shadow_color=True" if shadows else ""
                 script_lines.append(
                     f"g.plot_4d(roots, params, color_bar=True{'' if len(st.session_state.selected_roots) == 1 else ', compare_colors=colors'}{shadow_str})")
@@ -1057,8 +1056,8 @@ def generate_plot():
         elif color_by and color_by != "None":
             # Generate 3D scatter plot script - match original format exactly
             triplet = f"['{st.session_state.x_params[0]}', '{st.session_state.y_params[0]}', '{color_by}']"
-            script_lines.append(f"g.settings.scatter_size = 6")
-            script_lines.append(f"g.make_figure()")
+            script_lines.append("g.settings.scatter_size = 6")
+            script_lines.append("g.make_figure()")
             script_lines.append(f"g.plot_3d(roots, {triplet})")
         else:
             # Generate regular 2D contour plot script - match original format exactly
@@ -1076,8 +1075,8 @@ def generate_plot():
                 if single:
                     script_lines.append(
                         f"g.plot_2d(roots, '{pairs[0][0]}', '{pairs[0][1]}', filled={filled}, shaded={shaded})")
-                    script_lines.append(f"labels = g._default_legend_labels(None, roots)")
-                    script_lines.append(f"g.add_legend(labels)")
+                    script_lines.append("labels = g._default_legend_labels(None, roots)")
+                    script_lines.append("g.add_legend(labels)")
                 else:
                     script_lines.append(
                         f"g.plot_2d(roots, '{pairs[0][0]}', '{pairs[0][1]}', filled={filled}, shaded={shaded})")
@@ -1115,7 +1114,7 @@ def generate_plot():
                 color_by = None
 
             # Use the existing plotter that already has the samples loaded
-            logging.info(f"Using existing plotter for 2D plot")
+            logging.info("Using existing plotter for 2D plot")
 
             # Set appropriate figure size for 2D plots - similar to Qt implementation
             if st.session_state.plot_type == "2D Contour":
@@ -1188,7 +1187,7 @@ def generate_plot():
                 plotter.plot_3d(st.session_state.selected_roots, param_triplet)
             else:
                 # Create a 2D contour plot
-                logging.info(f"Creating 2D contour plot")
+                logging.info("Creating 2D contour plot")
                 # Handle different combinations of X and Y parameters - follow mainwindow.py logic exactly
                 single = False
 
@@ -1261,7 +1260,7 @@ def generate_plot():
         # Check if we have enough parameters for a triangle plot
         if len(st.session_state.x_params) < 2:
             logging.warning(f"Need at least 2 parameters for triangle plot, got {len(st.session_state.x_params)}")
-            st.error(f"Need at least 2 parameters for a triangle plot. Please select at least 2 parameters.")
+            st.error("Need at least 2 parameters for a triangle plot. Please select at least 2 parameters.")
             return None, "# Error: Need at least 2 parameters for a triangle plot"
         # Triangle plot
         filled = st.session_state.plot_settings.get('filled', True)
@@ -1277,7 +1276,7 @@ def generate_plot():
         script_lines.append(f"params = [{params_str}]")
         script_lines.append(f"g.triangle_plot(roots, params, filled={filled}" +
                             (f", plot_3d_with_param='{color_by}'" if color_by and color_by != "None" else "") +
-                            (f", shaded=True" if st.session_state.plot_settings.get('shaded', False) else "") +
+                            (", shaded=True" if st.session_state.plot_settings.get('shaded', False) else "") +
                             (f", no_1d_plots={not show_1d}" if not show_1d else "") +
                             (f", title_limit={show_1d}" if show_1d else "") +
                             ")")
@@ -1888,7 +1887,8 @@ def main():
                                                         # Skip header rows and process data rows
                                                         # Usually first few rows are headers and formatting
                                                         data_rows = [row for row in rows if
-                                                                     '&' in row and not '\\multicolumn' in row and not '\\hline' in row]
+                                                                     '&' in row and '\\multicolumn' not in row and
+                                                                     '\\hline' not in row]
 
                                                         # Process each data row
                                                         for row in data_rows:
@@ -1961,7 +1961,7 @@ def main():
                                                              key=f"latex_text_{i}")
 
                                                 # Add copy button
-                                                if st.button(f"Copy LaTeX", key=f"copy_latex_{i}"):
+                                                if st.button("Copy LaTeX", key=f"copy_latex_{i}"):
                                                     st.session_state[f"clipboard_{i}"] = table_text
                                                     st.success("LaTeX copied to clipboard!")
                             except Exception as e:
@@ -2071,7 +2071,7 @@ def main():
                                     if par not in skips:
                                         pars.append(par)
                                         comments[par] = items[2].strip() if len(items) > 2 else ""
-                                except:
+                                except Exception:
                                     pass
 
                     # Sort parameters
@@ -2174,7 +2174,7 @@ def main():
                                         else:
                                             try:
                                                 st.session_state.custom_plot_settings[key] = eval(value)
-                                            except:
+                                            except Exception:
                                                 if current is None or re.match(r'^[\w]+$', value):
                                                     st.session_state.custom_plot_settings[key] = value
                                                 else:
@@ -2478,7 +2478,7 @@ def main():
                     # Data tag selection (chains)
                     if data_tags:
                         # Create a dropdown for chains with a compact label
-                        st.write(f"**Chains:**")
+                        st.write("**Chains:**")
                         # Add an empty option to allow no selection by default
                         chain_options = ["Select a chain..."] + data_tags
                         selected_data_tag = st.selectbox(
