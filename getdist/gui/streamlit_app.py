@@ -43,8 +43,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 import traceback
+
 
 def track_session_reload():
     """Track why the session is reloading"""
@@ -60,8 +60,10 @@ Stack trace:
 {traceback.format_stack()}
     """.strip())
 
+
 # Add near start of main()
 track_session_reload()
+
 
 def parse_command_line_args():
     dir_path = None
@@ -111,25 +113,25 @@ st.set_page_config(
 )
 
 default_plot_settings = {
-        # General settings
-        'color_by': 'None',
+    # General settings
+    'color_by': 'None',
 
-        # 1D plot settings
-        'normalized': False,
+    # 1D plot settings
+    'normalized': False,
 
-        # 2D plot settings
-        'filled': True,
-        'shaded': False,
-        'axis_legend': False,
+    # 2D plot settings
+    'filled': True,
+    'shaded': False,
+    'axis_legend': False,
 
-        # Z-axis settings
-        'use_z_axis': False,
-        'z_param': None,
-        'shadows': False,
+    # Z-axis settings
+    'use_z_axis': False,
+    'z_param': None,
+    'shadows': False,
 
-        # Triangle plot settings
-        'show_1d': False
-    }
+    # Triangle plot settings
+    'show_1d': False
+}
 
 # --- Session State Initialization ---
 
@@ -167,8 +169,8 @@ if 'app_initialized' not in st.session_state:
         logger.info(f"File directory: {file_dir}")
         possible_locations = [
             '',
-            file_dir,                                # Current directory
-            os.path.abspath(os.path.join(file_dir, '..')),     # Parent directory
+            file_dir,  # Current directory
+            os.path.abspath(os.path.join(file_dir, '..')),  # Parent directory
             os.path.abspath(os.path.join(file_dir, '..', '..'))  # Grandparent directory
         ]
 
@@ -223,22 +225,26 @@ if 'current_settings' not in st.session_state:
     st.session_state.current_settings = copy.deepcopy(st.session_state.base_settings)
     logger.info("Initialized current settings from base settings.")
 
+
 # Functions for persisting recent directories between sessions
 def get_config_dir():
     """Get the directory for storing configuration files"""
     # Use the same directory as getdist.gui would use
     # Windows: %APPDATA%\getdist\streamlit
     # Unix/Linux/Mac: ~/.config/getdist/streamlit
-    base_dir = os.environ.get('APPDATA', os.path.expanduser('~')) if os.name == 'nt' else os.path.join(os.path.expanduser('~'), '.config')
+    base_dir = os.environ.get('APPDATA', os.path.expanduser('~')) if os.name == 'nt' else os.path.join(
+        os.path.expanduser('~'), '.config')
     config_dir = os.path.join(base_dir, 'getdist', 'streamlit')
 
     # Create the directory if it doesn't exist
     os.makedirs(config_dir, exist_ok=True)
     return config_dir
 
+
 def get_recent_dirs_file():
     """Get the path to the file storing recent directories"""
     return os.path.join(get_config_dir(), 'recent_directories.json')
+
 
 def save_recent_directories():
     """Save the list of recent directories to a file"""
@@ -256,6 +262,7 @@ def save_recent_directories():
     except Exception as e:
         logger.error(f"Error saving recent directories: {str(e)}")
 
+
 def load_recent_directories():
     """Load the list of recent directories from a file"""
     try:
@@ -272,6 +279,7 @@ def load_recent_directories():
                 logger.info(f"Loaded {len(recent_dirs)} recent directories from {file_path}")
     except Exception as e:
         logger.error(f"Error loading recent directories: {str(e)}")
+
 
 # Load recent directories when the app starts
 load_recent_directories()
@@ -297,6 +305,7 @@ def get_plotter(chain_dir=None):
     st.session_state.plotter = plots.get_subplot_plotter(chain_dir=chain_dirs,
                                                          analysis_settings=st.session_state.current_settings)
     return st.session_state.plotter
+
 
 def open_directory(dir_path):
     """Open a directory containing chains"""
@@ -336,6 +345,7 @@ def open_directory(dir_path):
     except Exception as e:
         st.error(f"Error opening directory: {str(e)}")
         return False
+
 
 def update_parameters():
     """Update parameter names by merging from all selected roots
@@ -423,6 +433,7 @@ def update_parameters():
     except Exception as e:
         logging.error(f"Error updating parameters: {str(e)}")
 
+
 def add_root(root_name):
     """Add a root to the selected roots"""
     if not root_name:
@@ -488,6 +499,7 @@ def add_root(root_name):
             st.session_state.selected_roots.remove(root_name)
         st.error(f"Error adding chain {root_name}: {str(e)}")
 
+
 def show_marge_stats(rootname=None):
     """Show marginalized statistics for the selected chain"""
     if not st.session_state.selected_roots:
@@ -522,6 +534,7 @@ def show_marge_stats(rootname=None):
         st.error(f"Error getting marginalized statistics: {str(e)}")
         return None
 
+
 def show_like_stats(rootname=None):
     """Show likelihood statistics for the selected chain"""
     if not st.session_state.selected_roots:
@@ -555,6 +568,7 @@ def show_like_stats(rootname=None):
     except Exception as e:
         st.error(f"Error getting likelihood statistics: {str(e)}")
         return None
+
 
 def show_converge_stats(rootname=None):
     """Show convergence statistics for the selected chain"""
@@ -596,6 +610,7 @@ def show_converge_stats(rootname=None):
     except Exception as e:
         st.error(f"Error getting convergence statistics: {str(e)}")
         return None
+
 
 def show_pca(rootname=None):
     """Show PCA analysis for selected parameters"""
@@ -651,6 +666,7 @@ def show_pca(rootname=None):
         st.error(f"Error performing PCA: {str(e)}")
         return None
 
+
 def reload_files():
     """Reload chain files from the current directory"""
     if not st.session_state.chain_dir:
@@ -670,6 +686,7 @@ def reload_files():
     # Reopen the directory
     return open_directory(st.session_state.chain_dir)
 
+
 def apply_analysis_settings(settings):
     """Apply analysis settings to the plotter"""
     if not st.session_state.plotter:
@@ -682,7 +699,8 @@ def apply_analysis_settings(settings):
     # Reset the sample analyzer with the new settings
     try:
         # Reset the plotter with new settings
-        st.session_state.plotter.sample_analyser.reset(st.session_state.current_settings, chain_settings_have_priority=False)
+        st.session_state.plotter.sample_analyser.reset(st.session_state.current_settings,
+                                                       chain_settings_have_priority=False)
 
         # Update the current plot if one exists
         if st.session_state.current_plot:
@@ -703,6 +721,7 @@ def apply_analysis_settings(settings):
         st.success("Analysis settings applied")
     except Exception as e:
         st.error(f"Error applying settings: {str(e)}")
+
 
 def apply_plot_module(module_name):
     """Apply plot style module"""
@@ -730,6 +749,7 @@ def apply_plot_module(module_name):
     except Exception as e:
         st.error(f"Error applying plot style module: {str(e)}")
 
+
 def reset_analysis_settings():
     """Reset analysis settings to defaults"""
     st.session_state.current_settings = copy.deepcopy(st.session_state.base_settings)
@@ -737,17 +757,20 @@ def reset_analysis_settings():
     # Reset the sample analyzer with the default settings
     if st.session_state.plotter:
         try:
-            st.session_state.plotter.sample_analyser.reset(st.session_state.current_settings, chain_settings_have_priority=False)
+            st.session_state.plotter.sample_analyser.reset(st.session_state.current_settings,
+                                                           chain_settings_have_priority=False)
             st.success("Analysis settings reset to defaults")
         except Exception as e:
             st.error(f"Error resetting settings: {str(e)}")
     else:
         st.success("Analysis settings reset to defaults")
 
+
 def reset_plot_options():
     """Reset plot options to defaults"""
     st.session_state.plot_settings = default_plot_settings.copy()
     st.success("Plot options reset to defaults")
+
 
 def changed_settings():
     base = st.session_state.base_settings.params
@@ -766,11 +789,12 @@ def set_size_for_n(plotter, cols, rows, width_inch, height_inch):
     # Set or adjust subplot size ratio
     if plotter.settings.subplot_size_ratio:
         plotter.settings.fig_width_inch = min(plotter.settings.fig_width_inch,
-                                           aspect_factor / plotter.settings.subplot_size_ratio)
+                                              aspect_factor / plotter.settings.subplot_size_ratio)
     else:
         plotter.settings.subplot_size_ratio = min(1.5, aspect_factor / plotter.settings.fig_width_inch)
 
-    logging.info(f"Set plot size: {cols}x{rows} grid, width={plotter.settings.fig_width_inch:.2f}in, ratio={plotter.settings.subplot_size_ratio:.2f}")
+    logging.info(
+        f"Set plot size: {cols}x{rows} grid, width={plotter.settings.fig_width_inch:.2f}in, ratio={plotter.settings.subplot_size_ratio:.2f}")
 
 
 def export_plot(format_type):
@@ -785,7 +809,8 @@ def export_plot(format_type):
     logging.info(f"Exporting plot in {format_type} format")
 
     # Check if we have a plotter with a figure
-    if not hasattr(st.session_state, 'plotter') or not st.session_state.plotter or not hasattr(st.session_state.plotter, 'fig'):
+    if not hasattr(st.session_state, 'plotter') or not st.session_state.plotter or not hasattr(st.session_state.plotter,
+                                                                                               'fig'):
         logging.warning("No plotter or figure available for export")
         # Fallback to PNG from memory if plotter not available
         if format_type == "PNG" and st.session_state.current_plot:
@@ -871,7 +896,8 @@ def generate_plot():
         logging.warning("No X parameters selected for plotting")
         return None, None
 
-    logging.info(f"Generating plot with roots: {st.session_state.selected_roots} and params: {st.session_state.x_params}")
+    logging.info(
+        f"Generating plot with roots: {st.session_state.selected_roots} and params: {st.session_state.x_params}")
 
     # Properly close all existing figures to prevent overlapping plots
     plt.close('all')
@@ -892,9 +918,10 @@ def generate_plot():
     # Generate script
     script_lines = ["from getdist import plots", ""]
 
-    if st.session_state.script_plot_module!= 'getdist.plots':
-        script_lines.append("from %s import style_name\nplots.set_active_style(style_name)" % st.session_state.script_plot_module)
-        script_lines +=[]
+    if st.session_state.script_plot_module != 'getdist.plots':
+        script_lines.append(
+            "from %s import style_name\nplots.set_active_style(style_name)" % st.session_state.script_plot_module)
+        script_lines += []
 
     if override_setting := changed_settings():
         script_lines.append(('analysis_settings = %s\n' % override_setting).replace(', ', ",\n" + " " * 21))
@@ -905,8 +932,9 @@ def generate_plot():
         plot_func = 'get_subplot_plotter('
         # Add subplot_size parameter in specific cases as in the original
         if not plotter.settings.fig_width_inch and \
-           len(st.session_state.y_params) and not (len(st.session_state.x_params) > 1 and len(st.session_state.y_params) > 1) and \
-           st.session_state.plot_type != "Triangle":
+                len(st.session_state.y_params) and not (
+                len(st.session_state.x_params) > 1 and len(st.session_state.y_params) > 1) and \
+                st.session_state.plot_type != "Triangle":
             plot_func += 'subplot_size=3.5, '
     else:
         plot_func = 'get_single_plotter('
@@ -948,7 +976,8 @@ def generate_plot():
 
         try:
             logging.info(f"Using existing plotter for 1D plot")
-            logging.info(f"Calling plots_1d with roots={st.session_state.selected_roots}, params={st.session_state.x_params}, normalized={normalized}")
+            logging.info(
+                f"Calling plots_1d with roots={st.session_state.selected_roots}, params={st.session_state.x_params}, normalized={normalized}")
 
             # Set appropriate figure size for 1D plots - similar to Qt implementation
             if st.session_state.plot_type == "1D Density":
@@ -960,7 +989,7 @@ def generate_plot():
 
             # Call plots_1d on the existing plotter
             plotter.plots_1d(st.session_state.selected_roots, st.session_state.x_params,
-                          normalized=normalized, colors=None)
+                             normalized=normalized, colors=None)
 
             # plots_1d already handles tight_layout internally
 
@@ -989,7 +1018,8 @@ def generate_plot():
         # Check if x and y parameters are the same
         if st.session_state.x_params[0] == st.session_state.y_params[0]:
             logging.warning(f"Cannot create 2D plot with same parameter for x and y: {st.session_state.x_params[0]}")
-            st.error(f"Cannot create 2D plot with same parameter for x and y: {st.session_state.x_params[0]}. Please select different parameters.")
+            st.error(
+                f"Cannot create 2D plot with same parameter for x and y: {st.session_state.x_params[0]}. Please select different parameters.")
             return None, "# Error: Cannot create 2D plot with same parameter for x and y"
         # 2D plot
         filled = st.session_state.plot_settings.get('filled', True)
@@ -1019,7 +1049,8 @@ def generate_plot():
             if len(st.session_state.selected_roots) > 1:
                 script_lines.append(f"colors = [c[-1] for c in g.settings.line_styles[:len(roots) - 1]]")
                 shadow_str = ", shadow_color=True" if shadows else ""
-                script_lines.append(f"g.plot_4d(roots, params, color_bar=True{'' if len(st.session_state.selected_roots) == 1 else ', compare_colors=colors'}{shadow_str})")
+                script_lines.append(
+                    f"g.plot_4d(roots, params, color_bar=True{'' if len(st.session_state.selected_roots) == 1 else ', compare_colors=colors'}{shadow_str})")
             else:
                 shadow_str = ", shadow_color=True" if shadows else ""
                 script_lines.append(f"g.plot_4d(roots, params, color_bar=True{shadow_str})")
@@ -1043,11 +1074,13 @@ def generate_plot():
 
                 # For single pairs with axis_legend, add legend after plot
                 if single:
-                    script_lines.append(f"g.plot_2d(roots, '{pairs[0][0]}', '{pairs[0][1]}', filled={filled}, shaded={shaded})")
+                    script_lines.append(
+                        f"g.plot_2d(roots, '{pairs[0][0]}', '{pairs[0][1]}', filled={filled}, shaded={shaded})")
                     script_lines.append(f"labels = g._default_legend_labels(None, roots)")
                     script_lines.append(f"g.add_legend(labels)")
                 else:
-                    script_lines.append(f"g.plot_2d(roots, '{pairs[0][0]}', '{pairs[0][1]}', filled={filled}, shaded={shaded})")
+                    script_lines.append(
+                        f"g.plot_2d(roots, '{pairs[0][0]}', '{pairs[0][1]}', filled={filled}, shaded={shaded})")
 
             elif len(st.session_state.x_params) == 1 and len(st.session_state.y_params) > 1:
                 # One X, multiple Y
@@ -1069,13 +1102,12 @@ def generate_plot():
                 script_lines.append(f"yparams = {st.session_state.y_params}")
                 script_lines.append(f"g.rectangle_plot(xparams, yparams, roots=roots, filled={filled})")
 
-
         try:
             # Get settings
             filled = st.session_state.plot_settings.get('filled', True)
 
-            logging.info(f"Calling plot_2d with roots={st.session_state.selected_roots}, x={st.session_state.x_params[0]}, y={st.session_state.y_params[0]}, filled={filled}")
-
+            logging.info(
+                f"Calling plot_2d with roots={st.session_state.selected_roots}, x={st.session_state.x_params[0]}, y={st.session_state.y_params[0]}, filled={filled}")
 
             # Get color_by parameter if set
             color_by = st.session_state.plot_settings.get('color_by', None)
@@ -1138,10 +1170,10 @@ def generate_plot():
                 if len(st.session_state.selected_roots) > 1:
                     colors = [c[-1] for c in plotter.settings.line_styles[:len(st.session_state.selected_roots) - 1]]
                     plotter.plot_4d(st.session_state.selected_roots, params, color_bar=z_param,
-                                   compare_colors=colors, shadow_color=shadows)
+                                    compare_colors=colors, shadow_color=shadows)
                 else:
                     plotter.plot_4d(st.session_state.selected_roots, params, color_bar=z_param,
-                                   shadow_color=shadows)
+                                    shadow_color=shadows)
             elif color_by and color_by != "None":
                 # Create a 3D scatter plot colored by the selected parameter
                 logging.info(f"Creating 3D scatter plot colored by {color_by}")
@@ -1172,19 +1204,19 @@ def generate_plot():
                     if single:
                         # Make a single figure and add legend inside the plot
                         plotter.plot_2d(st.session_state.selected_roots,
-                                       pairs[0][0],
-                                       pairs[0][1],
-                                       filled=filled,
-                                       shaded=shaded)
+                                        pairs[0][0],
+                                        pairs[0][1],
+                                        filled=filled,
+                                        shaded=shaded)
                         labels = plotter._default_legend_labels(None, st.session_state.selected_roots)
                         plotter.add_legend(labels)
                     else:
                         # Just plot directly
                         plotter.plot_2d(st.session_state.selected_roots,
-                                       pairs[0][0],
-                                       pairs[0][1],
-                                       filled=filled,
-                                       shaded=shaded)
+                                        pairs[0][0],
+                                        pairs[0][1],
+                                        filled=filled,
+                                        shaded=shaded)
 
                 elif len(st.session_state.x_params) == 1 and len(st.session_state.y_params) > 1:
                     # One X, multiple Y
@@ -1194,9 +1226,9 @@ def generate_plot():
                     cols, rows = plotter.default_col_row(len(pairs))
                     plotter.make_figure(cols, rows)
                     plotter.plots_2d(st.session_state.selected_roots,
-                                   param_pairs=pairs,
-                                   filled=filled,
-                                   shaded=shaded)
+                                     param_pairs=pairs,
+                                     filled=filled,
+                                     shaded=shaded)
 
                 elif len(st.session_state.x_params) > 1 and len(st.session_state.y_params) == 1:
                     # Multiple X, one Y
@@ -1206,19 +1238,19 @@ def generate_plot():
                     cols, rows = plotter.default_col_row(len(pairs))
                     plotter.make_figure(cols, rows)
                     plotter.plots_2d(st.session_state.selected_roots,
-                                   param_pairs=pairs,
-                                   filled=filled,
-                                   shaded=shaded)
+                                     param_pairs=pairs,
+                                     filled=filled,
+                                     shaded=shaded)
 
                 elif len(st.session_state.x_params) > 1 and len(st.session_state.y_params) > 1:
                     # Rectangle plot - multiple X and Y parameters
-                    logging.info(f"Creating rectangle plot with {len(st.session_state.x_params)} x params and {len(st.session_state.y_params)} y params")
+                    logging.info(
+                        f"Creating rectangle plot with {len(st.session_state.x_params)} x params and {len(st.session_state.y_params)} y params")
                     plotter.make_figure(len(st.session_state.x_params), len(st.session_state.y_params))
                     plotter.rectangle_plot(st.session_state.x_params,
                                            st.session_state.y_params,
                                            roots=st.session_state.selected_roots,
                                            filled=filled)
-
 
             logging.info("Successfully generated 2D plot")
         except Exception as e:
@@ -1244,35 +1276,36 @@ def generate_plot():
         # Format exactly like original mainwindow.py
         script_lines.append(f"params = [{params_str}]")
         script_lines.append(f"g.triangle_plot(roots, params, filled={filled}" +
-                          (f", plot_3d_with_param='{color_by}'" if color_by and color_by != "None" else "") +
-                          (f", shaded=True" if st.session_state.plot_settings.get('shaded', False) else "") +
-                          (f", no_1d_plots={not show_1d}" if not show_1d else "") +
-                          (f", title_limit={show_1d}" if show_1d else "") +
-                          ")")
+                            (f", plot_3d_with_param='{color_by}'" if color_by and color_by != "None" else "") +
+                            (f", shaded=True" if st.session_state.plot_settings.get('shaded', False) else "") +
+                            (f", no_1d_plots={not show_1d}" if not show_1d else "") +
+                            (f", title_limit={show_1d}" if show_1d else "") +
+                            ")")
 
         try:
             # Get settings
             filled = st.session_state.plot_settings.get('filled', True)
             show_1d = st.session_state.plot_settings.get('show_1d', True)
 
-            logging.info(f"Calling triangle_plot with roots={st.session_state.selected_roots}, params={st.session_state.x_params}, filled={filled}")
-
+            logging.info(
+                f"Calling triangle_plot with roots={st.session_state.selected_roots}, params={st.session_state.x_params}, filled={filled}")
 
             # Get color_by parameter if set
             color_by = st.session_state.plot_settings.get('color_by', None)
             if color_by == "None":
                 color_by = None
 
-            logging.info(f"Calling triangle_plot with roots={st.session_state.selected_roots}, params={st.session_state.x_params}, filled={filled}, plot_3d_with_param={color_by}")
+            logging.info(
+                f"Calling triangle_plot with roots={st.session_state.selected_roots}, params={st.session_state.x_params}, filled={filled}, plot_3d_with_param={color_by}")
 
             # Call triangle_plot on the existing plotter - use plot_3d_with_param as in original
             shaded = st.session_state.plot_settings.get('shaded', False)
 
             # Call triangle_plot exactly as in the original mainwindow.py
             plotter.triangle_plot(st.session_state.selected_roots, st.session_state.x_params,
-                               plot_3d_with_param=color_by, filled=filled,
-                               shaded=shaded, no_1d_plots=not show_1d,
-                               title_limit=show_1d)
+                                  plot_3d_with_param=color_by, filled=filled,
+                                  shaded=shaded, no_1d_plots=not show_1d,
+                                  title_limit=show_1d)
 
             logging.info("Successfully generated triangle plot")
         except Exception as e:
@@ -1282,7 +1315,7 @@ def generate_plot():
     script = "\n".join(script_lines)
 
     # Generate plot image in memory if figure is available
-    if (fig:=plotter.fig) is not None:
+    if (fig := plotter.fig) is not None:
         logging.info("Saving figure to memory")
         try:
             # Create a BytesIO object to store the image
@@ -1294,7 +1327,7 @@ def generate_plot():
             # Get the image bytes
             buf.seek(0)
             image_bytes = buf.getvalue()
-    
+
             return image_bytes, script
         except Exception as e:
             logging.exception("Error saving plot to memory")
@@ -1304,6 +1337,7 @@ def generate_plot():
 
     logging.info("Returning script only (no image)")
     return None, script
+
 
 def main():
     """Main function to render the Streamlit app"""
@@ -1316,7 +1350,8 @@ def main():
     with menu_col1:
         file_menu = st.expander("📁 File")
         with file_menu:
-            if st.button("Re-load files", key="reload_button", use_container_width=True, disabled=not st.session_state.chain_dir):
+            if st.button("Re-load files", key="reload_button", use_container_width=True,
+                         disabled=not st.session_state.chain_dir):
                 reload_files()
                 st.rerun()
 
@@ -1327,7 +1362,8 @@ def main():
             st.markdown("**Export Plot**")
 
             # Download PNG button
-            if st.button("Download PNG", key="download_png_button", use_container_width=True, disabled=not st.session_state.current_plot):
+            if st.button("Download PNG", key="download_png_button", use_container_width=True,
+                         disabled=not st.session_state.current_plot):
                 with st.spinner("Preparing PNG file..."):
                     # Get the plot data in PNG format
                     file_data, mime_type = export_plot("PNG")
@@ -1345,7 +1381,8 @@ def main():
                         st.error("Failed to generate PNG file")
 
             # Download PDF button
-            if st.button("Download PDF", key="download_pdf_button", use_container_width=True, disabled=not st.session_state.current_plot):
+            if st.button("Download PDF", key="download_pdf_button", use_container_width=True,
+                         disabled=not st.session_state.current_plot):
                 with st.spinner("Preparing PDF file..."):
                     # Get the plot data in PDF format
                     file_data, mime_type = export_plot("PDF")
@@ -1397,34 +1434,34 @@ def main():
         with data_menu:
             # Marge Stats button
             if st.button("Marge Stats", key="marge_stats_button",
-                       use_container_width=True,
-                       disabled=not st.session_state.selected_roots):
+                         use_container_width=True,
+                         disabled=not st.session_state.selected_roots):
                 toggle_dialog('show_marge_stats')
 
             # Like Stats button
             if st.button("Like Stats", key="like_stats_button",
-                       use_container_width=True,
-                       disabled=not st.session_state.selected_roots):
+                         use_container_width=True,
+                         disabled=not st.session_state.selected_roots):
                 toggle_dialog('show_like_stats')
 
             # Converge Stats button
             if st.button("Converge Stats", key="converge_stats_button",
-                       use_container_width=True,
-                       disabled=not st.session_state.selected_roots):
+                         use_container_width=True,
+                         disabled=not st.session_state.selected_roots):
                 toggle_dialog('show_converge_stats')
 
             st.divider()
 
             # Parameter PCA button
             if st.button("Parameter PCA", key="pca_button",
-                       use_container_width=True,
-                       disabled=not (st.session_state.selected_roots and st.session_state.x_params)):
+                         use_container_width=True,
+                         disabled=not (st.session_state.selected_roots and st.session_state.x_params)):
                 toggle_dialog('show_pca')
 
             # Parameter Table button
             if st.button("Parameter Table", key="param_table_button",
-                       use_container_width=True,
-                       disabled=not st.session_state.selected_roots):
+                         use_container_width=True,
+                         disabled=not st.session_state.selected_roots):
                 toggle_dialog('show_param_table')
 
     # Options Menu
@@ -1433,28 +1470,28 @@ def main():
         with options_menu:
             # Analysis Settings button
             if st.button("Analysis Settings", key="analysis_settings_button",
-                       use_container_width=True):
+                         use_container_width=True):
                 toggle_dialog('show_analysis_settings')
 
             # Plot Options button
             if st.button("Plot Options", key="plot_options_button",
-                       use_container_width=True):
+                         use_container_width=True):
                 toggle_dialog('show_plot_options')
 
             # Plot style module button
             if st.button("Plot style module", key="config_settings_button",
-                       use_container_width=True):
+                         use_container_width=True):
                 toggle_dialog('show_config_settings')
 
             st.divider()
 
             # Reset buttons (these don't toggle dialogs)
             if st.button("Reset Analysis Settings", key="reset_analysis_button",
-                       use_container_width=True):
+                         use_container_width=True):
                 reset_analysis_settings()
 
             if st.button("Reset Plot Options", key="reset_plot_button",
-                       use_container_width=True):
+                         use_container_width=True):
                 reset_plot_options()
                 st.rerun()
 
@@ -1492,7 +1529,8 @@ def main():
                 selected_chain = st.selectbox(
                     "Select chain:",
                     options=st.session_state.selected_roots,
-                    index=st.session_state.selected_roots.index(st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
+                    index=st.session_state.selected_roots.index(
+                        st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
                     key="marge_stats_chain_select"
                 )
 
@@ -1517,7 +1555,8 @@ def main():
 
                 # Create a table to display the stats
                 data = []
-                headers = ["Parameter", "Mean", "Std Dev"] + [f"{lim}% Lower" for lim in [68, 95, 99]] + [f"{lim}% Upper" for lim in [68, 95, 99]] + ["Label"]
+                headers = ["Parameter", "Mean", "Std Dev"] + [f"{lim}% Lower" for lim in [68, 95, 99]] + [
+                    f"{lim}% Upper" for lim in [68, 95, 99]] + ["Label"]
 
                 for param in stats.names:
                     row = [param.name, f"{param.mean:.6g}", f"{param.err:.6g}"]
@@ -1545,7 +1584,8 @@ def main():
                 selected_chain = st.selectbox(
                     "Select chain:",
                     options=st.session_state.selected_roots,
-                    index=st.session_state.selected_roots.index(st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
+                    index=st.session_state.selected_roots.index(
+                        st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
                     key="like_stats_chain_select"
                 )
 
@@ -1584,7 +1624,7 @@ def main():
                     # Add confidence limits - hardcoded to match original code
                     # The original code assumes exactly 2 contour levels (68% and 95%)
                     if hasattr(param, 'ND_limit_bot') and hasattr(param, 'ND_limit_top') and \
-                       param.ND_limit_bot.size >= 2 and param.ND_limit_top.size >= 2:
+                            param.ND_limit_bot.size >= 2 and param.ND_limit_top.size >= 2:
                         row.extend([
                             f"{param.ND_limit_bot[0]:.6g}",
                             f"{param.ND_limit_top[0]:.6g}",
@@ -1619,7 +1659,8 @@ def main():
                 selected_chain = st.selectbox(
                     "Select chain:",
                     options=st.session_state.selected_roots,
-                    index=st.session_state.selected_roots.index(st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
+                    index=st.session_state.selected_roots.index(
+                        st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
                     key="converge_stats_chain_select"
                 )
 
@@ -1654,7 +1695,8 @@ def main():
 
                 # Display as a dataframe
                 import pandas as pd
-                df = pd.DataFrame(data, columns=["Parameter", "R-1", "Var(mean)/mean(var)", "Remaining Chains", "Worst e-value"])
+                df = pd.DataFrame(data, columns=["Parameter", "R-1", "Var(mean)/mean(var)", "Remaining Chains",
+                                                 "Worst e-value"])
                 st.dataframe(df, use_container_width=True)
 
             if st.button("Close", key="close_converge_stats"):
@@ -1671,7 +1713,8 @@ def main():
                 selected_chain = st.selectbox(
                     "Select chain:",
                     options=st.session_state.selected_roots,
-                    index=st.session_state.selected_roots.index(st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
+                    index=st.session_state.selected_roots.index(
+                        st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
                     key="pca_chain_select"
                 )
 
@@ -1708,13 +1751,13 @@ def main():
                 # Display eigenvalues
                 st.write("**Eigenvalues:**")
                 for i, val in enumerate(eigenvalues):
-                    st.write(f"PC{i+1}: {val:.6g}")
+                    st.write(f"PC{i + 1}: {val:.6g}")
 
                 # Display eigenvectors
                 st.write("**Eigenvectors:**")
                 data = []
                 for i, vec in enumerate(eigenvectors):
-                    row = [f"PC{i+1}"] + [f"{v:.6g}" for v in vec]
+                    row = [f"PC{i + 1}"] + [f"{v:.6g}" for v in vec]
                     data.append(row)
 
                 # Display as a dataframe
@@ -1737,7 +1780,8 @@ def main():
                     selected_chain = st.selectbox(
                         "Select chain:",
                         options=st.session_state.selected_roots,
-                        index=st.session_state.selected_roots.index(st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
+                        index=st.session_state.selected_roots.index(
+                            st.session_state.active_chain) if 'active_chain' in st.session_state and st.session_state.active_chain in st.session_state.selected_roots else 0,
                         key="param_table_chain_select"
                     )
 
@@ -1798,11 +1842,13 @@ def main():
 
                                 if len(pars) > 0:
                                     # Create tables for different confidence levels
-                                    tables = [samples.getTable(columns=len(pars)//20 + 1, limit=lim + 1, paramList=pars)
-                                             for lim in range(len(samples.contours))]
+                                    tables = [
+                                        samples.getTable(columns=len(pars) // 20 + 1, limit=lim + 1, paramList=pars)
+                                        for lim in range(len(samples.contours))]
 
                                     # Create tabs for different confidence levels and display options
-                                    conf_tabs = st.tabs([f"{samples.contours[i]*100:.0f}% limits" for i in range(len(samples.contours))])
+                                    conf_tabs = st.tabs([f"{samples.contours[i] * 100:.0f}% limits" for i in
+                                                         range(len(samples.contours))])
 
                                     for i, tab in enumerate(conf_tabs):
                                         with tab:
@@ -1831,7 +1877,8 @@ def main():
                                                     latex_text = table.tableTex()
 
                                                     # Find the tabular environment
-                                                    tabular_match = re.search(r'\\begin\{tabular\}.*?\\end\{tabular\}', latex_text, re.DOTALL)
+                                                    tabular_match = re.search(r'\\begin\{tabular\}.*?\\end\{tabular\}',
+                                                                              latex_text, re.DOTALL)
                                                     if tabular_match:
                                                         tabular_content = tabular_match.group(0)
 
@@ -1840,7 +1887,8 @@ def main():
 
                                                         # Skip header rows and process data rows
                                                         # Usually first few rows are headers and formatting
-                                                        data_rows = [row for row in rows if '&' in row and not '\\multicolumn' in row and not '\\hline' in row]
+                                                        data_rows = [row for row in rows if
+                                                                     '&' in row and not '\\multicolumn' in row and not '\\hline' in row]
 
                                                         # Process each data row
                                                         for row in data_rows:
@@ -1851,7 +1899,8 @@ def main():
                                                                 clean_cells = []
                                                                 for cell in cells:
                                                                     # Remove LaTeX formatting
-                                                                    cell = re.sub(r'\\[a-zA-Z]+\{([^\}]*)\}', r'\1', cell)
+                                                                    cell = re.sub(r'\\[a-zA-Z]+\{([^\}]*)\}', r'\1',
+                                                                                  cell)
                                                                     cell = cell.strip()
                                                                     # Remove $ signs from math mode
                                                                     cell = cell.replace('$', '')
@@ -1872,21 +1921,24 @@ def main():
                                                             columns = ["Parameter", "Mean", "Std Dev"]
                                                         elif num_cols == 5:  # Parameter name, mean, std dev, lower, upper
                                                             if i == 0:  # 68% limits
-                                                                columns = ["Parameter", "Mean", "Std Dev", "Lower", "Upper"]
+                                                                columns = ["Parameter", "Mean", "Std Dev", "Lower",
+                                                                           "Upper"]
                                                             else:  # 95% or 99% limits
                                                                 columns = ["Parameter", "Mean", "Std Dev",
-                                                                          f"{samples.contours[i]*100:.0f}% Lower",
-                                                                          f"{samples.contours[i]*100:.0f}% Upper"]
+                                                                           f"{samples.contours[i] * 100:.0f}% Lower",
+                                                                           f"{samples.contours[i] * 100:.0f}% Upper"]
                                                         else:  # Generic column headers
-                                                            columns = [f"Column {j+1}" for j in range(num_cols)]
-                                                            columns[0] = "Parameter"  # First column is always parameter name
+                                                            columns = [f"Column {j + 1}" for j in range(num_cols)]
+                                                            columns[
+                                                                0] = "Parameter"  # First column is always parameter name
 
                                                         # Create the DataFrame
                                                         df = pd.DataFrame(param_data, columns=columns)
                                                     else:
                                                         # If no data was extracted, create an empty DataFrame
                                                         df = pd.DataFrame(columns=["Parameter", "Value"])
-                                                        st.warning("No parameter data could be extracted from the table.")
+                                                        st.warning(
+                                                            "No parameter data could be extracted from the table.")
 
                                                     # Display the table
                                                     st.dataframe(df, use_container_width=True)
@@ -1901,10 +1953,12 @@ def main():
 
                                                 # Display raw LaTeX with a copy button
                                                 st.write("### LaTeX Table")
-                                                st.info("The LaTeX table is shown in raw format below. Use the copy button to copy it to your clipboard.")
+                                                st.info(
+                                                    "The LaTeX table is shown in raw format below. Use the copy button to copy it to your clipboard.")
 
                                                 # Display the raw LaTeX in a text area
-                                                st.text_area("LaTeX Code", table_text, height=300, key=f"latex_text_{i}")
+                                                st.text_area("LaTeX Code", table_text, height=300,
+                                                             key=f"latex_text_{i}")
 
                                                 # Add copy button
                                                 if st.button(f"Copy LaTeX", key=f"copy_latex_{i}"):
@@ -1952,7 +2006,7 @@ def main():
 
                     # First column: first half of the chunk
                     with cols[0]:
-                        for key in chunk[:len(chunk)//2 + len(chunk)%2]:
+                        for key in chunk[:len(chunk) // 2 + len(chunk) % 2]:
                             value = st.session_state.current_settings.string(key)
                             is_bool = value in ['False', 'True']
 
@@ -1960,14 +2014,15 @@ def main():
                             st.markdown(f"**{key}**")
                             if is_bool:
                                 settings[key] = str(st.checkbox(key, value=st.session_state.current_settings.bool(key),
-                                                        key=f"checkbox_{key}", help=f"Parameter: {key}", label_visibility="collapsed"))
+                                                                key=f"checkbox_{key}", help=f"Parameter: {key}",
+                                                                label_visibility="collapsed"))
                             else:
                                 settings[key] = st.text_input(key, value=value, key=f"input_{key}",
-                                                      label_visibility="collapsed", help=f"Parameter: {key}")
+                                                              label_visibility="collapsed", help=f"Parameter: {key}")
 
                     # Second column: second half of the chunk
                     with cols[1]:
-                        for key in chunk[len(chunk)//2 + len(chunk)%2:]:
+                        for key in chunk[len(chunk) // 2 + len(chunk) % 2:]:
                             value = st.session_state.current_settings.string(key)
                             is_bool = value in ['False', 'True']
 
@@ -1975,10 +2030,11 @@ def main():
                             st.markdown(f"**{key}**")
                             if is_bool:
                                 settings[key] = str(st.checkbox(key, value=st.session_state.current_settings.bool(key),
-                                                        key=f"checkbox_{key}", help=f"Parameter: {key}", label_visibility="collapsed"))
+                                                                key=f"checkbox_{key}", help=f"Parameter: {key}",
+                                                                label_visibility="collapsed"))
                             else:
                                 settings[key] = st.text_input(key, value=value, key=f"input_{key}",
-                                                      label_visibility="collapsed", help=f"Parameter: {key}")
+                                                              label_visibility="collapsed", help=f"Parameter: {key}")
 
                 # Submit button
                 submitted = st.form_submit_button("Update")
@@ -1995,7 +2051,6 @@ def main():
             with st.form("plot_options_form"):
                 # Get the default plot settings from the plotter
                 if not hasattr(st.session_state, 'default_plot_settings') and st.session_state.plotter:
-
                     st.session_state.default_plot_settings = copy.copy(st.session_state.plotter.settings)
                     st.session_state.custom_plot_settings = {}
 
@@ -2039,7 +2094,7 @@ def main():
 
                         # First column: first half of the chunk
                         with cols[0]:
-                            for par in chunk[:len(chunk)//2 + len(chunk)%2]:
+                            for par in chunk[:len(chunk) // 2 + len(chunk) % 2]:
                                 # Get current value
                                 if par in st.session_state.custom_plot_settings:
                                     current_value = st.session_state.custom_plot_settings[par]
@@ -2061,18 +2116,18 @@ def main():
                                 is_bool = value_str.lower() in ['true', 'false']
                                 if is_bool:
                                     settings_dict[par] = str(st.checkbox(par, value=value_str.lower() == 'true',
-                                                                key=f"plot_checkbox_{par}_1",
-                                                                label_visibility="collapsed",
-                                                                help=comments.get(par, "")))
+                                                                         key=f"plot_checkbox_{par}_1",
+                                                                         label_visibility="collapsed",
+                                                                         help=comments.get(par, "")))
                                 else:
                                     settings_dict[par] = st.text_input(par, value=value_str,
-                                                              key=f"plot_input_{par}_1",
-                                                              label_visibility="collapsed",
-                                                              help=comments.get(par, ""))
+                                                                       key=f"plot_input_{par}_1",
+                                                                       label_visibility="collapsed",
+                                                                       help=comments.get(par, ""))
 
                         # Second column: second half of the chunk
                         with cols[1]:
-                            for par in chunk[len(chunk)//2 + len(chunk)%2:]:
+                            for par in chunk[len(chunk) // 2 + len(chunk) % 2:]:
                                 # Get current value
                                 if par in st.session_state.custom_plot_settings:
                                     current_value = st.session_state.custom_plot_settings[par]
@@ -2094,14 +2149,14 @@ def main():
                                 is_bool = value_str.lower() in ['true', 'false']
                                 if is_bool:
                                     settings_dict[par] = str(st.checkbox(par, value=value_str.lower() == 'true',
-                                                                key=f"plot_checkbox_{par}",
-                                                                label_visibility="collapsed",
-                                                                help=comments.get(par, "")))
+                                                                         key=f"plot_checkbox_{par}",
+                                                                         label_visibility="collapsed",
+                                                                         help=comments.get(par, "")))
                                 else:
                                     settings_dict[par] = st.text_input(par, value=value_str,
-                                                              key=f"plot_input_{par}",
-                                                              label_visibility="collapsed",
-                                                              help=comments.get(par, ""))
+                                                                       key=f"plot_input_{par}",
+                                                                       label_visibility="collapsed",
+                                                                       help=comments.get(par, ""))
 
                     # Submit button
                     submitted = st.form_submit_button("Update")
@@ -2169,7 +2224,8 @@ def main():
         with st.expander("About GetDist GUI", expanded=True):
             st.write("**GetDist GUI**")
             st.write("A graphical user interface for the GetDist package.")
-            st.write("GetDist is a Python package for analysing Monte Carlo samples, including correlated samples from Markov Chain Monte Carlo (MCMC).")
+            st.write(
+                "GetDist is a Python package for analysing Monte Carlo samples, including correlated samples from Markov Chain Monte Carlo (MCMC).")
             st.write("\nDeveloped by Antony Lewis and contributors.")
             st.write("\nStreamlit version by Augment Code.")
             st.write("\n[GetDist Documentation](https://getdist.readthedocs.io/)")
@@ -2203,11 +2259,11 @@ def main():
 
                     # Add download button for the log file
                     if st.download_button(
-                        label="Download Log File",
-                        data=log_content,
-                        file_name="getdist_streamlit.log",
-                        mime="text/plain",
-                        key="download_log"
+                            label="Download Log File",
+                            data=log_content,
+                            file_name="getdist_streamlit.log",
+                            mime="text/plain",
+                            key="download_log"
                     ):
                         pass
                 except Exception as e:
@@ -2254,7 +2310,6 @@ def main():
                     st.session_state.show_file_browser = True
                     st.rerun()
 
-
             # Change directory button
             if dir_path and dir_path != st.session_state.chain_dir:
                 if st.button("Change Directory", key="change_dir_button", use_container_width=True):
@@ -2298,7 +2353,7 @@ def main():
 
                 # Text input for directory path
                 dir_path = st.text_input("Directory path", key="dir_path_input", label_visibility="collapsed",
-                                        placeholder="Enter directory path")
+                                         placeholder="Enter directory path")
 
             with dir_col2:
                 # Browse button with folder icon
@@ -2355,7 +2410,7 @@ def main():
                 # Get directories in the current path
                 try:
                     dirs = [d for d in os.listdir(st.session_state.current_browser_path)
-                           if os.path.isdir(os.path.join(st.session_state.current_browser_path, d))]
+                            if os.path.isdir(os.path.join(st.session_state.current_browser_path, d))]
                     dirs.sort()
 
                     # Add parent directory option
@@ -2369,10 +2424,12 @@ def main():
                                 # Handle directory navigation
                                 if d == "..":
                                     # Go up one level
-                                    st.session_state.current_browser_path = os.path.dirname(st.session_state.current_browser_path)
+                                    st.session_state.current_browser_path = os.path.dirname(
+                                        st.session_state.current_browser_path)
                                 else:
                                     # Go into selected directory
-                                    st.session_state.current_browser_path = os.path.join(st.session_state.current_browser_path, d)
+                                    st.session_state.current_browser_path = os.path.join(
+                                        st.session_state.current_browser_path, d)
                                 st.rerun()
                 except Exception as e:
                     st.error(f"Error accessing directory: {str(e)}")
@@ -2393,7 +2450,8 @@ def main():
         # Chain selection
         if st.session_state.chain_dir:
             # If we have a batch with base_dir_names
-            if st.session_state.batch and hasattr(st.session_state.batch, 'base_dir_names') and st.session_state.batch.base_dir_names:
+            if st.session_state.batch and hasattr(st.session_state.batch,
+                                                  'base_dir_names') and st.session_state.batch.base_dir_names:
                 # Parameter tag selection (base directories)
                 param_tags = sorted(st.session_state.batch.base_dir_names)
 
@@ -2496,7 +2554,8 @@ def main():
 
                     # Add a Remove button at the top
                     with chain_cols[2]:
-                        if st.button("✕", key="remove_selected", help="Remove selected chain", disabled=not st.session_state.selected_roots):
+                        if st.button("✕", key="remove_selected", help="Remove selected chain",
+                                     disabled=not st.session_state.selected_roots):
                             # Get the currently selected chain
                             if st.session_state.active_chain in st.session_state.selected_roots:
                                 # Get the plotter to remove the chain from the sample analyzer
@@ -2536,7 +2595,7 @@ def main():
                             if root == st.session_state.active_chain:
                                 st.write("➤")
                             else:
-                                st.write(f"{i+1}")
+                                st.write(f"{i + 1}")
 
                         with chain_cols[1]:
                             # Make the chain name clickable to set as active
@@ -2558,22 +2617,24 @@ def main():
 
                         with reorder_cols[1]:
                             # Move up button (arrow up symbol)
-                            if st.button("↑", key="move_up", disabled=(active_index==0), help="Move up"):
+                            if st.button("↑", key="move_up", disabled=(active_index == 0), help="Move up"):
                                 # Swap with previous item
                                 idx = active_index
-                                st.session_state.selected_roots[idx], st.session_state.selected_roots[idx-1] = \
-                                    st.session_state.selected_roots[idx-1], st.session_state.selected_roots[idx]
+                                st.session_state.selected_roots[idx], st.session_state.selected_roots[idx - 1] = \
+                                    st.session_state.selected_roots[idx - 1], st.session_state.selected_roots[idx]
                                 # Update parameters after changing order
                                 update_parameters()
                                 st.rerun()
 
                         with reorder_cols[2]:
                             # Move down button (arrow down symbol)
-                            if st.button("↓", key="move_down", disabled=(active_index==len(st.session_state.selected_roots)-1), help="Move down"):
+                            if st.button("↓", key="move_down",
+                                         disabled=(active_index == len(st.session_state.selected_roots) - 1),
+                                         help="Move down"):
                                 # Swap with next item
                                 idx = active_index
-                                st.session_state.selected_roots[idx], st.session_state.selected_roots[idx+1] = \
-                                    st.session_state.selected_roots[idx+1], st.session_state.selected_roots[idx]
+                                st.session_state.selected_roots[idx], st.session_state.selected_roots[idx + 1] = \
+                                    st.session_state.selected_roots[idx + 1], st.session_state.selected_roots[idx]
                                 # Update parameters after changing order
                                 update_parameters()
                                 st.rerun()
@@ -2635,7 +2696,8 @@ def main():
                         st.write("Y")
 
                     # Add a separator line
-                    st.markdown("<hr style='margin: 0; border-color: rgba(250, 250, 250, 0.2);'>", unsafe_allow_html=True)
+                    st.markdown("<hr style='margin: 0; border-color: rgba(250, 250, 250, 0.2);'>",
+                                unsafe_allow_html=True)
 
                     # Display parameters in original order with X/Y checkboxes
                     for param in param_list:
@@ -2660,7 +2722,9 @@ def main():
                             )
 
                         # Add a very thin separator between rows to guide the eye
-                        st.markdown("<hr style='margin: 0; padding: 0; border-color: rgba(250, 250, 250, 0.1); border-width: 1px;'>", unsafe_allow_html=True)
+                        st.markdown(
+                            "<hr style='margin: 0; padding: 0; border-color: rgba(250, 250, 250, 0.1); border-width: 1px;'>",
+                            unsafe_allow_html=True)
 
                     # No need to extract selections - they're already in x_selections and y_selections
 
@@ -2700,7 +2764,9 @@ def main():
                 plot_type = st.radio(
                     "Select plot type:",
                     options=["1D Density", "2D Contour", "Triangle"],
-                    index=["1D Density", "2D Contour", "Triangle"].index(st.session_state.plot_type) if st.session_state.plot_type in ["1D Density", "2D Contour", "Triangle"] else 0,
+                    index=["1D Density", "2D Contour", "Triangle"].index(
+                        st.session_state.plot_type) if st.session_state.plot_type in ["1D Density", "2D Contour",
+                                                                                      "Triangle"] else 0,
                     horizontal=True
                 )
 
@@ -2848,7 +2914,7 @@ def main():
                         "Parameter",
                         options=color_params,
                         index=color_params.index(st.session_state.plot_settings.get('color_by', color_params[0]))
-                              if st.session_state.plot_settings.get('color_by', color_params[0]) in color_params else 0
+                        if st.session_state.plot_settings.get('color_by', color_params[0]) in color_params else 0
                     )
                 else:
                     st.session_state.plot_settings['color_by'] = "None"
@@ -2885,7 +2951,7 @@ def main():
                         "Parameter",
                         options=color_params,
                         index=color_params.index(st.session_state.plot_settings.get('color_by', color_params[0]))
-                              if st.session_state.plot_settings.get('color_by', color_params[0]) in color_params else 0
+                        if st.session_state.plot_settings.get('color_by', color_params[0]) in color_params else 0
                     )
                 else:
                     st.session_state.plot_settings['color_by'] = "None"
@@ -2945,16 +3011,17 @@ def main():
 
                 # Download script button
                 if st.download_button(
-                    label="Download Script",
-                    data=st.session_state.current_script,
-                    file_name="getdist_plot.py",
-                    mime="text/plain"
+                        label="Download Script",
+                        data=st.session_state.current_script,
+                        file_name="getdist_plot.py",
+                        mime="text/plain"
                 ):
                     pass
             else:
                 st.info("Generate a plot to see the corresponding script")
     else:
         st.info("Select a chain directory to get started")
+
 
 if __name__ == "__main__":
     main()
