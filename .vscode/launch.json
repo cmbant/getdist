@@ -1,0 +1,61 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Streamlit App",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "getdist/gui/streamlit_app.py",
+                "--server.runOnSave=true"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "python": "${command:python.interpreterPath}"
+        },
+        {
+            "name": "Debug Streamlit App",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "getdist/gui/streamlit_app.py",
+                "--server.runOnSave=true"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "showReturnValue": true,
+            "redirectOutput": true,
+            "python": "${command:python.interpreterPath}"
+        },
+        {
+            "name": "Debug Streamlit App (Skip Dunder Methods)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "getdist/gui/streamlit_app.py",
+                "--server.runOnSave=true"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "showReturnValue": true,
+            "redirectOutput": true,
+            "python": "${command:python.interpreterPath}",
+            "purpose": ["debug-in-terminal"]
+        },
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "python": "${command:python.interpreterPath}"
+        }
+    ]
+}

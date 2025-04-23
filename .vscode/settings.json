@@ -23,5 +23,6 @@
     "debug.toolBarLocation": "docked",
     "debug.showInStatusBar": "always",
     "debug.inlineValues": "on",
-    "debug.allowBreakpointsEverywhere": true
+    "debug.allowBreakpointsEverywhere": true,
+    "debugpy.debugJustMyCode": false
 }
