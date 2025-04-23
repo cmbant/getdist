@@ -24,7 +24,7 @@ Description
 GetDist is a Python package for analysing Monte Carlo samples, including correlated samples
 from Markov Chain Monte Carlo (MCMC).
 
-* **Point and click GUI** - select chain files, view plots, marginalized constraints, LaTeX tables and more
+* **Point and click GUI** - select chain files, view plots, marginalized constraints, LaTeX tables and more (Qt-based desktop app and Streamlit web interface)
 * **Plotting library** - make custom publication-ready 1D, 2D, 3D-scatter, triangle and other plots
 * **Named parameters** - simple handling of many parameters using parameter names, including LaTeX labels and prior bounds
 * **Optimized Kernel Density Estimation** - automated optimal bandwidth choice for 1D and 2D densities (Botev et al. Improved Sheather-Jones method), with boundary and bias correction
@@ -62,13 +62,15 @@ Dependencies
 * Python 3.8+
 * matplotlib
 * scipy
-* PySide6 - optional, only needed for GUI
+* PySide6 - optional, only needed for Qt-based GUI
+* Streamlit - optional, only needed for web-based GUI
 * Working LaTeX installation (not essential, only for some plotting/table functions)
 
 Python distributions like Anaconda have most of what you need (except for LaTeX).
 
-To use the `GUI <https://getdist.readthedocs.io/en/latest/gui.html>`_ you need PySide.
-See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installation>`_ for suggestions on how to install.
+To use the Qt-based `GUI <https://getdist.readthedocs.io/en/latest/gui.html>`_ you need PySide6.
+To use the Streamlit web interface, you need Streamlit.
+See the `GUI docs <https://getdist.readthedocs.io/en/latest/gui.html#installation>`_ for suggestions on how to install both.
 
 Algorithm details
 ==================
@@ -188,9 +190,17 @@ to produce the setting file distparams.ini, edit it, then run with your custom s
 GetDist GUI
 ===================
 
-Run *getdist-gui* to run the graphical user interface. This requires PySide, but will run on Windows, Linux and Mac.
-It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
-See the `GUI Readme <https://getdist.readthedocs.io/en/latest/gui.html>`_.
+GetDist provides two graphical user interfaces:
+
+1. **Qt-based Desktop App**: Run *getdist-gui* to use the traditional desktop interface. This requires PySide6 to be installed.
+
+2. **Streamlit Web Interface**: Run *streamlit run getdist/gui/streamlit_app.py* to use the browser-based interface. This requires Streamlit to be installed.
+
+Both interfaces allow you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
+
+You can also try the Streamlit interface online at `<https://getdist-gui-test.streamlit.app/>`_ (with fixed example chains).
+
+See the `GUI Documentation <https://getdist.readthedocs.io/en/latest/gui.html>`_ for more details on both interfaces.
 
 
 Using with CosmoMC and Cobaya
@@ -220,6 +230,10 @@ You can refer to the notes::
 
 
 and references therein as appropriate.
+
+LLM Integration
+===================
+For AI assistants and LLM agents working with GetDist, a single-file context document is available at `<https://help.cosmologist.info/api/context/getdist>`_. This document provides a comprehensive overview of GetDist's functionality, common usage patterns, and best practices in a format optimized for LLM context windows.
 
 ===================
 

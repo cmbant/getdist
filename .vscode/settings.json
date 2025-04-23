@@ -1,0 +1,27 @@
+{
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}"
+    ],
+    "flake8.args": [
+        "--select=E713,E704,E703,E714,E10,E11,E20,E22,E23,E25,E27,E301,E302,E304,E9,F405,F406,F5,F6,F7,F8,W1,W2,W3,W6",
+        "--show-source",
+        "--statistics",
+        "--max-line-length=120"
+    ],
+    "editor.formatOnSave": false,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python",
+        "editor.rulers": [120],
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    },
+    "python.terminal.activateEnvironment": true,
+    "debug.internalConsoleOptions": "neverOpen",
+    "debug.console.historySuggestions": true,
+    "debug.console.fontSize": 12,
+    "debug.toolBarLocation": "docked",
+    "debug.showInStatusBar": "always",
+    "debug.inlineValues": "on",
+    "debug.allowBreakpointsEverywhere": true
+}

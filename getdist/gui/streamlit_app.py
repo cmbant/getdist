@@ -85,7 +85,6 @@ def parse_command_line_args():
                 break
     except (ValueError, IndexError):
         # -- not found or other parsing error
-        # This handles the case when streamlit passes arguments directly to the script
         args = sys.argv
         for i, arg in enumerate(args):
             if arg.startswith('--dir=') or arg.startswith('--directory='):
@@ -99,7 +98,7 @@ def parse_command_line_args():
                 dir_path = os.path.abspath(args[i + 1])
                 break
     if dir_path:
-        logger.info(f"Found directory argument: {dir_path}")
+        logger.info("Found directory argument: %s", dir_path)
     return dir_path
 
 
@@ -3025,3 +3024,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

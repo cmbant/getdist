@@ -1,7 +1,12 @@
 GetDist GUI
 ===================
 
-Run the *getdist-gui* script to run the graphical user interface. This requires `PySide <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
+GetDist provides two graphical user interfaces: the original Qt-based GUI and a newer Streamlit-based web interface.
+
+Qt-based GUI
+-----------
+
+Run the *getdist-gui* script to run the traditional graphical user interface. This requires `PySide <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
 
 It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
@@ -57,4 +62,55 @@ from conda-forge (which includes PySide6),  e.g. ::
 
 Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
 On a Mac the installation will also make a GetDist GUI Mac app, which you can find using Spotlight.
+
+
+Streamlit-based Web Interface
+##############
+
+GetDist also provides a modern web-based interface built with `Streamlit <https://streamlit.io/>`_. 
+This alternative GUI offers similar functionality to the Qt-based version but runs in your web browser.
+
+
+Running Locally
+***************
+
+To run the Streamlit app locally, you need to install Streamlit first::
+
+   pip install streamlit
+
+Then you can run the app using::
+
+   streamlit run getdist/gui/streamlit_app.py
+
+Or if you're using the module::
+
+   python -m streamlit run getdist/gui/streamlit_app.py
+
+You can also specify a default directory to open::
+
+   streamlit run getdist/gui/streamlit_app.py -- --dir=/path/to/chains
+
+The app will automatically look for a `default_chains` directory in the repository root when it starts.
+
+Online Demo
+***********
+
+You can try the Streamlit app online at `<https://getdist-gui-test.streamlit.app/>`_.
+
+Note that the online demo:
+
+* Contains fixed example chains (from `<https://github.com/cmbant/streamlit-test>`_)
+* Cannot upload your own chains (as it's a demonstration of distributing chains with the app)
+* May not work well with very large chains due to limitations of the free Streamlit hosting
+
+Features
+********
+
+The Streamlit app includes all the core functionality of the Qt-based GUI:
+
+* Opening chain directories and grid structures
+* Selecting parameters and creating various plot types (1D, 2D, triangle, etc.)
+* Viewing statistics and parameter tables
+* Customizing analysis settings and plot options
+* Exporting plots and scripts
 
