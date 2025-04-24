@@ -14,7 +14,6 @@ Usage:
 Options:
     --exclude: Comma-separated list of files to exclude (without .md extension)
     --output: Output file path
-    --no-install: Skip installation of dependencies
 """
 
 import os
@@ -53,25 +52,48 @@ def build_markdown_docs():
     # Create build directory if it doesn't exist
     os.makedirs(build_dir, exist_ok=True)
 
-    # Run sphinx-build
-    result = subprocess.run(
-        [
-            "sphinx-build",
-            "-b",
-            "markdown",
-            "docs/source",
-            build_dir,
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
+    # Create a temporary conf.py with intersphinx_disabled_reftypes setting
+    temp_conf_dir = os.path.join(os.path.dirname(build_dir), "temp_conf")
+    os.makedirs(temp_conf_dir, exist_ok=True)
+    temp_conf_path = os.path.join(temp_conf_dir, "conf.py")
+    with open("docs/source/conf.py", "r", encoding="utf-8") as f:
+        conf_content = f.read()
+
+    # Disable intersphinx extension for markdown build
+    conf_content = conf_content.replace(
+        "'sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode', 'sphinx.ext.autosummary',",
+        "'sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.autosummary',"
     )
 
-    if result.returncode != 0:
-        print(f"Warning: sphinx-build returned non-zero exit code: {result.returncode}")
-        print(f"stdout: {result.stdout}")
-        print(f"stderr: {result.stderr}")
-        # Continue anyway as we might still have generated some markdown files
+    with open(temp_conf_path, "w", encoding="utf-8") as f:
+        f.write(conf_content)
+
+    try:
+        # Run sphinx-build with the temporary conf.py
+        result = subprocess.run(
+            [
+                "sphinx-build",
+                "-b",
+                "markdown",
+                "-c",
+                temp_conf_dir,
+                "docs/source",
+                build_dir,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            print(f"Warning: sphinx-build returned non-zero exit code: {result.returncode}")
+            print(f"stdout: {result.stdout}")
+            print(f"stderr: {result.stderr}")
+            # Continue anyway as we might still have generated some markdown files
+    finally:
+        # Clean up the temporary conf directory
+        if os.path.exists(temp_conf_dir):
+            shutil.rmtree(temp_conf_dir)
 
     return build_dir
 
