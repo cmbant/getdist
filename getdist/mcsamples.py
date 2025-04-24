@@ -1784,6 +1784,7 @@ class MCSamples(Chains):
         else:
             bin2Dlikes = None
 
+        bool_mask = None
         if has_prior and boundary_correction_order >= 0 or mult_bias_correction_order or mask_function:
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
             if mask_function:
@@ -2339,17 +2340,21 @@ class MCSamples(Chains):
                 if marge_limits_bot:
                     # fix to end of prior range
                     tail_limit_bot = par.range_min
+                    tail_confid_bot = None
                 elif marge_limits_top:
                     # 1 tail limit
                     tail_limit_bot = self.confidence(paramConfid, limfrac, upper=False)
+                    tail_confid_bot = None
                 else:
                     # 2 tail limit
                     tail_confid_bot = self.confidence(paramConfid, limfrac / 2, upper=False)
 
                 if marge_limits_top:
                     tail_limit_top = par.range_max
+                    tail_confid_top = None
                 elif marge_limits_bot:
                     tail_limit_top = self.confidence(paramConfid, limfrac, upper=True)
+                    tail_confid_top = None
                 else:
                     tail_confid_top = self.confidence(paramConfid, limfrac / 2, upper=True)
 
@@ -2652,3 +2657,4 @@ def getRootFileName(rootdir):
 def _dummy_usage():
     # prevent not-used warnings
     assert MCSamplesFromCobaya and ParamError
+

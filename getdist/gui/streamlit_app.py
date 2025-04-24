@@ -456,7 +456,6 @@ def add_root(root_name):
 
     try:
         # Get the path for the root
-        path = None
         if st.session_state.batch:
             logging.info(f"Getting path from batch for {root_name}")
             try:
@@ -3024,4 +3023,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
