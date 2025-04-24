@@ -233,7 +233,7 @@ and references therein as appropriate.
 
 LLM Integration
 ===================
-For AI assistants and LLM agents working with GetDist, a single-file context document is available at `<https://help.cosmologist.info/api/context/getdist>`_. This document provides a comprehensive overview of GetDist's functionality, common usage patterns, and best practices in a format optimized for LLM context windows.
+For AI assistants and LLM agents working with GetDist, a single-file context document is available at `GetDist LLM Context <https://help.cosmologist.info/api/context/getdist>`_. This document provides a comprehensive overview of GetDist's functionality, common usage patterns, and best practices in a format optimized for LLM context windows.
 
 ===================
 
