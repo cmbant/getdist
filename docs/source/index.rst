@@ -10,7 +10,7 @@ GetDist is a Python package for analysing and plotting Monte Carlo (or other) sa
    Plot gallery and tutorial <https://getdist.readthedocs.io/en/latest/plot_gallery.html>
    GetDist GUI program <gui>
 
-**LLM Integration**: For AI assistants and LLM agents, a comprehensive context document is available at `GetDist LLM Context <https://help.cosmologist.info/api/context/getdist>`_.
+**LLM Integration**: For AI assistants and LLM agents, a comprehensive context document is available at `GetDist LLM Context <https://getdist.readthedocs.io/en/master/_static/getdist_docs_combined.md>`_.
 
 High-level modules for analysing samples and plotting:
 

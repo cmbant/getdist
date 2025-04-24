@@ -34,7 +34,7 @@ dependencies = [
 [project.optional-dependencies]
 GUI = ["PySide6>=6.1"]
 StreamlitGUI = ["streamlit>=1.24.0"]
-docs = ["sphinx", "sphinx_rtd_theme>=1.0", "sphinxcontrib-jquery"]
+docs = ["sphinx", "sphinx_rtd_theme>=1.0", "sphinxcontrib-jquery", "sphinx_markdown_builder", "jupytext"]
 
 [project.scripts]
 getdist = "getdist.command_line:getdist_command"
