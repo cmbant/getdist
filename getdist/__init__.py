@@ -1,4 +1,4 @@
-__author__ = 'Antony Lewis'
+ = 'Antony Lewis'
 __version__ = "1.6.2"
 __url__ = "https://getdist.readthedocs.io"
 

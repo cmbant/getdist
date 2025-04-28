@@ -224,9 +224,10 @@ def combine_markdown_files(build_dir, exclude_files, output_file):
         for file_path in filtered_files:
             file_name = os.path.basename(file_path)
             section_name = os.path.splitext(file_name)[0]
+            link_name = 'https://getdist.readthedocs.io/en/latest/' + section_name + '.html'
 
             print(f"  Adding {section_name}...")
-            outfile.write(f"## {file_name}\n\n")
+            outfile.write(f"## {link_name}\n\n")
 
             # Add file content
             with open(file_path, "r", encoding="utf-8") as infile:

@@ -9,15 +9,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - name: "Latest Python 3.12"
+        - name: "Latest Python 3.x"
           os: ubuntu-latest
-          python-version: 3.12
-        - name: "OS X Python 3.8"
+          python-version: 3.x
+        - name: "OS X Python 3.9"
           os: macos-latest
-          python-version: 3.8
-        - name: "Windows Python 3.8"
+          python-version: 3.9
+        - name: "Windows Python 3.11"
           os: windows-latest
-          python-version: 3.8
+          python-version: 3.11
 
     steps:
     - uses: actions/checkout@v4

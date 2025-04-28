@@ -1,4 +1,4 @@
-GetDist, Copyright (c) 2019, Antony Lewis
+GetDist, Copyright (c) 2025, Antony Lewis
 
 Code to find optimal bandwidths for basic kernel density estimators in 1 and 2D
 was adapted from Matlab code by Zdravko Botev. Original code notice:
