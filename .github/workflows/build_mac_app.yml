@@ -50,6 +50,13 @@ jobs:
         # Run the build script with verbose output
         ./scripts/build_mac_app.sh
 
+    - name: Prepare App Bundle for Signing
+      if: github.event.inputs.skip_signing != 'true'
+      run: |
+        # Rename app bundle to remove spaces (to avoid "file name too long" error)
+        echo "Renaming app bundle to remove spaces..."
+        mv "dist/GetDist GUI.app" "dist/GetDistGUI.app"
+
     - name: Install App Store Connect API Key
       if: github.event.inputs.skip_signing != 'true'
       run: |
@@ -60,8 +67,8 @@ jobs:
       if: github.event.inputs.skip_signing != 'true'
       uses: indygreg/apple-code-sign-action@v1
       with:
-        input_path: dist/GetDist GUI.app
-        output_path: dist/GetDist GUI.app
+        input_path: dist/GetDistGUI.app
+        output_path: dist/GetDistGUI.app
         notarize: true
         staple: true
         p12_file: ${{ secrets.MACOS_CERTIFICATE }}
@@ -77,7 +84,7 @@ jobs:
         # Create a temporary directory for the DMG contents
         mkdir -p "dist/dmg"
         # Copy the signed and notarized app bundle to the temporary directory
-        cp -r "dist/GetDist GUI.app" "dist/dmg/"
+        cp -r "dist/GetDistGUI.app" "dist/dmg/GetDist GUI.app"
         # Create a symlink to the Applications folder
         ln -s /Applications "dist/dmg/"
         # Create the DMG
@@ -86,9 +93,9 @@ jobs:
         rm -rf "dist/dmg"
 
         echo "Verifying app signature..."
-        codesign --verify --verbose "dist/GetDist GUI.app"
+        codesign --verify --verbose "dist/GetDistGUI.app"
         echo "Verifying app notarization..."
-        spctl --assess --verbose=4 "dist/GetDist GUI.app"
+        spctl --assess --verbose=4 "dist/GetDistGUI.app"
 
     - name: Upload DMG
       uses: actions/upload-artifact@v4
