@@ -181,6 +181,7 @@ app = BUNDLE(
         "--project", venv_dir,
         "pyinstaller",
         "--clean",
+        "--noconfirm",  # Automatically answer yes to prompts
         "--distpath", output_dir,
         "--workpath", os.path.join(temp_dir, "build"),
         spec_path
