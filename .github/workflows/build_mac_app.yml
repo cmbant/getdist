@@ -53,28 +53,65 @@ jobs:
     - name: Prepare App Bundle for Signing
       if: github.event.inputs.skip_signing != 'true'
       run: |
-        # Rename app bundle to remove spaces (to avoid "file name too long" error)
+        # Rename app bundle to remove spaces
         echo "Renaming app bundle to remove spaces..."
         mv "dist/GetDist GUI.app" "dist/GetDistGUI.app"
 
-    - name: Install App Store Connect API Key
-      if: github.event.inputs.skip_signing != 'true'
-      run: |
-        mkdir -p private_keys/
-        echo '${{ secrets.APP_STORE_CONNECT_KEY }}' > private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8
+        # Create a temporary directory for the certificate
+        CERT_PATH=$RUNNER_TEMP/certificate.p12
+        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
-    - name: Sign and Notarize Mac App
-      if: github.event.inputs.skip_signing != 'true'
-      uses: indygreg/apple-code-sign-action@v1
-      with:
-        input_path: dist/GetDistGUI.app
-        output_path: dist/GetDistGUI.app
-        notarize: true
-        staple: true
-        p12_file: ${{ secrets.MACOS_CERTIFICATE }}
-        p12_password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-        app_store_connect_api_issuer: ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
-        app_store_connect_api_key: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        # Decode and save the certificate
+        echo "Decoding certificate..."
+        echo "${{ secrets.MACOS_CERTIFICATE }}" | base64 --decode > $CERT_PATH
+
+        # Create a temporary keychain
+        echo "Creating temporary keychain..."
+        security create-keychain -p "temp-password" $KEYCHAIN_PATH
+        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+        security unlock-keychain -p "temp-password" $KEYCHAIN_PATH
+
+        # Import certificate to keychain
+        echo "Importing certificate to keychain..."
+        security import $CERT_PATH -P "${{ secrets.MACOS_CERTIFICATE_PWD }}" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+        security list-keychain -d user -s $KEYCHAIN_PATH
+
+        # Allow codesign to access the keychain
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "temp-password" $KEYCHAIN_PATH
+
+        # Find the identity
+        echo "Available signing identities:"
+        IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed -E 's/.*"(Developer ID Application: .+)"$/\1/')
+        echo "Using identity: $IDENTITY"
+
+        # Sign the app
+        echo "Signing app bundle..."
+        codesign --deep --force --verify --verbose --sign "$IDENTITY" "dist/GetDistGUI.app"
+
+        # Verify signature
+        echo "Verifying app signature..."
+        codesign --verify --verbose "dist/GetDistGUI.app"
+
+        # Create a ZIP archive for notarization
+        echo "Creating ZIP archive for notarization..."
+        ditto -c -k --keepParent "dist/GetDistGUI.app" "dist/GetDistGUI.zip"
+
+        # Set up App Store Connect API
+        echo "Setting up App Store Connect API..."
+        mkdir -p ~/private_keys
+        echo '${{ secrets.APP_STORE_CONNECT_KEY }}' > ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8
+
+        # Submit for notarization
+        echo "Submitting app for notarization..."
+        xcrun notarytool submit "dist/GetDistGUI.zip" \
+          --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
+          --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
+          --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }} \
+          --wait
+
+        # Staple the notarization ticket
+        echo "Stapling notarization ticket to app..."
+        xcrun stapler staple "dist/GetDistGUI.app"
 
     - name: Create DMG with Signed App
       if: github.event.inputs.skip_signing != 'true'

@@ -66,7 +66,7 @@ For distribution outside of development, the app should be signed and notarized:
 2. Set up the required secrets for signing and notarization
 3. The GitHub workflow will automatically handle the signing and notarization process
 
-The workflow uses the [indygreg/apple-code-sign-action](https://github.com/indygreg/apple-code-sign-action) GitHub Action to handle the signing and notarization process, which provides robust error handling and reliable notarization using the App Store Connect API.
+The workflow uses native macOS commands and tools (`codesign`, `notarytool`, etc.) to handle the signing and notarization process, which provides direct control over the process and avoids potential issues with third-party actions.
 
 For detailed instructions on setting up code signing and notarization in GitHub Actions, see [MAC_APP_SIGNING.md](MAC_APP_SIGNING.md).
 
