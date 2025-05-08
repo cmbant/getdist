@@ -3,7 +3,7 @@ name: Build Mac App
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, mac ]
     paths:
       - 'getdist/gui/**'
       - 'scripts/build_mac_app.py'

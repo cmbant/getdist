@@ -75,11 +75,8 @@ def build_mac_app(output_dir, version, env_info):
 
     # Get the path to the icon
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    icns_path = os.path.join(repo_root, "getdist", "gui", "mac_app", "Contents", "Resources", "GetDistGUI.icns")
-    if not os.path.exists(icns_path):
-        # Fall back to PNG if ICNS doesn't exist
-        icns_path = os.path.join(repo_root, "getdist", "gui", "images", "Icon.png")
-
+    icns_path = os.path.join(repo_root, "getdist", "gui", "images", "GetDistGUI.icns")
+ 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
@@ -94,7 +91,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('{os.path.join(repo_root, "getdist/gui/images/*.png")}', 'getdist/gui/images'),
-        ('{os.path.join(repo_root, "getdist/gui/mac_app/Contents/Resources/*.icns")}', 'getdist/gui/mac_app/Contents/Resources'),
+        ('{os.path.join(repo_root, "getdist/gui/images/*.icns")}', 'getdist/gui/images'),
         ('{os.path.join(repo_root, "getdist/analysis_defaults.ini")}', 'getdist'),
         ('{os.path.join(repo_root, "getdist/distparam_template.ini")}', 'getdist'),
         ('{os.path.join(repo_root, "getdist/styles/*.paramnames")}', 'getdist/styles'),

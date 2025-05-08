@@ -667,7 +667,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(buttonBox)
         msg.setLayout(layout)
         msg.setAttribute(Qt.WA_DeleteOnClose)
-        msg.exec_()
+        msg.exec()
 
     def warning(self, title, message):
         QApplication.restoreOverrideCursor()
