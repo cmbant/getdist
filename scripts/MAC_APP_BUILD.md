@@ -63,13 +63,10 @@ You can customize the build by modifying the `scripts/build_mac_app.py` script:
 For distribution outside of development, the app should be signed and notarized:
 
 1. Obtain an Apple Developer ID
-2. Sign the app using:
+2. Set up the required secrets for signing and notarization
+3. The GitHub workflow will automatically handle the signing and notarization process
 
-   ```bash
-   codesign --deep --force --verify --verbose --sign "Developer ID Application: Your Name (TEAM_ID)" "dist/GetDist GUI.app"
-   ```
-
-3. Notarize the app for distribution (requires Apple Developer account)
+The workflow uses the [toitlang/action-macos-sign-notarize](https://github.com/toitlang/action-macos-sign-notarize) GitHub Action to handle the signing and notarization process, which greatly simplifies the workflow and makes it more reliable.
 
 For detailed instructions on setting up code signing and notarization in GitHub Actions, see [MAC_APP_SIGNING.md](MAC_APP_SIGNING.md).
 

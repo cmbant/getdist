@@ -50,63 +50,22 @@ jobs:
         # Run the build script with verbose output
         ./scripts/build_mac_app.sh
 
-    - name: Import Code Signing Certificate
+    - name: Sign and Notarize Mac App
       if: github.event.inputs.skip_signing != 'true'
-      env:
-        CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
-        CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      run: |
-        # Create variables
-        CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+      uses: toitlang/action-macos-sign-notarize@v1.2.1
+      with:
+        certificate: ${{ secrets.MACOS_CERTIFICATE }}
+        certificate-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        username: ${{ secrets.APPLE_ID }}
+        password: ${{ secrets.APPLE_APP_PASSWORD }}
+        apple-team-id: ${{ secrets.APPLE_TEAM_ID }}
+        app-path: dist/GetDist GUI.app
 
-        # Import certificate from secrets
-        echo -n "$CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-
-        # Create temporary keychain
-        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-        # Import certificate to keychain
-        security import $CERTIFICATE_PATH -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-        security list-keychain -d user -s $KEYCHAIN_PATH
-
-    - name: Sign Mac App
+    - name: Create DMG with Signed App
       if: github.event.inputs.skip_signing != 'true'
-      env:
-        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       run: |
-        # Sign the app bundle
-        echo "Signing app bundle..."
-        codesign --deep --force --verify --verbose --sign "Developer ID Application: $TEAM_ID" "dist/GetDist GUI.app"
-
-        # Verify signature
-        echo "Verifying app signature..."
-        codesign --verify --verbose "dist/GetDist GUI.app"
-
-    - name: Notarize Mac App
-      if: github.event.inputs.skip_signing != 'true'
-      env:
-        APPLE_ID: ${{ secrets.APPLE_ID }}
-        APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      run: |
-        # Create a ZIP archive for notarization
-        echo "Creating ZIP archive for notarization..."
-        ditto -c -k --keepParent "dist/GetDist GUI.app" "dist/GetDistGUI.zip"
-
-        # Submit for notarization
-        echo "Submitting app for notarization..."
-        xcrun notarytool submit "dist/GetDistGUI.zip" --apple-id "$APPLE_ID" --password "$APPLE_APP_PASSWORD" --team-id "$TEAM_ID" --wait
-
-        # Staple the notarization ticket
-        echo "Stapling notarization ticket to app..."
-        xcrun stapler staple "dist/GetDist GUI.app"
-
-        # Create a new DMG with the signed and notarized app
-        echo "Creating signed DMG..."
+        # Create a DMG with the signed and notarized app
+        echo "Creating DMG with signed app..."
         # Create a temporary directory for the DMG contents
         mkdir -p "dist/dmg"
         # Copy the signed and notarized app bundle to the temporary directory
@@ -114,21 +73,14 @@ jobs:
         # Create a symlink to the Applications folder
         ln -s /Applications "dist/dmg/"
         # Create the DMG
-        hdiutil create -volname "GetDist GUI" -srcfolder "dist/dmg" -ov -format UDZO "dist/GetDist-GUI-Signed.dmg"
-        # Sign the DMG
-        codesign --sign "Developer ID Application: $TEAM_ID" "dist/GetDist-GUI-Signed.dmg"
-        # Replace the original DMG with the signed one
-        mv "dist/GetDist-GUI-Signed.dmg" "dist/GetDist-GUI.dmg"
+        hdiutil create -volname "GetDist GUI" -srcfolder "dist/dmg" -ov -format UDZO "dist/GetDist-GUI.dmg"
         # Clean up
-        rm -rf "dist/dmg" "dist/GetDistGUI.zip"
+        rm -rf "dist/dmg"
 
-    - name: Verify Signed App
-      if: github.event.inputs.skip_signing != 'true'
-      run: |
-        echo "Verifying app signature and notarization..."
+        echo "Verifying app signature..."
+        codesign --verify --verbose "dist/GetDist GUI.app"
+        echo "Verifying app notarization..."
         spctl --assess --verbose=4 "dist/GetDist GUI.app"
-        echo "Verifying DMG signature..."
-        codesign --verify --verbose "dist/GetDist-GUI.dmg"
 
     - name: Upload DMG
       uses: actions/upload-artifact@v4
