@@ -39,6 +39,16 @@ if ! command -v uv &> /dev/null; then
     export PATH="$HOME/.cargo/bin:$PATH"
 fi
 
+# Verify uv is working
+echo "Verifying uv installation..."
+uv --version
+
+# Clean up any existing environment
+if [ -d "$PROJECT_DIR" ]; then
+    echo "Removing existing environment at $PROJECT_DIR"
+    rm -rf "$PROJECT_DIR"
+fi
+
 # Build the app
 echo "Building Mac app..."
 cd "$REPO_ROOT"

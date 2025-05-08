@@ -41,19 +41,31 @@ def setup_project_environment(project_dir):
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     try:
-        # Create virtual environment
+        # Remove existing environment if it exists
+        if os.path.exists(project_dir):
+            print(f"Removing existing environment at {project_dir}")
+            shutil.rmtree(project_dir)
+
+        # Create virtual environment with uv
+        print("Creating new virtual environment")
         subprocess.check_call([
             "uv", "venv", project_dir
         ])
 
-        # Install PyInstaller and PySide6
+        # Install packages directly with uv pip
+        print("Installing PyInstaller and PySide6")
         subprocess.check_call([
-            "uv", "pip", "install", "--project", project_dir, "PyInstaller", "PySide6"
+            "uv", "pip", "install",
+            "--python", os.path.join(project_dir, "bin", "python"),
+            "PyInstaller", "PySide6"
         ])
 
         # Install getdist from the current directory
+        print("Installing getdist from local repository")
         subprocess.check_call([
-            "uv", "pip", "install", "--project", project_dir, "-e", repo_root
+            "uv", "pip", "install",
+            "--python", os.path.join(project_dir, "bin", "python"),
+            "-e", repo_root
         ])
 
         print("Dependencies installed successfully!")
@@ -76,7 +88,7 @@ def build_mac_app(output_dir, version, env_info):
     # Get the path to the icon
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     icns_path = os.path.join(repo_root, "getdist", "gui", "images", "GetDistGUI.icns")
- 
+
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
@@ -169,20 +181,35 @@ app = BUNDLE(
     with open(spec_path, "w", encoding="utf-8") as f:
         f.write(spec_content)
 
-    # Run PyInstaller using uv run to ensure correct environment
+    # Run PyInstaller using the Python from the virtual environment
     venv_dir = env_info["venv_dir"]
+    python_path = os.path.join(venv_dir, "bin", "python")
 
-    print(f"Running PyInstaller with uv in environment {venv_dir}...")
-    subprocess.check_call([
-        "uv", "run",
-        "--project", venv_dir,
-        "pyinstaller",
-        "--clean",
-        "--noconfirm",  # Automatically answer yes to prompts
-        "--distpath", output_dir,
-        "--workpath", os.path.join(temp_dir, "build"),
-        spec_path
-    ])
+    # Check if pyinstaller is directly accessible in bin directory
+    pyinstaller_path = os.path.join(venv_dir, "bin", "pyinstaller")
+    if not os.path.exists(pyinstaller_path):
+        print("PyInstaller not found in bin directory, using module invocation")
+        print(f"Running PyInstaller as module with Python from {venv_dir}...")
+        subprocess.check_call([
+            python_path,
+            "-m", "PyInstaller",
+            "--clean",
+            "--noconfirm",  # Automatically answer yes to prompts
+            "--distpath", output_dir,
+            "--workpath", os.path.join(temp_dir, "build"),
+            spec_path
+        ])
+    else:
+        print(f"Running PyInstaller from environment {venv_dir}...")
+        subprocess.check_call([
+            python_path,
+            pyinstaller_path,
+            "--clean",
+            "--noconfirm",  # Automatically answer yes to prompts
+            "--distpath", output_dir,
+            "--workpath", os.path.join(temp_dir, "build"),
+            spec_path
+        ])
 
     # Clean up
     shutil.rmtree(temp_dir)
