@@ -41,12 +41,6 @@ jobs:
         # Run the build script
         ./scripts/build_mac_app.sh
 
-    - name: Upload App Bundle
-      uses: actions/upload-artifact@v3
-      with:
-        name: GetDist-GUI-App
-        path: "dist/GetDist GUI.app"
-
     - name: Upload DMG
       uses: actions/upload-artifact@v3
       with:
