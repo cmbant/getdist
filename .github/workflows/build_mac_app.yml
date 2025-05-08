@@ -6,13 +6,15 @@ on:
     branches: [ main, master ]
     paths:
       - 'getdist/gui/**'
-      - 'build_mac_app.py'
+      - 'scripts/build_mac_app.py'
+      - 'scripts/build_mac_app.sh'
       - '.github/workflows/build_mac_app.yml'
   pull_request:
     branches: [ main, master ]
     paths:
       - 'getdist/gui/**'
-      - 'build_mac_app.py'
+      - 'scripts/build_mac_app.py'
+      - 'scripts/build_mac_app.sh'
       - '.github/workflows/build_mac_app.yml'
 
 jobs:
@@ -29,8 +31,10 @@ jobs:
 
     - name: Build Mac App
       run: |
+        # Make the script executable
+        chmod +x scripts/build_mac_app.sh
         # Run the build script
-        ./build_mac_app.sh
+        ./scripts/build_mac_app.sh
 
     - name: Upload App Bundle
       uses: actions/upload-artifact@v3
