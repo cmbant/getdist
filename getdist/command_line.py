@@ -353,3 +353,9 @@ def getdist_gui():
             run_gui()
     else:
         run_gui()
+
+
+def getdist_streamlit():
+    from getdist import gui
+    path = os.path.join(os.path.dirname(gui.__file__), 'streamlit_app.py')
+    subprocess.Popen(["streamlit", "run", path] + ['--'] + sys.argv[1:], env=os.environ)

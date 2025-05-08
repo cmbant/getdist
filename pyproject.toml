@@ -38,6 +38,7 @@ docs = ["sphinx", "sphinx_rtd_theme>=1.0", "sphinxcontrib-jquery", "sphinx_markd
 [project.scripts]
 getdist = "getdist.command_line:getdist_command"
 getdist-gui = "getdist.command_line:getdist_gui"
+getdist-streamlit = "getdist.command_line:getdist_streamlit"
 
 [project.urls]
 Homepage = "https://getdist.readthedocs.io"

@@ -26,7 +26,7 @@ except ImportError as _e:
         print('Using Anaconda is probably the most reliable method')
     print("E.g. make and use a new environment")
     print('conda create -n pyside python=3.12 scipy matplotlib')
-    print("then after activating pyside envifornment 'pip install PySide6'")
+    print("then after activating pyside environment 'pip install PySide6'")
 
     sys.exit(-1)
 

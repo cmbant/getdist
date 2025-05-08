@@ -194,7 +194,7 @@ GetDist provides two graphical user interfaces:
 
 1. **Qt-based Desktop App**: Run *getdist-gui* to use the traditional desktop interface. This requires PySide6 to be installed.
 
-2. **Streamlit Web Interface**: Run *streamlit run getdist/gui/streamlit_app.py* to use the browser-based interface. This requires Streamlit to be installed.
+2. **Streamlit Web Interface**: Run *getdist-streamlit* to use the browser-based interface. This requires Streamlit to be installed.
 
 Both interfaces allow you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
