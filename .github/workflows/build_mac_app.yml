@@ -3,20 +3,13 @@ name: Build Mac App
 on:
   workflow_dispatch:
     inputs:
-      sign_and_notarize:
-        description: 'Sign and notarize the app'
+      skip_signing:
+        description: 'Skip signing and notarization (for testing only)'
         required: false
         default: false
         type: boolean
   push:
     branches: [ main, master, mac ]
-    paths:
-      - 'getdist/gui/**'
-      - 'scripts/build_mac_app.py'
-      - 'scripts/build_mac_app.sh'
-      - '.github/workflows/build_mac_app.yml'
-  pull_request:
-    branches: [ main, master ]
     paths:
       - 'getdist/gui/**'
       - 'scripts/build_mac_app.py'
@@ -58,7 +51,7 @@ jobs:
         ./scripts/build_mac_app.sh
 
     - name: Import Code Signing Certificate
-      if: github.event.inputs.sign_and_notarize == 'true' || startsWith(github.ref, 'refs/tags/')
+      if: github.event.inputs.skip_signing != 'true'
       env:
         CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
         CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
@@ -81,7 +74,7 @@ jobs:
         security list-keychain -d user -s $KEYCHAIN_PATH
 
     - name: Sign Mac App
-      if: github.event.inputs.sign_and_notarize == 'true' || startsWith(github.ref, 'refs/tags/')
+      if: github.event.inputs.skip_signing != 'true'
       env:
         TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       run: |
@@ -94,7 +87,7 @@ jobs:
         codesign --verify --verbose "dist/GetDist GUI.app"
 
     - name: Notarize Mac App
-      if: github.event.inputs.sign_and_notarize == 'true' || startsWith(github.ref, 'refs/tags/')
+      if: github.event.inputs.skip_signing != 'true'
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
@@ -130,7 +123,7 @@ jobs:
         rm -rf "dist/dmg" "dist/GetDistGUI.zip"
 
     - name: Verify Signed App
-      if: github.event.inputs.sign_and_notarize == 'true' || startsWith(github.ref, 'refs/tags/')
+      if: github.event.inputs.skip_signing != 'true'
       run: |
         echo "Verifying app signature and notarization..."
         spctl --assess --verbose=4 "dist/GetDist GUI.app"

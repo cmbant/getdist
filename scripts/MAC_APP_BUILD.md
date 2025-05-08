@@ -35,12 +35,13 @@ To manually trigger a build:
 2. Click on the "Actions" tab
 3. Select the "Build Mac App" workflow
 4. Click "Run workflow"
-5. Optionally, check "Sign and notarize the app" if you have set up the required secrets
+5. By default, the app will be signed and notarized if the required secrets are set up
+6. If you want to skip signing (for testing purposes), check the "Skip signing and notarization" option
 
 The workflow will:
 - Build the Mac app bundle
 - Create a DMG installer
-- Sign and notarize the app (if enabled and secrets are configured)
+- Sign and notarize the app (unless explicitly skipped)
 - Upload the DMG as an artifact that can be downloaded from the workflow run page
 
 ## Architecture Support
