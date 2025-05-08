@@ -35,11 +35,13 @@ To manually trigger a build:
 2. Click on the "Actions" tab
 3. Select the "Build Mac App" workflow
 4. Click "Run workflow"
+5. Optionally, check "Sign and notarize the app" if you have set up the required secrets
 
 The workflow will:
 - Build the Mac app bundle
 - Create a DMG installer
-- Upload both as artifacts that can be downloaded from the workflow run page
+- Sign and notarize the app (if enabled and secrets are configured)
+- Upload the DMG as an artifact that can be downloaded from the workflow run page
 
 ## Architecture Support
 
@@ -55,9 +57,9 @@ You can customize the build by modifying the `scripts/build_mac_app.py` script:
 - Change the project directory with the `--project-dir` parameter
 - Modify the PyInstaller spec file to include additional files or dependencies
 
-## Code Signing
+## Code Signing and Notarization
 
-For distribution outside of development:
+For distribution outside of development, the app should be signed and notarized:
 
 1. Obtain an Apple Developer ID
 2. Sign the app using:
@@ -67,6 +69,8 @@ For distribution outside of development:
    ```
 
 3. Notarize the app for distribution (requires Apple Developer account)
+
+For detailed instructions on setting up code signing and notarization in GitHub Actions, see [MAC_APP_SIGNING.md](MAC_APP_SIGNING.md).
 
 ## Notes
 
