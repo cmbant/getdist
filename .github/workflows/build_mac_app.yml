@@ -103,13 +103,41 @@ jobs:
         echo '</dict>' >> entitlements.plist
         echo '</plist>' >> entitlements.plist
 
-        # Sign the app with hardened runtime enabled
+        # Sign the app with special handling for Qt frameworks
         echo "Signing app bundle with hardened runtime..."
-        codesign --deep --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "dist/GetDistGUI.app"
+
+        # First, sign all the Qt frameworks individually
+        echo "Signing Qt frameworks..."
+        find "dist/GetDistGUI.app/Contents/Frameworks" -type f -name "*.dylib" -o -name "*.so" | while read -r file; do
+            echo "Signing $file"
+            codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "$file"
+        done
+
+        # Sign any framework bundles
+        find "dist/GetDistGUI.app/Contents/Frameworks" -type d -name "*.framework" | while read -r framework; do
+            echo "Signing framework: $framework"
+            codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "$framework"
+        done
+
+        # Sign the main executable
+        echo "Signing main executable..."
+        codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "dist/GetDistGUI.app/Contents/MacOS/GetDistGUI"
+
+        # Finally sign the app bundle
+        echo "Signing app bundle..."
+        codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "dist/GetDistGUI.app"
 
         # Verify signature
         echo "Verifying app signature..."
         codesign --verify --verbose "dist/GetDistGUI.app"
+
+        # Verify with strict validation
+        echo "Verifying with strict validation..."
+        codesign --verify --verbose=4 --strict "dist/GetDistGUI.app"
+
+        # Check for specific issues with frameworks
+        echo "Checking for framework issues..."
+        codesign --verify --verbose "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework"
 
         # Create a ZIP archive for notarization
         echo "Creating ZIP archive for notarization..."
@@ -122,15 +150,38 @@ jobs:
 
         # Submit for notarization
         echo "Submitting app for notarization..."
-        xcrun notarytool submit "dist/GetDistGUI.zip" \
+        NOTARIZATION_UUID=$(xcrun notarytool submit "dist/GetDistGUI.zip" \
           --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
           --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
           --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }} \
-          --wait
+          --wait | grep "id:" | awk '{print $2}')
+
+        echo "Notarization UUID: $NOTARIZATION_UUID"
+
+        # Check notarization status
+        echo "Checking notarization status..."
+        xcrun notarytool info "$NOTARIZATION_UUID" \
+          --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
+          --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
+          --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
+
+        # Get detailed log
+        echo "Getting detailed notarization log..."
+        xcrun notarytool log "$NOTARIZATION_UUID" \
+          --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
+          --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
+          --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }} \
+          notarization.log
+
+        cat notarization.log
 
         # Staple the notarization ticket
         echo "Stapling notarization ticket to app..."
         xcrun stapler staple "dist/GetDistGUI.app"
+
+        # Verify stapling
+        echo "Verifying stapling..."
+        stapler validate "dist/GetDistGUI.app"
 
     - name: Create DMG with Signed App
       if: github.event.inputs.skip_signing != 'true'

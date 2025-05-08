@@ -194,6 +194,10 @@ app = BUNDLE(
         'CFBundleShortVersionString': '{version}',
         'NSHumanReadableCopyright': '© Antony Lewis',
         'NSHighResolutionCapable': True,
+        'NSPrincipalClass': 'NSApplication',
+        'NSAppleScriptEnabled': False,
+        'LSMinimumSystemVersion': '10.13.0',
+        'LSApplicationCategoryType': 'public.app-category.developer-tools',
     }},
 )
 """

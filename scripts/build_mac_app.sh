@@ -85,9 +85,40 @@ EOF
         IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed -E 's/.*"(Developer ID Application: .+)"$/\1/')
         if [ ! -z "$IDENTITY" ]; then
             echo "Signing app with identity: $IDENTITY"
-            codesign --deep --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$OUTPUT_DIR/$APP_NAME"
+
+            # First, sign all the Qt frameworks individually
+            echo "Signing Qt frameworks..."
+            find "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks" -type f -name "*.dylib" -o -name "*.so" | while read -r file; do
+                echo "Signing $file"
+                codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$file"
+            done
+
+            # Sign any framework bundles
+            find "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks" -type d -name "*.framework" | while read -r framework; do
+                echo "Signing framework: $framework"
+                codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$framework"
+            done
+
+            # Sign the main executable
+            echo "Signing main executable..."
+            codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$OUTPUT_DIR/$APP_NAME/Contents/MacOS/GetDistGUI"
+
+            # Finally sign the app bundle
+            echo "Signing app bundle..."
+            codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$OUTPUT_DIR/$APP_NAME"
+
             echo "Verifying signature..."
             codesign --verify --verbose "$OUTPUT_DIR/$APP_NAME"
+
+            # Verify with strict validation
+            echo "Verifying with strict validation..."
+            codesign --verify --verbose=4 --strict "$OUTPUT_DIR/$APP_NAME"
+
+            # Check for specific issues with frameworks
+            if [ -d "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework" ]; then
+                echo "Checking for framework issues..."
+                codesign --verify --verbose "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework"
+            fi
         else
             echo "No Developer ID certificate found, skipping signing"
         fi
