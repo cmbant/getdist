@@ -56,6 +56,45 @@ python "$SCRIPT_DIR/build_mac_app.py" --output-dir "$OUTPUT_DIR" --project-dir "
 
 # Create DMG if the app was built successfully
 if [ -d "$OUTPUT_DIR/$APP_NAME" ]; then
+    # Create entitlements file for hardened runtime if it doesn't exist
+    ENTITLEMENTS_PATH="$REPO_ROOT/entitlements.plist"
+    if [ ! -f "$ENTITLEMENTS_PATH" ]; then
+        echo "Creating entitlements file..."
+        cat > "$ENTITLEMENTS_PATH" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+</dict>
+</plist>
+EOF
+    fi
+
+    # Check if we have a Developer ID certificate for signing
+    if command -v codesign &> /dev/null && codesign -v &> /dev/null; then
+        IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed -E 's/.*"(Developer ID Application: .+)"$/\1/')
+        if [ ! -z "$IDENTITY" ]; then
+            echo "Signing app with identity: $IDENTITY"
+            codesign --deep --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$OUTPUT_DIR/$APP_NAME"
+            echo "Verifying signature..."
+            codesign --verify --verbose "$OUTPUT_DIR/$APP_NAME"
+        else
+            echo "No Developer ID certificate found, skipping signing"
+        fi
+    else
+        echo "codesign tool not available, skipping signing"
+    fi
+
     echo "Creating DMG..."
 
     # Create a temporary directory for the DMG contents
@@ -69,6 +108,12 @@ if [ -d "$OUTPUT_DIR/$APP_NAME" ]; then
 
     # Create the DMG
     hdiutil create -volname "GetDist GUI" -srcfolder "$OUTPUT_DIR/dmg" -ov -format UDZO "$OUTPUT_DIR/$DMG_NAME"
+
+    # Sign the DMG if we have a Developer ID certificate
+    if [ ! -z "$IDENTITY" ]; then
+        echo "Signing DMG..."
+        codesign --sign "$IDENTITY" "$OUTPUT_DIR/$DMG_NAME"
+    fi
 
     # Clean up
     rm -rf "$OUTPUT_DIR/dmg"

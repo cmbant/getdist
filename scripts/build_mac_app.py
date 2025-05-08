@@ -89,6 +89,28 @@ def build_mac_app(output_dir, version, env_info):
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     icns_path = os.path.join(repo_root, "getdist", "gui", "images", "GetDistGUI.icns")
 
+    # Create entitlements file for hardened runtime
+    entitlements_path = os.path.join(temp_dir, "entitlements.plist")
+    entitlements_content = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+</dict>
+</plist>
+"""
+    with open(entitlements_path, "w", encoding="utf-8") as f:
+        f.write(entitlements_content)
+
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
@@ -145,7 +167,7 @@ exe = EXE(
     argv_emulation=True,
     target_arch=None,
     codesign_identity=None,
-    entitlements_file=None,
+    entitlements_file='{entitlements_path}',
 )
 
 coll = COLLECT(

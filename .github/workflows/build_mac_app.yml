@@ -84,9 +84,28 @@ jobs:
         IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed -E 's/.*"(Developer ID Application: .+)"$/\1/')
         echo "Using identity: $IDENTITY"
 
-        # Sign the app
-        echo "Signing app bundle..."
-        codesign --deep --force --verify --verbose --sign "$IDENTITY" "dist/GetDistGUI.app"
+        # Create entitlements file
+        echo "Creating entitlements file..."
+        echo '<?xml version="1.0" encoding="UTF-8"?>' > entitlements.plist
+        echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> entitlements.plist
+        echo '<plist version="1.0">' >> entitlements.plist
+        echo '<dict>' >> entitlements.plist
+        echo '    <key>com.apple.security.cs.allow-jit</key>' >> entitlements.plist
+        echo '    <true/>' >> entitlements.plist
+        echo '    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>' >> entitlements.plist
+        echo '    <true/>' >> entitlements.plist
+        echo '    <key>com.apple.security.cs.disable-library-validation</key>' >> entitlements.plist
+        echo '    <true/>' >> entitlements.plist
+        echo '    <key>com.apple.security.cs.allow-dyld-environment-variables</key>' >> entitlements.plist
+        echo '    <true/>' >> entitlements.plist
+        echo '    <key>com.apple.security.automation.apple-events</key>' >> entitlements.plist
+        echo '    <true/>' >> entitlements.plist
+        echo '</dict>' >> entitlements.plist
+        echo '</plist>' >> entitlements.plist
+
+        # Sign the app with hardened runtime enabled
+        echo "Signing app bundle with hardened runtime..."
+        codesign --deep --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "dist/GetDistGUI.app"
 
         # Verify signature
         echo "Verifying app signature..."
