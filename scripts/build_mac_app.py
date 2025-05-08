@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Simple script to build a Mac app bundle for GetDist GUI using PyInstaller.
-Uses a dedicated project directory for clean builds.
+Assumes uv is installed and available in the PATH.
 
 Usage:
     python scripts/build_mac_app.py [--output-dir OUTPUT_DIR] [--project-dir PROJECT_DIR]
@@ -14,7 +14,6 @@ import subprocess
 import argparse
 import re
 import tempfile
-import venv
 from pathlib import Path
 
 
@@ -29,74 +28,68 @@ def find_version():
 
 
 def setup_project_environment(project_dir):
-    """Set up a dedicated project environment"""
+    """Set up a dedicated project environment using uv"""
     print(f"Setting up project environment in {project_dir}...")
-    
+
     # Create project directory if it doesn't exist
     os.makedirs(project_dir, exist_ok=True)
-    
-    # Create a virtual environment
-    venv_dir = os.path.join(project_dir, "venv")
-    if not os.path.exists(venv_dir):
-        print(f"Creating virtual environment in {venv_dir}...")
-        venv.create(venv_dir, with_pip=True)
-    
-    # Determine paths
-    if sys.platform == "win32":
-        python_path = os.path.join(venv_dir, "Scripts", "python.exe")
-    else:
-        python_path = os.path.join(venv_dir, "bin", "python")
-    
-    # Install dependencies
-    print("Installing dependencies...")
+
+    # Create a virtual environment and install dependencies using uv
+    print("Creating virtual environment and installing dependencies...")
+
+    # Get repository root
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
     try:
-        # Install PyInstaller and PySide6 directly with pip to ensure they're installed correctly
-        subprocess.check_call([python_path, "-m", "pip", "install", "PyInstaller", "PySide6"])
-        
+        # Create virtual environment and install dependencies in one step
+        subprocess.check_call([
+            "uv", "venv", project_dir
+        ])
+
+        # Install PyInstaller and PySide6
+        subprocess.check_call([
+            "uv", "pip", "install", "--project", project_dir, "PyInstaller", "PySide6"
+        ])
+
         # Install getdist from the current directory
-        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        subprocess.check_call([python_path, "-m", "pip", "install", "-e", repo_root])
-        
-        # Verify PyInstaller is installed
-        try:
-            subprocess.check_call([
-                python_path, 
-                "-c", 
-                "import PyInstaller; print(f'PyInstaller installed')"
-            ])
-            print("PyInstaller verified!")
-        except subprocess.CalledProcessError:
-            print("PyInstaller not found after installation. Installing again...")
-            subprocess.check_call([python_path, "-m", "pip", "install", "--force-reinstall", "PyInstaller"])
-        
+        subprocess.check_call([
+            "uv", "pip", "install", "--project", project_dir, "-e", repo_root
+        ])
+
         print("Dependencies installed successfully!")
     except subprocess.CalledProcessError as e:
         print(f"Failed to install dependencies: {e}")
         sys.exit(1)
-    
+
+    # Determine Python path
+    if sys.platform == "win32":
+        python_path = os.path.join(project_dir, "Scripts", "python.exe")
+    else:
+        python_path = os.path.join(project_dir, "bin", "python")
+
     return {
         "python": python_path,
-        "venv_dir": venv_dir
+        "venv_dir": project_dir
     }
 
 
 def build_mac_app(output_dir, version, env_info):
     """Build the Mac app bundle using PyInstaller"""
     print(f"Building Mac app bundle for GetDist GUI v{version}...")
-    
+
     # Create a temporary directory for build files
     temp_dir = tempfile.mkdtemp()
-    
+
     # Get the path to the icon
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     icns_path = os.path.join(repo_root, "getdist", "gui", "images", "GetDistGUI.icns")
     if not os.path.exists(icns_path):
         # Fall back to PNG if ICNS doesn't exist
         icns_path = os.path.join(repo_root, "getdist", "gui", "images", "Icon.png")
-    
+
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Create PyInstaller spec file
     spec_content = f"""# -*- mode: python ; coding: utf-8 -*-
 
@@ -180,29 +173,29 @@ app = BUNDLE(
     }},
 )
 """
-    
+
     # Write spec file
     spec_path = os.path.join(temp_dir, "GetDistGUI.spec")
     with open(spec_path, "w", encoding="utf-8") as f:
         f.write(spec_content)
-    
+
     # Run PyInstaller using the project's Python
     python_path = env_info["python"]
-    
+
     print(f"Running PyInstaller with {python_path}...")
     subprocess.check_call([
-        python_path, 
-        "-m", 
-        "PyInstaller", 
+        python_path,
+        "-m",
+        "PyInstaller",
         "--clean",
         "--distpath", output_dir,
         "--workpath", os.path.join(temp_dir, "build"),
         spec_path
     ])
-    
+
     # Clean up
     shutil.rmtree(temp_dir)
-    
+
     print(f"Mac app bundle built successfully at {os.path.join(output_dir, 'GetDist GUI.app')}")
 
 
@@ -212,17 +205,17 @@ def main():
     parser.add_argument("--output-dir", default="dist", help="Output directory for the app bundle")
     parser.add_argument("--project-dir", default="build_env", help="Directory for the build environment")
     args = parser.parse_args()
-    
+
     # Check if running on macOS
     if sys.platform != "darwin":
         print("Warning: This script is designed to run on macOS. Some features may not work correctly.")
-    
+
     # Set up project environment
     env_info = setup_project_environment(args.project_dir)
-    
+
     # Get GetDist version
     version = find_version()
-    
+
     # Build the Mac app
     build_mac_app(args.output_dir, version, env_info)
 

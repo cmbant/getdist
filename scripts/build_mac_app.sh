@@ -31,6 +31,14 @@ done
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
 
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    echo "Installing uv package manager..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    # Add uv to PATH for this session
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
 # Build the app
 echo "Building Mac app..."
 cd "$REPO_ROOT"
@@ -39,22 +47,22 @@ python "$SCRIPT_DIR/build_mac_app.py" --output-dir "$OUTPUT_DIR" --project-dir "
 # Create DMG if the app was built successfully
 if [ -d "$OUTPUT_DIR/$APP_NAME" ]; then
     echo "Creating DMG..."
-    
+
     # Create a temporary directory for the DMG contents
     mkdir -p "$OUTPUT_DIR/dmg"
-    
+
     # Copy the app bundle to the temporary directory
     cp -r "$OUTPUT_DIR/$APP_NAME" "$OUTPUT_DIR/dmg/"
-    
+
     # Create a symlink to the Applications folder
     ln -s /Applications "$OUTPUT_DIR/dmg/"
-    
+
     # Create the DMG
     hdiutil create -volname "GetDist GUI" -srcfolder "$OUTPUT_DIR/dmg" -ov -format UDZO "$OUTPUT_DIR/$DMG_NAME"
-    
+
     # Clean up
     rm -rf "$OUTPUT_DIR/dmg"
-    
+
     echo "DMG created at $OUTPUT_DIR/$DMG_NAME"
 else
     echo "Error: App build failed, skipping DMG creation"
