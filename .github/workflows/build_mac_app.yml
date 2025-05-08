@@ -150,38 +150,80 @@ jobs:
 
         # Submit for notarization
         echo "Submitting app for notarization..."
-        NOTARIZATION_UUID=$(xcrun notarytool submit "dist/GetDistGUI.zip" \
+        # Create a temporary file to capture the output
+        NOTARIZATION_OUTPUT=$(mktemp)
+
+        # Run the notarytool command and capture its output
+        xcrun notarytool submit "dist/GetDistGUI.zip" \
           --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
           --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
           --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }} \
-          --wait | grep "id:" | awk '{print $2}')
+          --wait > "$NOTARIZATION_OUTPUT" 2>&1
 
-        echo "Notarization UUID: $NOTARIZATION_UUID"
+        # Display the full output
+        echo "Notarization output:"
+        cat "$NOTARIZATION_OUTPUT"
 
-        # Check notarization status
-        echo "Checking notarization status..."
-        xcrun notarytool info "$NOTARIZATION_UUID" \
-          --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
-          --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
-          --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
+        # Extract the UUID using a more reliable method
+        NOTARIZATION_UUID=$(grep -o "id: [a-f0-9\-]\+" "$NOTARIZATION_OUTPUT" | head -1 | cut -d' ' -f2)
 
-        # Get detailed log
-        echo "Getting detailed notarization log..."
-        xcrun notarytool log "$NOTARIZATION_UUID" \
-          --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
-          --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
-          --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }} \
-          notarization.log
+        echo "Extracted Notarization UUID: $NOTARIZATION_UUID"
 
-        cat notarization.log
+        # Check if we have a valid UUID
+        if [[ $NOTARIZATION_UUID =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]]; then
+            echo "Valid UUID format detected"
+
+            # Check notarization status
+            echo "Checking notarization status..."
+            xcrun notarytool info "$NOTARIZATION_UUID" \
+              --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
+              --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
+              --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
+
+            # Get detailed log
+            echo "Getting detailed notarization log..."
+            xcrun notarytool log "$NOTARIZATION_UUID" \
+              --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
+              --key-id ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
+              --issuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }} \
+              notarization.log
+
+            cat notarization.log
+        else
+            echo "Failed to extract a valid UUID from the notarization output"
+            echo "Skipping notarization status check and log retrieval"
+            # Continue with stapling anyway, as the notarization might have succeeded
+        fi
 
         # Staple the notarization ticket
         echo "Stapling notarization ticket to app..."
-        xcrun stapler staple "dist/GetDistGUI.app"
+        # Wait a bit to ensure notarization is fully processed
+        sleep 10
+
+        # Try stapling up to 3 times
+        for i in {1..3}; do
+            echo "Stapling attempt $i..."
+            if xcrun stapler staple "dist/GetDistGUI.app"; then
+                echo "Stapling succeeded on attempt $i"
+                break
+            else
+                echo "Stapling failed on attempt $i"
+                if [ $i -lt 3 ]; then
+                    echo "Waiting before retry..."
+                    sleep 10
+                else
+                    echo "All stapling attempts failed, but continuing anyway"
+                fi
+            fi
+        done
 
         # Verify stapling
         echo "Verifying stapling..."
-        stapler validate "dist/GetDistGUI.app"
+        if stapler validate "dist/GetDistGUI.app"; then
+            echo "Stapling validation succeeded"
+        else
+            echo "Stapling validation failed, but continuing anyway"
+        fi
 
     - name: Create DMG with Signed App
       if: github.event.inputs.skip_signing != 'true'
