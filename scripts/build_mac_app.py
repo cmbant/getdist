@@ -41,7 +41,7 @@ def setup_project_environment(project_dir):
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     try:
-        # Create virtual environment and install dependencies in one step
+        # Create virtual environment
         subprocess.check_call([
             "uv", "venv", project_dir
         ])
@@ -61,14 +61,7 @@ def setup_project_environment(project_dir):
         print(f"Failed to install dependencies: {e}")
         sys.exit(1)
 
-    # Determine Python path
-    if sys.platform == "win32":
-        python_path = os.path.join(project_dir, "Scripts", "python.exe")
-    else:
-        python_path = os.path.join(project_dir, "bin", "python")
-
     return {
-        "python": python_path,
         "venv_dir": project_dir
     }
 
@@ -179,14 +172,14 @@ app = BUNDLE(
     with open(spec_path, "w", encoding="utf-8") as f:
         f.write(spec_content)
 
-    # Run PyInstaller using the project's Python
-    python_path = env_info["python"]
+    # Run PyInstaller using uv run to ensure correct environment
+    venv_dir = env_info["venv_dir"]
 
-    print(f"Running PyInstaller with {python_path}...")
+    print(f"Running PyInstaller with uv in environment {venv_dir}...")
     subprocess.check_call([
-        python_path,
-        "-m",
-        "PyInstaller",
+        "uv", "run",
+        "--project", venv_dir,
+        "pyinstaller",
         "--clean",
         "--distpath", output_dir,
         "--workpath", os.path.join(temp_dir, "build"),
