@@ -240,7 +240,133 @@ app = BUNDLE(
     # Clean up
     shutil.rmtree(temp_dir)
 
-    print(f"Mac app bundle built successfully at {os.path.join(output_dir, 'GetDist GUI.app')}")
+    # Fix Qt frameworks to ensure proper bundle structure
+    app_path = os.path.join(output_dir, 'GetDist GUI.app')
+    print(f"Fixing Qt frameworks in {app_path}...")
+
+    # Run the fix_qt_frameworks.sh script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    fix_script = os.path.join(script_dir, "fix_qt_frameworks.sh")
+
+    # Make the script executable
+    os.chmod(fix_script, 0o755)
+
+    # Run the script
+    try:
+        subprocess.check_call([fix_script, app_path])
+        print("Qt frameworks fixed successfully")
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Failed to fix Qt frameworks: {e}")
+        print("The app may still work, but signing might fail")
+
+    # Additional fixes for framework structure
+    frameworks_dir = os.path.join(app_path, 'Contents', 'Frameworks')
+    if os.path.exists(frameworks_dir):
+        print("Applying additional framework structure fixes...")
+
+        # Find all Qt frameworks
+        for root, dirs, _ in os.walk(frameworks_dir):
+            for dir_name in dirs:
+                if dir_name.endswith('.framework'):
+                    framework_path = os.path.join(root, dir_name)
+                    framework_name = os.path.basename(framework_path).replace('.framework', '')
+
+                    # Create Info.plist if missing
+                    resources_dir = os.path.join(framework_path, 'Resources')
+                    versions_dir = os.path.join(framework_path, 'Versions')
+
+                    # Check if this is a versioned framework
+                    if os.path.exists(versions_dir):
+                        # Find the current version (usually 'A' or '5' for Qt)
+                        version_dirs = [d for d in os.listdir(versions_dir)
+                                       if os.path.isdir(os.path.join(versions_dir, d)) and d != 'Current']
+
+                        if version_dirs:
+                            current_version = version_dirs[0]
+                            current_dir = os.path.join(versions_dir, current_version)
+
+                            # Create symlink to Current if missing
+                            current_symlink = os.path.join(versions_dir, 'Current')
+                            if not os.path.exists(current_symlink):
+                                print(f"  Creating 'Current' symlink in {framework_path}")
+                                os.symlink(current_version, current_symlink)
+
+                            # Create Resources directory if missing
+                            version_resources = os.path.join(current_dir, 'Resources')
+                            if not os.path.exists(version_resources):
+                                os.makedirs(version_resources, exist_ok=True)
+
+                            # Create Info.plist if missing
+                            info_plist = os.path.join(version_resources, 'Info.plist')
+                            if not os.path.exists(info_plist):
+                                print(f"  Creating Info.plist for {framework_name}")
+                                with open(info_plist, 'w', encoding='utf-8') as f:
+                                    f.write(f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleExecutable</key>
+    <string>{framework_name}</string>
+    <key>CFBundleIdentifier</key>
+    <string>org.qt-project.{framework_name}</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>FMWK</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+</dict>
+</plist>''')
+
+                            # Create symlink to Resources if missing
+                            resources_symlink = os.path.join(framework_path, 'Resources')
+                            if not os.path.exists(resources_symlink):
+                                print(f"  Creating 'Resources' symlink in {framework_path}")
+                                os.symlink('Versions/Current/Resources', resources_symlink)
+
+                            # Create symlink to the framework binary if missing
+                            binary_path = os.path.join(current_dir, framework_name)
+                            if os.path.exists(binary_path):
+                                binary_symlink = os.path.join(framework_path, framework_name)
+                                if not os.path.exists(binary_symlink):
+                                    print(f"  Creating binary symlink for {framework_name}")
+                                    os.symlink(f'Versions/Current/{framework_name}', binary_symlink)
+                    else:
+                        # Non-versioned framework
+                        if not os.path.exists(resources_dir):
+                            os.makedirs(resources_dir, exist_ok=True)
+
+                        # Create Info.plist if missing
+                        info_plist = os.path.join(resources_dir, 'Info.plist')
+                        if not os.path.exists(info_plist):
+                            print(f"  Creating Info.plist for {framework_name}")
+                            with open(info_plist, 'w', encoding='utf-8') as f:
+                                f.write(f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleExecutable</key>
+    <string>{framework_name}</string>
+    <key>CFBundleIdentifier</key>
+    <string>org.qt-project.{framework_name}</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>FMWK</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+</dict>
+</plist>''')
+
+    print(f"Mac app bundle built successfully at {app_path}")
 
 
 def main():
@@ -252,7 +378,8 @@ def main():
 
     # Check if running on macOS
     if sys.platform != "darwin":
-        print("Warning: This script is designed to run on macOS. Some features may not work correctly.")
+        print("Error: This script must be run on macOS.")
+        sys.exit(1)
 
     # Set up project environment
     env_info = setup_project_environment(args.project_dir)

@@ -153,24 +153,80 @@ jobs:
         # Check for specific issues with frameworks
         echo "Checking for framework issues..."
 
-        # Check QtQuick.framework
-        if [ -d "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework" ]; then
-            echo "Verifying QtQuick.framework..."
-            codesign --verify --verbose "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework"
+        # Check QtGui.framework (known problematic framework)
+        if [ -d "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtGui.framework" ]; then
+            echo "Verifying QtGui.framework..."
+            codesign --verify --verbose "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtGui.framework" || {
+                echo "Warning: QtGui.framework verification failed, attempting to fix..."
+                # Try to fix the framework structure
+                if [ -d "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Resources" ]; then
+                    echo "Checking QtGui.framework Info.plist..."
+                    if [ -f "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Resources/Info.plist" ]; then
+                        echo "Adding CFBundleSupportedPlatforms to QtGui.framework Info.plist"
+                        sed -i '' '/<\/dict>/i\
+    <key>CFBundleSupportedPlatforms</key>\
+    <array>\
+        <string>MacOSX</string>\
+    </array>
+' "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtGui.framework/Resources/Info.plist"
+                        # Re-sign the framework
+                        codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtGui.framework"
+                    fi
+                fi
+            }
         fi
 
-        # Check QtQmlMeta.framework
+        # Check QtQmlMeta.framework (known problematic framework)
         if [ -d "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework" ]; then
             echo "Verifying QtQmlMeta.framework..."
-            codesign --verify --verbose "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework"
+            codesign --verify --verbose "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework" || {
+                echo "Warning: QtQmlMeta.framework verification failed, attempting to fix..."
+                # Try to fix the framework structure
+                if [ -d "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Resources" ]; then
+                    echo "Checking QtQmlMeta.framework Info.plist..."
+                    if [ -f "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Resources/Info.plist" ]; then
+                        echo "Adding CFBundleSupportedPlatforms to QtQmlMeta.framework Info.plist"
+                        sed -i '' '/<\/dict>/i\
+    <key>CFBundleSupportedPlatforms</key>\
+    <array>\
+        <string>MacOSX</string>\
+    </array>
+' "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework/Resources/Info.plist"
+                        # Re-sign the framework
+                        codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "dist/GetDistGUI.app/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework"
+                    fi
+                fi
+            }
         fi
 
         # Check all Qt frameworks
         echo "Verifying all Qt frameworks..."
         find "dist/GetDistGUI.app/Contents/Frameworks" -type d -name "Qt*.framework" | while read -r framework; do
             echo "Verifying framework: $framework"
-            codesign --verify --verbose "$framework"
+            codesign --verify --verbose "$framework" || {
+                echo "Warning: Framework verification failed for $framework, attempting to fix..."
+                framework_name=$(basename "$framework" .framework)
+                # Try to fix the framework structure
+                if [ -d "$framework/Resources" ]; then
+                    echo "Checking $framework_name Info.plist..."
+                    if [ -f "$framework/Resources/Info.plist" ]; then
+                        echo "Adding CFBundleSupportedPlatforms to $framework_name Info.plist"
+                        sed -i '' '/<\/dict>/i\
+    <key>CFBundleSupportedPlatforms</key>\
+    <array>\
+        <string>MacOSX</string>\
+    </array>
+' "$framework/Resources/Info.plist"
+                        # Re-sign the framework
+                        codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "$framework"
+                    fi
+                fi
+            }
         done
+
+        # Re-sign the app bundle after fixing frameworks
+        echo "Re-signing app bundle after framework fixes..."
+        codesign --force --verify --verbose --options runtime --entitlements entitlements.plist --sign "$IDENTITY" "dist/GetDistGUI.app"
 
         # Create a ZIP archive for notarization
         echo "Creating ZIP archive for notarization..."

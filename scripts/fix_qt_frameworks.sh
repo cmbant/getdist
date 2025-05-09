@@ -24,19 +24,19 @@ echo "Fixing Qt frameworks in $APP_PATH..."
 fix_framework() {
     local framework_path="$1"
     local framework_name=$(basename "$framework_path" .framework)
-    
+
     echo "Processing framework: $framework_name"
-    
+
     # Check if the framework exists
     if [ ! -d "$framework_path" ]; then
         echo "  Framework not found, skipping"
         return
     fi
-    
+
     # Check if the framework has an Info.plist
     if [ ! -f "$framework_path/Resources/Info.plist" ] && [ ! -f "$framework_path/Versions/Current/Resources/Info.plist" ]; then
         echo "  Creating Info.plist for $framework_name"
-        
+
         # Create Resources directory if it doesn't exist
         if [ -d "$framework_path/Versions/Current" ]; then
             mkdir -p "$framework_path/Versions/Current/Resources"
@@ -45,7 +45,7 @@ fix_framework() {
             mkdir -p "$framework_path/Resources"
             INFO_PLIST_PATH="$framework_path/Resources/Info.plist"
         fi
-        
+
         # Create a basic Info.plist
         cat > "$INFO_PLIST_PATH" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -66,11 +66,40 @@ fix_framework() {
     <string>????</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
 </dict>
 </plist>
 EOF
     else
         echo "  Info.plist already exists for $framework_name"
+
+        # Check if the Info.plist has CFBundleSupportedPlatforms
+        if [ -f "$framework_path/Resources/Info.plist" ]; then
+            if ! grep -q "CFBundleSupportedPlatforms" "$framework_path/Resources/Info.plist"; then
+                echo "  Adding CFBundleSupportedPlatforms to existing Info.plist"
+                # Insert before the closing </dict> tag
+                sed -i '' '/<\/dict>/i\
+    <key>CFBundleSupportedPlatforms</key>\
+    <array>\
+        <string>MacOSX</string>\
+    </array>
+' "$framework_path/Resources/Info.plist"
+            fi
+        elif [ -f "$framework_path/Versions/Current/Resources/Info.plist" ]; then
+            if ! grep -q "CFBundleSupportedPlatforms" "$framework_path/Versions/Current/Resources/Info.plist"; then
+                echo "  Adding CFBundleSupportedPlatforms to existing Info.plist"
+                # Insert before the closing </dict> tag
+                sed -i '' '/<\/dict>/i\
+    <key>CFBundleSupportedPlatforms</key>\
+    <array>\
+        <string>MacOSX</string>\
+    </array>
+' "$framework_path/Versions/Current/Resources/Info.plist"
+            fi
+        fi
     fi
 }
 
@@ -88,22 +117,22 @@ echo "Fixing framework symlinks..."
 for framework in $QT_FRAMEWORKS; do
     if [ -d "$framework/Versions" ]; then
         echo "Checking symlinks in $framework"
-        
+
         # Check if Current symlink exists
         if [ ! -L "$framework/Versions/Current" ] && [ -d "$framework/Versions/A" ]; then
             echo "  Creating Current symlink"
             ln -sf A "$framework/Versions/Current"
         fi
-        
+
         # Get the framework name
         framework_name=$(basename "$framework" .framework)
-        
+
         # Check if the framework binary symlink exists
         if [ ! -L "$framework/$framework_name" ] && [ -f "$framework/Versions/Current/$framework_name" ]; then
             echo "  Creating framework binary symlink"
             ln -sf "Versions/Current/$framework_name" "$framework/$framework_name"
         fi
-        
+
         # Check if the Resources symlink exists
         if [ ! -L "$framework/Resources" ] && [ -d "$framework/Versions/Current/Resources" ]; then
             echo "  Creating Resources symlink"
