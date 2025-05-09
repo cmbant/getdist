@@ -1663,12 +1663,12 @@ class MainWindow(QMainWindow):
             # or, for some reason scaling the figure dpi this way works...
             height = self.plotWidget.height() / self.logicalDpiX() * self.plot_scale_fudge  # / self.devicePixelRatio()
             width = self.plotWidget.width() / self.logicalDpiX() * self.plot_scale_fudge  # / self.devicePixelRatio()
-            matplotlib.rcParams['figure.dpi'] = self.logicalDpiX() / self.devicePixelRatio()
+            matplotlib.rcParams['figure.dpi'] = self.logicalDpiX() #/ self.devicePixelRatio()
             if self.devicePixelRatio() > 1:
                 self.plotter.settings.direct_scaling = True
-            if sys.platform == 'darwin' and self.devicePixelRatio() == 1:
-                # no idea why this works for low-res attached to mac laptops
-                matplotlib.rcParams['figure.dpi'] /= 2
+            # if sys.platform == 'darwin' and self.devicePixelRatio() == 1:
+            #     # no idea why this works for low-res attached to mac laptops
+            #     matplotlib.rcParams['figure.dpi'] /= 2
 
             def setSizeForN(cols, rows):
                 if self.plotter.settings.fig_width_inch is not None:

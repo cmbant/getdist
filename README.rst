@@ -59,7 +59,7 @@ the `Plot Gallery and tutorial <https://getdist.readthedocs.io/en/latest/plot_ga
 
 Dependencies
 =============
-* Python 3.8+
+* Python 3.9+
 * matplotlib
 * scipy
 * PySide6 - optional, only needed for Qt-based GUI
