@@ -20,6 +20,9 @@ on:
         type: boolean
   push:
     branches: [ main, master, mac ]
+    tags:
+      - 'v*'
+      - '*.*.*'
 jobs:
   build-mac:
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'mac' || github.event.inputs.platform == null
