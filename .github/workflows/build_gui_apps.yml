@@ -168,16 +168,8 @@ jobs:
         $msiFile = Get-ChildItem -Path dist -Filter "GetDist-GUI-*.msi" | Select-Object -First 1 -ExpandProperty FullName
         echo "Signing MSI installer: $msiFile"
 
-        # Create temporary certificate file
-        $certData = [System.Convert]::FromBase64String($env:WINDOWS_CERTIFICATE)
-        $certPath = [System.IO.Path]::GetTempFileName() + ".pfx"
-        [System.IO.File]::WriteAllBytes($certPath, $certData)
-
-        # Sign the MSI
-        signtool sign /f $certPath /p $env:WINDOWS_CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 /d "GetDist GUI" $msiFile
-
-        # Clean up
-        Remove-Item $certPath
+        # Use our existing signing script with the MSI file
+        python ./scripts/sign_windows_app.py --dir $msiFile
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
