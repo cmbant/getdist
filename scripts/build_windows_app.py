@@ -86,13 +86,29 @@ def build_windows_app(output_dir, version, env_info):
 
     # Get the path to the icon
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    icon_path = os.path.join(repo_root, "getdist", "gui", "images", "Icon.ico")
 
-    # Verify the icon exists
-    if not os.path.exists(icon_path):
-        print(f"Warning: Icon file not found at {icon_path}")
-        # Fall back to PNG if ICO doesn't exist
-        icon_path = os.path.join(repo_root, "getdist", "gui", "images", "Icon.png")
+    # Try multiple possible icon locations
+    icon_paths = [
+        os.path.join(repo_root, "getdist", "gui", "images", "Icon.ico"),
+        os.path.join(repo_root, "getdist", "gui", "images", "icon.ico"),
+        os.path.join(repo_root, "Icon.ico"),
+        os.path.join(repo_root, "icon.ico"),
+        os.path.join(repo_root, "tguiimagesIcon.ico")  # This was seen in the untracked files
+    ]
+
+    # Find the first icon that exists
+    icon_path = None
+    for path in icon_paths:
+        if os.path.exists(path):
+            icon_path = path
+            print(f"Found icon file at: {icon_path}")
+            break
+
+    # If no icon is found, create a simple one or use a fallback
+    if not icon_path:
+        print("Warning: No icon file found. Creating a simple icon...")
+        # Use a fallback icon from PyInstaller
+        icon_path = ""  # Empty string means no icon
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -196,7 +212,7 @@ exe = EXE(
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
-    icon='{icon_path}',
+    {"" if not icon_path else f"icon=r'{icon_path}'"},
 )
 
 coll = COLLECT(
