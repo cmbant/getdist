@@ -92,14 +92,7 @@ jobs:
         name: GetDist-GUI-DMG
         path: dist/GetDist-GUI.dmg
 
-    - name: Create Release (on tag)
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          dist/GetDist-GUI.dmg
-        draft: true
-        prerelease: false
+
 
   build-windows:
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows' || github.event.inputs.platform == null
@@ -179,12 +172,47 @@ jobs:
           dist/GetDist-GUI-*.zip
           dist/GetDist-GUI-*.msi
 
-    - name: Create Release (on tag)
-      if: startsWith(github.ref, 'refs/tags/')
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-mac, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download Mac Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: GetDist-GUI-DMG
+        path: artifacts/mac
+
+    - name: Download Windows Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: GetDist-GUI-Windows
+        path: artifacts/windows
+
+    - name: List Downloaded Artifacts
+      run: |
+        echo "Downloaded artifacts:"
+        find artifacts -type f | sort
+
+    - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          dist/GetDist-GUI-*.zip
-          dist/GetDist-GUI-*.msi
+          artifacts/mac/GetDist-GUI.dmg
+          artifacts/windows/GetDist-GUI-*.zip
+          artifacts/windows/GetDist-GUI-*.msi
         draft: true
         prerelease: false
+        name: GetDist GUI ${{ github.ref_name }}
+        body: |
+          GetDist GUI ${{ github.ref_name }} Release
+
+          ## Downloads
+          - Mac: GetDist-GUI.dmg
+          - Windows: GetDist-GUI-*.msi (installer) or GetDist-GUI-*.zip (portable)
+
+          ## Installation
+          - Mac: Open the DMG file and drag the app to your Applications folder
+          - Windows: Run the MSI installer or extract the ZIP file to a location of your choice
+
