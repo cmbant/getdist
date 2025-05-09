@@ -576,8 +576,19 @@ class MainWindow(QMainWindow):
                 color: palette(text);
             }
         """)
-        textfont = QFont("Monospace")
-        textfont.setStyleHint(QFont.TypeWriter)
+        # Use a cross-platform monospace font that works well on macOS
+        if sys.platform == "darwin":
+            # macOS preferred monospace fonts
+            textfont = QFont("Menlo")
+            if not textfont.exactMatch():
+                textfont = QFont("Monaco")
+        else:
+            # Other platforms
+            textfont = QFont("Consolas")
+
+        # Set fallback to generic monospace
+        textfont.setStyleHint(QFont.Monospace)
+        textfont.setFixedPitch(True)
         self.textWidget.setWordWrapMode(QTextOption.NoWrap)
         self.textWidget.setFont(textfont)
         PythonHighlighter(self.textWidget.document())
