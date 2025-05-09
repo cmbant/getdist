@@ -18,6 +18,7 @@ on:
       - 'scripts/notarize_mac_app.sh'
       - 'scripts/create_mac_dmg.sh'
       - 'scripts/fix_qt_frameworks.sh'
+      - 'scripts/fix_qt_bundle_ambiguity.sh'
       - '.github/workflows/build_mac_app.yml'
 
 jobs:
@@ -68,6 +69,7 @@ jobs:
         chmod +x scripts/notarize_mac_app.sh
         chmod +x scripts/create_mac_dmg.sh
         chmod +x scripts/fix_qt_frameworks.sh
+        chmod +x scripts/fix_qt_bundle_ambiguity.sh
 
         # Sign the app (this will rename the app to replace spaces with underscores)
         echo "Signing the app..."

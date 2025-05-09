@@ -31,7 +31,9 @@ TEMP_DIR=$(mktemp -d)
 # Copy the app bundle to the temporary directory
 # Use the original name with spaces for the app in the DMG
 APP_NAME=$(basename "$APP_PATH" | sed 's/_/ /g')
-cp -r "$APP_PATH" "$TEMP_DIR/$APP_NAME"
+# Use ditto instead of cp -r to preserve symbolic links and file attributes
+echo "Copying app bundle with ditto to preserve symbolic links..."
+ditto "$APP_PATH" "$TEMP_DIR/$APP_NAME"
 
 # Create a symlink to the Applications folder
 ln -s /Applications "$TEMP_DIR/"

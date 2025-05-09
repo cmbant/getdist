@@ -109,6 +109,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 chmod +x "$SCRIPT_DIR/fix_qt_frameworks.sh"
 "$SCRIPT_DIR/fix_qt_frameworks.sh" "$APP_PATH"
 
+# Fix bundle ambiguity issues
+echo "Fixing bundle ambiguity issues..."
+chmod +x "$SCRIPT_DIR/fix_qt_bundle_ambiguity.sh"
+"$SCRIPT_DIR/fix_qt_bundle_ambiguity.sh" "$APP_PATH"
+
 # Create a script to fix Info.plist files
 FIX_PLIST_PATH=$(mktemp).sh
 cat > "$FIX_PLIST_PATH" << 'EOF'
