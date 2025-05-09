@@ -37,9 +37,11 @@ jobs:
     - name: Install uv
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        # Add uv to PATH - on Mac it installs to .local/bin
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        # Refresh the PATH in the current shell
+        export PATH="$HOME/.local/bin:$PATH"
         # Verify uv installation
-        source "$HOME/.cargo/env"
         uv --version
 
     - name: Build Mac App
@@ -114,7 +116,10 @@ jobs:
     - name: Install uv
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $env:GITHUB_PATH
+        # Add uv to PATH - on Windows it installs to .local/bin
+        echo "$HOME/.local/bin" >> $env:GITHUB_PATH
+        # Refresh the PATH in the current shell
+        $env:PATH = "$HOME/.local/bin;$env:PATH"
         # Verify uv installation
         uv --version
 
