@@ -343,6 +343,25 @@ class MainWindow(QMainWindow):
             QCoreApplication.processEvents()
 
     def _image_file(self, name):
+        # First try the standard path relative to the script
+        path = os.path.join(os.path.dirname(__file__), 'images', name)
+        if os.path.exists(path):
+            return path
+
+        # If running from PyInstaller executable, try to find the image in the _internal directory
+        if hasattr(sys, 'frozen') and hasattr(sys, '_MEIPASS'):
+            # PyInstaller sets sys._MEIPASS to the path of the bundle
+            path = os.path.join(sys._MEIPASS, 'getdist', 'gui', 'images', name)
+            if os.path.exists(path):
+                return path
+
+            # Try other common locations for PyInstaller bundles
+            for prefix in ['_internal', '']:
+                path = os.path.join(os.path.dirname(sys.executable), prefix, 'getdist', 'gui', 'images', name)
+                if os.path.exists(path):
+                    return path
+
+        # Fall back to the original path
         return os.path.join(os.path.dirname(__file__), 'images', name)
 
     def _icon(self, name, large=True):
