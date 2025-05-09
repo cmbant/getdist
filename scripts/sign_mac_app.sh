@@ -23,6 +23,8 @@ fi
 if [[ "$APP_PATH" == *" "* ]]; then
     NEW_PATH=$(echo "$APP_PATH" | tr ' ' '_')
     echo "Renaming app bundle to remove spaces..."
+    echo "  From: $APP_PATH"
+    echo "  To:   $NEW_PATH"
     mv "$APP_PATH" "$NEW_PATH"
     APP_PATH="$NEW_PATH"
 fi
@@ -159,7 +161,7 @@ codesign --verify --verbose "$APP_PATH"
 echo "Verifying with strict validation..."
 codesign --verify --verbose=4 --strict "$APP_PATH" || {
     echo "Warning: Strict validation failed, attempting to fix frameworks..."
-    
+
     # Check for specific issues with frameworks
     echo "Checking for framework issues..."
 
@@ -218,7 +220,7 @@ codesign --verify --verbose=4 --strict "$APP_PATH" || {
             fi
         }
     done
-    
+
     # Re-sign the app bundle after fixing frameworks
     echo "Re-signing app bundle after framework fixes..."
     codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$APP_PATH"
@@ -227,5 +229,9 @@ codesign --verify --verbose=4 --strict "$APP_PATH" || {
 # Skip notarization if requested
 if [ "$SKIP_NOTARIZATION" = "true" ]; then
     echo "Skipping notarization as requested"
-    exit 0
 fi
+
+# Print the final app path for reference
+echo "Signing completed successfully"
+echo "Final app path: $APP_PATH"
+exit 0

@@ -68,18 +68,18 @@ jobs:
         chmod +x scripts/notarize_mac_app.sh
         chmod +x scripts/create_mac_dmg.sh
         chmod +x scripts/fix_qt_frameworks.sh
-        
-        # Sign the app
+
+        # Sign the app (this will rename the app to replace spaces with underscores)
         echo "Signing the app..."
         ./scripts/sign_mac_app.sh "dist/GetDist GUI.app"
-        
-        # Notarize the app
+
+        # Notarize the app (use the renamed path with underscores)
         echo "Notarizing the app..."
-        ./scripts/notarize_mac_app.sh "dist/GetDist GUI.app"
-        
-        # Create DMG
+        ./scripts/notarize_mac_app.sh "dist/GetDist_GUI.app"
+
+        # Create DMG (use the renamed path with underscores)
         echo "Creating DMG..."
-        ./scripts/create_mac_dmg.sh "dist/GetDist GUI.app" "dist/GetDist-GUI.dmg"
+        ./scripts/create_mac_dmg.sh "dist/GetDist_GUI.app" "dist/GetDist-GUI.dmg"
 
     - name: Upload DMG
       uses: actions/upload-artifact@v4
