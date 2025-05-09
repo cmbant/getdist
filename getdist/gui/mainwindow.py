@@ -2,6 +2,10 @@
 import os
 import copy
 import logging
+
+os.environ['MPLBACKEND'] = 'Qt5Agg'
+# os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=0"  # Force light mode
+
 import matplotlib
 import matplotlib.colors
 import numpy as np
@@ -11,8 +15,6 @@ import signal
 import warnings
 from io import BytesIO
 from typing import Optional
-
-# os.environ["QT_QPA_PLATFORM"] = "windows:darkmode=0"  # Force light mode
 
 try:
     from PySide6 import QtCore
@@ -26,7 +28,8 @@ except ImportError as _e:
         print('Using Anaconda is probably the most reliable method')
     print("E.g. make and use a new environment")
     print('conda create -n pyside python=3.12 scipy matplotlib')
-    print("then after activating pyside environment 'pip install PySide6'")
+    print("then after activating pyside environment 'pip install PySide6'.")
+    print("There are also pre-built GUI apps on the GitHub Releases page")
 
     sys.exit(-1)
 
@@ -46,7 +49,7 @@ from PySide6.QtCore import Qt, SIGNAL, QSize, QSettings, QCoreApplication, QPoin
 from PySide6.QtWidgets import QListWidget, QMainWindow, QDialog, QApplication, QAbstractItemView, \
     QTabWidget, QWidget, QComboBox, QPushButton, QCheckBox, QRadioButton, QGridLayout, QVBoxLayout, \
     QSplitter, QHBoxLayout, QToolBar, QPlainTextEdit, QScrollArea, QFileDialog, QMessageBox, QTableWidgetItem, \
-    QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox
+    QLabel, QTableWidget, QListWidgetItem, QTextEdit, QDialogButtonBox, QSizePolicy
 
 # works with or without this:
 # QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -429,10 +432,18 @@ class MainWindow(QMainWindow):
         self.listParametersX = QListWidget(self.selectWidget)
         self.listParametersX.clear()
         self.listParametersX.itemChanged.connect(self.itemCheckChange)
+        self.listParametersX.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.listParametersX.setMinimumWidth(150 * self.dpiScale())
+        # Ensure horizontal scrollbar appears when needed
+        self.listParametersX.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         self.listParametersY = QListWidget(self.selectWidget)
         self.listParametersY.clear()
         self.listParametersY.itemChanged.connect(self.itemCheckChange)
+        self.listParametersY.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.listParametersY.setMinimumWidth(150 * self.dpiScale())
+        # Ensure horizontal scrollbar appears when needed
+        self.listParametersY.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         self.selectAllX = QCheckBox("Select All", self.selectWidget)
         self.selectAllX.setCheckState(Qt.Unchecked)
@@ -501,6 +512,12 @@ class MainWindow(QMainWindow):
 
         leftLayout.addWidget(self.selectAllX, 5, 0, 1, 2)
         leftLayout.addWidget(self.selectAllY, 5, 2, 1, 2)
+        # Set column stretch factors to ensure balanced width distribution
+        leftLayout.setColumnStretch(0, 1)
+        leftLayout.setColumnStretch(1, 1)
+        leftLayout.setColumnStretch(2, 1)
+        leftLayout.setColumnStretch(3, 1)
+
         leftLayout.addWidget(self.listParametersX, 6, 0, 6, 2)
         leftLayout.addWidget(self.listParametersY, 6, 2, 1, 2)
 
@@ -1452,6 +1469,9 @@ class MainWindow(QMainWindow):
             listItem.setCheckState(Qt.Unchecked)
             listParameters.addItem(listItem)
 
+        # Set uniform item size to prevent long items from expanding the list too much
+        listParameters.setUniformItemSizes(True)
+
     def _updateListParametersSelection(self, oldItems, listParameters):
         if not oldItems:
             return
@@ -1663,9 +1683,10 @@ class MainWindow(QMainWindow):
             # or, for some reason scaling the figure dpi this way works...
             height = self.plotWidget.height() / self.logicalDpiX() * self.plot_scale_fudge  # / self.devicePixelRatio()
             width = self.plotWidget.width() / self.logicalDpiX() * self.plot_scale_fudge  # / self.devicePixelRatio()
-            matplotlib.rcParams['figure.dpi'] = self.logicalDpiX() #/ self.devicePixelRatio()
+            matplotlib.rcParams['figure.dpi'] = self.logicalDpiX()  # / self.devicePixelRatio()
             if self.devicePixelRatio() > 1:
                 self.plotter.settings.direct_scaling = True
+
             # if sys.platform == 'darwin' and self.devicePixelRatio() == 1:
             #     # no idea why this works for low-res attached to mac laptops
             #     matplotlib.rcParams['figure.dpi'] /= 2
