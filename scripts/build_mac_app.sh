@@ -86,6 +86,11 @@ EOF
         if [ ! -z "$IDENTITY" ]; then
             echo "Signing app with identity: $IDENTITY"
 
+            # Fix Qt frameworks before signing
+            echo "Fixing Qt frameworks..."
+            chmod +x "$SCRIPT_DIR/fix_qt_frameworks.sh"
+            "$SCRIPT_DIR/fix_qt_frameworks.sh" "$OUTPUT_DIR/$APP_NAME"
+
             # First, sign all the Qt frameworks individually
             echo "Signing Qt frameworks..."
             find "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks" -type f -name "*.dylib" -o -name "*.so" | while read -r file; do
@@ -93,9 +98,19 @@ EOF
                 codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$file"
             done
 
-            # Sign any framework bundles
+            # Sign any framework bundles - with special handling for Qt frameworks
+            echo "Signing framework bundles..."
             find "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks" -type d -name "*.framework" | while read -r framework; do
                 echo "Signing framework: $framework"
+
+                # Sign the framework binary first if it exists
+                framework_name=$(basename "$framework" .framework)
+                if [ -f "$framework/$framework_name" ]; then
+                    echo "  Signing framework binary: $framework/$framework_name"
+                    codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$framework/$framework_name"
+                fi
+
+                # Sign the framework bundle
                 codesign --force --verify --verbose --options runtime --entitlements "$ENTITLEMENTS_PATH" --sign "$IDENTITY" "$framework"
             done
 
@@ -115,10 +130,26 @@ EOF
             codesign --verify --verbose=4 --strict "$OUTPUT_DIR/$APP_NAME"
 
             # Check for specific issues with frameworks
+            echo "Checking for framework issues..."
+
+            # Check QtQuick.framework
             if [ -d "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework" ]; then
-                echo "Checking for framework issues..."
+                echo "Verifying QtQuick.framework..."
                 codesign --verify --verbose "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks/PySide6/Qt/lib/QtQuick.framework"
             fi
+
+            # Check QtQmlMeta.framework
+            if [ -d "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework" ]; then
+                echo "Verifying QtQmlMeta.framework..."
+                codesign --verify --verbose "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks/PySide6/Qt/lib/QtQmlMeta.framework"
+            fi
+
+            # Check all Qt frameworks
+            echo "Verifying all Qt frameworks..."
+            find "$OUTPUT_DIR/$APP_NAME/Contents/Frameworks" -type d -name "Qt*.framework" | while read -r framework; do
+                echo "Verifying framework: $framework"
+                codesign --verify --verbose "$framework"
+            done
         else
             echo "No Developer ID certificate found, skipping signing"
         fi
