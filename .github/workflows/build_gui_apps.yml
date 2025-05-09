@@ -168,9 +168,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: GetDist-GUI-Windows
-        path: |
-          dist/GetDist-GUI-*.zip
-          dist/GetDist-GUI-*.msi
+        path: dist/GetDist-GUI-*.msi
 
   create-release:
     if: startsWith(github.ref, 'refs/tags/')
@@ -200,7 +198,6 @@ jobs:
       with:
         files: |
           artifacts/mac/GetDist-GUI.dmg
-          artifacts/windows/GetDist-GUI-*.zip
           artifacts/windows/GetDist-GUI-*.msi
         draft: true
         prerelease: false
@@ -210,9 +207,9 @@ jobs:
 
           ## Downloads
           - Mac: GetDist-GUI.dmg
-          - Windows: GetDist-GUI-*.msi (installer) or GetDist-GUI-*.zip (portable)
+          - Windows: GetDist-GUI-*.msi (installer)
 
           ## Installation
           - Mac: Open the DMG file and drag the app to your Applications folder
-          - Windows: Run the MSI installer or extract the ZIP file to a location of your choice
+          - Windows: Run the MSI installer
 

@@ -267,18 +267,8 @@ coll = COLLECT(
 
     print(f"Windows executable built successfully in {output_dir}\\GetDistGUI")
 
-    # Create a zip file of the GetDistGUI directory
-    zip_path = os.path.join(output_dir, f"GetDist-GUI-{version}.zip")
-    print(f"Creating zip file at {zip_path}...")
-
-    shutil.make_archive(
-        os.path.join(output_dir, f"GetDist-GUI-{version}"),
-        'zip',
-        output_dir,
-        'GetDistGUI'
-    )
-
-    print(f"Zip file created at {zip_path}")
+    # Skip creating ZIP file as we only use the MSI installer
+    print("Skipping ZIP file creation as we only use the MSI installer")
 
     # Create MSI installer if WiX is available
     try:
@@ -293,11 +283,11 @@ coll = COLLECT(
         ])
         msi_path = os.path.join(output_dir, f"GetDist-GUI-{version}.msi")
         print(f"MSI installer created at {msi_path}")
-        return zip_path, msi_path
+        return msi_path
     except subprocess.CalledProcessError as e:
         print(f"Warning: Failed to create MSI installer: {e}")
-        print("Continuing with zip file only.")
-        return zip_path, None
+        print("Build failed - MSI installer is required.")
+        sys.exit(1)
 
 
 def main():
