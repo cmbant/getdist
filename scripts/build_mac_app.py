@@ -14,6 +14,7 @@ import subprocess
 import argparse
 import re
 import tempfile
+import platform
 from pathlib import Path
 
 
@@ -80,7 +81,11 @@ def setup_project_environment(project_dir):
 
 def build_mac_app(output_dir, version, env_info):
     """Build the Mac app bundle using PyInstaller"""
-    print(f"Building Mac app bundle for GetDist GUI v{version}...")
+    # Detect architecture
+    is_arm = platform.machine() == 'arm64'
+    arch_type = "ARM" if is_arm else "Intel"
+
+    print(f"Building Mac app bundle for GetDist GUI v{version} on {arch_type} architecture...")
 
     # Create a temporary directory for build files
     temp_dir = tempfile.mkdtemp()
@@ -113,6 +118,9 @@ def build_mac_app(output_dir, version, env_info):
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
+
+    # Set target_arch based on the current architecture
+    target_arch_value = "'arm64'" if is_arm else "'x86_64'"
 
     # Create PyInstaller spec file
     spec_content = f"""# -*- mode: python ; coding: utf-8 -*-
@@ -165,7 +173,7 @@ exe = EXE(
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=True,
-    target_arch=None,
+    target_arch={target_arch_value},
     codesign_identity=None,
     entitlements_file='{entitlements_path}',
 )
@@ -198,6 +206,7 @@ app = BUNDLE(
         'NSAppleScriptEnabled': False,
         'LSMinimumSystemVersion': '10.13.0',
         'LSApplicationCategoryType': 'public.app-category.developer-tools',
+        'LSArchitecturePriority': ['arm64', 'x86_64'] if {is_arm} else ['x86_64'],
     }},
 )
 """

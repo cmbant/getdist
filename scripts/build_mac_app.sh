@@ -16,7 +16,16 @@ REPO_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 OUTPUT_DIR="$REPO_ROOT/dist"
 PROJECT_DIR="$REPO_ROOT/build_env"
 APP_NAME="GetDist GUI.app"
-DMG_NAME="GetDist-GUI.dmg"
+
+# Detect architecture
+if [[ $(uname -m) == "arm64" ]]; then
+    ARCH="arm"
+else
+    ARCH="intel"
+fi
+DMG_NAME="GetDist-GUI-$ARCH.dmg"
+
+echo "Detected architecture: $ARCH"
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do

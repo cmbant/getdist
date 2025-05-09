@@ -23,7 +23,15 @@ on:
 jobs:
   build-mac:
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'mac' || github.event.inputs.platform == null
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
+        include:
+          - os: macos-13
+            arch: intel
+          - os: macos-14
+            arch: arm
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -54,6 +62,7 @@ jobs:
         uv --version
         echo "Working directory:"
         pwd
+        echo "Architecture: ${{ matrix.arch }}"
         # Run the build script with verbose output
         ./scripts/build_mac_app.sh
 
@@ -83,13 +92,13 @@ jobs:
 
         # Create DMG (use the renamed path with underscores)
         echo "Creating DMG..."
-        ./scripts/create_mac_dmg.sh "dist/GetDist_GUI.app" "dist/GetDist-GUI.dmg"
+        ./scripts/create_mac_dmg.sh "dist/GetDist_GUI.app" "dist/GetDist-GUI-${{ matrix.arch }}.dmg"
 
     - name: Upload DMG
       uses: actions/upload-artifact@v4
       with:
-        name: GetDist-GUI-DMG
-        path: dist/GetDist-GUI.dmg
+        name: GetDist-GUI-DMG-${{ matrix.arch }}
+        path: dist/GetDist-GUI-${{ matrix.arch }}.dmg
 
 
 
@@ -175,11 +184,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download Mac Artifacts
+    - name: Download Mac Intel Artifacts
       uses: actions/download-artifact@v4
       with:
-        name: GetDist-GUI-DMG
-        path: artifacts/mac
+        name: GetDist-GUI-DMG-intel
+        path: artifacts/mac/intel
+
+    - name: Download Mac ARM Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: GetDist-GUI-DMG-arm
+        path: artifacts/mac/arm
 
     - name: Download Windows Artifacts
       uses: actions/download-artifact@v4
@@ -196,7 +211,8 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          artifacts/mac/GetDist-GUI.dmg
+          artifacts/mac/intel/GetDist-GUI-intel.dmg
+          artifacts/mac/arm/GetDist-GUI-arm.dmg
           artifacts/windows/GetDist-GUI-*.msi
         draft: true
         prerelease: false
@@ -205,7 +221,8 @@ jobs:
           GetDist GUI ${{ github.ref_name }} Release
 
           ## Downloads
-          - Mac: GetDist-GUI.dmg
+          - Mac (Intel): GetDist-GUI-intel.dmg
+          - Mac (Apple Silicon): GetDist-GUI-arm.dmg
           - Windows: GetDist-GUI-*.msi (installer)
 
           ## Installation
