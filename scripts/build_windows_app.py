@@ -173,7 +173,10 @@ block_cipher = None
 a = Analysis(
     [r'{main_script}'],
     pathex=[],
-    binaries=[],
+    binaries=[
+        # Explicitly include Python DLLs to avoid version conflicts
+        (r'{os.path.join(os.path.dirname(sys.executable), "python310.dll")}', '.'),
+    ],
     datas=[
         {data_entries_str}
     ],
@@ -264,9 +267,6 @@ coll = COLLECT(
             "--workpath", os.path.join(temp_dir, "build"),
             # Add additional options to ensure correct Python version
             "--log-level", "DEBUG",  # More verbose logging
-            "--collect-all", "multiprocessing",  # Ensure all multiprocessing modules are included
-            "--collect-all", "multiprocessing.pool",  # Include pool module
-            "--collect-all", "multiprocessing.context",  # Include context module
             spec_path
         ])
     else:
@@ -280,9 +280,6 @@ coll = COLLECT(
             "--workpath", os.path.join(temp_dir, "build"),
             # Add additional options to ensure correct Python version
             "--log-level", "DEBUG",  # More verbose logging
-            "--collect-all", "multiprocessing",  # Ensure all multiprocessing modules are included
-            "--collect-all", "multiprocessing.pool",  # Include pool module
-            "--collect-all", "multiprocessing.context",  # Include context module
             spec_path
         ])
 
