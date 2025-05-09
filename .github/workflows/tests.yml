@@ -68,7 +68,7 @@ jobs:
         python -m pip install -U build twine
 
     - name: Build package
-      run: python -m build --sdist
+      run: python -m build
 
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1

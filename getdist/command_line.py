@@ -335,27 +335,15 @@ def getdist_command(args=None):
 
 def getdist_gui():
     from getdist.gui.mainwindow import run_gui
-
-    if sys.platform == "darwin":
-        # On Mac need to run .app with plist to get menu name right (and avoid menu bugs)
-        import subprocess
-        import os
-
-        path = os.path.join(os.path.dirname(getdist.gui.__file__), 'GetDist GUI.app')
-        if os.path.exists(path):
-            if subprocess.call(["/usr/bin/open", "-a", path, "--args"] + sys.argv[1:], env=os.environ):
-                print("Error running 'GetDist GUI.app'. This may be a Catalina issue, any ideas?\n"
-                      "Attempting to run script directly, using non-unified menus.")
-                run_gui()
-        else:
-            print('GetDist GUI.app not found; not running getdist-gui, getdist package not installed '
-                  'or no valid PySide6 found when setup was run. Running script...')
-            run_gui()
-    else:
-        run_gui()
+    run_gui()
 
 
 def getdist_streamlit():
     from getdist import gui
+    try:
+        import streamlit
+    except ImportError:
+        print('Please pip install streamlit first')
+        return
     path = os.path.join(os.path.dirname(gui.__file__), 'streamlit_app.py')
     subprocess.Popen(["streamlit", "run", path] + ['--'] + sys.argv[1:], env=os.environ)
