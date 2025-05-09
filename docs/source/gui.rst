@@ -3,12 +3,18 @@ GetDist GUI
 
 GetDist provides two graphical user interfaces: the original Qt-based GUI and a newer Streamlit-based web interface.
 
-Qt-based GUI
+GUI Application
 -----------
 
-Run the *getdist-gui* script to run the traditional graphical user interface. This requires `PySide <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
+Pre-built standalone applications are available for Mac and Windows platforms. 
 
-It allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
+* **Mac**: The Mac app is distributed as a DMG file. Simply download, mount the DMG, and drag the app to your Applications folder.
+* **Windows**: The Windows app is distributed as both an MSI installer
+
+You can download the latest versions from the `GitHub releases page <https://github.com/cmbant/getdist/releases>`_.
+These applications do not require Python or any dependencies to be installed.
+
+The GUI allows you to open a folder of chain files, then easily select, open, plot and compare, as well as viewing standard GetDist outputs and tables.
 
 .. image:: https://cdn.cosmologist.info/antony/getdist/gui_planck2018.png
 
@@ -48,10 +54,12 @@ Settings
 The Options menu allows you to change a settings defining how limits, lines and contours are calculated, and customize plot options.
 The "Plot module config" option lets you use a different module to define the plotting functions (the default is getdist.plots).
 
-Installation
-##############
+GUI Script
+***********
 
-To run the GUI you need PySide. This is not included in default dependencies, but can easily be installed::
+From python, Run the *getdist-gui* script to run the traditional graphical user interface. This requires `PySide <https://wiki.qt.io/Qt_for_Python>`_ to be installed, but will run on Windows, Linux and Mac.
+
+PySide is not included in default dependencies, but can easily be installed::
 
    pip install PySide6
 
@@ -62,25 +70,12 @@ from conda-forge (which includes PySide6),  e.g. ::
 
 Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
 
-Standalone Applications
-**********************
-
-Pre-built standalone applications are available for Mac and Windows platforms. These applications do not require Python or any dependencies to be installed.
-
-* **Mac**: The Mac app is distributed as a DMG file. Simply download, mount the DMG, and drag the app to your Applications folder.
-* **Windows**: The Windows app is distributed as both an MSI installer and a ZIP file:
-
-  * **MSI Installer**: Download the MSI file and double-click to install. This will create start menu shortcuts.
-  * **ZIP Archive**: Alternatively, download and extract the ZIP file, then run the GetDistGUI.exe executable.
-
-You can download the latest versions from the `GitHub releases page <https://github.com/cmbant/getdist/releases>`_.
-
 
 Streamlit-based Web Interface
 ##############
 
 GetDist also provides a modern web-based interface built with `Streamlit <https://streamlit.io/>`_.
-This alternative GUI offers similar functionality to the Qt-based version but runs in your web browser.
+This alternative GUI offers similar functionality to the application but runs in your web browser.
 
 
 Running Locally
@@ -90,19 +85,15 @@ To run the Streamlit app locally, you need to install Streamlit first::
 
    pip install streamlit
 
-Then you can run the app using::
+Then you can run the app using the *getdist-streamlit* script. You can also run it directly using
 
    streamlit run getdist/gui/streamlit_app.py
 
-Or if you're using the module::
-
-   python -m streamlit run getdist/gui/streamlit_app.py
-
 You can also specify a default directory to open::
 
-   streamlit run getdist/gui/streamlit_app.py -- --dir=/path/to/chains
+   getdist-streamlit --dir=/path/to/chains
 
-The app will automatically look for a `default_chains` directory in the repository root when it starts.
+Otherwise the app will automatically look for a `default_chains` directory in the repository root when it starts.
 
 Online Demo
 ***********
@@ -118,7 +109,7 @@ Note that the online demo:
 Features
 ********
 
-The Streamlit app includes all the core functionality of the Qt-based GUI:
+The Streamlit app includes all the core functionality of the Qt-based GUI, but is not quite as well tested:
 
 * Opening chain directories and grid structures
 * Selecting parameters and creating various plot types (1D, 2D, triangle, etc.)

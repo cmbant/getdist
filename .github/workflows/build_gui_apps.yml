@@ -1,6 +1,5 @@
 name: Build GUI Apps
 # This workflow builds both Mac and Windows GUI applications
-# It replaces the previous separate workflows for each platform
 
 on:
   workflow_dispatch:
