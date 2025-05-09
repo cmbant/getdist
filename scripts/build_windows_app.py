@@ -43,10 +43,10 @@ def setup_project_environment(project_dir):
             print(f"Removing existing environment at {project_dir}")
             shutil.rmtree(project_dir)
 
-        # Create virtual environment with uv
-        print("Creating new virtual environment")
+        # Create virtual environment with uv, explicitly using Python 3.10
+        print("Creating new virtual environment with Python 3.10")
         subprocess.check_call([
-            "uv", "venv", project_dir
+            "uv", "venv", "--python", "3.10", project_dir
         ])
 
         # Install packages directly with uv pip
@@ -185,10 +185,24 @@ a = Analysis(
         'scipy.special.cython_special',
         'matplotlib.backends.backend_qt5agg',
         'matplotlib.backends.backend_qtagg',
+        # Add multiprocessing imports to fix the python313.dll conflict
+        'multiprocessing',
+        'multiprocessing.pool',
+        'multiprocessing.managers',
+        'multiprocessing.popen_spawn_win32',
+        'multiprocessing.popen_fork',
+        'multiprocessing.popen_forkserver',
+        'multiprocessing.popen_spawn_posix',
+        'multiprocessing.synchronize',
+        'multiprocessing.heap',
+        'multiprocessing.resource_tracker',
+        'multiprocessing.spawn',
+        'multiprocessing.util',
+        'multiprocessing.context',
     ],
     hookspath=[],
     hooksconfig={{}},
-    runtime_hooks=[],
+    runtime_hooks=[r'{os.path.join(os.path.dirname(os.path.abspath(__file__)), "multiprocessing_hook.py")}'],
     excludes=[],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
@@ -248,6 +262,11 @@ coll = COLLECT(
             "--noconfirm",  # Automatically answer yes to prompts
             "--distpath", output_dir,
             "--workpath", os.path.join(temp_dir, "build"),
+            # Add additional options to ensure correct Python version
+            "--log-level", "DEBUG",  # More verbose logging
+            "--collect-all", "multiprocessing",  # Ensure all multiprocessing modules are included
+            "--collect-all", "multiprocessing.pool",  # Include pool module
+            "--collect-all", "multiprocessing.context",  # Include context module
             spec_path
         ])
     else:
@@ -259,6 +278,11 @@ coll = COLLECT(
             "--noconfirm",  # Automatically answer yes to prompts
             "--distpath", output_dir,
             "--workpath", os.path.join(temp_dir, "build"),
+            # Add additional options to ensure correct Python version
+            "--log-level", "DEBUG",  # More verbose logging
+            "--collect-all", "multiprocessing",  # Ensure all multiprocessing modules are included
+            "--collect-all", "multiprocessing.pool",  # Include pool module
+            "--collect-all", "multiprocessing.context",  # Include context module
             spec_path
         ])
 
