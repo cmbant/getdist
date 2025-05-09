@@ -206,7 +206,6 @@ jobs:
         if [[ $NOTARIZATION_UUID =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]]; then
             echo "Valid UUID format detected"
 
-            # Check notarization status
             echo "Checking notarization status..."
             xcrun notarytool info "$NOTARIZATION_UUID" \
               --key ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY }}.p8 \
