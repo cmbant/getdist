@@ -61,13 +61,25 @@ from conda-forge (which includes PySide6),  e.g. ::
   conda create -n myenv -c conda-forge scipy matplotlib PyYAML PySide6
 
 Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
-On a Mac the installation will also make a GetDist GUI Mac app, which you can find using Spotlight.
+
+Standalone Applications
+**********************
+
+Pre-built standalone applications are available for Mac and Windows platforms. These applications do not require Python or any dependencies to be installed.
+
+* **Mac**: The Mac app is distributed as a DMG file. Simply download, mount the DMG, and drag the app to your Applications folder.
+* **Windows**: The Windows app is distributed as both an MSI installer and a ZIP file:
+
+  * **MSI Installer**: Download the MSI file and double-click to install. This will create start menu shortcuts.
+  * **ZIP Archive**: Alternatively, download and extract the ZIP file, then run the GetDistGUI.exe executable.
+
+You can download the latest versions from the `GitHub releases page <https://github.com/cmbant/getdist/releases>`_.
 
 
 Streamlit-based Web Interface
 ##############
 
-GetDist also provides a modern web-based interface built with `Streamlit <https://streamlit.io/>`_. 
+GetDist also provides a modern web-based interface built with `Streamlit <https://streamlit.io/>`_.
 This alternative GUI offers similar functionality to the Qt-based version but runs in your web browser.
 
 

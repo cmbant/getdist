@@ -20,21 +20,7 @@ on:
         default: false
         type: boolean
   push:
-    branches: [ main, master ]
-    paths:
-      - 'getdist/gui/**'
-      - 'scripts/build_mac_app.py'
-      - 'scripts/build_mac_app.sh'
-      - 'scripts/build_windows_app.py'
-      - 'scripts/build_windows_app.bat'
-      - 'scripts/sign_mac_app.sh'
-      - 'scripts/sign_windows_app.py'
-      - 'scripts/notarize_mac_app.sh'
-      - 'scripts/create_mac_dmg.sh'
-      - 'scripts/fix_qt_frameworks.sh'
-      - 'scripts/fix_qt_bundle_ambiguity.sh'
-      - '.github/workflows/build_gui_apps.yml'
-
+    branches: [ main, master, mac ]
 jobs:
   build-mac:
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'mac' || github.event.inputs.platform == null
