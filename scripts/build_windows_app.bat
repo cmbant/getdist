@@ -43,8 +43,8 @@ where uv >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     echo Installing uv package manager...
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    REM Add uv to PATH for this session
-    set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"
+    REM Add uv to PATH for this session - on Windows it installs to .local/bin
+    set "PATH=%USERPROFILE%\.local\bin;%PATH%"
 )
 
 REM Verify uv is working
@@ -60,6 +60,16 @@ if exist "%PROJECT_DIR%" (
 REM Verify the icon exists
 if not exist "%REPO_ROOT%\getdist\gui\images\Icon.ico" (
     echo Warning: Icon.ico not found, will use Icon.png as fallback
+)
+
+REM Verify the main script exists
+if not exist "%REPO_ROOT%\getdist\gui\mainwindow.py" (
+    echo ERROR: mainwindow.py not found at %REPO_ROOT%\getdist\gui\mainwindow.py
+    echo Listing files in the repository:
+    dir /s /b "%REPO_ROOT%\getdist\gui\*.py"
+    exit /b 1
+) else (
+    echo Found mainwindow.py at %REPO_ROOT%\getdist\gui\mainwindow.py
 )
 
 REM Build the app

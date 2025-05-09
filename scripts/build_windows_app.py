@@ -98,20 +98,68 @@ def build_windows_app(output_dir, version, env_info):
     os.makedirs(output_dir, exist_ok=True)
 
     # Create PyInstaller spec file
+    # Fix paths to use proper Windows paths with double backslashes
+    main_script = os.path.normpath(os.path.join(repo_root, "getdist", "gui", "mainwindow.py"))
+
+    # Verify the main script exists
+    if not os.path.exists(main_script):
+        print(f"ERROR: Main script not found at {main_script}")
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Repository root: {repo_root}")
+        print("Listing files in getdist/gui directory:")
+        gui_dir = os.path.join(repo_root, "getdist", "gui")
+        if os.path.exists(gui_dir):
+            for f in os.listdir(gui_dir):
+                print(f"  {f}")
+        else:
+            print(f"Directory {gui_dir} does not exist!")
+        sys.exit(1)
+    else:
+        print(f"Found main script at: {main_script}")
+
+    # Create data entries with proper paths
+    images_dir = os.path.join(repo_root, "getdist", "gui", "images")
+    styles_dir = os.path.join(repo_root, "getdist", "styles")
+
+    # Create data entries list for PyInstaller
+    data_entries = []
+
+    # Add image files individually
+    if os.path.exists(images_dir):
+        for file in os.listdir(images_dir):
+            if file.endswith('.png'):
+                src = os.path.join(images_dir, file)
+                data_entries.append(f"(r'{src}', 'getdist/gui/images')")
+
+    # Add INI files
+    analysis_defaults = os.path.join(repo_root, "getdist", "analysis_defaults.ini")
+    if os.path.exists(analysis_defaults):
+        data_entries.append(f"(r'{analysis_defaults}', 'getdist')")
+
+    distparam_template = os.path.join(repo_root, "getdist", "distparam_template.ini")
+    if os.path.exists(distparam_template):
+        data_entries.append(f"(r'{distparam_template}', 'getdist')")
+
+    # Add style files individually
+    if os.path.exists(styles_dir):
+        for file in os.listdir(styles_dir):
+            if file.endswith('.paramnames') or file.endswith('.sty'):
+                src = os.path.join(styles_dir, file)
+                data_entries.append(f"(r'{src}', 'getdist/styles')")
+
+    # Join all data entries
+    data_entries_str = ',\n        '.join(data_entries)
+
     spec_content = f"""# -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
 
 a = Analysis(
-    ['{os.path.join(repo_root, "getdist/gui/mainwindow.py")}'],
+    [r'{main_script}'],
     pathex=[],
     binaries=[],
     datas=[
-        ('{os.path.join(repo_root, "getdist/gui/images/*.png")}', 'getdist/gui/images'),
-        ('{os.path.join(repo_root, "getdist/analysis_defaults.ini")}', 'getdist'),
-        ('{os.path.join(repo_root, "getdist/distparam_template.ini")}', 'getdist'),
-        ('{os.path.join(repo_root, "getdist/styles/*.paramnames")}', 'getdist/styles'),
-        ('{os.path.join(repo_root, "getdist/styles/*.sty")}', 'getdist/styles'),
+        {data_entries_str}
     ],
     hiddenimports=[
         'getdist',
