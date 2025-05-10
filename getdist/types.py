@@ -432,6 +432,8 @@ class ResultTable:
         :param bytesIO: if True, return a BytesIO instance holding the .png data
         :return: if bytesIO, the BytesIO instance, otherwise name of the output file
         """
+        import subprocess
+
         texfile = tempfile.mktemp(suffix='.tex')
         self.write(texfile, document=True, latex_preamble=latex_preamble)
         basefile = os.path.splitext(texfile)[0]
@@ -439,17 +441,45 @@ class ResultTable:
         old_pwd = os.getcwd()
 
         def runCommand(command):
-            command += ' 2>%s 1>&2' % os.devnull
-            os.system(command)
+            # Use CREATE_NO_WINDOW flag on Windows to prevent console window from appearing
+            creationflags = 0
+            if os.name == 'nt':  # Windows
+                creationflags = subprocess.CREATE_NO_WINDOW
+
+            try:
+                subprocess.run(
+                    command,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=creationflags,
+                    check=True  # Raise exception on non-zero return code
+                )
+            except FileNotFoundError:
+                cmd_name = command[0] if command else "Command"
+                error_msg = f"Command not found: {cmd_name}"
+
+                if cmd_name == 'latex':
+                    error_msg += "\nLaTeX must be installed to generate tables. Please install a TeX distribution like TeX Live, MiKTeX, or MacTeX."
+                elif cmd_name == 'dvipng':
+                    error_msg += "\ndvipng must be installed to generate PNG images. It is included in most LaTeX distributions."
+
+                raise FileNotFoundError(error_msg)
 
         try:
             os.chdir(os.path.dirname(texfile))
-            runCommand('latex %s' % texfile)
-            cmd = 'dvipng'
+            runCommand(['latex', texfile])
+
+            cmd = ['dvipng']
             if dpi:
-                cmd += ' -D %s' % dpi
-            cmd += ' -T tight -x 1000 -z 9 --truecolor -o "%s" "%s" ' \
-                   % (outfile, basefile + '.dvi')
+                cmd.extend(['-D', str(dpi)])
+            cmd.extend([
+                '-T', 'tight',
+                '-x', '1000',
+                '-z', '9',
+                '--truecolor',
+                '-o', outfile,
+                basefile + '.dvi'
+            ])
             runCommand(cmd)
         finally:
             for f in [basefile + ext for ext in ('.tex', '.dvi', '.aux', '.log')]:

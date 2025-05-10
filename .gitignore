@@ -57,3 +57,5 @@ default_chains
 .idea
 Untitled*
 *.pdf
+*checkpoint*
+_*
