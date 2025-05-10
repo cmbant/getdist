@@ -57,21 +57,6 @@ if exist "%PROJECT_DIR%" (
     rmdir /s /q "%PROJECT_DIR%"
 )
 
-REM Verify the icon exists
-if not exist "%REPO_ROOT%\getdist\gui\images\Icon.ico" (
-    echo Warning: Icon.ico not found, will use Icon.png as fallback
-)
-
-REM Verify the main script exists
-if not exist "%REPO_ROOT%\getdist\gui\mainwindow.py" (
-    echo ERROR: mainwindow.py not found at %REPO_ROOT%\getdist\gui\mainwindow.py
-    echo Listing files in the repository:
-    dir /s /b "%REPO_ROOT%\getdist\gui\*.py"
-    exit /b 1
-) else (
-    echo Found mainwindow.py at %REPO_ROOT%\getdist\gui\mainwindow.py
-)
-
 REM Build the app
 echo Building Windows executable...
 cd "%REPO_ROOT%"
