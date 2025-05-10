@@ -87,28 +87,8 @@ def build_windows_app(output_dir, version, env_info):
     # Get the path to the icon
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    # Try multiple possible icon locations
-    icon_paths = [
-        os.path.join(repo_root, "getdist", "gui", "images", "Icon.ico"),
-        os.path.join(repo_root, "getdist", "gui", "images", "icon.ico"),
-        os.path.join(repo_root, "Icon.ico"),
-        os.path.join(repo_root, "icon.ico"),
-        os.path.join(repo_root, "tguiimagesIcon.ico")  # This was seen in the untracked files
-    ]
-
     # Find the first icon that exists
-    icon_path = None
-    for path in icon_paths:
-        if os.path.exists(path):
-            icon_path = path
-            print(f"Found icon file at: {icon_path}")
-            break
-
-    # If no icon is found, create a simple one or use a fallback
-    if not icon_path:
-        print("Warning: No icon file found. Creating a simple icon...")
-        # Use a fallback icon from PyInstaller
-        icon_path = ""  # Empty string means no icon
+    icon_path = os.path.join(repo_root, "getdist", "gui", "images", "Icon.ico")
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -287,29 +267,6 @@ coll = COLLECT(
     shutil.rmtree(temp_dir)
 
     print(f"Windows executable built successfully in {output_dir}\\GetDistGUI")
-
-    # Skip creating ZIP file as we only use the MSI installer
-    print("Skipping ZIP file creation as we only use the MSI installer")
-
-    # Create MSI installer if WiX is available
-    try:
-        print("Attempting to create MSI installer...")
-        msi_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "create_windows_msi.py")
-        subprocess.check_call([
-            sys.executable,
-            msi_script,
-            "--input-dir", os.path.join(output_dir, "GetDistGUI"),
-            "--output-dir", output_dir,
-            "--version", version
-        ])
-        msi_path = os.path.join(output_dir, f"GetDist-GUI-{version}.msi")
-        print(f"MSI installer created at {msi_path}")
-        return msi_path
-    except subprocess.CalledProcessError as e:
-        print(f"Warning: Failed to create MSI installer: {e}")
-        print("Build failed - MSI installer is required.")
-        sys.exit(1)
-
 
 def main():
     """Main function to parse arguments and build the app"""

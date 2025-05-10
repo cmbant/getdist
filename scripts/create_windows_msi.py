@@ -3,6 +3,11 @@
 Script to create an MSI installer for the GetDist GUI Windows application.
 Uses the WiX Toolset to create the installer.
 
+The MSI installer is configured to properly handle upgrades, ensuring that:
+1. Previous versions are removed before installing the new version
+2. Same version upgrades are allowed without creating duplicates in Add/Remove Programs
+3. All features from previous versions are properly removed
+
 Usage:
     python scripts/create_windows_msi.py --input-dir dist/GetDistGUI --output-dir dist --version 1.6.3
 """
@@ -40,19 +45,6 @@ def check_wix_installed():
     except subprocess.CalledProcessError:
         return False
 
-
-def install_wix():
-    """Provide instructions for installing WiX Toolset"""
-    print("WiX Toolset not found.")
-    print("Please install WiX Toolset manually:")
-    print("1. Download WiX Toolset from https://wixtoolset.org/")
-    print("2. Add the WiX Toolset bin directory to your PATH")
-    print("   (typically C:\\Program Files (x86)\\WiX Toolset v3.11\\bin)")
-    print("")
-    print("For GitHub Actions, we'll install WiX automatically.")
-    return False
-
-
 def create_wix_files(input_dir, output_dir, version):
     """Create WiX source files for the installer"""
     print("Creating WiX source files...")
@@ -87,11 +79,24 @@ def create_wix_files(input_dir, output_dir, version):
 
         <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
-        <MajorUpgrade DowngradeErrorMessage="A newer version of GetDist GUI is already installed." />
+        <!-- MajorUpgrade element handles removing previous versions before installing the new one
+             AllowSameVersionUpgrades="yes" - Allows reinstalling the same version without duplicates in Add/Remove Programs
+             RemoveFeatures="ALL" - Ensures all features from previous versions are removed
+             Schedule="afterInstallInitialize" - Ensures previous version is removed before new one is installed -->
+        <MajorUpgrade
+            DowngradeErrorMessage="A newer version of GetDist GUI is already installed."
+            AllowSameVersionUpgrades="yes"
+            RemoveFeatures="ALL"
+            Schedule="afterInstallInitialize" />
         <MediaTemplate EmbedCab="yes" />
 
         <Icon Id="icon.ico" SourceFile="{icon_path}" />
         <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+
+        <!-- Properties to improve upgrade experience -->
+        <Property Id="REINSTALLMODE" Value="amus" />
+        <Property Id="ARPNOREPAIR" Value="yes" />
+        <Property Id="ARPNOMODIFY" Value="yes" />
 
         <Feature Id="ProductFeature" Title="GetDist GUI" Level="1">
             <ComponentGroupRef Id="ProductComponents" />
@@ -193,7 +198,6 @@ def main():
 
     # Check if WiX is installed
     if not check_wix_installed():
-        if not install_wix():
             print("Error: WiX Toolset is required to create MSI installers.")
             sys.exit(1)
 

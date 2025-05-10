@@ -19,7 +19,7 @@ on:
         default: false
         type: boolean
   push:
-    branches: [ main, master, mac ]
+    branches: [ main, master, test ]
     tags:
       - 'v*'
       - '*.*.*'
@@ -39,20 +39,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        # Add uv to PATH - on Mac it installs to .local/bin
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        # Refresh the PATH in the current shell
-        export PATH="$HOME/.local/bin:$PATH"
-        # Verify uv installation
-        uv --version
 
     - name: Build Mac App
       run: |
@@ -112,20 +105,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        # Add uv to PATH - on Windows it installs to .local/bin
-        echo "$HOME/.local/bin" >> $env:GITHUB_PATH
-        # Refresh the PATH in the current shell
-        $env:PATH = "$HOME/.local/bin;$env:PATH"
-        # Verify uv installation
-        uv --version
 
     - name: Build Windows App
       run: |
@@ -151,11 +137,11 @@ jobs:
     - name: Install WiX Toolset
       run: |
         # Download WiX Toolset
-        Invoke-WebRequest -Uri https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311.exe -OutFile wix311.exe
+        Invoke-WebRequest -Uri https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe -OutFile wix314.exe
         # Install WiX silently
-        Start-Process -FilePath .\wix311.exe -ArgumentList "/install","/quiet","/norestart" -Wait
+        Start-Process -FilePath .\wix314.exe -ArgumentList "/install","/quiet","/norestart" -Wait
         # Add WiX to PATH
-        echo "C:\Program Files (x86)\WiX Toolset v3.11\bin" >> $env:GITHUB_PATH
+        echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" >> $env:GITHUB_PATH
 
     - name: Create MSI Installer
       run: |
