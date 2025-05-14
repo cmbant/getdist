@@ -158,7 +158,7 @@ class MCSamples(Chains):
 
                - **paramNamesFile**: optional name of .paramnames file with parameter names
                - **names**: list of names for the parameters, or list of arrays if more than one chain
-               - **labels**: list of latex labels for the parameters
+               - **labels**: list of latex labels for the parameters (without $...$)
                - **renames**: dictionary of parameter aliases
                - **ignore_rows**:
 

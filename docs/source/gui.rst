@@ -70,6 +70,7 @@ from conda-forge (which includes PySide6),  e.g. ::
 
 Once PySide is set up, (re)install getdist and you should then be able to use the getdist-gui script on your path.
 
+NOTE: currently the mac version may crash run this way, use the pre-built installers linked above if you have issues.
 
 Streamlit-based Web Interface
 ##############
