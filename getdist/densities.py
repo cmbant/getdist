@@ -207,10 +207,10 @@ class Density1D(GridDensity):
         Get parameter equal-density confidence limits (a credible interval).
         If the density is bounded, may only have a one-tail limit.
 
-        :param p: list of limits to calculate, e.g. [0.68, 0.95]
+        :param p: limit to calculate, or list of limits to calculate, e.g. [0.68, 0.95]
         :param interpGrid: optional pre-computed cache
         :param accuracy_factor: parameter to boost default accuracy for fine sampling
-        :return: list of (min, max, has_min, has_top) values
+        :return: list of (min, max, has_min, has_top) values, or tuple fo single limit,
                 where has_min and has_top are True or False depending on whether lower and upper limit exists
         """
         g = interpGrid or self.initLimitGrids(accuracy_factor)
