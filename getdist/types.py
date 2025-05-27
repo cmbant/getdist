@@ -1,10 +1,12 @@
 import decimal
 import os
-from io import BytesIO
-import numpy as np
 import tempfile
-from getdist.paramnames import ParamInfo, ParamList, makeList
+from io import BytesIO
 from types import MappingProxyType
+
+import numpy as np
+
+from getdist.paramnames import ParamInfo, ParamList, makeList
 
 empty_dict = MappingProxyType({})
 
@@ -18,16 +20,16 @@ class TextFile:
         self.lines = lines or []
 
     def write(self, outfile):
-        with open(outfile, 'w', encoding='utf-8') as f:
+        with open(outfile, "w", encoding="utf-8") as f:
             f.write("\n".join(self.lines))
 
 
 def texEscapeText(string):
-    return string.replace('_', '{\\textunderscore}')
+    return string.replace("_", "{\\textunderscore}")
 
 
 def times_ten_power(exponent):
-    return r'\cdot 10^{%d}' % exponent
+    return r"\cdot 10^{%d}" % exponent
 
 
 def float_to_decimal(f):
@@ -47,7 +49,7 @@ def float_to_decimal(f):
 # noinspection PyUnboundLocalVariable
 def numberFigs(number, sigfig, sci=False):
     # https://stackoverflow.com/questions/2663612/nicely-representing-a-floating-point-number-in-python/2663623#2663623
-    assert (sigfig > 0)
+    assert sigfig > 0
     try:
         d = decimal.Decimal(number)
     except TypeError:
@@ -55,7 +57,7 @@ def numberFigs(number, sigfig, sci=False):
     if sci:
         exponent = d.adjusted()
         if abs(exponent) > _sci_tolerance:
-            d = decimal.getcontext().multiply(d, float_to_decimal(10. ** -exponent))
+            d = decimal.getcontext().multiply(d, float_to_decimal(10.0**-exponent))
         else:
             exponent = 0
     sign, digits = d.as_tuple()[0:2]
@@ -63,7 +65,7 @@ def numberFigs(number, sigfig, sci=False):
         digits = list(digits)
         digits.extend([0] * (sigfig - len(digits)))
     shift = d.adjusted()
-    result = int(''.join(map(str, digits[:sigfig])))
+    result = int("".join(map(str, digits[:sigfig])))
     # Round the result
     if len(digits) > sigfig and digits[sigfig] >= 5:
         result += 1
@@ -75,19 +77,19 @@ def numberFigs(number, sigfig, sci=False):
     result = result[:sigfig]
     if shift >= sigfig - 1:
         # Tack more zeros on the end
-        result += ['0'] * (shift - sigfig + 1)
+        result += ["0"] * (shift - sigfig + 1)
     elif 0 <= shift:
         # Place the decimal point in between digits
-        result.insert(shift + 1, '.')
+        result.insert(shift + 1, ".")
     else:
         # Tack zeros on the front
-        assert (shift < 0)
-        result = ['0.'] + ['0'] * (-shift - 1) + result
+        assert shift < 0
+        result = ["0."] + ["0"] * (-shift - 1) + result
     if sign:
-        result.insert(0, '-')
+        result.insert(0, "-")
     if sci:
-        return ''.join(result), exponent
-    return ''.join(result)
+        return "".join(result), exponent
+    return "".join(result)
 
 
 class NumberFormatter:
@@ -111,9 +113,11 @@ class NumberFormatter:
             # First, call without knowing sig figs, to get the exponent
             if exponent := self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]:
                 value, limplus, limminus = [
-                    (lambda x: decimal.getcontext().multiply(
-                        float_to_decimal(x), float_to_decimal(10. ** -exponent)))(lim)
-                    for lim in [value, limplus, limminus]]
+                    (lambda x: decimal.getcontext().multiply(float_to_decimal(x), float_to_decimal(10.0**-exponent)))(
+                        lim
+                    )
+                    for lim in [value, limplus, limminus]
+                ]
         plus_str = self.formatNumber(limplus, err_sf, wantSign)
         minus_str = self.formatNumber(limminus, err_sf, wantSign)
         res = self.formatNumber(value, sf)
@@ -121,9 +125,9 @@ class NumberFormatter:
         while maxdp < self.decimal_places(res):
             sf -= 1
             if sf == 0:
-                res = ('%.' + str(maxdp) + 'f') % value
+                res = ("%." + str(maxdp) + "f") % value
                 if float(res) == 0.0:
-                    res = ('%.' + str(maxdp) + 'f') % 0
+                    res = ("%." + str(maxdp) + "f") % 0
                 break
             else:
                 res = self.formatNumber(value, sf)
@@ -146,17 +150,17 @@ class NumberFormatter:
         if sci:
             s, exponent = s
         if wantSign:
-            if s[0] != '-' and float(s) < 0:
-                s = '-' + s
+            if s[0] != "-" and float(s) < 0:
+                s = "-" + s
             if float(s) > 0:
-                s = '+' + s
+                s = "+" + s
         if sci:
             return s, exponent
         else:
             return s
 
     def decimal_places(self, s):
-        i = s.find('.')
+        i = s.find(".")
         if i > 0:
             return len(s) - i - 1
         return 0
@@ -167,19 +171,19 @@ class NumberFormatter:
 
 class TableFormatter:
     def __init__(self):
-        self.border = '|'
-        self.endofrow = '\\\\'
-        self.hline = '\\hline'
-        self.paramText = 'Parameter'
+        self.border = "|"
+        self.endofrow = "\\\\"
+        self.hline = "\\hline"
+        self.paramText = "Parameter"
         self.aboveTitles = self.hline
-        self.majorDividor = '|'
-        self.minorDividor = '|'
-        self.colDividor = '||'
-        self.belowTitles = ''
+        self.majorDividor = "|"
+        self.minorDividor = "|"
+        self.colDividor = "||"
+        self.belowTitles = ""
         self.headerWrapper = " %s"
-        self.noConstraint = '---'
-        self.spacer = ' '  # just to make output more readable
-        self.colSeparator = self.spacer + '&' + self.spacer
+        self.noConstraint = "---"
+        self.spacer = " "  # just to make output more readable
+        self.colSeparator = self.spacer + "&" + self.spacer
         self.numberFormatter = NumberFormatter()
 
     def getLine(self, position=None):
@@ -191,24 +195,39 @@ class TableFormatter:
         return self.getLine("belowTitles")
 
     def startTable(self, ncol, colsPerResult, numResults):
-        part = self.majorDividor + (" c" + self.minorDividor) * (colsPerResult - 1) + ' c'
-        return '\\begin{tabular} {' + self.border + " l " + part * numResults + (
-                self.colDividor + " l " + part * numResults) * (
-                ncol - 1) + self.border + '}'
+        part = self.majorDividor + (" c" + self.minorDividor) * (colsPerResult - 1) + " c"
+        return (
+            "\\begin{tabular} {"
+            + self.border
+            + " l "
+            + part * numResults
+            + (self.colDividor + " l " + part * numResults) * (ncol - 1)
+            + self.border
+            + "}"
+        )
 
     def endTable(self):
-        return '\\end{tabular}'
+        return "\\end{tabular}"
 
     def titleSubColumn(self, colsPerResult, title):
-        return ' \\multicolumn{' + str(
-            colsPerResult) + '}{' + self.majorDividor + 'c' + self.majorDividor + '}{' + self.formatTitle(title) + '}'
+        return (
+            " \\multicolumn{"
+            + str(colsPerResult)
+            + "}{"
+            + self.majorDividor
+            + "c"
+            + self.majorDividor
+            + "}{"
+            + self.formatTitle(title)
+            + "}"
+        )
 
     def formatTitle(self, title):
-        return '\\bf ' + texEscapeText(title)
+        return "\\bf " + texEscapeText(title)
 
     def texEquation(self, txt):
-        if txt and txt[0] != '$':
-            return '$' + txt + '$'
+        if txt and txt[0] != "$":
+            return "$" + txt + "$"
         else:
             return txt
 
@@ -222,7 +241,7 @@ class TableFormatter:
         if latex:
             res = self.texEquation(res)
             if bold:
-                res = '{\\boldmath' + res + '}'
+                res = "{\\boldmath" + res + "}"
         if separator:
             res += self.colSeparator
         return res
@@ -231,33 +250,34 @@ class TableFormatter:
 class OpenTableFormatter(TableFormatter):
     def __init__(self):
         super().__init__()
-        self.border = ''
-        self.aboveTitles = r'\noalign{\vskip 3pt}' + self.hline + r'\noalign{\vskip 1.5pt}' \
-                           + self.hline + r'\noalign{\vskip 5pt}'
-        self.belowTitles = r'\noalign{\vskip 3pt}' + self.hline
-        self.aboveHeader = ''
+        self.border = ""
+        self.aboveTitles = (
+            r"\noalign{\vskip 3pt}" + self.hline + r"\noalign{\vskip 1.5pt}" + self.hline + r"\noalign{\vskip 5pt}"
+        )
+        self.belowTitles = r"\noalign{\vskip 3pt}" + self.hline
+        self.aboveHeader = ""
         self.belowHeader = self.hline
-        self.minorDividor = ''
-        self.belowFinalRow = ''
+        self.minorDividor = ""
+        self.belowFinalRow = ""
 
     def titleSubColumn(self, colsPerResult, title):
-        return ' \\multicolumn{' + str(colsPerResult) + '}{' + 'c' + '}{' + self.formatTitle(title) + '}'
+        return " \\multicolumn{" + str(colsPerResult) + "}{" + "c" + "}{" + self.formatTitle(title) + "}"
 
 
 class NoLineTableFormatter(OpenTableFormatter):
     def __init__(self):
         super().__init__()
-        self.aboveHeader = ''
+        self.aboveHeader = ""
         # self.belowHeader = r'\noalign{\vskip 5pt}'
-        self.minorDividor = ''
-        self.majorDividor = ''
+        self.minorDividor = ""
+        self.majorDividor = ""
         self.belowFinalRow = self.hline
         self.belowBlockRow = self.hline
-        self.colDividor = '|'
-        self.hline = ''
+        self.colDividor = "|"
+        self.hline = ""
 
     def belowTitleLine(self, colsPerParam, numResults=None):
-        return r'\noalign{\vskip 3pt}\cline{2-' + str(colsPerParam * numResults + 1) + r'}\noalign{\vskip 3pt}'
+        return r"\noalign{\vskip 3pt}\cline{2-" + str(colsPerParam * numResults + 1) + r"}\noalign{\vskip 3pt}"
 
 
 class ResultTable:
@@ -265,9 +285,21 @@ class ResultTable:
     Class for holding a latex table of parameter statistics
     """
 
-    def __init__(self, ncol, results, limit=2, tableParamNames=None, titles=None, formatter=None,
-                 numFormatter=None, blockEndParams=None, paramList=None, refResults=None, shiftSigma_indep=False,
-                 shiftSigma_subset=False):
+    def __init__(
+        self,
+        ncol,
+        results,
+        limit=2,
+        tableParamNames=None,
+        titles=None,
+        formatter=None,
+        numFormatter=None,
+        blockEndParams=None,
+        paramList=None,
+        refResults=None,
+        shiftSigma_indep=False,
+        shiftSigma_subset=False,
+    ):
         """
         :param ncol: number of columns
         :param results: a :class:`MargeStats` or :class:`BestFit` instance, or a list of them for
@@ -351,7 +383,7 @@ class ResultTable:
 
     def addTitlesRow(self, titles):
         self.addLine("aboveTitles")
-        cols = [self.format.titleSubColumn(1, '')]
+        cols = [self.format.titleSubColumn(1, "")]
         cols += [self.format.titleSubColumn(self.colsPerResult, title) for title in titles]
         self.lines.append(self.format.colSeparator.join(cols * self.ncol) + self.format.endofrow)
 
@@ -372,17 +404,23 @@ class ResultTable:
         return self.format.colSeparator.join(self.paramResultTex(result, param) for result in self.results)
 
     def paramResultTex(self, result, p):
-        values = result.texValues(self.format, p, self.limit, self.refResults,
-                                  shiftSigma_subset=self.shiftSigma_subset, shiftSigma_indep=self.shiftSigma_indep)
+        values = result.texValues(
+            self.format,
+            p,
+            self.limit,
+            self.refResults,
+            shiftSigma_subset=self.shiftSigma_subset,
+            shiftSigma_indep=self.shiftSigma_indep,
+        )
         if values is not None:
             if len(values) > 1:
                 txt = self.format.textAsColumn(values[1], True, separator=True)
             else:
-                txt = ''
+                txt = ""
             txt += self.format.textAsColumn(values[0], values[0] != self.format.noConstraint)
             return txt
         else:
-            return self.format.textAsColumn('') * len(result.getColumnLabels(self.limit))
+            return self.format.textAsColumn("") * len(result.getColumnLabels(self.limit))
 
     def paramLabelColumn(self, param):
         return self.format.textAsColumn(param.getLabel(), True, separator=True, bold=not param.isDerived)
@@ -390,7 +428,7 @@ class ResultTable:
     def endTable(self):
         self.lines.append(self.format.endTable())
 
-    def tableTex(self, document=False, latex_preamble=None, packages=('amsmath', 'amssymb', 'bm')):
+    def tableTex(self, document=False, latex_preamble=None, packages=("amsmath", "amssymb", "bm")):
         """
         Get the latex string for the table
 
@@ -400,15 +438,15 @@ class ResultTable:
         """
 
         if document:
-            lines = [r'\documentclass{article}', r'\pagestyle{empty}']
+            lines = [r"\documentclass{article}", r"\pagestyle{empty}"]
             for package in packages:
-                lines.append(r'\usepackage{%s}' % package)
-            lines.append('\\renewcommand{\\arraystretch}{1.5}')
+                lines.append(r"\usepackage{%s}" % package)
+            lines.append("\\renewcommand{\\arraystretch}{1.5}")
             if latex_preamble:
                 lines.append(latex_preamble)
-            lines.append('\\begin{document}')
+            lines.append("\\begin{document}")
             lines += self.lines
-            lines.append('\\end{document}')
+            lines.append("\\end{document}")
         else:
             lines = self.lines
         return "\n".join(lines)
@@ -434,16 +472,16 @@ class ResultTable:
         """
         import subprocess
 
-        texfile = tempfile.mktemp(suffix='.tex')
+        texfile = tempfile.mktemp(suffix=".tex")
         self.write(texfile, document=True, latex_preamble=latex_preamble)
         basefile = os.path.splitext(texfile)[0]
-        outfile = filename or basefile + '.png'
+        outfile = filename or basefile + ".png"
         old_pwd = os.getcwd()
 
         def runCommand(command):
             # Use CREATE_NO_WINDOW flag on Windows to prevent console window from appearing
             creationflags = 0
-            if os.name == 'nt':  # Windows
+            if os.name == "nt":  # Windows
                 creationflags = subprocess.CREATE_NO_WINDOW
 
             try:
@@ -452,42 +490,37 @@ class ResultTable:
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     creationflags=creationflags,
-                    check=True  # Raise exception on non-zero return code
+                    check=True,  # Raise exception on non-zero return code
                 )
             except FileNotFoundError:
                 cmd_name = command[0] if command else "Command"
                 error_msg = f"Command not found: {cmd_name}"
 
-                if cmd_name == 'latex':
+                if cmd_name == "latex":
                     error_msg += "\nLaTeX must be installed to generate tables. Please install a TeX distribution like TeX Live, MiKTeX, or MacTeX."
-                elif cmd_name == 'dvipng':
-                    error_msg += "\ndvipng must be installed to generate PNG images. It is included in most LaTeX distributions."
+                elif cmd_name == "dvipng":
+                    error_msg += (
+                        "\ndvipng must be installed to generate PNG images. It is included in most LaTeX distributions."
+                    )
 
                 raise FileNotFoundError(error_msg)
 
         try:
             os.chdir(os.path.dirname(texfile))
-            runCommand(['latex', texfile])
+            runCommand(["latex", texfile])
 
-            cmd = ['dvipng']
+            cmd = ["dvipng"]
             if dpi:
-                cmd.extend(['-D', str(dpi)])
-            cmd.extend([
-                '-T', 'tight',
-                '-x', '1000',
-                '-z', '9',
-                '--truecolor',
-                '-o', outfile,
-                basefile + '.dvi'
-            ])
+                cmd.extend(["-D", str(dpi)])
+            cmd.extend(["-T", "tight", "-x", "1000", "-z", "9", "--truecolor", "-o", outfile, basefile + ".dvi"])
             runCommand(cmd)
         finally:
-            for f in [basefile + ext for ext in ('.tex', '.dvi', '.aux', '.log')]:
+            for f in [basefile + ext for ext in (".tex", ".dvi", ".aux", ".log")]:
                 if os.path.isfile(f):
                     os.remove(f)
             os.chdir(old_pwd)
         if bytesIO:
-            with open(outfile, 'rb') as f:
+            with open(outfile, "rb") as f:
                 result = BytesIO(f.read())
             os.remove(outfile)
             result.seek(0)
@@ -502,6 +535,7 @@ class ParamResults(ParamList):
     so that self.names is a list of :class:`~.paramnames.ParamInfo` instances for each parameter, which
     have attribute holding results for the different parameters.
     """
+
     pass
 
 
@@ -533,24 +567,24 @@ class BestFit(ParamResults):
             self.setLabelsFromParamNames(setParamNameFile)
 
     def getColumnLabels(self, **_kwargs):
-        return ['Best fit']
+        return ["Best fit"]
 
     def loadFromFile(self, filename, want_fixed=False):
         textFileLines = self.fileList(filename)
-        first = textFileLines[0].strip().split('=')
-        if first[0].strip() == 'weight':
+        first = textFileLines[0].strip().split("=")
+        if first[0].strip() == "weight":
             self.weight = float(first[1].strip())
-            del (textFileLines[0])
-            first = textFileLines[0].strip().split('=')
-        if first[0].strip() != '-log(Like)':
-            raise Exception('Error in format of parameter (best fit) file')
+            del textFileLines[0]
+            first = textFileLines[0].strip().split("=")
+        if first[0].strip() != "-log(Like)":
+            raise Exception("Error in format of parameter (best fit) file")
         self.logLike = float(first[1].strip())
         isFixed = False
         isDerived = False
         self.chiSquareds = []
         chunks = 0
         if len(textFileLines[1].strip()) > 0:
-            del (textFileLines[1])  # if it has chi2 line as well
+            del textFileLines[1]  # if it has chi2 line as well
         for ix in range(2, len(textFileLines)):
             line = textFileLines[ix]
             if len(line.strip()) == 0:
@@ -560,17 +594,17 @@ class BestFit(ParamResults):
                 if chunks == 3:
                     if ix + 2 >= len(textFileLines):
                         break
-                    for likePart in textFileLines[ix + 2:]:
+                    for likePart in textFileLines[ix + 2 :]:
                         if len(likePart.strip()) != 0:
                             (chisq, name) = [s.strip() for s in likePart.split(None, 2)][1:]
-                            name = [s.strip() for s in name.split(':', 1)]
+                            name = [s.strip() for s in name.split(":", 1)]
                             if len(name) > 1:
                                 (kind, name) = name
                             else:
-                                kind = ''
+                                kind = ""
                             chi2 = LikelihoodChi2()
-                            if '=' in name:
-                                chi2.tag, chi2.name = [s.strip() for s in name.split('=')]
+                            if "=" in name:
+                                chi2.tag, chi2.name = [s.strip() for s in name.split("=")]
                             else:
                                 chi2.tag, chi2.name = None, name
                             chi2.chisq = float(chisq)
@@ -612,8 +646,8 @@ class BestFit(ParamResults):
         for i, name in enumerate(self.names):
             if include_derived or not name.isDerived:
                 res[name.name] = name.best_fit
-        res['weight'] = 1
-        res['loglike'] = self.logLike
+        res["weight"] = 1
+        res["loglike"] = self.logLike
         return res
 
 
@@ -628,7 +662,7 @@ class ParamLimit:
     :ivar onetail_lower: True if one-tail lower limit
     """
 
-    def __init__(self, minmax, tag='two'):
+    def __init__(self, minmax, tag="two"):
         """
         :param minmax: a [min,max] tuple with lower and upper limits. Entries be None if no limit.
         :param tag: a text tag descibing the limit, one of ['two' | '>' | '<' | 'none']
@@ -636,9 +670,9 @@ class ParamLimit:
 
         self.lower = minmax[0]
         self.upper = minmax[1]
-        self.twotail = tag == 'two'
-        self.onetail_upper = tag == '>'
-        self.onetail_lower = tag == '<'
+        self.twotail = tag == "two"
+        self.onetail_upper = tag == ">"
+        self.onetail_lower = tag == "<"
 
     def limitTag(self):
         """
@@ -650,13 +684,13 @@ class ParamLimit:
                 - *none*: no limits (both boundaries have high probability)
         """
         if self.twotail:
-            return 'two'
+            return "two"
         elif self.onetail_upper:
-            return '>'
+            return ">"
         elif self.onetail_lower:
-            return '<'
+            return "<"
         else:
-            return 'none'
+            return "none"
 
     def limitType(self):
         """
@@ -668,13 +702,13 @@ class ParamLimit:
             - *none*
         """
         if self.twotail:
-            return 'two tail'
+            return "two tail"
         elif self.onetail_upper:
-            return 'one tail upper limit'
+            return "one tail upper limit"
         elif self.onetail_lower:
-            return 'one tail lower limit'
+            return "one tail lower limit"
         else:
-            return 'none'
+            return "none"
 
     def __str__(self):
         """
@@ -711,8 +745,8 @@ class MargeStats(ParamResults):
         :param filename: file to load from
         """
         textFileLines = self.fileList(filename)
-        lims = textFileLines[0].split(':')[1]
-        self.limits = [float(s.strip()) for s in lims.split(';')]
+        lims = textFileLines[0].split(":")[1]
+        self.limits = [float(s.strip()) for s in lims.split(";")]
         self.hasBestFit = False
         for line in textFileLines[3:]:
             if len(line.strip()) == 0:
@@ -720,7 +754,7 @@ class MargeStats(ParamResults):
             param = ParamInfo()
             items = [s.strip() for s in line.split(None, len(self.limits) * 3 + 3)]
             param.name = items[0]
-            if param.name[-1] == '*':
+            if param.name[-1] == "*":
                 param.isDerived = True
                 param.name = param.name[:-1]
             param.mean = float(items[1])
@@ -728,7 +762,7 @@ class MargeStats(ParamResults):
             param.label = items[-1]
             param.limits = []
             for i in range(len(self.limits)):
-                param.limits.append(ParamLimit([float(s) for s in items[3 + i * 3:5 + i * 3]], items[5 + i * 3]))
+                param.limits.append(ParamLimit([float(s) for s in items[3 + i * 3 : 5 + i * 3]], items[5 + i * 3]))
             self.names.append(param)
 
     def headerLine(self, inc_limits=False):
@@ -740,7 +774,7 @@ class MargeStats(ParamResults):
         for j, limit in enumerate(self.limits):
             if inc_limits:
                 tag = "_%.0f%%" % (limit * 100)
-                limtxt = 'type'
+                limtxt = "type"
             else:
                 tag = str(j + 1)
                 limtxt = "limit" + tag
@@ -750,7 +784,7 @@ class MargeStats(ParamResults):
         return text, parForm
 
     def __str__(self):
-        contours_str = '; '.join([str(c) for c in self.limits])
+        contours_str = "; ".join([str(c) for c in self.limits])
         header, parForm = self.headerLine()
         text = ""
         text += "Marginalized limits: %s\n\n" % contours_str
@@ -777,17 +811,17 @@ class MargeStats(ParamResults):
             par.isDerived = param.isDerived
 
     def limitText(self, limit):
-        txt = str(round(self.limits[limit - 1] * 100.))
+        txt = str(round(self.limits[limit - 1] * 100.0))
         if txt.endswith(".0"):  # e.g. 95.0 -> 95
             txt = txt.split(".")[0]
         return txt
 
     def getColumnLabels(self, limit=2):
         if self.hasBestFit:
-            res = ['Best fit']
+            res = ["Best fit"]
         else:
             res = []
-        return res + [self.limitText(limit) + '\\% limits']
+        return res + [self.limitText(limit) + "\\% limits"]
 
     def texValues(self, formatter, p, limit=2, refResults=None, shiftSigma_indep=False, shiftSigma_subset=False):
         if not isinstance(p, ParamInfo):
@@ -797,39 +831,40 @@ class MargeStats(ParamResults):
         if param is not None:
             lim = param.limits[limit - 1]
             sf = 3
-            if param.name.startswith('chi2'):
+            if param.name.startswith("chi2"):
                 # Chi2 for low dof are very skewed, always want mean and sigma or limit
-                res, sigma, _ = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err, wantSign=False,
-                                                                      sci=False)
+                res, sigma, _ = formatter.numberFormatter.namesigFigs(
+                    param.mean, param.err, param.err, wantSign=False, sci=False
+                )
                 if limit == 1:
-                    res += r'\pm ' + sigma
+                    res += r"\pm " + sigma
                 else:
                     # in this case give mean and effective dof
-                    res += r'\,({\nu\rm{:}\,%.1f})' % (param.err ** 2 / 2)
+                    res += r"\,({\nu\rm{:}\,%.1f})" % (param.err**2 / 2)
                     # res, plus_str, minus_str =
                     # formatter.numberFormatter.namesigFigs(param.mean, lim.upper - param.mean, lim.lower, sci=False)
                     # res += '^{' + plus_str + '}_{>' + minus_str + '}'
             elif lim.twotail:
                 if not formatter.numberFormatter.plusMinusLimit(limit, lim.upper - param.mean, lim.lower - param.mean):
-                    res, plus_str, _, exponent = formatter.numberFormatter.namesigFigs(param.mean, param.err, param.err,
-                                                                                       wantSign=False, sci=True)
-                    res += r'\pm ' + plus_str
+                    res, plus_str, _, exponent = formatter.numberFormatter.namesigFigs(
+                        param.mean, param.err, param.err, wantSign=False, sci=True
+                    )
+                    res += r"\pm " + plus_str
                 else:
-                    res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(param.mean,
-                                                                                               lim.upper - param.mean,
-                                                                                               lim.lower - param.mean,
-                                                                                               sci=True)
-                    res += '^{' + plus_str + '}_{' + minus_str + '}'
+                    res, plus_str, minus_str, exponent = formatter.numberFormatter.namesigFigs(
+                        param.mean, lim.upper - param.mean, lim.lower - param.mean, sci=True
+                    )
+                    res += "^{" + plus_str + "}_{" + minus_str + "}"
                 if exponent:
-                    res = r'\left(\,%s\,\right)' % res + times_ten_power(exponent)
+                    res = r"\left(\,%s\,\right)" % res + times_ten_power(exponent)
             elif lim.onetail_upper:
                 res, exponent = formatter.numberFormatter.formatNumber(lim.upper, sf, sci=True)
-                res = '< ' + res
+                res = "< " + res
                 if exponent:
                     res += times_ten_power(exponent)
             elif lim.onetail_lower:
                 res, exponent = formatter.numberFormatter.formatNumber(lim.lower, sf, sci=True)
-                res = '> ' + res
+                res = "> " + res
                 if exponent:
                     res += times_ten_power(exponent)
             else:
@@ -839,22 +874,23 @@ class MargeStats(ParamResults):
                 if refVal is not None:
                     delta = param.mean - refVal.mean
                     if shiftSigma_indep or shiftSigma_subset:
-                        res += r'\quad('
+                        res += r"\quad("
                         if shiftSigma_subset:
                             # give mean shift in sigma units for subset data (regularized to max sigma/20)
-                            subset_sigma = np.sqrt(abs(param.err ** 2 - refVal.err ** 2))
-                            res += '%+.1f \\sigma_s' % (delta / max(subset_sigma, refVal.err / 20))
+                            subset_sigma = np.sqrt(abs(param.err**2 - refVal.err**2))
+                            res += "%+.1f \\sigma_s" % (delta / max(subset_sigma, refVal.err / 20))
                         if shiftSigma_indep:
                             # give mean shift in sigma units for independent data
-                            indep_sigma = np.sqrt(param.err ** 2 + refVal.err ** 2)
-                            res += ', %+.1f \\sigma_i' % (delta / indep_sigma)
-                        res += ')'
+                            indep_sigma = np.sqrt(param.err**2 + refVal.err**2)
+                            res += ", %+.1f \\sigma_i" % (delta / indep_sigma)
+                        res += ")"
                     else:
-                        res += r'\quad(%+.1f \\sigma)' % (delta / refVal.err)
+                        res += r"\quad(%+.1f \\sigma)" % (delta / refVal.err)
             if self.hasBestFit:  # add best fit too
                 rangew = (lim.upper - lim.lower) / 10
-                bestfit, _, _, exponent = formatter.numberFormatter.namesigFigs(param.best_fit, rangew, -rangew,
-                                                                                sci=True)
+                bestfit, _, _, exponent = formatter.numberFormatter.namesigFigs(
+                    param.best_fit, rangew, -rangew, sci=True
+                )
                 if exponent:
                     bestfit += times_ten_power(exponent)
                 return [res, bestfit]
@@ -876,14 +912,14 @@ class LikeStats(ParamResults):
         for line in textFileLines:
             if len(line.strip()) == 0:
                 break
-            name, value = [x.strip() for x in line.split('=')]
+            name, value = [x.strip() for x in line.split("=")]
             results[name] = float(value)
-        self.logLike_sample = results.get('Best fit sample -log(Like)')
-        self.logMeanInvLike = results.get('Ln(mean 1/like)')
-        self.meanLogLike = results.get('mean(-Ln(like))')
-        self.logMeanLike = results.get('-Ln(mean like)')
-        self.complexity = results.get('complexity')
-        twiceVarLogLike = results.get('2*Var(Ln(like))')
+        self.logLike_sample = results.get("Best fit sample -log(Like)")
+        self.logMeanInvLike = results.get("Ln(mean 1/like)")
+        self.meanLogLike = results.get("mean(-Ln(like))")
+        self.logMeanLike = results.get("-Ln(mean like)")
+        self.complexity = results.get("complexity")
+        twiceVarLogLike = results.get("2*Var(Ln(like))")
         if twiceVarLogLike is not None:
             self.varLogLike = 0.5 * twiceVarLogLike
         else:
@@ -903,7 +939,7 @@ class LikeStats(ParamResults):
         return text
 
     def headerLine(self):
-        return self.parFormat() % "parameter" + '  bestfit        lower1         upper1         lower2         upper2\n'
+        return self.parFormat() % "parameter" + "  bestfit        lower1         upper1         lower2         upper2\n"
 
     def __str__(self):
         text = self.likeSummary()
@@ -913,11 +949,16 @@ class LikeStats(ParamResults):
             text += self.headerLine()
             for j, par in enumerate(self.names):
                 if par.ND_limit_bot.size < 2:
-                    raise Exception('Likestats output assumes at least two contour levels')
+                    raise Exception("Likestats output assumes at least two contour levels")
                 text += parForm % (self.name(j, True))
-                text += '%15.7E%15.7E%15.7E%15.7E%15.7E   %s\n' % (par.bestfit_sample,
-                                                                   par.ND_limit_bot[0], par.ND_limit_top[0],
-                                                                   par.ND_limit_bot[1], par.ND_limit_top[1], par.label)
+                text += "%15.7E%15.7E%15.7E%15.7E%15.7E   %s\n" % (
+                    par.bestfit_sample,
+                    par.ND_limit_bot[0],
+                    par.ND_limit_top[0],
+                    par.ND_limit_bot[1],
+                    par.ND_limit_top[1],
+                    par.label,
+                )
         return text
 
 
@@ -927,26 +968,26 @@ class ConvergeStats(ParamResults):
             textFileLines = self.fileList(filename)
             self.R_eigs = []
             for i in range(len(textFileLines)):
-                if textFileLines[i].find('var(mean)') >= 0:
-                    for line in textFileLines[i + 1:]:
+                if textFileLines[i].find("var(mean)") >= 0:
+                    for line in textFileLines[i + 1 :]:
                         if len(line.strip()) == 0:
                             break
                         try:
                             self.R_eigs.append(line.split()[1])
                         except Exception:
-                            self.R_eigs.append('1e30')
-                elif 'Parameter auto-correlations' in textFileLines[i]:
+                            self.R_eigs.append("1e30")
+                elif "Parameter auto-correlations" in textFileLines[i]:
                     self.auto_correlation_steps = [int(s) for s in textFileLines[i + 2].split()]
                     self.auto_correlations = []
                     self.auto_correlation_pars = []
-                    for line in textFileLines[i + 3:]:
+                    for line in textFileLines[i + 3 :]:
                         if len(line.strip()) == 0:
                             break
                         items = line.split(None, len(self.auto_correlation_steps) + 1)
                         self.auto_correlation_pars.append(items[0])
                         self.auto_correlations.append([float(s) for s in items[1:-1]])
         except:
-            print('Error reading: ' + filename)
+            print("Error reading: " + filename)
             raise
 
     def worstR(self, default=None):

@@ -10,11 +10,11 @@ Usage:
 
 import argparse
 import base64
+import glob
 import os
 import subprocess
 import sys
 import tempfile
-import glob
 
 
 def find_signtool():
@@ -107,16 +107,25 @@ def sign_files(path, certificate_path, certificate_password):
     for file_path in files_to_sign:
         print(f"Signing {file_path}...")
         try:
-            subprocess.check_call([
-                signtool_path, "sign",
-                "/f", certificate_path,
-                "/p", certificate_password,
-                "/tr", "http://timestamp.digicert.com",
-                "/td", "sha256",
-                "/fd", "sha256",
-                "/d", "GetDist GUI",
-                file_path
-            ])
+            subprocess.check_call(
+                [
+                    signtool_path,
+                    "sign",
+                    "/f",
+                    certificate_path,
+                    "/p",
+                    certificate_password,
+                    "/tr",
+                    "http://timestamp.digicert.com",
+                    "/td",
+                    "sha256",
+                    "/fd",
+                    "sha256",
+                    "/d",
+                    "GetDist GUI",
+                    file_path,
+                ]
+            )
         except subprocess.CalledProcessError as e:
             print(f"Failed to sign {file_path}: {e}")
             # Continue with other files even if one fails

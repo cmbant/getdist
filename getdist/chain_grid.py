@@ -1,11 +1,11 @@
-import os
 import glob
+import os
+
 from getdist.inifile import IniFile
 
 
 def file_root_to_root(root):
-    return (os.path.basename(root) if not root.endswith((os.sep, "/"))
-            else os.path.basename(root[:-1]) + os.sep)
+    return os.path.basename(root) if not root.endswith((os.sep, "/")) else os.path.basename(root[:-1]) + os.sep
 
 
 def get_chain_root_files(rootdir):
@@ -16,12 +16,12 @@ def get_chain_root_files(rootdir):
     :return:  The root names
     """
     from getdist.chains import hasChainFiles
-    pattern = os.path.join(rootdir, '*.paramnames')
+
+    pattern = os.path.join(rootdir, "*.paramnames")
     files = [os.path.splitext(f)[0] for f in glob.glob(pattern)]
-    ending = 'updated.yaml'
+    ending = "updated.yaml"
     pattern = os.path.join(rootdir, "*" + ending)
-    files += [f[:-len(ending)].rstrip("_.") for f in glob.glob(pattern)
-              if '.minimize.' not in f]
+    files += [f[: -len(ending)].rstrip("_.") for f in glob.glob(pattern) if ".minimize." not in f]
     files = [f for f in files if hasChainFiles(os.path.join(rootdir, f))]
     files.sort()
     return files
@@ -35,12 +35,13 @@ def is_grid_object(obj):
 def load_supported_grid(chain_dir):
     if is_grid_object(chain_dir):
         return chain_dir
-    config_file = os.path.join(chain_dir, 'config', 'config.ini')
+    config_file = os.path.join(chain_dir, "config", "config.ini")
     if os.path.exists(config_file):
         grid_settings = IniFile(config_file)
-        if grid_settings.hasKey('cobaya_version'):
+        if grid_settings.hasKey("cobaya_version"):
             try:
                 from cobaya.grid_tools import batchjob
+
                 return batchjob.readobject(chain_dir)
             except ImportError:
                 return None
@@ -48,7 +49,8 @@ def load_supported_grid(chain_dir):
             try:
                 # If cosmomc is installed, e.g. to allow use of old Planck grids
                 # The 2018 final Planck grid should be OK with getdist default chain grid below
-                from paramgrid import gridconfig, batchjob
+                from paramgrid import batchjob, gridconfig
+
                 if gridconfig.pathIsGrid(chain_dir):
                     return batchjob.readobject(chain_dir)
             except ImportError:
@@ -75,7 +77,7 @@ class ChainDirGrid:
         self.roots = {}
         self.base_dir_names = set()
         self._sorted_names = {}
-        option_file = os.path.join(base, 'getdist.ini')
+        option_file = os.path.join(base, "getdist.ini")
         if os.path.exists(option_file):
             self.getdist_options = IniFile(option_file).params
         else:
@@ -94,15 +96,15 @@ class ChainDirGrid:
         self._make_unique()
 
     def normed_name(self, root):
-        return '_'.join(sorted(root.replace('__', '_')
-                               .replace('_post', '').replace('.post.', '_').split('_')))
+        return "_".join(sorted(root.replace("__", "_").replace("_post", "").replace(".post.", "_").split("_")))
 
     def _add(self, dir_tag, dirname, roots):
         self.base_dir_names.add(dir_tag)
         for root in roots:
             root = file_root_to_root(root)
             self.roots[root] = self.roots.get(root, []) + [
-                ChainItem(self.batchPath, os.path.join(dirname, root), dir_tag, root)]
+                ChainItem(self.batchPath, os.path.join(dirname, root), dir_tag, root)
+            ]
 
     def _make_unique(self):
         for root in list(self.roots):
@@ -114,7 +116,7 @@ class ChainDirGrid:
                 while all(s[i] == paths[0][i] for s in paths[1:]):
                     i -= 1
                 for parts, item in zip(paths, self.roots[root]):
-                    item.name = '/'.join(parts[i:])
+                    item.name = "/".join(parts[i:])
                     item.chainPath = os.sep.join(parts[:i])
                     self.roots[item.name] = item
                 self.roots.pop(root)
@@ -139,6 +141,8 @@ class ChainDirGrid:
             if items:
                 if len(items) == 1:
                     return items[0]
-                raise ValueError('No exact march for %s and normalized name %s is ambiguous: %r' %
-                                 (root, normed_name, [i.chainRoot for i in items]))
+                raise ValueError(
+                    "No exact march for %s and normalized name %s is ambiguous: %r"
+                    % (root, normed_name, [i.chainRoot for i in items])
+                )
         return item

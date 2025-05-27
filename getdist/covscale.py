@@ -1,17 +1,18 @@
-import sys
 import fnmatch
 import os
+import sys
+
 from getdist import covmat
 
 if len(sys.argv) < 4:
-    print('covscale rescales parameter(s) in all .covmat files in a directory and outputs to another directory')
-    print('Usage: python covscale.py in_dir out_dir param1:param2:.. fac1:fac2:..')
+    print("covscale rescales parameter(s) in all .covmat files in a directory and outputs to another directory")
+    print("Usage: python covscale.py in_dir out_dir param1:param2:.. fac1:fac2:..")
     sys.exit()
 
 indir = os.path.abspath(sys.argv[1]) + os.sep
 outdir = os.path.abspath(sys.argv[2]) + os.sep
-pars = sys.argv[3].split(':')
-factors = sys.argv[4].split(':')
+pars = sys.argv[3].split(":")
+factors = sys.argv[4].split(":")
 
 if not os.path.exists(outdir):
     os.makedirs(outdir)
