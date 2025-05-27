@@ -74,6 +74,8 @@ select = [
     "W1", "W2", "W3", "W6",
 ]
 extend-select = ["I"]
+ignore = ["E203"]  # Conflicts with ruff formatter
+preview = true
 
 [tool.ruff.format]
 quote-style = "double"
