@@ -2,10 +2,10 @@
 
 import logging
 import os
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from importlib import import_module
 from numbers import Number
-from typing import Mapping, Sequence
 
 import numpy as np
 
@@ -194,7 +194,7 @@ def get_range(param_info):
                 "Format of prior not recognised: %r. " % prior
                 + "Use '[min, max]' or a dictionary following Cobaya's documentation."
             )
-        info_lims = dict((tag, prior.get(tag)) for tag in ["min", "max", "loc", "scale"])
+        info_lims = {tag: prior.get(tag) for tag in ["min", "max", "loc", "scale"]}
         if info_lims["min"] is not None or info_lims["max"] is not None:
             lims = [prior.get("min"), prior.get("max")]
         elif info_lims["loc"] is not None or info_lims["scale"] is not None:

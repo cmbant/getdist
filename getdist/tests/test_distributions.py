@@ -122,7 +122,7 @@ def get1DMises(prob, nsamp=default_nsamp, nsim=50, scales=(0.6, 1.5, 0.1), setti
             failures += 1
     Mises /= nsim - failures - 1
     if failures:
-        logging.warning("%s failures for 1D bandwidth with %s" % (failures, prob.label))
+        logging.warning("{} failures for 1D bandwidth with {}".format(failures, prob.label))
     return scales, Mises
 
 
@@ -398,7 +398,7 @@ def run_test_program(plots=("dists_2D", "dists_1D"), sims=100, nsamp=default_nsa
         compare1D(g, test1D.distributions(), nsamp=nsamp, settings=test_settings)
         print("1D timing:", time.time() - start)
         join_subplots(g.subplots)
-        plt.savefig("test_dists_1D_mbc%s_bco%s_N%s.pdf" % (mbc, bco, nsamp), bbox_inches="tight")
+        plt.savefig("test_dists_1D_mbc{}_bco{}_N{}.pdf".format(mbc, bco, nsamp), bbox_inches="tight")
 
     if plots is None or "dists_2D" in plots:
         g.new_plot()
@@ -406,7 +406,7 @@ def run_test_program(plots=("dists_2D", "dists_1D"), sims=100, nsamp=default_nsa
         compare2D(g, test2D.distributions(), nsamp=nsamp, settings=test_settings)
         print("2D timing:", time.time() - start)
         join_subplots(g.subplots)
-        plt.savefig("test_dists_2D_mbc%s_bco%s_N%s.pdf" % (mbc, bco, nsamp), bbox_inches="tight")
+        plt.savefig("test_dists_2D_mbc{}_bco{}_N{}.pdf".format(mbc, bco, nsamp), bbox_inches="tight")
 
     # if False:
     #     print('testing 1D gaussian MISE...')

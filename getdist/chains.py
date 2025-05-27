@@ -2,8 +2,9 @@ import os
 import pickle
 import re
 from collections import namedtuple
+from collections.abc import Sequence
 from copy import deepcopy
-from typing import Any, List, Optional, Sequence, Union
+from typing import Any, List, Optional, Union
 
 import numpy as np
 
@@ -188,13 +189,13 @@ class WeightedSamples:
     :ivar name_tag: name tag for the samples
     """
 
-    weights: Optional[np.ndarray]
-    loglikes: Optional[np.ndarray]
+    weights: np.ndarray | None
+    loglikes: np.ndarray | None
     samples: np.ndarray
     norm: Any
     n: Any
     numrows: Any
-    paramNames: Optional[ParamNames]
+    paramNames: ParamNames | None
 
     def __init__(
         self,
@@ -759,7 +760,7 @@ class WeightedSamples:
         else:
             return paramVec[where] - self.mean(paramVec, where)
 
-    def mean_diffs(self, pars: Union[None, int, Sequence] = None, where=None) -> Sequence:
+    def mean_diffs(self, pars: None | int | Sequence = None, where=None) -> Sequence:
         """
         Calculates a list of parameter vectors giving distances from parameter means
 
@@ -915,7 +916,7 @@ class WeightedSamples:
         return thin_ix
 
     def random_single_samples_indices(
-        self, random_state=None, thin: Optional[float] = None, max_samples: Optional[int] = None
+        self, random_state=None, thin: float | None = None, max_samples: int | None = None
     ):
         """
         Returns an array of sample indices that give a list of weight-one samples, by randomly
@@ -1499,7 +1500,7 @@ class Chains(WeightedSamples):
         self.needs_update = True
         return self
 
-    def getSeparateChains(self) -> List["WeightedSamples"]:
+    def getSeparateChains(self) -> list["WeightedSamples"]:
         """
         Gets a list of samples for separate chains.
         If the chains have already been combined, uses the stored sample offsets to reconstruct the array

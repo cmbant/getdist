@@ -9,7 +9,6 @@ GetDist is a Python package for analysing and plotting Monte Carlo (or other) sa
    Introduction <intro>
    Plot gallery and tutorial <https://getdist.readthedocs.io/en/latest/plot_gallery.html>
    GetDist GUI program <gui>
-   Contributing Guide <https://github.com/cmbant/getdist/blob/master/CONTRIBUTING.md>
    Paper with technical details <https://arxiv.org/abs/1910.13970>
 
 

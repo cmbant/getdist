@@ -264,7 +264,7 @@ def load_recent_directories():
     try:
         file_path = get_recent_dirs_file()
         if os.path.exists(file_path):
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 recent_dirs = json.load(f)
 
             # Validate the loaded data
@@ -948,9 +948,9 @@ def generate_plot():
         chain_dirs = "r'%s'" % chain_dirs.rstrip("\\").rstrip("/")
 
     if override_setting:
-        script_lines += ["g=plots.%schain_dir=%s,analysis_settings=analysis_settings)" % (plot_func, chain_dirs)]
+        script_lines += ["g=plots.{}chain_dir={},analysis_settings=analysis_settings)".format(plot_func, chain_dirs)]
     else:
-        script_lines += ["g=plots.%schain_dir=%s)" % (plot_func, chain_dirs)]
+        script_lines += ["g=plots.{}chain_dir={})".format(plot_func, chain_dirs)]
 
     script_lines.append("")
 
@@ -2382,7 +2382,7 @@ def main():
             if os.path.exists(log_file_path):
                 try:
                     # Read the log file
-                    with open(log_file_path, "r") as f:
+                    with open(log_file_path) as f:
                         log_content = f.read()
 
                     # Add refresh button and log file path info

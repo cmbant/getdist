@@ -36,8 +36,8 @@ except ImportError as _e:
 
 import matplotlib.pyplot as plt
 import PySide6 as PySide
+from matplotlib.backends.backend_qt import NavigationToolbar2QT as QNavigationToolbar
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as QNavigationToolbar
 from PySide6.QtCore import SIGNAL, QCoreApplication, QPoint, QSettings, QSize, Qt
 from PySide6.QtGui import QAction, QFont, QIcon, QImage, QKeySequence, QPixmap, QShortcut, QTextOption
 from PySide6.QtWidgets import (
@@ -186,7 +186,7 @@ class MainWindow(QMainWindow):
 
         # Path of root directory
         self.rootdirname = None
-        self.plotter: Optional[plots.GetDistPlotter] = None
+        self.plotter: plots.GetDistPlotter | None = None
         self.root_infos = {}
 
         self._resetGridData()
@@ -410,9 +410,9 @@ class MainWindow(QMainWindow):
         """
         scale = self.dpiScale()
         if sys.platform in ["darwin", "win32"]:
-            self.setStyleSheet("* {font-size:%spt} QComboBox,QPushButton {height:%sem}" % (9, 1.3))
+            self.setStyleSheet("* {{font-size:{}pt}} QComboBox,QPushButton {{height:{}em}}".format(9, 1.3))
         else:
-            self.setStyleSheet("* {font-size:%spx} QComboBox,QPushButton {height:%sem}" % (12 * scale, 1.3))
+            self.setStyleSheet("* {{font-size:{}px}} QComboBox,QPushButton {{height:{}em}}".format(12 * scale, 1.3))
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
@@ -1069,7 +1069,7 @@ class MainWindow(QMainWindow):
                     if isinstance(value, str):
                         value = '"' + value + '"'
                     script_set = "g.settings.%s =" % key
-                    script_line = "%s %s" % (script_set, value)
+                    script_line = "{} {}".format(script_set, value)
                     last = None
                     for i, line in enumerate(script):
                         if line.startswith(script_set):
@@ -1699,17 +1699,19 @@ class MainWindow(QMainWindow):
                 chain_dirs = "r'%s'" % chain_dirs[0].rstrip("\\").rstrip("/")
 
             if override_setting:
-                script += "g=plots.%schain_dir=%s,analysis_settings=analysis_settings)\n" % (plot_func, chain_dirs)
+                script += "g=plots.{}chain_dir={},analysis_settings=analysis_settings)\n".format(plot_func, chain_dirs)
             elif self.iniFile:
-                script += "g=plots.%schain_dir=%s, analysis_settings=r'%s')\n" % (plot_func, chain_dirs, self.iniFile)
+                script += "g=plots.{}chain_dir={}, analysis_settings=r'{}')\n".format(
+                    plot_func, chain_dirs, self.iniFile
+                )
             else:
-                script += "g=plots.%schain_dir=%s)\n" % (plot_func, chain_dirs)
+                script += "g=plots.{}chain_dir={})\n".format(plot_func, chain_dirs)
 
             if self.custom_plot_settings:
                 for key, value in self.custom_plot_settings.items():
                     if isinstance(value, str):
                         value = '"' + value + '"'
-                    script += "g.settings.%s = %s\n" % (key, value)
+                    script += "g.settings.{} = {}\n".format(key, value)
 
             if len(roots) < 3:
                 script += "roots = %s\n" % roots
@@ -1798,7 +1800,7 @@ class MainWindow(QMainWindow):
                         compare_colors=colors,
                         shadow_color=self.checkShadow.isChecked(),
                     )
-                    script += "g.plot_4d(roots, params, color_bar=True%s%s)\n" % (
+                    script += "g.plot_4d(roots, params, color_bar=True{}{})\n".format(
                         "" if len(roots) == 1 else ", compare_colors=%r" % colors,
                         ", shadow_color=True" if self.checkShadow.isChecked() else "",
                     )
@@ -1829,7 +1831,7 @@ class MainWindow(QMainWindow):
                     actionText = "Rectangle plot"
                     script += "xparams = %s\n" % str(items_x)
                     script += "yparams = %s\n" % str(items_y)
-                    logging.debug("Rectangle plot with xparams=%s and yparams=%s" % (str(items_x), str(items_y)))
+                    logging.debug("Rectangle plot with xparams={} and yparams={}".format(str(items_x), str(items_y)))
 
                     setSizeForN(len(items_x), len(items_y))
                     self.plotter.rectangle_plot(items_x, items_y, roots=roots, filled=filled)
@@ -1860,7 +1862,7 @@ class MainWindow(QMainWindow):
                         if single:
                             self.plotter.make_figure(1)
                             self.plotter.plot_2d(roots, pairs[0], filled=filled, shaded=shaded)
-                            script += "g.plot_2d(roots, %s, filled=%s, shaded=%s)\n" % (
+                            script += "g.plot_2d(roots, {}, filled={}, shaded={})\n".format(
                                 pairs[0],
                                 str(filled),
                                 str(shaded),
@@ -1872,7 +1874,7 @@ class MainWindow(QMainWindow):
                             script += "pairs = %s\n" % pairs
                             self.plotter.plots_2d(roots, param_pairs=pairs, filled=filled, shaded=shaded)
                             make_space_for_legend()
-                            script += "g.plots_2d(roots, param_pairs=pairs, filled=%s, shaded=%s)\n" % (
+                            script += "g.plots_2d(roots, param_pairs=pairs, filled={}, shaded={})\n".format(
                                 str(filled),
                                 str(shaded),
                             )
@@ -1983,7 +1985,7 @@ class MainWindow(QMainWindow):
             return
         filename = str(filename)
         logging.debug("Open file %s" % filename)
-        with open(filename, "r", encoding="utf-8-sig") as f:
+        with open(filename, encoding="utf-8-sig") as f:
             self.script_edit = f.read()
         self.textWidget.setPlainText(self.script_edit)
         self._last_export_dir = os.path.dirname(filename)
@@ -2034,7 +2036,7 @@ class MainWindow(QMainWindow):
             self.clipboardAct.setEnabled(True)
 
         except SyntaxError as e:
-            self.warning("Plot script", type(e).__name__ + ": %s\n %s" % (e, e.text))
+            self.warning("Plot script", type(e).__name__ + ": {}\n {}".format(e, e.text))
         except Exception as e:
             self.errorReport(e, caption="Plot script", capture=True)
         finally:
@@ -2375,10 +2377,10 @@ class DialogSettings(QDialog):
                 item.setToolTip("\n".join(hint))
             self.table.setItem(irow, 1, item)
         for i in range(nblank):
-            item = QTableWidgetItem(str(""))
+            item = QTableWidgetItem("")
             irow = len(items) + i
             self.table.setItem(irow, 0, item)
-            item = QTableWidgetItem(str(""))
+            item = QTableWidgetItem("")
             self.table.setItem(irow, 1, item)
 
         self.table.horizontalHeader().setStretchLastSection(True)

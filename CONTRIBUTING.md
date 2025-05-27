@@ -6,7 +6,7 @@ Thank you for your interest in contributing to GetDist! This guide will help you
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Git
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip for package management
 
@@ -56,7 +56,7 @@ GetDist uses [Ruff](https://docs.astral.sh/ruff/) for code formatting and lintin
 
 - **Line length:** 120 characters
 - **Quote style:** Double quotes
-- **Target Python version:** 3.9+
+- **Target Python version:** 3.10+
 - **Import sorting:** Enabled (isort-compatible)
 
 ### Pre-commit Hooks
@@ -103,6 +103,28 @@ python -m pytest getdist/tests/getdist_test.py
 # Run the basic unit test (legacy method)
 python -m unittest getdist.tests.getdist_test
 ```
+
+### VS Code Integration
+
+If you're using VS Code, the repository includes pre-configured launch configurations and tasks:
+
+**Launch Configurations (F5 menu):**
+- `Run GetDist Tests` - Run tests using unittest
+- `Debug GetDist Tests` - Debug tests with breakpoints
+- `Run GetDist Tests (pytest)` - Run tests using pytest
+- `Debug GetDist Tests (pytest)` - Debug tests with pytest
+
+**Tasks (Ctrl+Shift+P → "Tasks: Run Task"):**
+- `Run GetDist Tests` - Quick test execution
+- `Run GetDist Tests (pytest)` - Run with pytest
+- `Run All Tests` - Run all tests in the project
+- `Run Pre-commit` - Run code quality checks
+
+**Keyboard Shortcuts:**
+- `Ctrl+Shift+T` - Run GetDist Tests
+- `Ctrl+Shift+F5` - Launch GetDist Tests
+- `Ctrl+Shift+F6` - Debug GetDist Tests
+- `Ctrl+Shift+P` - Run Pre-commit checks
 
 ### Writing Tests
 

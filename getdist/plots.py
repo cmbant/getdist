@@ -3,7 +3,8 @@ import logging
 import os
 import sys
 import warnings
-from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple, Union
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any, Dict, Optional, Tuple, Union
 
 import matplotlib
 
@@ -143,7 +144,7 @@ class GetDistPlotSettings(_BaseObject):
         "x_label_rotation": "axis_tick_x_rotation",
     }
 
-    def __init__(self, subplot_size_inch: float = 2, fig_width_inch: Optional[float] = None):
+    def __init__(self, subplot_size_inch: float = 2, fig_width_inch: float | None = None):
         """
         If fig_width_inch set, fixed setting for fixed total figure size in inches.
         Otherwise, use subplot_size_inch to determine default font sizes etc.,
@@ -154,7 +155,7 @@ class GetDistPlotSettings(_BaseObject):
         """
         self.scaling = True
         self.scaling_reference_size = 3.5  # reference subplot size for font sizes etc.
-        self.scaling_max_axis_size: Optional[float] = self.scaling_reference_size
+        self.scaling_max_axis_size: float | None = self.scaling_reference_size
         self.scaling_factor = 2
         self.direct_scaling = False  # if true just scale directly with the axes size
 
@@ -221,7 +222,7 @@ class GetDistPlotSettings(_BaseObject):
         self.axis_marker_ls = "--"
         self.axis_marker_lw = 0.5
 
-        self.axis_tick_powerlimits: Tuple[int, int] = (-4, 5)
+        self.axis_tick_powerlimits: tuple[int, int] = (-4, 5)
         self.axis_tick_max_labels: int = 7
         self.axis_tick_step_groups: Sequence[Sequence[float]] = [[1, 2, 5, 10], [2.5, 3, 4, 6, 8], [1.5, 7, 9]]
         self.axis_tick_x_rotation: float = 0
@@ -233,7 +234,7 @@ class GetDistPlotSettings(_BaseObject):
 
         self.title_limit: int = 0  # which limit (1,2..) to plot in the title
         self.title_limit_labels = True
-        self.title_limit_fontsize: Optional[float] = None
+        self.title_limit_fontsize: float | None = None
         self._fail_on_not_exist = True
 
     def _numerical_fontsize(self, size):
@@ -300,7 +301,7 @@ default_settings = GetDistPlotSettings()
 defaultSettings = default_settings
 
 
-def get_plotter(style: Optional[str] = None, **kwargs):
+def get_plotter(style: str | None = None, **kwargs):
     """
     Creates a new plotter and returns it
 
@@ -312,11 +313,11 @@ def get_plotter(style: Optional[str] = None, **kwargs):
 
 
 def get_single_plotter(
-    ratio: Optional[float] = None,
-    width_inch: Optional[float] = None,
-    scaling: Optional[bool] = None,
+    ratio: float | None = None,
+    width_inch: float | None = None,
+    scaling: bool | None = None,
     rc_sizes=False,
-    style: Optional[str] = None,
+    style: str | None = None,
     **kwargs,
 ):
     """
@@ -343,12 +344,12 @@ def get_single_plotter(
 
 
 def get_subplot_plotter(
-    subplot_size: Optional[float] = None,
-    width_inch: Optional[float] = None,
-    scaling: Optional[bool] = None,
+    subplot_size: float | None = None,
+    width_inch: float | None = None,
+    scaling: bool | None = None,
     rc_sizes=False,
-    subplot_size_ratio: Optional[float] = None,
-    style: Optional[str] = None,
+    subplot_size_ratio: float | None = None,
+    style: str | None = None,
     **kwargs,
 ) -> "GetDistPlotter":
     """
@@ -413,7 +414,7 @@ class MCSampleAnalysis(_BaseObject):
     use plotter.sample_analyser.samples_for_root(name).
     """
 
-    def __init__(self, chain_locations: Union[str, Iterable[str]], settings: Union[str, dict, IniFile] = None):
+    def __init__(self, chain_locations: str | Iterable[str], settings: str | dict | IniFile = None):
         """
         :param chain_locations: either a directory or the path of a grid of runs;
                it can also be a list of such, which is searched in order
@@ -488,10 +489,10 @@ class MCSampleAnalysis(_BaseObject):
 
     def samples_for_root(
         self,
-        root: Union[str, MCSamples],
-        file_root: Optional[str] = None,
+        root: str | MCSamples,
+        file_root: str | None = None,
         cache=True,
-        settings: Optional[Mapping[str, Any]] = None,
+        settings: Mapping[str, Any] | None = None,
     ):
         """
         Gets :class:`~.mcsamples.MCSamples` from root name
@@ -693,9 +694,9 @@ class GetDistPlotter(_BaseObject):
 
     def __init__(
         self,
-        chain_dir: Union[str, Iterable[str], None] = None,
-        settings: Optional[GetDistPlotSettings] = None,
-        analysis_settings: Union[str, dict, IniFile] = None,
+        chain_dir: str | Iterable[str] | None = None,
+        settings: GetDistPlotSettings | None = None,
+        analysis_settings: str | dict | IniFile = None,
         auto_close=False,
     ):
         """
@@ -1286,7 +1287,7 @@ class GetDistPlotter(_BaseObject):
         density = mixture.marginalizedMixture(params=[param1, param2]).density2D()
         return self.add_2d_density_contours(density, **kwargs)
 
-    def add_x_marker(self, marker: Union[float, Sequence[float]], color=None, ls=None, lw=None, ax=None, **kwargs):
+    def add_x_marker(self, marker: float | Sequence[float], color=None, ls=None, lw=None, ax=None, **kwargs):
         """
         Adds vertical lines marking x values. Optional arguments can override default settings.
 
@@ -1307,7 +1308,7 @@ class GetDistPlotter(_BaseObject):
         for m in makeList(marker):
             self.get_axes(ax).axvline(m, ls=ls, color=color, lw=lw, **kwargs)
 
-    def add_y_marker(self, marker: Union[float, Iterable[float]], color=None, ls=None, lw=None, ax=None, **kwargs):
+    def add_y_marker(self, marker: float | Iterable[float], color=None, ls=None, lw=None, ax=None, **kwargs):
         """
         Adds horizontal lines marking y values. Optional arguments can override default settings.
 
@@ -1328,9 +1329,7 @@ class GetDistPlotter(_BaseObject):
         for m in makeList(marker):
             self.get_axes(ax).axhline(m, ls=ls, color=color, lw=lw, **kwargs)
 
-    def add_param_markers(
-        self, param_value_dict: Dict[str, Union[Iterable[float], float]], *, color=None, ls=None, lw=None
-    ):
+    def add_param_markers(self, param_value_dict: dict[str, Iterable[float] | float], *, color=None, ls=None, lw=None):
         """
         Adds vertical and horizontal lines on all subplots marking some parameter values.
 
@@ -1340,7 +1339,7 @@ class GetDistPlotter(_BaseObject):
         :param lw: optional line width.
         """
         for ax in self.subplots.reshape(-1):
-            par: Optional[list] = getattr(ax, "getdist_params", None)
+            par: list | None = getattr(ax, "getdist_params", None)
             if par is not None:
                 for p, op in zip(self._par_name_list(par), [self.add_x_marker, self.add_y_marker]):
                     for paramval in [x for x in makeList(param_value_dict.get(p, None)) if x is not None]:
@@ -1513,7 +1512,7 @@ class GetDistPlotter(_BaseObject):
 
     def _make_contour_args(self, nroots, **kwargs):
         contour_args = self._make_line_args(nroots, **kwargs)
-        filled: Union[None, bool, Sequence] = kwargs.get("filled")
+        filled: None | bool | Sequence = kwargs.get("filled")
         if filled and not isinstance(filled, bool):
             for cont, fill in zip(contour_args, filled):
                 cont["filled"] = fill
@@ -1945,7 +1944,7 @@ class GetDistPlotter(_BaseObject):
         self.subplots[:, :] = None
         return self.plot_col, self.plot_row
 
-    def get_param_array(self, roots, params: Union[None, str, Sequence] = None, renames: Mapping = None):
+    def get_param_array(self, roots, params: None | str | Sequence = None, renames: Mapping = None):
         """
         Gets an array of :class:`~.paramnames.ParamInfo` for named params
         in the given `root`.
@@ -3498,7 +3497,7 @@ class GetDistPlotter(_BaseObject):
         params,
         ax,
         color_bar=False,
-        max_scatter_points: Optional[int] = None,
+        max_scatter_points: int | None = None,
         lims=empty_dict,
         fixed_color=None,
         colorbar_args: Mapping = empty_dict,
@@ -3555,12 +3554,12 @@ class GetDistPlotter(_BaseObject):
         colorbar_args: Mapping = empty_dict,
         ax=None,
         lims=empty_dict,
-        azim: Optional[float] = 15,
-        elev: Optional[float] = None,
+        azim: float | None = 15,
+        elev: float | None = None,
         dist: float = 12,
-        alpha: Union[float, Sequence[float]] = 0.5,
+        alpha: float | Sequence[float] = 0.5,
         marker="o",
-        max_scatter_points: Optional[int] = None,
+        max_scatter_points: int | None = None,
         shadow_color=None,
         shadow_alpha=0.1,
         fixed_color=None,
@@ -3569,7 +3568,7 @@ class GetDistPlotter(_BaseObject):
         anim_angle_degrees=360,
         anim_step_degrees=0.6,
         anim_fps=15,
-        mp4_filename: Optional[str] = None,
+        mp4_filename: str | None = None,
         mp4_bitrate=-1,
         **kwargs,
     ):
@@ -3676,7 +3675,7 @@ class GetDistPlotter(_BaseObject):
             )
 
         axes = ax.xaxis, ax.yaxis, ax.zaxis
-        lim_x, lim_y, lim_z = [
+        lim_x, lim_y, lim_z = (
             (
                 tuple(
                     (_cur_lim if _lim is None else _lim)
@@ -3684,7 +3683,7 @@ class GetDistPlotter(_BaseObject):
                 )
             )
             for par, axis in zip(params, axes)
-        ]
+        )
         for axis in axes:
             self._set_main_axis_properties(axis, True)
         ax.set_xlim(*lim_x)

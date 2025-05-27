@@ -112,12 +112,12 @@ class NumberFormatter:
         if sci:
             # First, call without knowing sig figs, to get the exponent
             if exponent := self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]:
-                value, limplus, limminus = [
+                value, limplus, limminus = (
                     (lambda x: decimal.getcontext().multiply(float_to_decimal(x), float_to_decimal(10.0**-exponent)))(
                         lim
                     )
                     for lim in [value, limplus, limminus]
-                ]
+                )
         plus_str = self.formatNumber(limplus, err_sf, wantSign)
         minus_str = self.formatNumber(limminus, err_sf, wantSign)
         res = self.formatNumber(value, sf)
@@ -604,7 +604,7 @@ class BestFit(ParamResults):
                                 kind = ""
                             chi2 = LikelihoodChi2()
                             if "=" in name:
-                                chi2.tag, chi2.name = [s.strip() for s in name.split("=")]
+                                chi2.tag, chi2.name = (s.strip() for s in name.split("="))
                             else:
                                 chi2.tag, chi2.name = None, name
                             chi2.chisq = float(chisq)
@@ -615,7 +615,7 @@ class BestFit(ParamResults):
                 param = ParamInfo()
                 param.isFixed = isFixed
                 param.isDerived = isDerived
-                (param.number, param.best_fit, param.name, param.label) = [s.strip() for s in line.split(None, 3)]
+                (param.number, param.best_fit, param.name, param.label) = (s.strip() for s in line.split(None, 3))
                 param.number = int(param.number)
                 param.best_fit = float(param.best_fit)
                 self.names.append(param)
@@ -714,7 +714,7 @@ class ParamLimit:
         """
         :return: string representation of lower and upper bounds, with text description of the limit type
         """
-        return "%g %g %s" % (self.lower, self.upper, self.limitTag())
+        return "{:g} {:g} {}".format(self.lower, self.upper, self.limitTag())
 
 
 class MargeStats(ParamResults):
@@ -793,7 +793,7 @@ class MargeStats(ParamResults):
 
         for j, par in enumerate(self.names):
             text += parForm % (self.name(j, True))
-            text += "%15.7E%15.7E" % (par.mean, par.err)
+            text += "{:15.7E}{:15.7E}".format(par.mean, par.err)
             for lim in par.limits:
                 text += "%15.7E%15.7E  %-5s" % (lim.lower, lim.upper, lim.limitTag())
             text += "   %s\n" % par.label
@@ -912,7 +912,7 @@ class LikeStats(ParamResults):
         for line in textFileLines:
             if len(line.strip()) == 0:
                 break
-            name, value = [x.strip() for x in line.split("=")]
+            name, value = (x.strip() for x in line.split("="))
             results[name] = float(value)
         self.logLike_sample = results.get("Best fit sample -log(Like)")
         self.logMeanInvLike = results.get("Ln(mean 1/like)")
@@ -951,7 +951,7 @@ class LikeStats(ParamResults):
                 if par.ND_limit_bot.size < 2:
                     raise Exception("Likestats output assumes at least two contour levels")
                 text += parForm % (self.name(j, True))
-                text += "%15.7E%15.7E%15.7E%15.7E%15.7E   %s\n" % (
+                text += "{:15.7E}{:15.7E}{:15.7E}{:15.7E}{:15.7E}   {}\n".format(
                     par.bestfit_sample,
                     par.ND_limit_bot[0],
                     par.ND_limit_top[0],

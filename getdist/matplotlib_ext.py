@@ -29,11 +29,11 @@ class SciFuncFormatter(ticker.Formatter):
                 # reformat 1x10^y as 10^y
                 significand = ""
             if exponent:
-                exponent = "10^{%s%s}" % (sign, exponent)
+                exponent = "10^{{{}{}}}".format(sign, exponent)
             if significand and exponent:
-                return r"%s{\times}%s" % (significand, exponent)
+                return r"{}{{\times}}{}".format(significand, exponent)
             else:
-                return r"%s%s" % (significand, exponent)
+                return r"{}{}".format(significand, exponent)
         except IndexError:
             return s
 

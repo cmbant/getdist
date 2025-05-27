@@ -5,7 +5,8 @@ import math
 import os
 import pickle
 import time
-from typing import Any, Iterable, Mapping, Optional, Union
+from collections.abc import Iterable, Mapping
+from typing import Any, Optional, Union
 
 import numpy as np
 from scipy.stats import norm
@@ -45,10 +46,10 @@ class BandwidthError(MCSamplesError):
 
 def loadMCSamples(
     file_root: str,
-    ini: Union[None, str, IniFile] = None,
+    ini: None | str | IniFile = None,
     jobItem=None,
     no_cache=False,
-    settings: Optional[Mapping[str, Any]] = None,
+    settings: Mapping[str, Any] | None = None,
     chain_exclude=None,
 ) -> "MCSamples":
     """
@@ -115,7 +116,7 @@ def loadMCSamples(
         except Exception:
             pass
     if not len(files):
-        raise IOError("No chains found: " + file_root)
+        raise OSError("No chains found: " + file_root)
     samples.readChains(files)
     if no_cache:
         if os.path.exists(cachefile):
@@ -147,15 +148,15 @@ class MCSamples(Chains):
 
     def __init__(
         self,
-        root: Optional[str] = None,
+        root: str | None = None,
         jobItem=None,
         ini=None,
-        settings: Optional[Mapping[str, Any]] = None,
+        settings: Mapping[str, Any] | None = None,
         ranges=None,
-        samples: Union[np.ndarray, Iterable[np.ndarray], None] = None,
-        weights: Union[np.ndarray, Iterable[np.ndarray], None] = None,
-        loglikes: Union[np.ndarray, Iterable[np.ndarray], None] = None,
-        temperature: Optional[float] = None,
+        samples: np.ndarray | Iterable[np.ndarray] | None = None,
+        weights: np.ndarray | Iterable[np.ndarray] | None = None,
+        loglikes: np.ndarray | Iterable[np.ndarray] | None = None,
+        temperature: float | None = None,
         **kwargs,
     ):
         """
@@ -465,7 +466,7 @@ class MCSamples(Chains):
                     self.markers[par.name] = float(line)
 
     def updateSettings(
-        self, settings: Optional[Mapping[str, Any]] = None, ini: Union[None, str, IniFile] = None, doUpdate=True
+        self, settings: Mapping[str, Any] | None = None, ini: None | str | IniFile = None, doUpdate=True
     ):
         """
         Updates settings from a .ini file or dictionary
@@ -834,16 +835,16 @@ class MCSamples(Chains):
                         div = "%f" % (-np.exp(PCmean[j]))
                     else:
                         div = "%f" % (np.exp(PCmean[j]))
-                    summary += "[%f]  (%s/%s)^{%s}\n" % (u[i][j], label, div, expo)
+                    summary += "[{:f}]  ({}/{})^{{{}}}\n".format(u[i][j], label, div, expo)
                 else:
                     expo = "%f" % (sd[j] / u[i][j])
                     if doexp:
-                        summary += "[%f]   exp((%s-%f)/%s)\n" % (u[i][j], label, PCmean[j], expo)
+                        summary += "[{:f}]   exp(({}-{:f})/{})\n".format(u[i][j], label, PCmean[j], expo)
                     else:
-                        summary += "[%f]   (%s-%f)/%s\n" % (u[i][j], label, PCmean[j], expo)
+                        summary += "[{:f}]   ({}-{:f})/{}\n".format(u[i][j], label, PCmean[j], expo)
             newmean[i] = self.mean(PCdata[:, i])
             newsd[i] = np.sqrt(self.mean((PCdata[:, i] - newmean[i]) ** 2))
-            summary += "          = %f +- %f\n" % (newmean[i], newsd[i])
+            summary += "          = {:f} +- {:f}\n".format(newmean[i], newsd[i])
             summary += "\n"
             PCAmodeTexts += [summary]
             PCAtext += summary
@@ -889,7 +890,7 @@ class MCSamples(Chains):
 
         :return: The summary text as a string.
         """
-        lines = "using %s rows, %s parameters; mean weight %s, tot weight %s\n" % (
+        lines = "using {} rows, {} parameters; mean weight {}, tot weight {}\n".format(
             self.numrows,
             self.paramNames.numParams(),
             self.mean_mult,
@@ -982,7 +983,7 @@ class MCSamples(Chains):
                     in_chain_var[j] += np.dot(chain.weights, chain.diffs[j] ** 2)
 
                 in_chain_var[j] /= self.norm
-                lines += parNames[j] + "%10.4f  %s\n" % (
+                lines += parNames[j] + "{:10.4f}  {}\n".format(
                     math.sqrt(between_chain_var[j] / in_chain_var[j]),
                     self.parLabel(j),
                 )
@@ -1264,7 +1265,7 @@ class MCSamples(Chains):
             if par.name not in self.no_warning_params and (
                 not self.no_warning_chi2_params or "chi2_" not in par.name and "minuslog" not in par.name
             ):
-                msg = "auto bandwidth for %s very small or failed (h=%s,N_eff=%s). Using fallback (h=%s)" % (
+                msg = "auto bandwidth for {} very small or failed (h={},N_eff={}). Using fallback (h={})".format(
                     par.name,
                     h,
                     N_eff,
@@ -1343,7 +1344,7 @@ class MCSamples(Chains):
         do_correlated = not parx.has_limits or not pary.has_limits
 
         def fallback_widths(ex):
-            msg = "2D kernel density bandwidth optimizer failed for %s, %s. Using fallback width: %s" % (
+            msg = "2D kernel density bandwidth optimizer failed for {}, {}. Using fallback width: {}".format(
                 parx.name,
                 pary.name,
                 ex,
@@ -1568,7 +1569,7 @@ class MCSamples(Chains):
             if self.shade_likes_is_mean_loglikes:
                 w = self.weights * self.loglikes
             else:
-                w = self.weights * np.exp((self.mean_loglike - self.loglikes))
+                w = self.weights * np.exp(self.mean_loglike - self.loglikes)
             finebinlikes = np.bincount(bin_indices, weights=w, minlength=fine_bins)
 
         if smooth_scale_1D <= 0:
@@ -2715,7 +2716,7 @@ class MCSamples(Chains):
                 if (par1, par2) not in done2D:
                     plot_num += 1
                     done2D[(par1, par2)] = True
-                    text += "pairs.append(['%s','%s'])\n" % (par1, par2)
+                    text += "pairs.append(['{}','{}'])\n".format(par1, par2)
         text += "g.plots_2d(roots,param_pairs=pairs,filled=True)"
         self._WritePlotFile(filename, self.subplot_size_inch2, text, "_2D", ext)
         return done2D
@@ -2767,7 +2768,7 @@ class MCSamples(Chains):
             f.write(text + "\n")
             ext = ext or self.plot_output
             fname = self.rootname + tag + "." + ext
-            f.write("g.export(os.path.join(r'%s',r'%s'))\n" % (self.out_dir, fname))
+            f.write("g.export(os.path.join(r'{}',r'{}'))\n".format(self.out_dir, fname))
 
 
 # Useful functions

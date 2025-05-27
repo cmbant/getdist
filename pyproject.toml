@@ -19,13 +19,12 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Astronomy",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13"
 ]
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 dependencies = [
     "numpy>=1.23.0", "matplotlib (>=2.2.0,!=3.5.0)", "scipy>=1.5", "PyYAML>=5.1", "packaging"
 ]
@@ -66,7 +65,7 @@ getdist = ["analysis_defaults.ini", "distparam_template.ini"]
 [tool.ruff]
 line-length = 120
 src = ["getdist"]
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [

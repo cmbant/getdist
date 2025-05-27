@@ -6,7 +6,11 @@
         "**/__pycache__/": true,
         "build*/": true,
         "default_chains": true,
-        "*.egg*": true
+        "*.egg*": true,
+        "**/.ipynb_checkpoints": true,
+        "**/_summaries*": true,
+        "dist/": true,
+        "**/_build": true
     },
     "python.analysis.extraPaths": [
         "${workspaceFolder}"

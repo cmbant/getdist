@@ -336,7 +336,8 @@ class UtilTest(unittest.TestCase):
             axs.xaxis.set_major_locator(BoundedMaxNLocator(prune=prune))
         axs.xaxis.get_major_formatter().useOffset = False
         fig.suptitle(
-            "%s: scale %g, size %g, offset %g" % ("Default" if default else "Bounded", scale, x, off), fontsize=6
+            "{}: scale {:g}, size {:g}, offset {:g}".format("Default" if default else "Bounded", scale, x, off),
+            fontsize=6,
         )
         return fig, axs
 
@@ -355,7 +356,7 @@ class UtilTest(unittest.TestCase):
             ax.set_ylim(bounds)
             ticks = ax.get_yticks()
             if len(ticks) != len(expected) or not np.allclose(ticks, expected):
-                raise self.failureException("Wrong ticks %s for bounds %s" % (ticks, bounds))
+                raise self.failureException("Wrong ticks {} for bounds {}".format(ticks, bounds))
 
         check_ticks([0.0253, 0.02915], [0.026, 0.027, 0.028])
 
@@ -373,7 +374,7 @@ class UtilTest(unittest.TestCase):
             ax.set_xlim(bounds)
             ticks = ax.get_xticks()
             if len(ticks) != len(expected) or not np.allclose(ticks, expected):
-                raise self.failureException("Wrong ticks %s for bounds %s" % (ticks, bounds))
+                raise self.failureException("Wrong ticks {} for bounds {}".format(ticks, bounds))
 
         check_ticks([-5.2, 5.2], [-4, -2, 0, 2, 4])
         check_ticks([0, 8.2], [0, 2, 4, 6, 8])

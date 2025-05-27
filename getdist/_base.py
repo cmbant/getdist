@@ -37,20 +37,20 @@ class _BaseObject:
             return object.__getattribute__(self, name)
         res = _map_name(self, name)
         if res is None:
-            raise AttributeError("%s is not a valid attribute for class %s" % (name, self.__class__))
+            raise AttributeError("{} is not a valid attribute for class {}".format(name, self.__class__))
         value, newname = res
         if newname is None:
             logging.warning("%s is removed and will be ignored" % name)
             return None
         if newname is not name:
-            logging.warning("%s is deprecated, use %s" % (name, newname))
+            logging.warning("{} is deprecated, use {}".format(name, newname))
         return value
 
     def __setattr__(self, name, value):
         res = _map_name(self, name)
         if res is None:
             if object.__getattribute__(self, "_fail_on_not_exist"):
-                raise AttributeError("Unknown attribute %s for class %s" % (name, self.__class__))
+                raise AttributeError("Unknown attribute {} for class {}".format(name, self.__class__))
             newname = name
         else:
             _, newname = res

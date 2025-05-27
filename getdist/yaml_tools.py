@@ -76,6 +76,6 @@ def yaml_load(text_stream, Loader=yaml.Loader, file_name=None):
 
 def yaml_load_file(input_file):
     """Wrapper to load a yaml file."""
-    with open(input_file, "r", encoding="utf-8-sig") as f:
+    with open(input_file, encoding="utf-8-sig") as f:
         lines = "".join(f.readlines())
     return yaml_load(lines, file_name=input_file)
