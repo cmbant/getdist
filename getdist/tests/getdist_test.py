@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -90,7 +91,7 @@ class GetDistFileTest(unittest.TestCase):
             for f in [".py", "_2D.py", "_3D.py", "_tri.py"]:
                 pyname = self.root + f
                 self.assertTrue(os.path.isfile(pyname))
-                subprocess.check_output(["python", pyname])
+                subprocess.check_output([sys.executable, pyname])
                 pdf = self.root + f.replace("py", "pdf")
                 self.assertTrue(os.path.isfile(pdf))
                 os.remove(pdf)

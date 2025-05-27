@@ -12,13 +12,14 @@ from scipy.stats import norm
 
 import getdist
 import getdist.kde_bandwidth as kde
-from getdist import IniFile, ParamInfo, ParamNames, chains, cobaya_interface, covmat
+from getdist import IniFile, chains, cobaya_interface, covmat
 from getdist import types as types
 from getdist.chains import Chains, ParamError, WeightedSampleError, chainFiles, last_modified
 from getdist.cobaya_interface import MCSamplesFromCobaya
 from getdist.convolve import convolve1D, convolve2D
 from getdist.densities import Density1D, Density2D, DensityND
 from getdist.densities import getContourLevels as getImportContourLevels
+from getdist.paramnames import ParamInfo, ParamNames
 from getdist.parampriors import ParamBounds
 
 pickle_version = 22

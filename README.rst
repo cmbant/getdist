@@ -235,6 +235,10 @@ LLM Integration
 ===================
 For AI assistants and LLM agents working with GetDist, a single-file context document is available at `GetDist LLM Context <https://help.cosmologist.info/api/context/getdist>`_. This document provides a comprehensive overview of GetDist's functionality, common usage patterns, and best practices in a format optimized for LLM context windows.
 
+Contributing
+===================
+Please see our `Contributing Guide <https://github.com/cmbant/getdist/blob/master/CONTRIBUTING.md>`_ for:
+
 ===================
 
 .. image:: https://raw.githubusercontent.com/CobayaSampler/cobaya/master/img/Sussex_white.svg

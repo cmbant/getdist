@@ -34,6 +34,7 @@ dependencies = [
 GUI = ["PySide6>=6.1"]
 StreamlitGUI = ["streamlit>=1.24.0"]
 docs = ["sphinx", "sphinx_rtd_theme>=1.0", "sphinxcontrib-jquery", "sphinx_markdown_builder", "jupytext"]
+dev = ["pre-commit>=3.0.0", "pytest>=6.0"]
 
 [project.scripts]
 getdist = "getdist.command_line:getdist_command"
@@ -69,7 +70,7 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = [
-    "E10", "E11", "E20", "E22", "E23", "E25", "E27", "E301", "E302", "E304", "E703", 
+    "E10", "E11", "E20", "E22", "E23", "E25", "E27", "E301", "E302", "E304", "E703",
     "E713", "E714", "E9", "F405", "F406", "F5", "F6", "F7", "F8",
     "W1", "W2", "W3", "W6",
 ]
@@ -78,5 +79,5 @@ extend-select = ["I"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-skip-magic-trailing-comma = false 
+skip-magic-trailing-comma = false
 line-ending = "auto"
