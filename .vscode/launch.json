@@ -56,6 +56,65 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "python": "${command:python.interpreterPath}"
+        },
+        {
+            "name": "Run GetDist Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "args": [
+                "getdist.tests.getdist_test"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug GetDist Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unittest",
+            "args": [
+                "getdist.tests.getdist_test"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "showReturnValue": true,
+            "redirectOutput": true,
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Run GetDist Tests (pytest)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "getdist/tests/getdist_test.py",
+                "-v"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug GetDist Tests (pytest)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "getdist/tests/getdist_test.py",
+                "-v",
+                "-s"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "showReturnValue": true,
+            "redirectOutput": true,
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

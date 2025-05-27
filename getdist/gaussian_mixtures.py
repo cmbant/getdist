@@ -1,12 +1,14 @@
-import numpy as np
-from getdist.densities import Density1D, Density2D
-from getdist.paramnames import ParamNames
-from getdist.mcsamples import MCSamples
 import copy
+
+import numpy as np
+
+from getdist.densities import Density1D, Density2D
+from getdist.mcsamples import MCSamples
+from getdist.paramnames import ParamNames
 
 
 def make_2D_Cov(sigmax, sigmay, corr):
-    return np.array([[sigmax ** 2, sigmax * sigmay * corr], [sigmax * sigmay * corr, sigmay ** 2]])
+    return np.array([[sigmax**2, sigmax * sigmay * corr], [sigmax * sigmay * corr, sigmay**2]])
 
 
 class MixtureND:
@@ -16,7 +18,7 @@ class MixtureND:
     For a simple Gaussian, can use GaussianND inherited class.
     """
 
-    def __init__(self, means, covs, weights=None, lims=None, names=None, label='', labels=None):
+    def __init__(self, means, covs, weights=None, lims=None, names=None, label="", labels=None):
         """
         :param means: list of y for each Gaussian in the mixture
         :param covs: list of covariances for the Gaussians in the mixture
@@ -33,10 +35,10 @@ class MixtureND:
         self.covs = [np.array(cov) for cov in covs]
         self.invcovs = [np.linalg.inv(cov) for cov in self.covs]
         if weights is None:
-            weights = [1. / len(means)] * len(means)
+            weights = [1.0 / len(means)] * len(means)
         self.weights = np.array(weights, dtype=np.float64)
         if np.sum(self.weights) <= 0:
-            raise ValueError('Weight <= 0 in MixtureND')
+            raise ValueError("Weight <= 0 in MixtureND")
         self.weights /= np.sum(weights)
         self.norms = (2 * np.pi) ** (0.5 * self.dim) * np.array([np.sqrt(np.linalg.det(cov)) for cov in self.covs])
         self.lims = lims
@@ -80,7 +82,7 @@ class MixtureND:
         if len(res) > 1:
             samples = random_state.permutation(samples)
         if tot != size:
-            samples = samples[:-(tot - size), :]
+            samples = samples[: -(tot - size), :]
         return samples
 
     def MCSamples(self, size, names=None, logLikes=False, random_state=None, **kwargs):
@@ -99,8 +101,14 @@ class MixtureND:
             loglikes = -np.log(self.pdf(samples))
         else:
             loglikes = None
-        return MCSamples(samples=samples, loglikes=loglikes, paramNamesFile=copy.deepcopy(self.paramNames),
-                         names=names, ranges=self.lims, **kwargs)
+        return MCSamples(
+            samples=samples,
+            loglikes=loglikes,
+            paramNamesFile=copy.deepcopy(self.paramNames),
+            names=names,
+            ranges=self.lims,
+            **kwargs,
+        )
 
     def autoRanges(self, sigma_max=4, lims=None):
         res = []
@@ -139,7 +147,7 @@ class MixtureND:
             if len(x.shape) == 1:
                 res = np.exp(-icov.dot(dx).dot(dx) / 2) / norm
             else:
-                res = np.exp(-np.einsum('ik,km,im->i', dx, icov, dx) / 2) / norm
+                res = np.exp(-np.einsum("ik,km,im->i", dx, icov, dx) / 2) / norm
             if not i:
                 tot = res * weight
             else:
@@ -163,7 +171,7 @@ class MixtureND:
         for i, (mean, cov, weight) in enumerate(zip(self.means, self.covs, self.weights)):
             dx = x - mean[index]
             var = cov[index, index]
-            res = np.exp(-dx ** 2 / var / 2) / np.sqrt(2 * np.pi * var)
+            res = np.exp(-(dx**2) / var / 2) / np.sqrt(2 * np.pi * var)
             if not i:
                 tot = res * weight
             else:
@@ -205,13 +213,14 @@ class MixtureND:
         if self.dim > 2 or params is not None or not isinstance(self, Mixture2D):
             mixture = self.marginalizedMixture(params=params)
         elif self.dim != 2:
-            raise Exception('density2D requires at least two dimensions')
+            raise Exception("density2D requires at least two dimensions")
         else:
             mixture = self
 
         # noinspection PyProtectedMember
-        return mixture._density2D(num_points=num_points, xmin=xmin, xmax=xmax, ymin=ymin,
-                                  ymax=ymax, sigma_max=sigma_max)
+        return mixture._density2D(
+            num_points=num_points, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, sigma_max=sigma_max
+        )
 
     def _params_to_indices(self, params):
         indices = []
@@ -220,13 +229,13 @@ class MixtureND:
         for p in params:
             if isinstance(p, str):
                 indices.append(self.names.index(p))
-            elif hasattr(p, 'name'):
+            elif hasattr(p, "name"):
                 indices.append(self.names.index(p.name))
             else:
                 indices.append(p)
         return indices
 
-    def marginalizedMixture(self, params, label=None, no_limit_marge=False) -> 'MixtureND':
+    def marginalizedMixture(self, params, label=None, no_limit_marge=False) -> "MixtureND":
         """
         Calculates a reduced mixture model by marginalization over unwanted parameters
 
@@ -257,8 +266,7 @@ class MixtureND:
             tp = Mixture2D
         else:
             tp = MixtureND
-        mixture = tp(means, covs, self.weights, lims=lims,
-                     names=names, label=label)
+        mixture = tp(means, covs, self.weights, lims=lims, names=names, label=label)
         mixture.paramNames.setLabelsAndDerivedFromParamNames(self.paramNames)
         return mixture
 
@@ -276,7 +284,7 @@ class MixtureND:
         self.checkNoLimits(fixed_params)
         keep_params = [i for i in range(self.dim) if i not in fixed_params]
         if not len(keep_params):
-            raise ValueError('conditionalMixture must leave at least one non-fixed parameter')
+            raise ValueError("conditionalMixture must leave at least one non-fixed parameter")
         new_means = []
         new_covs = []
         new_weights = []
@@ -287,11 +295,16 @@ class MixtureND:
             if len(self.weights) == 1 and False:
                 logw = 0
             else:
-                logw = invcov[np.ix_(fixed_params, fixed_params)].dot(deltas).dot(deltas) \
-                       + np.log(np.linalg.det(cov[np.ix_(fixed_params, fixed_params)]
-                                              - cov[np.ix_(fixed_params, keep_params)]
-                                              .dot(np.linalg.inv(cov[np.ix_(keep_params, keep_params)])
-                                                   .dot(cov[np.ix_(keep_params, fixed_params)]))))
+                logw = invcov[np.ix_(fixed_params, fixed_params)].dot(deltas).dot(deltas) + np.log(
+                    np.linalg.det(
+                        cov[np.ix_(fixed_params, fixed_params)]
+                        - cov[np.ix_(fixed_params, keep_params)].dot(
+                            np.linalg.inv(cov[np.ix_(keep_params, keep_params)]).dot(
+                                cov[np.ix_(keep_params, fixed_params)]
+                            )
+                        )
+                    )
+                )
             new_weights.append(logw)
             new_means.append(new_mean)
             new_covs.append(new_cov)
@@ -311,7 +324,8 @@ class MixtureND:
         for i, lim in enumerate(self.lims):
             if i not in keep_params and (lim[0] is not None or lim[1] is not None):
                 raise Exception(
-                    'In general can only marginalize analytically if no hard boundary limits: ' + self.label)
+                    "In general can only marginalize analytically if no hard boundary limits: " + self.label
+                )
 
     def getUpper(self, name):
         if self.lims is None:
@@ -329,8 +343,19 @@ class Mixture2D(MixtureND):
     Gaussian mixture model in 2D with optional boundaries for fixed x and y ranges
     """
 
-    def __init__(self, means, covs, weights=None, lims=None, names=('x', 'y'),
-                 xmin=None, xmax=None, ymin=None, ymax=None, **kwargs):
+    def __init__(
+        self,
+        means,
+        covs,
+        weights=None,
+        lims=None,
+        names=("x", "y"),
+        xmin=None,
+        xmax=None,
+        ymin=None,
+        ymax=None,
+        **kwargs,
+    ):
         """
         :param means: list of y for each Gaussian in the mixture
         :param covs: list of covariances for the Gaussians in the mixture. Instead of 2x2 arrays,
@@ -389,7 +414,7 @@ class Mixture2D(MixtureND):
         for i, (mean, icov, weight, norm) in enumerate(zip(self.means, self.invcovs, self.weights, self.norms)):
             dx = x - mean[0]
             dy = y - mean[1]
-            res = np.exp(-(dx ** 2 * icov[0, 0] + 2 * dx * dy * icov[0, 1] + dy ** 2 * icov[1, 1]) / 2) / norm
+            res = np.exp(-(dx**2 * icov[0, 0] + 2 * dx * dy * icov[0, 1] + dy**2 * icov[1, 1]) / 2) / norm
             if not i:
                 tot = res * weight
             else:
@@ -413,7 +438,7 @@ class Gaussian2D(Mixture2D):
 
 class GaussianND(MixtureND):
     """
-        Simple special case of a Gaussian mixture model with only one Gaussian component
+    Simple special case of a Gaussian mixture model with only one Gaussian component
     """
 
     def __init__(self, mean, cov, is_inv_cov=False, **kwargs):
@@ -437,8 +462,7 @@ class Mixture1D(MixtureND):
     Gaussian mixture model in 1D with optional boundaries for fixed ranges
     """
 
-    def __init__(self, means, sigmas, weights=None, lims=None, name='x',
-                 xmin=None, xmax=None, **kwargs):
+    def __init__(self, means, sigmas, weights=None, lims=None, name="x", xmin=None, xmax=None, **kwargs):
         """
         :param means: array of y for each component
         :param sigmas: array of standard deviations for each component
@@ -453,7 +477,7 @@ class Mixture1D(MixtureND):
             limits = [(xmin if xmin is not None else lims[0], xmax if xmax is not None else lims[1])]
         else:
             limits = [(xmin, xmax)]
-        covs = [np.atleast_2d(sigma ** 2) for sigma in sigmas]
+        covs = [np.atleast_2d(sigma**2) for sigma in sigmas]
         means = [[mean] for mean in means]
         super().__init__(means, covs, weights, limits, names=[name], **kwargs)
 
@@ -481,7 +505,7 @@ class RandomTestMixtureND(MixtureND):
     samples from the mixture).
     """
 
-    def __init__(self, ndim=4, ncomponent=1, names=None, weights=None, seed=None, label='RandomMixture'):
+    def __init__(self, ndim=4, ncomponent=1, names=None, weights=None, seed=None, label="RandomMixture"):
         """
         :param ndim: number of dimensions
         :param ncomponent: number of components
@@ -495,8 +519,9 @@ class RandomTestMixtureND(MixtureND):
         for _ in range(ncomponent):
             A = random_state.random((ndim, ndim))
             covs.append(np.dot(A, A.T))
-        super().__init__(random_state.random((ncomponent, ndim)), covs, weights=weights,
-                         lims=None, names=names, label=label)
+        super().__init__(
+            random_state.random((ncomponent, ndim)), covs, weights=weights, lims=None, names=names, label=label
+        )
 
 
 def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10, names=None, labels=None):
@@ -508,8 +533,12 @@ def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10
     if labels is None:
         labels = ["x_{%s}" % i for i in range(ndim)]
     seed = np.random.default_rng(seed)
-    result = [RandomTestMixtureND(ndim, ncomponent, names, seed=seed).MCSamples(
-        nsamp, labels=labels, name_tag='Sim %s' % (i + 1), random_state=seed) for i in range(nMCSamples)]
+    result = [
+        RandomTestMixtureND(ndim, ncomponent, names, seed=seed).MCSamples(
+            nsamp, labels=labels, name_tag="Sim %s" % (i + 1), random_state=seed
+        )
+        for i in range(nMCSamples)
+    ]
     if nMCSamples > 1:
         return result
     else:

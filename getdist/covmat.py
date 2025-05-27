@@ -9,7 +9,7 @@ class CovMat:
     :ivar paramNames: list of parameter name strings
     """
 
-    def __init__(self, filename='', matrix=None, paramNames=None):
+    def __init__(self, filename="", matrix=None, paramNames=None):
         """
         :param filename: optionally, a file name to load from
 
@@ -21,7 +21,7 @@ class CovMat:
         self.size = 0
         if matrix is not None:
             self.size = matrix.shape[0]
-        if filename != '':
+        if filename != "":
             self.loadFromFile(filename)
 
     def paramNameString(self):
@@ -30,11 +30,11 @@ class CovMat:
     def loadFromFile(self, filename):
         with open(filename, encoding="utf-8-sig") as f:
             first = f.readline().strip()
-            if first.startswith('#'):
+            if first.startswith("#"):
                 self.paramNames = first[1:].split()
                 self.size = len(self.paramNames)
             else:
-                raise Exception('.covmat must now have parameter names header')
+                raise Exception(".covmat must now have parameter names header")
             # noinspection PyTypeChecker
             self.matrix = np.loadtxt(f)
 
@@ -44,9 +44,9 @@ class CovMat:
 
         :param filename: name of file to save to (.covmat)
         """
-        with open(filename, 'wb') as fout:
-            fout.write(('# ' + self.paramNameString() + '\n').encode('UTF-8'))
-            np.savetxt(fout, self.matrix, '%15.7E')
+        with open(filename, "wb") as fout:
+            fout.write(("# " + self.paramNameString() + "\n").encode("UTF-8"))
+            np.savetxt(fout, self.matrix, "%15.7E")
 
     def rescaleParameter(self, name, scale):
         """
@@ -60,7 +60,7 @@ class CovMat:
             self.matrix[:, i] = self.matrix[:, i] * scale
             self.matrix[i, :] = self.matrix[i, :] * scale
         else:
-            print('Not in covmat: ' + name)
+            print("Not in covmat: " + name)
 
     def mergeCovmatWhereNew(self, cov2):
         params1 = self.paramNames
@@ -112,8 +112,8 @@ class CovMat:
         plt.pcolor(self.correlation())
         plt.colorbar()
         sz = self.size
-        plt.yticks(np.arange(0.5, sz + .5), list(range(1, sz + 1)))
+        plt.yticks(np.arange(0.5, sz + 0.5), list(range(1, sz + 1)))
         plt.gca().set_yticklabels(self.paramNames)
-        plt.xticks(np.arange(0.5, sz + .5), list(range(1, sz + 1)))
+        plt.xticks(np.arange(0.5, sz + 0.5), list(range(1, sz + 1)))
         plt.xlim([0, sz])
         plt.ylim([0, sz])

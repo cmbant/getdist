@@ -1,12 +1,13 @@
 # JT 2017-19
 
-from importlib import import_module
-from copy import deepcopy
 import logging
-from numbers import Number
-import numpy as np
 import os
-from typing import Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from copy import deepcopy
+from importlib import import_module
+from numbers import Number
+
+import numpy as np
 
 # Conventions
 _label = "label"
@@ -30,11 +31,11 @@ _post = "post"
 
 
 def cobaya_params_file(root):
-    file = root + ('' if root.endswith((os.sep, "/")) else '.') + 'updated.yaml'
+    file = root + ("" if root.endswith((os.sep, "/")) else ".") + "updated.yaml"
     if os.path.exists(file):
         return file
     else:
-        file = root + ('' if root.endswith((os.sep, "/")) else '__') + 'full.yaml'
+        file = root + ("" if root.endswith((os.sep, "/")) else "__") + "full.yaml"
         if os.path.exists(file):
             return file
     return None
@@ -43,15 +44,15 @@ def cobaya_params_file(root):
 def yaml_file_or_dict(file_or_dict) -> Mapping:
     if isinstance(file_or_dict, str):
         from getdist.yaml_tools import yaml_load_file
+
         return yaml_load_file(file_or_dict)
     elif isinstance(file_or_dict, Mapping):
         return file_or_dict
     else:
-        raise ValueError('Cobya parameter input must be a dictionary or filename')
+        raise ValueError("Cobya parameter input must be a dictionary or filename")
 
 
-def MCSamplesFromCobaya(info, collections, name_tag=None,
-                        ignore_rows=0, ini=None, settings=None):
+def MCSamplesFromCobaya(info, collections, name_tag=None, ignore_rows=0, ini=None, settings=None):
     """
     Creates a set of samples from Cobaya's output.
     Parameter names, ranges and labels are taken from the "info" dictionary
@@ -76,8 +77,7 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     try:
         columns = list(collections[0].data)
     except AttributeError:
-        raise TypeError(
-            "The second argument does not appear to be a (list of) samples `Collection`.")
+        raise TypeError("The second argument does not appear to be a (list of) samples `Collection`.")
     if not all(list(c.data) == columns for c in collections[1:]):
         raise ValueError("The given collections don't have the same columns.")
     # Check consistency with info
@@ -85,22 +85,23 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     # if skip burn in *has already been done*
     skip = info.get(_post, {}).get("skip", 0)
     if ignore_rows != 0 and skip != 0:
-        logging.warning("You are asking for rows to be ignored (%r), but some (%r) were "
-                        "already ignored in the original chain.", ignore_rows, skip)
-    var_params = [k for k, v in info_params.items() if
-                  is_sampled_param(v) or is_derived_param(v)]
+        logging.warning(
+            "You are asking for rows to be ignored (%r), but some (%r) were already ignored in the original chain.",
+            ignore_rows,
+            skip,
+        )
+    var_params = [k for k, v in info_params.items() if is_sampled_param(v) or is_derived_param(v)]
     assert set(columns[2:]) == set(var_params), (
-            "Info and collection(s) are not compatible, because their parameters differ: "
-            "the collection(s) have %r and the info has %r. " % (
-                columns[2:], var_params) +
-            "Are you sure that you are using an *updated* info dictionary "
-            "(i.e. the output of `cobaya.run`)?")
+        "Info and collection(s) are not compatible, because their parameters differ: "
+        "the collection(s) have %r and the info has %r. "
+        % (columns[2:], var_params)
+        + "Are you sure that you are using an *updated* info dictionary "
+        "(i.e. the output of `cobaya.run`)?"
+    )
     # We need to use *collection* sorting, not info sorting!
-    names = [p + ("*" if is_derived_param(info_params[p]) else "")
-             for p in columns[2:]]
+    names = [p + ("*" if is_derived_param(info_params[p]) else "") for p in columns[2:]]
     labels = [(info_params[p] or {}).get(_p_label, p) for p in columns[2:]]
-    ranges = {p: get_range(info_params[p]) for p in
-              info_params}  # include fixed parameters not in columns
+    ranges = {p: get_range(info_params[p]) for p in info_params}  # include fixed parameters not in columns
     renames = {p: info_params.get(p, {}).get(_p_renames, []) for p in columns[2:]}
     samples = [c[c.data.columns[2:]].values.astype(np.float64) for c in collections]
     weights = [c[_weight].values.astype(np.float64) for c in collections]
@@ -109,16 +110,31 @@ def MCSamplesFromCobaya(info, collections, name_tag=None,
     temperature = get_sampler_temperature(info)
     label = get_sample_label(info)
     if temperature is not None and temperature != 1:
-        logging.warning("You have loaded a sample with non-unit temperature. "
-                        "Use the 'MCSamples.cool()' method to turn it into a sample from "
-                        "the original posterior before performing statistical analyses, "
-                        "but maybe after thinning the sample with method "
-                        "'MCSamples.thin_indices()'.")
+        logging.warning(
+            "You have loaded a sample with non-unit temperature. "
+            "Use the 'MCSamples.cool()' method to turn it into a sample from "
+            "the original posterior before performing statistical analyses, "
+            "but maybe after thinning the sample with method "
+            "'MCSamples.thin_indices()'."
+        )
     from getdist.mcsamples import MCSamples
-    return MCSamples(samples=samples, weights=weights, loglikes=loglikes, sampler=sampler,
-                     names=names, labels=labels, ranges=ranges, renames=renames,
-                     ignore_rows=ignore_rows, name_tag=name_tag, label=label, ini=ini,
-                     temperature=temperature, settings=settings)
+
+    return MCSamples(
+        samples=samples,
+        weights=weights,
+        loglikes=loglikes,
+        sampler=sampler,
+        names=names,
+        labels=labels,
+        ranges=ranges,
+        renames=renames,
+        ignore_rows=ignore_rows,
+        name_tag=name_tag,
+        label=label,
+        ini=ini,
+        temperature=temperature,
+        settings=settings,
+    )
 
 
 def str_to_list(x):
@@ -158,11 +174,11 @@ def get_info_params(info):
     info_params_full[_minuslogprior] = {_p_label: r"-\log\pi"}
     for prior in priors:
         info_params_full[_minuslogprior + _separator + prior] = {
-            _p_label: r"-\log\pi_\mathrm{" + prior.replace("_", r"\ ") + r"}"}
+            _p_label: r"-\log\pi_\mathrm{" + prior.replace("_", r"\ ") + r"}"
+        }
     info_params_full[_chi2] = {_p_label: r"\chi^2"}
     for like in likes:
-        info_params_full[_chi2 + _separator + like] = {
-            _p_label: r"\chi^2_\mathrm{" + like.replace("_", r"\ ") + r"}"}
+        info_params_full[_chi2 + _separator + like] = {_p_label: r"\chi^2_\mathrm{" + like.replace("_", r"\ ") + r"}"}
     return info_params_full
 
 
@@ -175,10 +191,10 @@ def get_range(param_info):
             prior = {lim: n for lim, n in zip(["min", "max"], prior)}
         elif not isinstance(prior, Mapping):
             raise ValueError(
-                "Format of prior not recognised: %r. " % prior +
-                "Use '[min, max]' or a dictionary following Cobaya's documentation.")
-        info_lims = dict((tag, prior.get(tag))
-                         for tag in ["min", "max", "loc", "scale"])
+                "Format of prior not recognised: %r. " % prior
+                + "Use '[min, max]' or a dictionary following Cobaya's documentation."
+            )
+        info_lims = {tag: prior.get(tag) for tag in ["min", "max", "loc", "scale"]}
         if info_lims["min"] is not None or info_lims["max"] is not None:
             lims = [prior.get("min"), prior.get("max")]
         elif info_lims["loc"] is not None or info_lims["scale"] is not None:
@@ -196,8 +212,7 @@ def get_range(param_info):
             value = float(value)
         except (ValueError, TypeError):
             # e.g. lambda function values
-            lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(
-                param_info or {})
+            lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(param_info or {})
         else:
             lims = (value, value)
     return lims[0] if lims[0] != -np.inf else None, lims[1] if lims[1] != np.inf else None
@@ -258,8 +273,7 @@ def expand_info_param(info_param):
 
 
 def get_sampler_key(filename_or_info, default_sampler_for_chain_type="mcmc"):
-    return list(yaml_file_or_dict(filename_or_info).get(_sampler, [
-        default_sampler_for_chain_type]))[0]
+    return list(yaml_file_or_dict(filename_or_info).get(_sampler, [default_sampler_for_chain_type]))[0]
 
 
 def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):

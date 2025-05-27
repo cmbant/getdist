@@ -5,7 +5,7 @@ __pycache__/
 
 # Distribution / packaging
 env/
-build/
+build*
 develop-eggs/
 dist/
 downloads/
@@ -20,6 +20,14 @@ var/
 .installed.cfg
 *.egg
 .pytest_cache/
+.ruff_cache/
+testfile*
+*.ipynb
+!plot_gallery.ipynb
+mytest.py
+*.lock
+config.ini
+make_latex.py
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
