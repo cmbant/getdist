@@ -714,7 +714,7 @@ class ParamLimit:
         """
         :return: string representation of lower and upper bounds, with text description of the limit type
         """
-        return "{:g} {:g} {}".format(self.lower, self.upper, self.limitTag())
+        return f"{self.lower:g} {self.upper:g} {self.limitTag()}"
 
 
 class MargeStats(ParamResults):
@@ -793,7 +793,7 @@ class MargeStats(ParamResults):
 
         for j, par in enumerate(self.names):
             text += parForm % (self.name(j, True))
-            text += "{:15.7E}{:15.7E}".format(par.mean, par.err)
+            text += f"{par.mean:15.7E}{par.err:15.7E}"
             for lim in par.limits:
                 text += "%15.7E%15.7E  %-5s" % (lim.lower, lim.upper, lim.limitTag())
             text += "   %s\n" % par.label

@@ -948,9 +948,9 @@ def generate_plot():
         chain_dirs = "r'%s'" % chain_dirs.rstrip("\\").rstrip("/")
 
     if override_setting:
-        script_lines += ["g=plots.{}chain_dir={},analysis_settings=analysis_settings)".format(plot_func, chain_dirs)]
+        script_lines += [f"g=plots.{plot_func}chain_dir={chain_dirs},analysis_settings=analysis_settings)"]
     else:
-        script_lines += ["g=plots.{}chain_dir={})".format(plot_func, chain_dirs)]
+        script_lines += [f"g=plots.{plot_func}chain_dir={chain_dirs})"]
 
     script_lines.append("")
 

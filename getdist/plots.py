@@ -4,7 +4,7 @@ import os
 import sys
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
 
 import matplotlib
 
@@ -3277,7 +3277,7 @@ class GetDistPlotter(_BaseObject):
             y = samples[1][filt]
             z = samples[2][filt]
             # split up high-weighted samples into multiple copies
-            weights = weights[filt] / max_weight * dup_fac
+            weights = weights[filt] / max_weight * dup_fac  # type: ignore
             intweights = np.ceil(weights)
             thin_ix = mcsamples.thin_indices(1, intweights)
             x = x[thin_ix]
@@ -3540,7 +3540,7 @@ class GetDistPlotter(_BaseObject):
         ax.scatter(x, y, z, c=colors, depthshade=True, **opts)
 
         if color_bar and not fixed_color:
-            mappable = cm.ScalarMappable(plt.Normalize(colors.min(), colors.max()), cmap=opts["cmap"])
+            mappable = cm.ScalarMappable(colors.Normalize(colors.min(), colors.max()), cmap=opts["cmap"])
             mappable.set_array(colors)
             self.last_colorbar = self.add_colorbar(params[3], mappable=mappable, ax=ax, colorbar_args=colorbar_args)
 

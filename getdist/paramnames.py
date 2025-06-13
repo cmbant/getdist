@@ -111,7 +111,7 @@ class ParamInfo:
 
     def setName(self, name):
         if not isinstance(name, str):
-            raise ValueError('"name" must be a parameter name string not {}: {}'.format(type(name), name))
+            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
         if "*" in name or "?" in name or " " in name or "\t" in name:
             raise ValueError("Parameter names must not contain spaces, * or ?")
         self.name = name
@@ -220,7 +220,7 @@ class ParamList:
 
     def _check_name_str(self, name):
         if not isinstance(name, str):
-            raise ValueError('"name" must be a parameter name string not {}: {}'.format(type(name), name))
+            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
 
     def parWithName(self, name, error=False, renames=None):
         """

@@ -21,7 +21,7 @@ def find_version():
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     init_file = os.path.join(repo_root, "getdist", "__init__.py")
 
-    with open(init_file, "r", encoding="utf-8") as f:
+    with open(init_file, encoding="utf-8") as f:
         for line in f:
             match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', line)
             if match:

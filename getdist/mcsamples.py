@@ -6,7 +6,7 @@ import os
 import pickle
 import time
 from collections.abc import Iterable, Mapping
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 from scipy.stats import norm
@@ -835,16 +835,16 @@ class MCSamples(Chains):
                         div = "%f" % (-np.exp(PCmean[j]))
                     else:
                         div = "%f" % (np.exp(PCmean[j]))
-                    summary += "[{:f}]  ({}/{})^{{{}}}\n".format(u[i][j], label, div, expo)
+                    summary += f"[{u[i][j]:f}]  ({label}/{div})^{{{expo}}}\n"
                 else:
                     expo = "%f" % (sd[j] / u[i][j])
                     if doexp:
-                        summary += "[{:f}]   exp(({}-{:f})/{})\n".format(u[i][j], label, PCmean[j], expo)
+                        summary += f"[{u[i][j]:f}]   exp(({label}-{PCmean[j]:f})/{expo})\n"
                     else:
-                        summary += "[{:f}]   ({}-{:f})/{}\n".format(u[i][j], label, PCmean[j], expo)
+                        summary += f"[{u[i][j]:f}]   ({label}-{PCmean[j]:f})/{expo}\n"
             newmean[i] = self.mean(PCdata[:, i])
             newsd[i] = np.sqrt(self.mean((PCdata[:, i] - newmean[i]) ** 2))
-            summary += "          = {:f} +- {:f}\n".format(newmean[i], newsd[i])
+            summary += f"          = {newmean[i]:f} +- {newsd[i]:f}\n"
             summary += "\n"
             PCAmodeTexts += [summary]
             PCAtext += summary
@@ -2716,7 +2716,7 @@ class MCSamples(Chains):
                 if (par1, par2) not in done2D:
                     plot_num += 1
                     done2D[(par1, par2)] = True
-                    text += "pairs.append(['{}','{}'])\n".format(par1, par2)
+                    text += f"pairs.append(['{par1}','{par2}'])\n"
         text += "g.plots_2d(roots,param_pairs=pairs,filled=True)"
         self._WritePlotFile(filename, self.subplot_size_inch2, text, "_2D", ext)
         return done2D
@@ -2768,7 +2768,7 @@ class MCSamples(Chains):
             f.write(text + "\n")
             ext = ext or self.plot_output
             fname = self.rootname + tag + "." + ext
-            f.write("g.export(os.path.join(r'{}',r'{}'))\n".format(self.out_dir, fname))
+            f.write(f"g.export(os.path.join(r'{self.out_dir}',r'{fname}'))\n")
 
 
 # Useful functions

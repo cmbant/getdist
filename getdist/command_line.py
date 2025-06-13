@@ -361,11 +361,11 @@ def getdist_gui():
 
 
 def getdist_streamlit():
+    import importlib.util
+
     from getdist import gui
 
-    try:
-        import streamlit
-    except ImportError:
+    if importlib.util.find_spec("portalocker") is None:
         print("Please pip install streamlit first")
         return
     path = os.path.join(os.path.dirname(gui.__file__), "streamlit_app.py")

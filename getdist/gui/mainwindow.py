@@ -10,7 +10,6 @@ import signal
 import sys
 import warnings
 from io import BytesIO
-from typing import Optional
 
 import matplotlib
 import matplotlib.colors
@@ -410,9 +409,9 @@ class MainWindow(QMainWindow):
         """
         scale = self.dpiScale()
         if sys.platform in ["darwin", "win32"]:
-            self.setStyleSheet("* {{font-size:{}pt}} QComboBox,QPushButton {{height:{}em}}".format(9, 1.3))
+            self.setStyleSheet(f"* {{font-size:{9}pt}} QComboBox,QPushButton {{height:{1.3}em}}")
         else:
-            self.setStyleSheet("* {{font-size:{}px}} QComboBox,QPushButton {{height:{}em}}".format(12 * scale, 1.3))
+            self.setStyleSheet(f"* {{font-size:{12 * scale}px}} QComboBox,QPushButton {{height:{1.3}em}}")
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.East)
@@ -1069,7 +1068,7 @@ class MainWindow(QMainWindow):
                     if isinstance(value, str):
                         value = '"' + value + '"'
                     script_set = "g.settings.%s =" % key
-                    script_line = "{} {}".format(script_set, value)
+                    script_line = f"{script_set} {value}"
                     last = None
                     for i, line in enumerate(script):
                         if line.startswith(script_set):
@@ -1699,19 +1698,19 @@ class MainWindow(QMainWindow):
                 chain_dirs = "r'%s'" % chain_dirs[0].rstrip("\\").rstrip("/")
 
             if override_setting:
-                script += "g=plots.{}chain_dir={},analysis_settings=analysis_settings)\n".format(plot_func, chain_dirs)
+                script += f"g=plots.{plot_func}chain_dir={chain_dirs},analysis_settings=analysis_settings)\n"
             elif self.iniFile:
                 script += "g=plots.{}chain_dir={}, analysis_settings=r'{}')\n".format(
                     plot_func, chain_dirs, self.iniFile
                 )
             else:
-                script += "g=plots.{}chain_dir={})\n".format(plot_func, chain_dirs)
+                script += f"g=plots.{plot_func}chain_dir={chain_dirs})\n"
 
             if self.custom_plot_settings:
                 for key, value in self.custom_plot_settings.items():
                     if isinstance(value, str):
                         value = '"' + value + '"'
-                    script += "g.settings.{} = {}\n".format(key, value)
+                    script += f"g.settings.{key} = {value}\n"
 
             if len(roots) < 3:
                 script += "roots = %s\n" % roots
@@ -1831,7 +1830,7 @@ class MainWindow(QMainWindow):
                     actionText = "Rectangle plot"
                     script += "xparams = %s\n" % str(items_x)
                     script += "yparams = %s\n" % str(items_y)
-                    logging.debug("Rectangle plot with xparams={} and yparams={}".format(str(items_x), str(items_y)))
+                    logging.debug(f"Rectangle plot with xparams={str(items_x)} and yparams={str(items_y)}")
 
                     setSizeForN(len(items_x), len(items_y))
                     self.plotter.rectangle_plot(items_x, items_y, roots=roots, filled=filled)
@@ -2036,7 +2035,7 @@ class MainWindow(QMainWindow):
             self.clipboardAct.setEnabled(True)
 
         except SyntaxError as e:
-            self.warning("Plot script", type(e).__name__ + ": {}\n {}".format(e, e.text))
+            self.warning("Plot script", type(e).__name__ + f": {e}\n {e.text}")
         except Exception as e:
             self.errorReport(e, caption="Plot script", capture=True)
         finally:

@@ -356,7 +356,7 @@ class UtilTest(unittest.TestCase):
             ax.set_ylim(bounds)
             ticks = ax.get_yticks()
             if len(ticks) != len(expected) or not np.allclose(ticks, expected):
-                raise self.failureException("Wrong ticks {} for bounds {}".format(ticks, bounds))
+                raise self.failureException(f"Wrong ticks {ticks} for bounds {bounds}")
 
         check_ticks([0.0253, 0.02915], [0.026, 0.027, 0.028])
 
@@ -374,7 +374,7 @@ class UtilTest(unittest.TestCase):
             ax.set_xlim(bounds)
             ticks = ax.get_xticks()
             if len(ticks) != len(expected) or not np.allclose(ticks, expected):
-                raise self.failureException("Wrong ticks {} for bounds {}".format(ticks, bounds))
+                raise self.failureException(f"Wrong ticks {ticks} for bounds {bounds}")
 
         check_ticks([-5.2, 5.2], [-4, -2, 0, 2, 4])
         check_ticks([0, 8.2], [0, 2, 4, 6, 8])

@@ -5,10 +5,12 @@ __url__ = "https://getdist.readthedocs.io"
 import os
 import sys
 
-from getdist.chains import WeightedSamples
+from getdist.chains import WeightedSamples as WeightedSamples
 from getdist.inifile import IniFile
-from getdist.mcsamples import MCSamples, loadMCSamples
-from getdist.paramnames import ParamInfo, ParamNames
+from getdist.mcsamples import MCSamples as MCSamples
+from getdist.mcsamples import loadMCSamples as loadMCSamples
+from getdist.paramnames import ParamInfo as ParamInfo
+from getdist.paramnames import ParamNames as ParamNames
 
 
 def get_defaults_file(name="analysis_defaults.ini"):

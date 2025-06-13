@@ -4,7 +4,7 @@ import re
 from collections import namedtuple
 from collections.abc import Sequence
 from copy import deepcopy
-from typing import Any, List, Optional, Union
+from typing import Any
 
 import numpy as np
 

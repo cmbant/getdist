@@ -12,6 +12,19 @@
         "dist/": true,
         "**/_build": true
     },
+    "search.exclude": {
+        ".pytest_cache/": true,
+        ".ruff_cache/": true,
+        ".idea": true,
+        "**/__pycache__/": true,
+        "build*/": true,
+        "default_chains": true,
+        "*.egg*": true,
+        "**/.ipynb_checkpoints": true,
+        "**/_summaries*": true,
+        "dist/": true,
+        "**/_build": true
+    },
     "python.analysis.extraPaths": [
         "${workspaceFolder}"
     ],
@@ -37,7 +50,14 @@
         "reportAttributeAccessIssue": "none",
         "reportCallIssue": "none"
     },
-    "editor.formatOnSave": false,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.ruff": "explicit",
+        "source.organizeImports.ruff": "explicit"
+    },
+    "ruff.organizeImports": true,
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.rulers": [

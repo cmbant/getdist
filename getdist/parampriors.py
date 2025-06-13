@@ -69,7 +69,7 @@ class ParamBounds:
 
     def _check_name(self, name):
         if not isinstance(name, str):
-            raise ValueError('"name" must be a parameter name string not {}: {}'.format(type(name), name))
+            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
 
     def setFixed(self, name, value):
         self.setRange(name, (value, value))

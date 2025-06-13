@@ -5,7 +5,6 @@ This script is executed before the app starts to ensure multiprocessing works co
 
 import multiprocessing
 import multiprocessing.popen_spawn_win32
-import os
 import sys
 
 # Ensure we're using the correct multiprocessing implementation

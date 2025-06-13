@@ -100,7 +100,7 @@ class GridDensity:
         if P is not None:
             for size, ax in zip(P.shape, self.axes):
                 if size != ax.size:
-                    raise DensitiesError("Array size mismatch in Density arrays: P {}, axis {}".format(size, ax.size))
+                    raise DensitiesError(f"Array size mismatch in Density arrays: P {size}, axis {ax.size}")
             self.P = P
         else:
             self.P = np.zeros([ax.size for ax in self.axes])
