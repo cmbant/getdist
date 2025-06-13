@@ -59,7 +59,7 @@ the `Plot Gallery and tutorial <https://getdist.readthedocs.io/en/latest/plot_ga
 
 Dependencies
 =============
-* Python 3.9+
+* Python 3.10+
 * matplotlib
 * scipy
 * PySide6 - optional, only needed for Qt-based GUI
@@ -234,6 +234,10 @@ and references therein as appropriate.
 LLM Integration
 ===================
 For AI assistants and LLM agents working with GetDist, a single-file context document is available at `GetDist LLM Context <https://help.cosmologist.info/api/context/getdist>`_. This document provides a comprehensive overview of GetDist's functionality, common usage patterns, and best practices in a format optimized for LLM context windows.
+
+Contributing
+===================
+Please see our `Contributing Guide <https://github.com/cmbant/getdist/blob/master/CONTRIBUTING.md>`_ for:
 
 ===================
 

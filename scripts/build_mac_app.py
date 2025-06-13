@@ -7,21 +7,20 @@ Usage:
     python scripts/build_mac_app.py [--output-dir OUTPUT_DIR] [--project-dir PROJECT_DIR]
 """
 
+import argparse
 import os
-import sys
+import platform
+import re
 import shutil
 import subprocess
-import argparse
-import re
+import sys
 import tempfile
-import platform
-from pathlib import Path
 
 
 def find_version():
     """Extract version from getdist/__init__.py"""
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    version_file = open(os.path.join(repo_root, 'getdist', '__init__.py')).read()
+    version_file = open(os.path.join(repo_root, "getdist", "__init__.py")).read()
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
@@ -49,40 +48,32 @@ def setup_project_environment(project_dir):
 
         # Create virtual environment with uv
         print("Creating new virtual environment")
-        subprocess.check_call([
-            "uv", "venv", project_dir
-        ])
+        subprocess.check_call(["uv", "venv", project_dir])
 
         # Install packages directly with uv pip
         print("Installing PyInstaller and PySide6")
-        subprocess.check_call([
-            "uv", "pip", "install",
-            "--python", os.path.join(project_dir, "bin", "python"),
-            "PyInstaller", "PySide6"
-        ])
+        subprocess.check_call(
+            ["uv", "pip", "install", "--python", os.path.join(project_dir, "bin", "python"), "PyInstaller", "PySide6"]
+        )
 
         # Install getdist from the current directory
         print("Installing getdist from local repository")
-        subprocess.check_call([
-            "uv", "pip", "install",
-            "--python", os.path.join(project_dir, "bin", "python"),
-            "-e", repo_root
-        ])
+        subprocess.check_call(
+            ["uv", "pip", "install", "--python", os.path.join(project_dir, "bin", "python"), "-e", repo_root]
+        )
 
         print("Dependencies installed successfully!")
     except subprocess.CalledProcessError as e:
         print(f"Failed to install dependencies: {e}")
         sys.exit(1)
 
-    return {
-        "venv_dir": project_dir
-    }
+    return {"venv_dir": project_dir}
 
 
 def build_mac_app(output_dir, version, env_info):
     """Build the Mac app bundle using PyInstaller"""
     # Detect architecture
-    is_arm = platform.machine() == 'arm64'
+    is_arm = platform.machine() == "arm64"
     arch_type = "ARM" if is_arm else "Intel"
 
     print(f"Building Mac app bundle for GetDist GUI v{version} on {arch_type} architecture...")
@@ -225,32 +216,41 @@ app = BUNDLE(
     if not os.path.exists(pyinstaller_path):
         print("PyInstaller not found in bin directory, using module invocation")
         print(f"Running PyInstaller as module with Python from {venv_dir}...")
-        subprocess.check_call([
-            python_path,
-            "-m", "PyInstaller",
-            "--clean",
-            "--noconfirm",  # Automatically answer yes to prompts
-            "--distpath", output_dir,
-            "--workpath", os.path.join(temp_dir, "build"),
-            spec_path
-        ])
+        subprocess.check_call(
+            [
+                python_path,
+                "-m",
+                "PyInstaller",
+                "--clean",
+                "--noconfirm",  # Automatically answer yes to prompts
+                "--distpath",
+                output_dir,
+                "--workpath",
+                os.path.join(temp_dir, "build"),
+                spec_path,
+            ]
+        )
     else:
         print(f"Running PyInstaller from environment {venv_dir}...")
-        subprocess.check_call([
-            python_path,
-            pyinstaller_path,
-            "--clean",
-            "--noconfirm",  # Automatically answer yes to prompts
-            "--distpath", output_dir,
-            "--workpath", os.path.join(temp_dir, "build"),
-            spec_path
-        ])
+        subprocess.check_call(
+            [
+                python_path,
+                pyinstaller_path,
+                "--clean",
+                "--noconfirm",  # Automatically answer yes to prompts
+                "--distpath",
+                output_dir,
+                "--workpath",
+                os.path.join(temp_dir, "build"),
+                spec_path,
+            ]
+        )
 
     # Clean up
     shutil.rmtree(temp_dir)
 
     # Fix Qt frameworks to ensure proper bundle structure
-    app_path = os.path.join(output_dir, 'GetDist GUI.app')
+    app_path = os.path.join(output_dir, "GetDist GUI.app")
     print(f"Fixing Qt frameworks in {app_path}...")
 
     # Run the fix_qt_frameworks.sh script
@@ -269,48 +269,51 @@ app = BUNDLE(
         print("The app may still work, but signing might fail")
 
     # Additional fixes for framework structure
-    frameworks_dir = os.path.join(app_path, 'Contents', 'Frameworks')
+    frameworks_dir = os.path.join(app_path, "Contents", "Frameworks")
     if os.path.exists(frameworks_dir):
         print("Applying additional framework structure fixes...")
 
         # Find all Qt frameworks
         for root, dirs, _ in os.walk(frameworks_dir):
             for dir_name in dirs:
-                if dir_name.endswith('.framework'):
+                if dir_name.endswith(".framework"):
                     framework_path = os.path.join(root, dir_name)
-                    framework_name = os.path.basename(framework_path).replace('.framework', '')
+                    framework_name = os.path.basename(framework_path).replace(".framework", "")
 
                     # Create Info.plist if missing
-                    resources_dir = os.path.join(framework_path, 'Resources')
-                    versions_dir = os.path.join(framework_path, 'Versions')
+                    resources_dir = os.path.join(framework_path, "Resources")
+                    versions_dir = os.path.join(framework_path, "Versions")
 
                     # Check if this is a versioned framework
                     if os.path.exists(versions_dir):
                         # Find the current version (usually 'A' or '5' for Qt)
-                        version_dirs = [d for d in os.listdir(versions_dir)
-                                       if os.path.isdir(os.path.join(versions_dir, d)) and d != 'Current']
+                        version_dirs = [
+                            d
+                            for d in os.listdir(versions_dir)
+                            if os.path.isdir(os.path.join(versions_dir, d)) and d != "Current"
+                        ]
 
                         if version_dirs:
                             current_version = version_dirs[0]
                             current_dir = os.path.join(versions_dir, current_version)
 
                             # Create symlink to Current if missing
-                            current_symlink = os.path.join(versions_dir, 'Current')
+                            current_symlink = os.path.join(versions_dir, "Current")
                             if not os.path.exists(current_symlink):
                                 print(f"  Creating 'Current' symlink in {framework_path}")
                                 os.symlink(current_version, current_symlink)
 
                             # Create Resources directory if missing
-                            version_resources = os.path.join(current_dir, 'Resources')
+                            version_resources = os.path.join(current_dir, "Resources")
                             if not os.path.exists(version_resources):
                                 os.makedirs(version_resources, exist_ok=True)
 
                             # Create Info.plist if missing
-                            info_plist = os.path.join(version_resources, 'Info.plist')
+                            info_plist = os.path.join(version_resources, "Info.plist")
                             if not os.path.exists(info_plist):
                                 print(f"  Creating Info.plist for {framework_name}")
-                                with open(info_plist, 'w', encoding='utf-8') as f:
-                                    f.write(f'''<?xml version="1.0" encoding="UTF-8"?>
+                                with open(info_plist, "w", encoding="utf-8") as f:
+                                    f.write(f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -329,13 +332,13 @@ app = BUNDLE(
     <key>CFBundleVersion</key>
     <string>1.0</string>
 </dict>
-</plist>''')
+</plist>""")
 
                             # Create symlink to Resources if missing
-                            resources_symlink = os.path.join(framework_path, 'Resources')
+                            resources_symlink = os.path.join(framework_path, "Resources")
                             if not os.path.exists(resources_symlink):
                                 print(f"  Creating 'Resources' symlink in {framework_path}")
-                                os.symlink('Versions/Current/Resources', resources_symlink)
+                                os.symlink("Versions/Current/Resources", resources_symlink)
 
                             # Create symlink to the framework binary if missing
                             binary_path = os.path.join(current_dir, framework_name)
@@ -343,18 +346,18 @@ app = BUNDLE(
                                 binary_symlink = os.path.join(framework_path, framework_name)
                                 if not os.path.exists(binary_symlink):
                                     print(f"  Creating binary symlink for {framework_name}")
-                                    os.symlink(f'Versions/Current/{framework_name}', binary_symlink)
+                                    os.symlink(f"Versions/Current/{framework_name}", binary_symlink)
                     else:
                         # Non-versioned framework
                         if not os.path.exists(resources_dir):
                             os.makedirs(resources_dir, exist_ok=True)
 
                         # Create Info.plist if missing
-                        info_plist = os.path.join(resources_dir, 'Info.plist')
+                        info_plist = os.path.join(resources_dir, "Info.plist")
                         if not os.path.exists(info_plist):
                             print(f"  Creating Info.plist for {framework_name}")
-                            with open(info_plist, 'w', encoding='utf-8') as f:
-                                f.write(f'''<?xml version="1.0" encoding="UTF-8"?>
+                            with open(info_plist, "w", encoding="utf-8") as f:
+                                f.write(f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -373,7 +376,7 @@ app = BUNDLE(
     <key>CFBundleVersion</key>
     <string>1.0</string>
 </dict>
-</plist>''')
+</plist>""")
 
     print(f"Mac app bundle built successfully at {app_path}")
 

@@ -16,20 +16,18 @@ Options:
     --output: Output file path
 """
 
-import os
-import sys
-import subprocess
 import argparse
 import glob
-import traceback
+import os
 import shutil
+import subprocess
+import sys
+import traceback
 
 
 def parse_args():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Build Sphinx documentation in Markdown format for LLM context."
-    )
+    parser = argparse.ArgumentParser(description="Build Sphinx documentation in Markdown format for LLM context.")
     parser.add_argument(
         "--exclude",
         type=str,
@@ -56,13 +54,13 @@ def build_markdown_docs():
     temp_conf_dir = os.path.join(os.path.dirname(build_dir), "temp_conf")
     os.makedirs(temp_conf_dir, exist_ok=True)
     temp_conf_path = os.path.join(temp_conf_dir, "conf.py")
-    with open("docs/source/conf.py", "r", encoding="utf-8") as f:
+    with open("docs/source/conf.py", encoding="utf-8") as f:
         conf_content = f.read()
 
     # Disable intersphinx extension for markdown build
     conf_content = conf_content.replace(
         "'sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode', 'sphinx.ext.autosummary',",
-        "'sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.autosummary',"
+        "'sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.autosummary',",
     )
 
     with open(temp_conf_path, "w", encoding="utf-8") as f:
@@ -101,7 +99,7 @@ def build_markdown_docs():
 def extract_toctree_order(index_rst_path="docs/source/index.rst"):
     """Extract the order of files from the index.rst toctree."""
     try:
-        with open(index_rst_path, "r", encoding="utf-8") as f:
+        with open(index_rst_path, encoding="utf-8") as f:
             content = f.read()
 
         # Find all toctree sections
@@ -109,13 +107,13 @@ def extract_toctree_order(index_rst_path="docs/source/index.rst"):
         current_section = []
         in_toctree = False
 
-        for line in content.split('\n'):
+        for line in content.split("\n"):
             line = line.strip()
-            if '.. toctree::' in line:
+            if ".. toctree::" in line:
                 in_toctree = True
                 current_section = []
             elif in_toctree:
-                if line and not line.startswith(':'):
+                if line and not line.startswith(":"):
                     # This is a document reference in the toctree
                     current_section.append(line)
                 elif not line and current_section:
@@ -224,13 +222,13 @@ def combine_markdown_files(build_dir, exclude_files, output_file):
         for file_path in filtered_files:
             file_name = os.path.basename(file_path)
             section_name = os.path.splitext(file_name)[0]
-            link_name = 'https://getdist.readthedocs.io/en/latest/' + section_name + '.html'
+            link_name = "https://getdist.readthedocs.io/en/latest/" + section_name + ".html"
 
             print(f"  Adding {section_name}...")
             outfile.write(f"## {link_name}\n\n")
 
             # Add file content
-            with open(file_path, "r", encoding="utf-8") as infile:
+            with open(file_path, encoding="utf-8") as infile:
                 content = infile.read()
                 outfile.write(content)
                 outfile.write("\n\n")
@@ -250,12 +248,7 @@ def convert_plot_gallery_to_markdown():
 
     # Run jupytext to convert the notebook to markdown
     result = subprocess.run(
-        [
-            "jupytext",
-            "--to", "md",
-            "--opt", "notebook_metadata_filter=-all",
-            notebook_path
-        ],
+        ["jupytext", "--to", "md", "--opt", "notebook_metadata_filter=-all", notebook_path],
         check=False,
         capture_output=True,
         text=True,
@@ -308,7 +301,7 @@ def main():
             print(f"Appending plot_gallery.md to {args.output}...")
             with open(args.output, "a", encoding="utf-8") as outfile:
                 outfile.write("## Usage examples from plot_gallery jupyter notebook \n\n")
-                with open(plot_gallery_md, "r", encoding="utf-8") as infile:
+                with open(plot_gallery_md, encoding="utf-8") as infile:
                     content = infile.read()
                     outfile.write(content)
 

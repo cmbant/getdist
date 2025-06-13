@@ -1,5 +1,5 @@
-import os
 import fnmatch
+import os
 from itertools import chain
 
 
@@ -20,8 +20,9 @@ def makeList(roots):
 def escapeLatex(text):
     if text:
         import matplotlib
-        if matplotlib.rcParams['text.usetex']:
-            return text.replace('_', '{\\textunderscore}')
+
+        if matplotlib.rcParams["text.usetex"]:
+            return text.replace("_", "{\\textunderscore}")
     return text
 
 
@@ -38,8 +39,7 @@ def mergeRenames(*dicts, **kwargs):
     keep_names_1st = kwargs.pop("keep_names_1st", False)
     if kwargs:
         raise ValueError("kwargs not recognized: %r" % kwargs)
-    sets = list(chain(*[[set([k] + (makeList(v or [])))
-                         for k, v in dic.items()] for dic in dicts]))
+    sets = list(chain(*[[set([k] + (makeList(v or []))) for k, v in dic.items()] for dic in dicts]))
     # If two sets have elements in common, join them.
     something_changed = True
     out = []
@@ -76,13 +76,12 @@ class ParamInfo:
     :ivar isDerived: True if a derived parameter, False otherwise (e.g. for MCMC parameters)
     """
 
-    def __init__(self, line=None, name='', label='', comment='', derived=False,
-                 renames=None, number=None):
+    def __init__(self, line=None, name="", label="", comment="", derived=False, renames=None, number=None):
         self.setName(name)
         self.isDerived = derived
         self.label = label or name
         self.comment = comment
-        self.filenameLoadedFrom = ''
+        self.filenameLoadedFrom = ""
         self.number = number
         self.renames = makeList(renames or [])
         if line is not None:
@@ -97,24 +96,24 @@ class ParamInfo:
     def setFromString(self, line):
         items = line.split(None, 1)
         name = items[0]
-        if name.endswith('*'):
-            name = name.strip('*')
+        if name.endswith("*"):
+            name = name.strip("*")
             self.isDerived = True
         self.setName(name)
         if len(items) > 1:
-            tmp = items[1].split('#', 1)
-            self.label = tmp[0].strip().replace('!', '\\')
+            tmp = items[1].split("#", 1)
+            self.label = tmp[0].strip().replace("!", "\\")
             if len(tmp) > 1:
                 self.comment = tmp[1].strip()
             else:
-                self.comment = ''
+                self.comment = ""
         return self
 
     def setName(self, name):
         if not isinstance(name, str):
-            raise ValueError('"name" must be a parameter name string not %s: %s' % (type(name), name))
-        if '*' in name or '?' in name or ' ' in name or '\t' in name:
-            raise ValueError('Parameter names must not contain spaces, * or ?')
+            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
+        if "*" in name or "?" in name or " " in name or "\t" in name:
+            raise ValueError("Parameter names must not contain spaces, * or ?")
         self.name = name
 
     def getLabel(self):
@@ -125,22 +124,22 @@ class ParamInfo:
 
     def latexLabel(self):
         if self.label:
-            return '$' + self.label + '$'
+            return "$" + self.label + "$"
         else:
             return self.name
 
     def setFromStringWithComment(self, items):
         self.setFromString(items[0])
-        if items[1] != 'NULL':
+        if items[1] != "NULL":
             self.comment = items[1]
 
     def string(self, wantComments=True):
         res = self.name
         if self.isDerived:
-            res += '*'
-        res = res + '\t' + self.label
-        if wantComments and self.comment != '':
-            res = res + '\t#' + self.comment
+            res += "*"
+        res = res + "\t" + self.label
+        if wantComments and self.comment != "":
+            res = res + "\t#" + self.comment
         return res
 
     def __str__(self):
@@ -153,6 +152,7 @@ class ParamList:
 
     :ivar names: list of :class:`ParamInfo` objects
     """
+
     loadFromFile: callable
 
     def __init__(self, fileName=None, setParamNameFile=None, default=0, names=None, labels=None):
@@ -177,7 +177,7 @@ class ParamList:
             self.setLabels(labels)
 
     def setDefault(self, n):
-        self.names = [ParamInfo(name='param' + str(i + 1), label='p_{' + str(i + 1) + '}') for i in range(n)]
+        self.names = [ParamInfo(name="param" + str(i + 1), label="p_{" + str(i + 1) + "}") for i in range(n)]
         return self
 
     def setWithNames(self, names):
@@ -220,7 +220,7 @@ class ParamList:
 
     def _check_name_str(self, name):
         if not isinstance(name, str):
-            raise ValueError('"name" must be a parameter name string not %s: %s' % (type(name), name))
+            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
 
     def parWithName(self, name, error=False, renames=None):
         """
@@ -236,8 +236,11 @@ class ParamList:
         if renames:
             given_names.update(makeList(renames.get(name, [])))
         for par in self.names:
-            known_names = set([par.name] + makeList(getattr(par, 'renames', [])) +
-                              (makeList(renames.get(par.name, [])) if renames else []))
+            known_names = set(
+                [par.name]
+                + makeList(getattr(par, "renames", []))
+                + (makeList(renames.get(par.name, [])) if renames else [])
+            )
             if known_names.intersection(given_names):
                 return par
         if error:
@@ -280,7 +283,7 @@ class ParamList:
             if isinstance(name, ParamInfo):
                 res.append(name)
             else:
-                if '?' in name or '*' in name:
+                if "?" in name or "*" in name:
                     res += self.getMatches(name)
                 else:
                     res.append(self.parWithName(name, error, renames))
@@ -315,23 +318,24 @@ class ParamList:
         """
         Gets dictionary of renames known to each parameter.
         """
-        return {param.name: getattr(param, "renames", [])
-                for param in self.names
-                if (getattr(param, "renames", False) or keep_empty)}
+        return {
+            param.name: getattr(param, "renames", [])
+            for param in self.names
+            if (getattr(param, "renames", False) or keep_empty)
+        }
 
     def updateRenames(self, renames):
         """
         Updates the renames known to each parameter with the given dictionary of renames.
         """
-        merged_renames = mergeRenames(
-            self.getRenames(keep_empty=True), renames, keep_names_1st=True)
+        merged_renames = mergeRenames(self.getRenames(keep_empty=True), renames, keep_names_1st=True)
         known_names = self.list()
         for name, rename in merged_renames.items():
             if name in known_names:
                 self.parWithName(name).renames = rename
 
     def fileList(self, fname):
-        with open(fname, encoding='utf-8-sig') as f:
+        with open(fname, encoding="utf-8-sig") as f:
             textFileLines = f.readlines()
         return textFileLines
 
@@ -356,10 +360,10 @@ class ParamList:
         :param name: name tag for the new parameter
         :param kwargs: other arguments for constructing the new :class:`ParamInfo`
         """
-        if kwargs.get('derived') is None:
-            kwargs['derived'] = True
+        if kwargs.get("derived") is None:
+            kwargs["derived"] = True
         self._check_name_str(name)
-        kwargs['name'] = name
+        kwargs["name"] = name
         self.names.append(ParamInfo(**kwargs))
         return self.names[-1]
 
@@ -373,14 +377,14 @@ class ParamList:
     def name(self, ix, tag_derived=False):
         par = self.names[ix]
         if tag_derived and par.isDerived:
-            return par.name + '*'
+            return par.name + "*"
         else:
             return par.name
 
     def __str__(self):
-        text = ''
+        text = ""
         for par in self.names:
-            text += par.string() + '\n'
+            text += par.string() + "\n"
         return text
 
     def saveAsText(self, filename):
@@ -389,7 +393,7 @@ class ParamList:
 
         :param filename: filename to save to
         """
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(str(self))
 
     def getDerivedNames(self):
@@ -424,39 +428,52 @@ class ParamNames(ParamList):
 
         self.filenameLoadedFrom = os.path.split(fileName)[1]
         extension = os.path.splitext(fileName)[-1]
-        if extension == '.paramnames':
-            with open(fileName, encoding='utf-8-sig') as f:
-                self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != '']
-        elif extension.lower() in ('.yaml', '.yml'):
+        if extension == ".paramnames":
+            with open(fileName, encoding="utf-8-sig") as f:
+                self.names = [ParamInfo(line) for line in [s.strip() for s in f] if line != ""]
+        elif extension.lower() in (".yaml", ".yml"):
             from getdist import yaml_tools
-            from getdist.cobaya_interface import get_info_params, is_sampled_param
-            from getdist.cobaya_interface import is_derived_param, _p_label, _p_renames
+            from getdist.cobaya_interface import (
+                _p_label,
+                _p_renames,
+                get_info_params,
+                is_derived_param,
+                is_sampled_param,
+            )
+
             self.info_dict = yaml_tools.yaml_load_file(fileName)
             info_params = get_info_params(self.info_dict)
             # first sampled, then derived
-            self.names = [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
-                                    renames=(info or {}).get(_p_renames))
-                          for param, info in info_params.items() if is_sampled_param(info)]
-            self.names += [ParamInfo(name=param, label=(info or {}).get(_p_label, param),
-                                     renames=(info or {}).get(_p_renames), derived=True)
-                           for param, info in info_params.items() if is_derived_param(info)]
+            self.names = [
+                ParamInfo(name=param, label=(info or {}).get(_p_label, param), renames=(info or {}).get(_p_renames))
+                for param, info in info_params.items()
+                if is_sampled_param(info)
+            ]
+            self.names += [
+                ParamInfo(
+                    name=param,
+                    label=(info or {}).get(_p_label, param),
+                    renames=(info or {}).get(_p_renames),
+                    derived=True,
+                )
+                for param, info in info_params.items()
+                if is_derived_param(info)
+            ]
         else:
-            raise ValueError('ParanNames must be loaded from .paramnames or .yaml/.yml file, '
-                             'found %s' % fileName)
+            raise ValueError("ParanNames must be loaded from .paramnames or .yaml/.yml file, found %s" % fileName)
 
     def loadFromKeyWords(self, keywordProvider):
-        num_params_used = keywordProvider.keyWord_int('num_params_used')
-        num_derived_params = keywordProvider.keyWord_int('num_derived_params')
+        num_params_used = keywordProvider.keyWord_int("num_params_used")
+        num_derived_params = keywordProvider.keyWord_int("num_derived_params")
         nparam = num_params_used + num_derived_params
         for i in range(nparam):
             info = ParamInfo()
-            info.setFromStringWithComment(keywordProvider.keyWordAndComment('param_' + str(i + 1)))
+            info.setFromStringWithComment(keywordProvider.keyWordAndComment("param_" + str(i + 1)))
             self.names.append(info)
         return nparam
 
     def saveKeyWords(self, keywordProvider):
-        keywordProvider.setKeyWord_int('num_params_used', len(self.names) - self.numDerived())
-        keywordProvider.setKeyWord_int('num_derived_params', self.numDerived())
+        keywordProvider.setKeyWord_int("num_params_used", len(self.names) - self.numDerived())
+        keywordProvider.setKeyWord_int("num_derived_params", self.numDerived())
         for i, name in enumerate(self.names):
-            keywordProvider.setKeyWord('param_' + str(i + 1), name.string(False).replace('\\', '!'),
-                                       name.comment)
+            keywordProvider.setKeyWord("param_" + str(i + 1), name.string(False).replace("\\", "!"), name.comment)

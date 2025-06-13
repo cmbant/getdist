@@ -1,25 +1,74 @@
 {
+    "files.exclude": {
+        ".pytest_cache/": true,
+        ".ruff_cache/": true,
+        ".idea": true,
+        "**/__pycache__/": true,
+        "build*/": true,
+        "default_chains": true,
+        "*.egg*": true,
+        "**/.ipynb_checkpoints": true,
+        "**/_summaries*": true,
+        "dist/": true,
+        "**/_build": true,
+        "**/uk.lock": true
+    },
+    "search.exclude": {
+        ".pytest_cache/": true,
+        ".ruff_cache/": true,
+        ".idea": true,
+        "**/__pycache__/": true,
+        "build*/": true,
+        "default_chains": true,
+        "*.egg*": true,
+        "**/.ipynb_checkpoints": true,
+        "**/_summaries*": true,
+        "dist/": true,
+        "**/_build": true,
+        "**/uk.lock": true
+    },
     "python.analysis.extraPaths": [
         "${workspaceFolder}"
     ],
-    "flake8.args": [
-        "--select=E713,E704,E703,E714,E10,E11,E20,E22,E23,E25,E27,E301,E302,E304,E9,F405,F406,F5,F6,F7,F8,W1,W2,W3,W6",
-        "--extend-ignore=E101,E111,E112,E113,E114,E115,E116,E117,E121,E122,E123,E124,E125,E126,E127,E128,E129,E131,E133,E201,E202,E203,E211,E221,E222,E223,E224,E225,E226,E227,E228,E231,E241,E242,E251,E261,E262,E265,E266,E271,E272,E273,E274,E275,E401,E402,E501,E502,E701,E702,E711,E712,E721,E722,E731,E741,E742,E743,E901,E902,E999,F401,F402,F403,F404,F811,F812,F821,F822,F823,F831,F841,F901,W191,W291,W292,W293,W391,W503,W504,W601,W602,W603,W604,W605,W606",
-        "--show-source",
-        "--statistics",
-        "--max-line-length=120",
-        "--exclude=.git,__pycache__,build,dist,docs,test_lint.py"
-    ],
-    "pylint.args": [
-        "--max-line-length=120",
-        "--disable=C0111"
-    ],
-    "editor.formatOnSave": false,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportGeneralTypeIssues": "none",
+        "reportOptionalMemberAccess": "none",
+        "reportOptionalSubscript": "none",
+        "reportOptionalOperand": "none",
+        "reportOptionalIterable": "none",
+        "reportUnknownMemberType": "none",
+        "reportUnknownArgumentType": "none",
+        "reportUnknownVariableType": "none",
+        "reportUnknownParameterType": "none",
+        "reportMissingTypeStubs": "none",
+        "reportUnknownLambdaType": "none",
+        "reportImportCycles": "none",
+        "reportOptionalCall": "none",
+        "reportOptionalContextManager": "none",
+        "reportTypedDictNotRequiredAccess": "none",
+        "reportArgumentType": "none",
+        "reportOperatorIssue": "none",
+        "reportAttributeAccessIssue": "none",
+        "reportCallIssue": "none"
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.ruff": "explicit",
+        "source.organizeImports.ruff": "explicit"
+    },
+    "ruff.organizeImports": true,
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
     "[python]": {
-        "editor.defaultFormatter": "ms-python.python",
-        "editor.rulers": [120],
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.rulers": [
+            120
+        ],
+        "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
+            "source.organizeImports": "explicit",
+            "source.fixAll": "explicit"
         }
     },
     "python.terminal.activateEnvironment": true,
@@ -29,6 +78,5 @@
     "debug.toolBarLocation": "docked",
     "debug.showInStatusBar": "always",
     "debug.inlineValues": "on",
-    "debug.allowBreakpointsEverywhere": true,
-    "debugpy.debugJustMyCode": false
+    "debug.allowBreakpointsEverywhere": true
 }

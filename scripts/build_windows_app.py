@@ -9,11 +9,11 @@ Usage:
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import re
 
 
 def find_version():
@@ -21,7 +21,7 @@ def find_version():
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     init_file = os.path.join(repo_root, "getdist", "__init__.py")
 
-    with open(init_file, "r", encoding="utf-8") as f:
+    with open(init_file, encoding="utf-8") as f:
         for line in f:
             match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', line)
             if match:
@@ -45,36 +45,23 @@ def setup_project_environment(project_dir):
 
         # Create virtual environment with uv, explicitly using Python 3.10
         print("Creating new virtual environment with Python 3.10")
-        subprocess.check_call([
-            "uv", "venv", "--python", "3.10", project_dir
-        ])
+        subprocess.check_call(["uv", "venv", "--python", "3.10", project_dir])
 
         # Install packages directly with uv pip
         print("Installing PyInstaller and PySide6")
         python_path = os.path.join(project_dir, "Scripts", "python.exe")
-        subprocess.check_call([
-            "uv", "pip", "install",
-            "--python", python_path,
-            "PyInstaller", "PySide6"
-        ])
+        subprocess.check_call(["uv", "pip", "install", "--python", python_path, "PyInstaller", "PySide6"])
 
         # Install getdist from the current directory
         print("Installing getdist from local repository")
-        subprocess.check_call([
-            "uv", "pip", "install",
-            "--python", python_path,
-            "-e", repo_root
-        ])
+        subprocess.check_call(["uv", "pip", "install", "--python", python_path, "-e", repo_root])
 
         print("Dependencies installed successfully!")
     except subprocess.CalledProcessError as e:
         print(f"Failed to install dependencies: {e}")
         sys.exit(1)
 
-    return {
-        "venv_dir": project_dir,
-        "python_path": python_path
-    }
+    return {"venv_dir": project_dir, "python_path": python_path}
 
 
 def build_windows_app(output_dir, version, env_info):
@@ -123,7 +110,7 @@ def build_windows_app(output_dir, version, env_info):
     # Add image files individually
     if os.path.exists(images_dir):
         for file in os.listdir(images_dir):
-            if file.endswith('.png'):
+            if file.endswith(".png"):
                 src = os.path.join(images_dir, file)
                 data_entries.append(f"(r'{src}', 'getdist/gui/images')")
 
@@ -139,12 +126,12 @@ def build_windows_app(output_dir, version, env_info):
     # Add style files individually
     if os.path.exists(styles_dir):
         for file in os.listdir(styles_dir):
-            if file.endswith('.paramnames') or file.endswith('.sty'):
+            if file.endswith(".paramnames") or file.endswith(".sty"):
                 src = os.path.join(styles_dir, file)
                 data_entries.append(f"(r'{src}', 'getdist/styles')")
 
     # Join all data entries
-    data_entries_str = ',\n        '.join(data_entries)
+    data_entries_str = ",\n        ".join(data_entries)
 
     spec_content = f"""# -*- mode: python ; coding: utf-8 -*-
 
@@ -238,35 +225,47 @@ coll = COLLECT(
     if not os.path.exists(pyinstaller_path):
         print("PyInstaller not found in Scripts directory, using module invocation")
         print(f"Running PyInstaller as module with Python from {venv_dir}...")
-        subprocess.check_call([
-            python_path,
-            "-m", "PyInstaller",
-            "--clean",
-            "--noconfirm",  # Automatically answer yes to prompts
-            "--distpath", output_dir,
-            "--workpath", os.path.join(temp_dir, "build"),
-            # Add additional options to ensure correct Python version
-            "--log-level", "DEBUG",  # More verbose logging
-            spec_path
-        ])
+        subprocess.check_call(
+            [
+                python_path,
+                "-m",
+                "PyInstaller",
+                "--clean",
+                "--noconfirm",  # Automatically answer yes to prompts
+                "--distpath",
+                output_dir,
+                "--workpath",
+                os.path.join(temp_dir, "build"),
+                # Add additional options to ensure correct Python version
+                "--log-level",
+                "DEBUG",  # More verbose logging
+                spec_path,
+            ]
+        )
     else:
         print(f"Running PyInstaller from environment {venv_dir}...")
-        subprocess.check_call([
-            python_path,
-            pyinstaller_path,
-            "--clean",
-            "--noconfirm",  # Automatically answer yes to prompts
-            "--distpath", output_dir,
-            "--workpath", os.path.join(temp_dir, "build"),
-            # Add additional options to ensure correct Python version
-            "--log-level", "DEBUG",  # More verbose logging
-            spec_path
-        ])
+        subprocess.check_call(
+            [
+                python_path,
+                pyinstaller_path,
+                "--clean",
+                "--noconfirm",  # Automatically answer yes to prompts
+                "--distpath",
+                output_dir,
+                "--workpath",
+                os.path.join(temp_dir, "build"),
+                # Add additional options to ensure correct Python version
+                "--log-level",
+                "DEBUG",  # More verbose logging
+                spec_path,
+            ]
+        )
 
     # Clean up
     shutil.rmtree(temp_dir)
 
     print(f"Windows executable built successfully in {output_dir}\\GetDistGUI")
+
 
 def main():
     """Main function to parse arguments and build the app"""

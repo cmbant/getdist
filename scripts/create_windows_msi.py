@@ -14,12 +14,12 @@ Usage:
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import uuid
-import re
 
 
 def find_version():
@@ -27,7 +27,7 @@ def find_version():
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     init_file = os.path.join(repo_root, "getdist", "__init__.py")
 
-    with open(init_file, "r", encoding="utf-8") as f:
+    with open(init_file, encoding="utf-8") as f:
         for line in f:
             match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', line)
             if match:
@@ -44,6 +44,7 @@ def check_wix_installed():
         return True
     except subprocess.CalledProcessError:
         return False
+
 
 def create_wix_files(input_dir, output_dir, version):
     """Create WiX source files for the installer"""
@@ -135,14 +136,26 @@ def create_wix_files(input_dir, output_dir, version):
     # Create a components file using heat.exe
     components_wxs_path = os.path.join(temp_dir, "GetDistGUIComponents.wxs")
 
-    subprocess.check_call([
-        "heat", "dir", input_dir,
-        "-nologo", "-sfrag", "-srd", "-sreg",
-        "-gg", "-cg", "ProductComponents",
-        "-dr", "INSTALLFOLDER",
-        "-var", "var.SourceDir",
-        "-out", components_wxs_path
-    ])
+    subprocess.check_call(
+        [
+            "heat",
+            "dir",
+            input_dir,
+            "-nologo",
+            "-sfrag",
+            "-srd",
+            "-sreg",
+            "-gg",
+            "-cg",
+            "ProductComponents",
+            "-dr",
+            "INSTALLFOLDER",
+            "-var",
+            "var.SourceDir",
+            "-out",
+            components_wxs_path,
+        ]
+    )
 
     return temp_dir, wxs_path, components_wxs_path
 
@@ -152,27 +165,26 @@ def build_msi(temp_dir, wxs_path, components_wxs_path, input_dir, output_dir, ve
     print("Building MSI installer...")
 
     # Compile the WiX source files
-    subprocess.check_call([
-        "candle",
-        "-nologo",
-        "-dSourceDir=" + input_dir,
-        wxs_path,
-        components_wxs_path,
-        "-out", temp_dir + "\\"
-    ])
+    subprocess.check_call(
+        ["candle", "-nologo", "-dSourceDir=" + input_dir, wxs_path, components_wxs_path, "-out", temp_dir + "\\"]
+    )
 
     # Link the compiled objects into an MSI
     msi_path = os.path.join(output_dir, f"GetDist-GUI-{version}.msi")
 
-    subprocess.check_call([
-        "light",
-        "-nologo",
-        "-ext", "WixUIExtension",
-        "-cultures:en-us",
-        "-out", msi_path,
-        os.path.join(temp_dir, "GetDistGUI.wixobj"),
-        os.path.join(temp_dir, "GetDistGUIComponents.wixobj")
-    ])
+    subprocess.check_call(
+        [
+            "light",
+            "-nologo",
+            "-ext",
+            "WixUIExtension",
+            "-cultures:en-us",
+            "-out",
+            msi_path,
+            os.path.join(temp_dir, "GetDistGUI.wixobj"),
+            os.path.join(temp_dir, "GetDistGUIComponents.wixobj"),
+        ]
+    )
 
     print(f"MSI installer created at {msi_path}")
     return msi_path
@@ -181,7 +193,9 @@ def build_msi(temp_dir, wxs_path, components_wxs_path, input_dir, output_dir, ve
 def main():
     """Main function to parse arguments and create the MSI installer"""
     parser = argparse.ArgumentParser(description="Create an MSI installer for GetDist GUI")
-    parser.add_argument("--input-dir", default="dist/GetDistGUI", help="Input directory containing the PyInstaller output")
+    parser.add_argument(
+        "--input-dir", default="dist/GetDistGUI", help="Input directory containing the PyInstaller output"
+    )
     parser.add_argument("--output-dir", default="dist", help="Output directory for the MSI installer")
     parser.add_argument("--version", default=None, help="Version number for the installer")
     args = parser.parse_args()
@@ -198,8 +212,8 @@ def main():
 
     # Check if WiX is installed
     if not check_wix_installed():
-            print("Error: WiX Toolset is required to create MSI installers.")
-            sys.exit(1)
+        print("Error: WiX Toolset is required to create MSI installers.")
+        sys.exit(1)
 
     # Create output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
@@ -217,7 +231,7 @@ def main():
         sys.exit(1)
     finally:
         # Clean up temporary files
-        if 'temp_dir' in locals():
+        if "temp_dir" in locals():
             shutil.rmtree(temp_dir)
 
 
