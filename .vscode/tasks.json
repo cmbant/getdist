@@ -27,17 +27,6 @@
             "problemMatcher": []
         },
         {
-            "label": "Run GetDist Tests (pytest)",
-            "type": "shell",
-            "command": "python -m pytest getdist/tests/getdist_test.py -v",
-            "group": "test",
-            "presentation": {
-                "reveal": "always",
-                "panel": "new"
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "Run All Tests",
             "type": "shell",
             "command": "python -m pytest",

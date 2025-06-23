@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run Streamlit App",
+            "name": "Streamlit App",
             "type": "debugpy",
             "request": "launch",
             "module": "streamlit",
@@ -32,33 +32,16 @@
             "python": "${command:python.interpreterPath}"
         },
         {
-            "name": "Debug Streamlit App (Skip Dunder Methods)",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "streamlit",
-            "args": [
-                "run",
-                "getdist/gui/streamlit_app.py",
-                "--server.runOnSave=true"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "showReturnValue": true,
-            "redirectOutput": true,
-            "python": "${command:python.interpreterPath}",
-            "purpose": ["debug-in-terminal"]
-        },
-        {
             "name": "Python: Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "python": "${command:python.interpreterPath}"
         },
         {
-            "name": "Run GetDist Tests",
+            "name": "GetDist Tests",
             "type": "debugpy",
             "request": "launch",
             "module": "unittest",
@@ -77,37 +60,6 @@
             "module": "unittest",
             "args": [
                 "getdist.tests.getdist_test"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "showReturnValue": true,
-            "redirectOutput": true,
-            "python": "${command:python.interpreterPath}",
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Run GetDist Tests (pytest)",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "pytest",
-            "args": [
-                "getdist/tests/getdist_test.py",
-                "-v"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "python": "${command:python.interpreterPath}",
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Debug GetDist Tests (pytest)",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "pytest",
-            "args": [
-                "getdist/tests/getdist_test.py",
-                "-v",
-                "-s"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
