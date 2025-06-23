@@ -145,7 +145,7 @@ class IniFile:
         def asIniText(value):
             if isinstance(value, str):
                 return value
-            if type(value) == bool:
+            if isinstance(value, bool):
                 return str(value)[0]
             return str(value)
 
@@ -200,11 +200,11 @@ class IniFile:
 
     def asType(self, name, tp, default=None, allowEmpty=False):
         if self.isSet(name, allowEmpty):
-            if tp == bool:
+            if tp is bool:
                 return self.bool(name, default)
-            elif tp == list:
+            elif tp is list:
                 return self.split(name, default)
-            elif tp == np.ndarray:
+            elif tp is np.ndarray:
                 return self.ndarray(name, default)
             else:
                 return tp(self.params[name])

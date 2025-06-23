@@ -1309,7 +1309,10 @@ class MainWindow(QMainWindow):
             old_selection[x_] = [find_new_name(p) for p in old_selection[x_]]
         # Create tags for list widget
         renames = self.paramNames.getRenames(keep_empty=True)
-        renames_list_func = lambda x: (" (" + ", ".join(x) + ")") if x else ""
+
+        def renames_list_func(x):
+            return (" (" + ", ".join(x) + ")") if x else ""
+
         self.paramNamesTags = {p + renames_list_func(r): p for p, r in renames.items()}
         self._updateListParameters(list(self.paramNamesTags), self.listParametersX)
         self._updateListParameters(list(self.paramNamesTags), self.listParametersY)

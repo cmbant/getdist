@@ -1,4 +1,6 @@
 {
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
     "files.exclude": {
         ".pytest_cache/": true,
         ".ruff_cache/": true,
@@ -65,18 +67,7 @@
         "editor.rulers": [
             120
         ],
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit",
-            "source.fixAll": "explicit"
-        }
     },
     "python.terminal.activateEnvironment": true,
-    "debug.internalConsoleOptions": "neverOpen",
-    "debug.console.historySuggestions": true,
-    "debug.console.fontSize": 12,
-    "debug.toolBarLocation": "docked",
-    "debug.showInStatusBar": "always",
-    "debug.inlineValues": "on",
-    "debug.allowBreakpointsEverywhere": true
+    "github-actions.use-enterprise": true
 }

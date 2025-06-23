@@ -1008,9 +1008,9 @@ class GetDistPlotter(_BaseObject):
 
         kwargs = self._get_line_styles(plotno, **kwargs)
         self.lines_added[plotno] = kwargs
-        (l,) = ax.plot(density.x, density.P, **kwargs)
+        (lines,) = ax.plot(density.x, density.P, **kwargs)
         if kwargs.get("dashes"):
-            l.set_dashes(kwargs["dashes"])
+            lines.set_dashes(kwargs["dashes"])
         if self.settings.plot_meanlikes:
             kwargs["lw"] = self._scaled_linewidth(self.settings.linewidth_meanlikes)
             ax.plot(density.x, density.likes, **kwargs)
