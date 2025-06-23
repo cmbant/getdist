@@ -13,6 +13,3 @@ getdist.mcsamples
 .. automodule:: getdist.mcsamples
    :members: MCSamplesError, ParamError, SettingError
    :noindex:
-
-
-   

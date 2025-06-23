@@ -217,4 +217,3 @@ jobs:
           ## Installation
           - Mac: Open the DMG file and drag the app to your Applications folder
           - Windows: Run the MSI installer
-

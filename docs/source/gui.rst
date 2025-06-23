@@ -6,7 +6,7 @@ GetDist provides two graphical user interfaces: the original Qt-based GUI and a 
 GUI Application
 -----------
 
-Pre-built standalone applications are available for Mac and Windows platforms. 
+Pre-built standalone applications are available for Mac and Windows platforms.
 
 * **Mac**: The Mac app is distributed as a DMG file. Simply download, mount the DMG, and drag the app to your Applications folder.
 * **Windows**: The Windows app is distributed as both an MSI installer
@@ -117,4 +117,3 @@ The Streamlit app includes all the core functionality of the Qt-based GUI, but i
 * Viewing statistics and parameter tables
 * Customizing analysis settings and plot options
 * Exporting plots and scripts
-
