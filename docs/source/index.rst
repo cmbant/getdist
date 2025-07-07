@@ -22,13 +22,14 @@ High-level modules for analysing samples and plotting:
 
    mcsamples
    plots
-   arviz_integration
+
 
 See also:
 
 .. toctree::
 
    analysis_settings
+   arviz_integration
 
 Other main modules:
 

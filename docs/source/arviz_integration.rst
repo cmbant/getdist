@@ -13,10 +13,7 @@ To get getdist samples directly from cobaya chains use, e.g.:
 For chain files (or hierarchy of chain directories) stored on disk you can just pass the `chain_dir` argument to `get_single_plotter` or `get_subplot_plotter`,
 then reference chains by their root name string. See Cobaya `examples <https://cobaya.readthedocs.io/en/latest/example.html>`_.
 
-Using GetDist with ArviZ, PyMC, NUTS, emcee and other MCMC samplers
-====================================================================
-
-GetDist can be used to analyze and plot samples from a wide variety of MCMC samplers by loading sample arrays directly or integration with ArviZ,
+GetDist can also be used to analyze and plot samples from a wide variety of MCMC samplers by loading sample arrays directly or integration with ArviZ,
 a Python package for exploratory analysis of Bayesian models.
 
 ArviZ Integration

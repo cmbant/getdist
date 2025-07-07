@@ -148,7 +148,7 @@ from two chains with root names *xxx* and *yyy*::
 
 MCSamples objects can also be constructed directly from numpy arrays in memory, see the example
 in the `Plot Gallery <https://getdist.readthedocs.io/en/latest/plot_gallery.html>`_,
-and frp, `ArviZ, PyMC and other sammpler formats` <https://getdist.readthedocs.io/en/latest/arviz_integration.html>`_.
+and from, `ArviZ, PyMC and other sampler formats <https://getdist.readthedocs.io/en/latest/arviz_integration.html>`_.
 
 GetDist script
 ===================
@@ -240,7 +240,7 @@ For AI assistants and LLM agents working with GetDist, a single-file context doc
 
 Contributing
 ===================
-Please see our `Contributing Guide <https://github.com/cmbant/getdist/blob/master/CONTRIBUTING.md>`_ for:
+Please see the `Contributing Guide <https://github.com/cmbant/getdist/blob/master/CONTRIBUTING.md>`_.
 
 ===================
 
