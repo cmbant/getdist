@@ -83,9 +83,11 @@ Samples file format
 
 GetDist can be used in scripts and interactively with standard numpy arrays
 (as in the `examples <https://getdist.readthedocs.io/en/latest/plot_gallery.html>`_).
+
 Scripts and the `GetDist GUI <https://getdist.readthedocs.io/en/latest/gui.html>`_ can also read parameter sample/chain files in plain text format
-(or in the format output by the `Cobaya <https://cobaya.readthedocs.io>`__ sampling program).
-In general plain text files of the form::
+(or in the format output by the `Cobaya <https://cobaya.readthedocs.io>`__ sampling program.
+
+Plain text sample files are of the form::
 
   xxx_1.txt
   xxx_2.txt
@@ -145,7 +147,8 @@ from two chains with root names *xxx* and *yyy*::
 
 
 MCSamples objects can also be constructed directly from numpy arrays in memory, see the example
-in the `Plot Gallery <https://getdist.readthedocs.io/en/latest/plot_gallery.html>`_.
+in the `Plot Gallery <https://getdist.readthedocs.io/en/latest/plot_gallery.html>`_,
+and frp, `ArviZ, PyMC and other sammpler formats` <https://getdist.readthedocs.io/en/latest/arviz_integration.html>`_.
 
 GetDist script
 ===================

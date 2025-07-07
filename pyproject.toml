@@ -32,8 +32,6 @@ dependencies = [
 [project.optional-dependencies]
 GUI = ["PySide6>=6.1"]
 StreamlitGUI = ["streamlit>=1.24.0"]
-docs = ["sphinx", "sphinx_rtd_theme>=1.0", "sphinxcontrib-jquery", "sphinx_markdown_builder", "jupytext"]
-dev = ["ruff", "pre-commit>=3.0.0", "pytest>=6.0", "pyupgrade"]
 
 [project.scripts]
 getdist = "getdist.command_line:getdist_command"
@@ -77,3 +75,20 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[dependency-groups]
+# Development tools (linting, formatting, pre-commit)
+lint = ["ruff", "pre-commit>=3.0.0", "pyupgrade"]
+# Testing dependencies
+test = ["pytest>=8.4.1"]
+# Documentation building
+docs = ["sphinx", "sphinx_rtd_theme>=1.0", "sphinxcontrib-jquery", "sphinx_markdown_builder", "jupytext"]
+# MCMC integration testing (not published as these are for testing integration)
+mcmc = ["arviz>=0.21.0", "pymc>=5.23.0"]
+# All development dependencies
+dev = [
+    {include-group = "lint"},
+    {include-group = "test"},
+    {include-group = "docs"},
+    {include-group = "mcmc"}
+]
