@@ -8,7 +8,11 @@ from typing import Any
 
 import matplotlib
 
-if "ipykern" not in matplotlib.rcParams["backend"] and "linux" in sys.platform and os.environ.get("DISPLAY", "") == "":
+if (
+    not any(b in matplotlib.rcParams["backend"] for b in ["inline", "ipykern"])
+    and "linux" in sys.platform
+    and os.environ.get("DISPLAY", "") == ""
+):
     # default to agg if not in notebook and linux with no display
     matplotlib.use("Agg")
 import matplotlib.axis
