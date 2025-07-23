@@ -1,5 +1,5 @@
 __author__ = "Antony Lewis"
-__version__ = "1.7.0"
+__version__ = "1.7.1"
 __url__ = "https://getdist.readthedocs.io"
 
 import os
