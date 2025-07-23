@@ -5,24 +5,24 @@ on:
   workflow_dispatch:
     inputs:
       platform:
-        description: 'Platform to build'
+        description: "Platform to build"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
           - all
           - mac
           - windows
       skip_signing:
-        description: 'Skip signing (for testing only)'
+        description: "Skip signing (for testing only)"
         required: false
         default: false
         type: boolean
   push:
-    branches: [ gui ]
+    branches: [gui]
     tags:
-      - 'v*'
-      - '*.*.*'
+      - "v*"
+      - "*.*.*"
 jobs:
   build-mac:
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'mac' || github.event.inputs.platform == null
@@ -37,135 +37,139 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Build Mac App
-      run: |
-        # Make the script executable
-        chmod +x scripts/build_mac_app.sh
-        # Show environment info
-        echo "Python version:"
-        python --version
-        echo "uv version:"
-        uv --version
-        echo "Working directory:"
-        pwd
-        echo "Architecture: ${{ matrix.arch }}"
-        # Run the build script with verbose output
-        ./scripts/build_mac_app.sh
+      - name: Build Mac App
+        run: |
+          # Make the script executable
+          chmod +x scripts/build_mac_app.sh
+          # Show environment info
+          echo "Python version:"
+          python --version
+          echo "uv version:"
+          uv --version
+          echo "Working directory:"
+          pwd
+          echo "Architecture: ${{ matrix.arch }}"
+          # Run the build script with verbose output
+          ./scripts/build_mac_app.sh
 
-    - name: Sign and Notarize Mac App
-      if: github.event.inputs.skip_signing != 'true'
-      env:
-        MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-        MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-        APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
-        APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-        APP_STORE_CONNECT_API_ISSUER: ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
-      run: |
-        # Make the scripts executable
-        chmod +x scripts/sign_mac_app.sh
-        chmod +x scripts/notarize_mac_app.sh
-        chmod +x scripts/create_mac_dmg.sh
-        chmod +x scripts/fix_qt_frameworks.sh
-        chmod +x scripts/fix_qt_bundle_ambiguity.sh
+      - name: Sign and Notarize Mac App
+        if: github.event.inputs.skip_signing != 'true'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_API_ISSUER: ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
+        run: |
+          # Make the scripts executable
+          chmod +x scripts/sign_mac_app.sh
+          chmod +x scripts/notarize_mac_app.sh
+          chmod +x scripts/create_mac_dmg.sh
+          chmod +x scripts/fix_qt_frameworks.sh
+          chmod +x scripts/fix_qt_bundle_ambiguity.sh
 
-        # Sign the app (this will rename the app to replace spaces with underscores)
-        echo "Signing the app..."
-        ./scripts/sign_mac_app.sh "dist/GetDist GUI.app"
+          # Sign the app (this will rename the app to replace spaces with underscores)
+          echo "Signing the app..."
+          ./scripts/sign_mac_app.sh "dist/GetDist GUI.app"
 
-        # Notarize the app (use the renamed path with underscores)
-        echo "Notarizing the app..."
-        ./scripts/notarize_mac_app.sh "dist/GetDist_GUI.app"
+          # Notarize the app (use the renamed path with underscores)
+          echo "Notarizing the app..."
+          ./scripts/notarize_mac_app.sh "dist/GetDist_GUI.app"
 
-        # Create DMG (use the renamed path with underscores)
-        echo "Creating DMG..."
-        ./scripts/create_mac_dmg.sh "dist/GetDist_GUI.app" "dist/GetDist-GUI-${{ matrix.arch }}.dmg"
+          # Workaround for hdiutil: create failed - Resource busy - https://github.com/actions/runner-images/issues/7522
+          echo "Applying workaround for hdiutil Resource busy issue..."
+          sudo pkill -9 XProtect >/dev/null || true
+          echo "Waiting for XProtect to fully terminate..."
+          while pgrep XProtect; do sleep 3; done
 
-    - name: Upload DMG
-      uses: actions/upload-artifact@v4
-      with:
-        name: GetDist-GUI-DMG-${{ matrix.arch }}
-        path: dist/GetDist-GUI-${{ matrix.arch }}.dmg
+          # Create DMG (use the renamed path with underscores)
+          echo "Creating DMG..."
+          ./scripts/create_mac_dmg.sh "dist/GetDist_GUI.app" "dist/GetDist-GUI-${{ matrix.arch }}.dmg"
 
-
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: GetDist-GUI-DMG-${{ matrix.arch }}
+          path: dist/GetDist-GUI-${{ matrix.arch }}.dmg
 
   build-windows:
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows' || github.event.inputs.platform == null
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Build Windows App
-      run: |
-        # Show environment info
-        echo "Python version:"
-        python --version
-        echo "uv version:"
-        uv --version
-        echo "Working directory:"
-        pwd
-        # Run the build script with verbose output
-        ./scripts/build_windows_app.bat
+      - name: Build Windows App
+        run: |
+          # Show environment info
+          echo "Python version:"
+          python --version
+          echo "uv version:"
+          uv --version
+          echo "Working directory:"
+          pwd
+          # Run the build script with verbose output
+          ./scripts/build_windows_app.bat
 
-    - name: Sign Windows App
-      if: github.event.inputs.skip_signing != 'true'
-      env:
-        WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-        WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-      run: |
-        # Run the signing script
-        python ./scripts/sign_windows_app.py --dir dist/GetDistGUI
+      - name: Sign Windows App
+        if: github.event.inputs.skip_signing != 'true'
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Run the signing script
+          python ./scripts/sign_windows_app.py --dir dist/GetDistGUI
 
-    - name: Install WiX Toolset
-      run: |
-        # Download WiX Toolset
-        Invoke-WebRequest -Uri https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe -OutFile wix314.exe
-        # Install WiX silently
-        Start-Process -FilePath .\wix314.exe -ArgumentList "/install","/quiet","/norestart" -Wait
-        # Add WiX to PATH
-        echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" >> $env:GITHUB_PATH
+      - name: Install WiX Toolset
+        run: |
+          # Download WiX Toolset
+          Invoke-WebRequest -Uri https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe -OutFile wix314.exe
+          # Install WiX silently
+          Start-Process -FilePath .\wix314.exe -ArgumentList "/install","/quiet","/norestart" -Wait
+          # Add WiX to PATH
+          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" >> $env:GITHUB_PATH
 
-    - name: Create MSI Installer
-      run: |
-        # Create MSI installer
-        python ./scripts/create_windows_msi.py --input-dir dist/GetDistGUI --output-dir dist
+      - name: Create MSI Installer
+        run: |
+          # Create MSI installer
+          python ./scripts/create_windows_msi.py --input-dir dist/GetDistGUI --output-dir dist
 
-    - name: Sign MSI Installer
-      if: github.event.inputs.skip_signing != 'true'
-      env:
-        WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-        WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-      run: |
-        # Get the MSI file path
-        $msiFile = Get-ChildItem -Path dist -Filter "GetDist-GUI-*.msi" | Select-Object -First 1 -ExpandProperty FullName
-        echo "Signing MSI installer: $msiFile"
+      - name: Sign MSI Installer
+        if: github.event.inputs.skip_signing != 'true'
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Get the MSI file path
+          $msiFile = Get-ChildItem -Path dist -Filter "GetDist-GUI-*.msi" | Select-Object -First 1 -ExpandProperty FullName
+          echo "Signing MSI installer: $msiFile"
 
-        # Use our existing signing script with the MSI file
-        python ./scripts/sign_windows_app.py --dir $msiFile
+          # Use our existing signing script with the MSI file
+          python ./scripts/sign_windows_app.py --dir $msiFile
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: GetDist-GUI-Windows
-        path: dist/GetDist-GUI-*.msi
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: GetDist-GUI-Windows
+          path: dist/GetDist-GUI-*.msi
 
   create-release:
     if: startsWith(github.ref, 'refs/tags/')
@@ -173,47 +177,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download Mac Intel Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: GetDist-GUI-DMG-intel
-        path: artifacts/mac/intel
+      - name: Download Mac Intel Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: GetDist-GUI-DMG-intel
+          path: artifacts/mac/intel
 
-    - name: Download Mac ARM Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: GetDist-GUI-DMG-arm
-        path: artifacts/mac/arm
+      - name: Download Mac ARM Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: GetDist-GUI-DMG-arm
+          path: artifacts/mac/arm
 
-    - name: Download Windows Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: GetDist-GUI-Windows
-        path: artifacts/windows
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: GetDist-GUI-Windows
+          path: artifacts/windows
 
-    - name: List Downloaded Artifacts
-      run: |
-        echo "Downloaded artifacts:"
-        find artifacts -type f | sort
+      - name: List Downloaded Artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find artifacts -type f | sort
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          artifacts/mac/intel/GetDist-GUI-intel.dmg
-          artifacts/mac/arm/GetDist-GUI-arm.dmg
-          artifacts/windows/GetDist-GUI-*.msi
-        draft: true
-        prerelease: false
-        name: GetDist GUI ${{ github.ref_name }}
-        body: |
-          GetDist GUI ${{ github.ref_name }} Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/mac/intel/GetDist-GUI-intel.dmg
+            artifacts/mac/arm/GetDist-GUI-arm.dmg
+            artifacts/windows/GetDist-GUI-*.msi
+          draft: true
+          prerelease: false
+          name: GetDist GUI ${{ github.ref_name }}
+          body: |
+            GetDist GUI ${{ github.ref_name }} Release
 
-          ## Downloads
-          - Mac (Intel): GetDist-GUI-intel.dmg
-          - Mac (Apple Silicon): GetDist-GUI-arm.dmg
-          - Windows: GetDist-GUI-*.msi (installer)
+            ## Downloads
+            - Mac (Intel): GetDist-GUI-intel.dmg
+            - Mac (Apple Silicon): GetDist-GUI-arm.dmg
+            - Windows: GetDist-GUI-*.msi (installer)
 
-          ## Installation
-          - Mac: Open the DMG file and drag the app to your Applications folder
-          - Windows: Run the MSI installer
+            ## Installation
+            - Mac: Open the DMG file and drag the app to your Applications folder
+            - Windows: Run the MSI installer
