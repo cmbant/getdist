@@ -101,7 +101,7 @@ The .txt files are separate chain files (there can also be just one xxx.txt file
 
   *weight like param1 param2 param3* ...
 
-The *weight* gives the number of samples (or importance weight) with these parameters. *like* gives -log(likelihood), and *param1, param2...* are the values of the parameters at the sample point. The first two columns can be 1 and 0 if they are not known or used.
+The *weight* gives the number of samples (or importance weight) with these parameters. *like* gives -log(posterior), and *param1, param2...* are the values of the parameters at the sample point. The first two columns can be 1 and 0 if they are not known or used.
 
 The .paramnames file lists the names of the parameters, one per line, optionally followed by a LaTeX label. Names cannot include spaces, and if they end in "*" they are interpreted as derived (rather than MCMC) parameters, e.g.::
 

@@ -173,7 +173,8 @@ class MCSamples(Chains):
         :param samples: if not loading from file, array of parameter values for each sample, passed
                         to :meth:`setSamples`, or list of arrays if more than one chain
         :param weights: array of weights for samples, or list of arrays if more than one chain
-        :param loglikes: array of -log(Likelihood) for samples, or list of arrays if more than one chain
+        :param loglikes: array of -log(posterior) for samples, or list of arrays if more than one chain.
+                         Note: this is the negative log posterior (likelihood × prior), not just the likelihood.
         :param temperatute: temperature of the sample. If not specified will be read from the
                             root.properties.ini file if it exists and otherwise default to 1.
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from
@@ -501,7 +502,7 @@ class MCSamples(Chains):
 
         :param files_or_samples: The list of file names to read, samples or list of samples
         :param weights: array of weights if setting from arrays
-        :param loglikes: array of -log(likelihood) if setting from arrays
+        :param loglikes: array of -log(posterior) if setting from arrays
         :return: self.
         """
         self.loadChains(self.root, files_or_samples, weights=weights, loglikes=loglikes)

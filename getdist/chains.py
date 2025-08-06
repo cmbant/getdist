@@ -182,7 +182,8 @@ class WeightedSamples:
     WeightedSamples is the base class for a set of weighted parameter samples
 
     :ivar weights:  array of weights for each sample (default: array of 1)
-    :ivar loglikes: array of -log(Likelihoods) for each sample (default: array of 0)
+    :ivar loglikes: array of -log(posterior) for each sample (default: array of 0).
+                    Note: this is the negative log posterior (likelihood × prior), not just the likelihood.
     :ivar samples: n_samples x n_parameters numpy array of parameter values
     :ivar n: number of parameters
     :ivar numrows: number of samples positions (rows in the samples array)
@@ -216,11 +217,11 @@ class WeightedSamples:
             - if float <1: The fraction of rows to skip at the beginning of the file
         :param samples: array of parameter values for each sample, passed to :func:`setSamples`
         :param weights: array of weights
-        :param loglikes: array of -log(Likelihood)
+        :param loglikes: array of -log(posterior).
         :param name_tag: The name of this instance.
         :param label: latex label for these samples
         :param files_are_chains: use False if the samples file (filename) does not start with two columns giving
-                                 weights and -log(Likelihoods)
+                                 weights and -log(posterior)
         :param min_weight_ratio: remove samples with weight less than min_weight_ratio times the maximum weight
         """
 
@@ -279,7 +280,7 @@ class WeightedSamples:
 
         :param samples: The sample values, n_samples x n_parameters numpy array, or can be a list of parameter vectors
         :param weights: Array of weights for each sample. Defaults to 1 for all samples if unspecified.
-        :param loglikes: Array of -log(Likelihood) values for each sample
+        :param loglikes: Array of -log(posterior) values for each sample.
         :param min_weight_ratio: remove samples with weight less than min_weight_ratio of the maximum
         """
         self.weights = weights
@@ -981,7 +982,7 @@ class WeightedSamples:
     def reweightAddingLogLikes(self, logLikes):
         """
         Importance sample the samples, by adding logLike (array of -log(likelihood values)) to the currently
-        stored likelihoods, and re-weighting accordingly, e.g. for adding a new data constraint
+        stored likelihoods, and re-weighting accordingly, e.g. for adding a new data constraint.
 
         :param logLikes: array of -log(likelihood) for each sample to adjust
         """
@@ -1370,7 +1371,7 @@ class Chains(WeightedSamples):
         :param root: Root name
         :param files_or_samples: list of file names or list of arrays of samples, or single array of samples
         :param weights: if loading from arrays of samples, corresponding list of arrays of weights
-        :param loglikes: if loading from arrays of samples, corresponding list of arrays of -log(likelihood)
+        :param loglikes: if loading from arrays of samples, corresponding list of arrays of -log(posterior)
         :param ignore_lines: Amount of lines at the start of the file to ignore, None not to ignore any
         :return: True if loaded successfully, False if none loaded
         """

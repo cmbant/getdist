@@ -92,7 +92,7 @@ class MixtureND:
 
         :param size: number of samples
         :param names: set to override existing names
-        :param logLikes: if True set the sample likelihood values from the pdf, if false, don't store log likelihoods
+        :param logLikes: if True set the sample -log(posterior) values from the pdf, if false, don't store loglikes
         :param random_state: random seed or Generator
         :return: a new :class:`.mcsamples.MCSamples` instance
         """

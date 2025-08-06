@@ -901,8 +901,10 @@ class MargeStats(ParamResults):
 
 class LikeStats(ParamResults):
     """
-    Stores likelihood-related statistics, including best-fit sample and extremal values of the N-D confidence region,
-    inheriting from :class:`ParamResults`.
+    Stores posterior-related statistics, including best-fit sample and extremal values of the N-D confidence region,
+    inheriting from :class:`ParamResults`. Note: despite the name "LikeStats", this actually stores statistics
+    related to the posterior (likelihood × prior), not just the likelihood.
+
     TODO: currently only saves to text, does not load full data from file
     """
 

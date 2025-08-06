@@ -120,16 +120,23 @@ or load chains being careful with the index order.
 
     samples = MCSamples(
         samples=chain_list,  # List of arrays, each walker as separate chain
-        loglikes=[-lp for lp in logprob_list],  # List of log-likelihood arrays
+        loglikes=[-lp for lp in logprob_list],  # List of -log(posterior) arrays
         names=['m', 'b', 'log_f'],
         labels=[r'm', r'b', r'\log f'],
         label='Line Fitting with emcee'
     )
 
 .. note::
-    **Important**: Do not pass the 3D emcee array directly to MCSamples. GetDist would
-    interpret each step as a separate chain rather than each walker, which is incorrect.
-    Always convert to a list of walker chains as shown above, or faltten the emcee chain.
+    **Important**:
+
+    - Do not pass the 3D emcee array directly to MCSamples. GetDist would
+      interpret each step as a separate chain rather than each walker, which is incorrect.
+      Always convert to a list of walker chains as shown above, or flatten the emcee chain.
+
+    - **Sign Convention**: The ``loglikes`` parameter expects **-log(posterior)** values, not
+      -log(likelihood). Since emcee's ``log_prob`` typically contains log(posterior) values
+      (including both likelihood and prior), we negate them with ``-lp`` to get the correct
+      sign for GetDist.
 
 
 ArviZ Options
@@ -154,14 +161,14 @@ You can specify parameter ranges so density estimates correctly account for shar
 Including Weights and Likelihoods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If your InferenceData contains sample weights or log-likelihood values:
+If your InferenceData contains sample weights or log-posterior values:
 
 .. code-block:: python
 
     samples = arviz_to_mcsamples(
         idata,
         weights_var='sample_weight',    # Variable name for weights
-        loglikes_var='log_likelihood'   # Variable name for log-likelihoods
+        loglikes_var='log_likelihood'   # Variable name for log-posterior values
     )
 
 Multi-dimensional Parameters
