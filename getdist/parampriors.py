@@ -90,10 +90,10 @@ class ParamBounds:
         if len(strings) > 2:
             if strings[2] is True or strings[2].upper() in ["T", "TRUE", "PERIODIC"]:
                 if name not in self.upper or name not in self.lower:
-                    raise ValueError("Periodic parameter must have lower and upper bound: {name}")
+                    raise ValueError(f"Periodic parameter must have lower and upper bound: {name}")
                 self.periodic.add(name)
             elif strings[2] is not False and strings[2].upper() not in ["F", "FALSE"]:
-                raise ValueError("Unknown value for periodic range settings for param {name}: {strings[2]}")
+                raise ValueError(f"Unknown value for periodic range settings for param {name}: {strings[2]}")
 
         if name not in self.names:
             self.names.append(name)
