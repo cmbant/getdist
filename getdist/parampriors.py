@@ -20,6 +20,7 @@ class ParamBounds:
         self.names = []
         self.lower = {}
         self.upper = {}
+        self.periodic = set()
         if fileName is not None:
             self.loadFromFile(fileName)
 
@@ -30,7 +31,7 @@ class ParamBounds:
             with open(fileName, encoding="utf-8-sig") as f:
                 for line in f:
                     strings = [text.strip() for text in line.split()]
-                    if len(strings) == 3:
+                    if len(strings) in [3, 4]:
                         self.setRange(strings[0], strings[1:])
         elif extension in (".yaml", ".yml"):
             from getdist.cobaya_interface import get_info_params, get_range, is_parameter_with_range
@@ -39,6 +40,8 @@ class ParamBounds:
             for p, info in info_params.items():
                 if is_parameter_with_range(info):
                     self.setRange(p, get_range(info))
+                    if (info or {}).get("periodic"):
+                        self.periodic.add(p)
         else:
             raise ValueError("ParamBounds must be loaded from .bounds, .ranges or .yaml/.yml file, not %s" % fileName)
 
@@ -55,7 +58,11 @@ class ParamBounds:
                 lim2 = "%15.7E" % valMax
             else:
                 lim2 = "    N"
-            s += "%22s%17s%17s\n" % (name, lim1, lim2)
+            if name in self.periodic:
+                s += "%22s%17s%17s%10s\n" % (name, lim1, lim2, "periodic")
+            else:
+                s += "%22s%17s%17s\n" % (name, lim1, lim2)
+
         return s
 
     def saveToFile(self, fileName):
@@ -80,6 +87,14 @@ class ParamBounds:
             self.lower[name] = float(strings[0])
         if strings[1] != "N" and strings[1] is not None and strings[1] != np.inf:
             self.upper[name] = float(strings[1])
+        if len(strings) > 2:
+            if strings[2] is True or strings[2].upper() in ["T", "TRUE", "PERIODIC"]:
+                if name not in self.upper or name not in self.lower:
+                    raise ValueError("Periodic parameter must have lower and upper bound: {name}")
+                self.periodic.add(name)
+            elif strings[2] is not False and strings[2].upper() not in ["F", "FALSE"]:
+                raise ValueError("Unknown value for periodic range settings for param {name}: {strings[2]}")
+
         if name not in self.names:
             self.names.append(name)
 

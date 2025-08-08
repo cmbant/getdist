@@ -460,6 +460,7 @@ class MCSamples(Chains):
             par.limmax = self.ranges.getUpper(par.name)
             par.has_limits_bot = par.limmin is not None
             par.has_limits_top = par.limmax is not None
+            par.periodic = par.name in self.ranges.periodic
 
             if ini and "marker[%s]" % par.name in ini.params:
                 line = ini.string("marker[%s]" % par.name)
@@ -1497,7 +1498,7 @@ class MCSamples(Chains):
         return par
 
     def _binSamples(self, paramVec, par, num_fine_bins, borderfrac=0.1):
-        # High resolution density (sampled many times per smoothing scale). First and last bins are half width
+        # High resolution density (sampled many times per smoothing scale). First and last bins are half width.
 
         border = (par.range_max - par.range_min) * borderfrac
         binmin = min(par.param_min, par.range_min)
@@ -1574,7 +1575,9 @@ class MCSamples(Chains):
             finebinlikes = np.bincount(bin_indices, weights=w, minlength=fine_bins)
 
         if smooth_scale_1D <= 0:
-            # Set automatically.
+            # Set smoothing bandwidth automatically.
+            # For the moment treat periodic and non-periodic the same, similar error to using DCT for distributions
+            # with non-zero gradient at boundary
             bandwidth = self.getAutoBandwidth1D(bins, par, j, mult_bias_correction_order, boundary_correction_order) * (
                 binmax - binmin
             )
@@ -1596,18 +1599,19 @@ class MCSamples(Chains):
             "%s 1D sigma_range, std: %s, %s; smooth_1D_bins: %s ", par.name, par.sigma_range, par.err, smooth_1D
         )
 
-        winw = min(int(round(2.5 * smooth_1D)), fine_bins // 2 - 2)
+        winw = min(int(round(2.5 * smooth_1D)), ((fine_bins - 1) if par.periodic else fine_bins) // 2 - 2)
         kernel = Kernel1D(winw, smooth_1D)
 
         cache = {}
-        conv = convolve1D(bins, kernel.Win, "same", cache=cache)
+        convolution_mode = "periodic" if par.periodic else "same"
+        conv = convolve1D(bins, kernel.Win, convolution_mode, cache=cache)
         fine_x = np.linspace(binmin, binmax, fine_bins)
         density1D = Density1D(fine_x, P=conv, view_ranges=[par.range_min, par.range_max])
 
         if meanlikes:
             rawbins = conv.copy()
 
-        if par.has_limits and boundary_correction_order >= 0:
+        if par.has_limits and not par.periodic and boundary_correction_order >= 0:
             # correct for cuts allowing for normalization over window
             prior_mask = np.ones(fine_bins + 2 * winw)
             if par.has_limits_bot:
@@ -1645,8 +1649,8 @@ class MCSamples(Chains):
                 density1D.P[ix] = normed * np.exp(np.minimum(corrected / normed, 4) - 1)
             else:
                 raise SettingError("Unknown boundary_correction_order (expected 0, 1, 2)")
-        elif boundary_correction_order == 2:
-            # higher order kernel
+        elif not par.periodic and boundary_correction_order == 2:
+            # higher order kernel, ignored for periodic
             # eg. see https://www.jstor.org/stable/2965571
             xWin2 = kernel.Win * kernel.x**2
             x2P = convolve1D(bins, xWin2, "same", cache=cache)
@@ -1657,21 +1661,23 @@ class MCSamples(Chains):
             density1D.P[ix] *= np.exp(np.minimum(corrected[ix] / density1D.P[ix], 2) - 1)
 
         if mult_bias_correction_order:
-            prior_mask = np.ones(fine_bins)
-            if par.has_limits_bot:
-                prior_mask[0] *= 0.5
-            if par.has_limits_top:
-                prior_mask[-1] *= 0.5
-            a0 = convolve1D(prior_mask, kernel.Win, "same", cache=cache, cache_args=[2])
+            if not par.periodic:
+                prior_mask = np.ones(fine_bins)
+                if par.has_limits_bot:
+                    prior_mask[0] *= 0.5
+                if par.has_limits_top:
+                    prior_mask[-1] *= 0.5
+                a0 = convolve1D(prior_mask, kernel.Win, "same", cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
                 # estimate using flattened samples to remove second order biases
                 # mostly good performance, see https://www.jstor.org/stable/2965571 method 3,1 for first order
                 prob1 = density1D.P.copy()
                 prob1[prob1 == 0] = 1
                 fine = bins / prob1
-                conv = convolve1D(fine, kernel.Win, "same", cache=cache, cache_args=[2])
+                conv = convolve1D(fine, kernel.Win, convolution_mode, cache=cache, cache_args=[2])
                 density1D.setP(density1D.P * conv)
-                density1D.P /= a0
+                if not par.periodic:
+                    density1D.P /= a0
 
         density1D.normalize("max", in_place=True)
         if not kwargs:
@@ -1680,7 +1686,7 @@ class MCSamples(Chains):
         if meanlikes:
             ix = density1D.P > 0
             finebinlikes[ix] /= density1D.P[ix]
-            binlikes = convolve1D(finebinlikes, kernel.Win, "same", cache=cache, cache_args=[2])
+            binlikes = convolve1D(finebinlikes, kernel.Win, convolution_mode, cache=cache, cache_args=[2])
             binlikes[ix] *= density1D.P[ix] / rawbins[ix]
             if self.shade_likes_is_mean_loglikes:
                 maxbin = np.min(binlikes)

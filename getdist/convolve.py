@@ -194,6 +194,8 @@ def nearestFFTnumber(x):
 
 
 def convolve1D(x, y, mode, largest_size=0, cache=None, cache_args=(1, 2)):
+    if mode == "periodic":
+        return convolve1D_periodic(x, y, cache, cache_args)
     if min(x.shape[0], y.shape[0]) > 1000:
         return convolveFFT(x, y, mode, largest_size=largest_size, cache=cache, cache_args=cache_args)
     else:
@@ -202,6 +204,50 @@ def convolve1D(x, y, mode, largest_size=0, cache=None, cache_args=(1, 2)):
 
 def convolve2D(x, y, mode, largest_size=0, cache=None, cache_args=(1, 2)):
     return convolveFFTn(x, y, mode, largest_size, cache, cache_args=cache_args)
+
+
+def convolve1D_periodic(x, y, cache=None, cache_args=(1, 2)):
+    """
+    Circular (periodic) 1D convolution of x with kernel y. Returns same-length result.
+    Input x is assumed to have equal boundaries with average half bin count, so
+    periodic bins formed by adding last bin to first.
+    Returns array of same size of x, with last bins equal.
+
+    Notes:
+    - Uses FFT of size N=len(x) for true circular convolution. Kernel y is centered
+      (rolled by -(len(y)//2)) before FFT so that the kernel's central element aligns
+      with the current bin, matching the usual "same" semantics used elsewhere.
+    - Basic caching supported via provided cache dict.
+    """
+    x_circ = x[:-1].copy()
+    x_circ[0] += x[-1]
+    N = x_circ.shape[0]
+    M = y.shape[0]
+    # Prepare padded, centered kernel for circular convolution
+    if cache is not None and 2 in cache_args:
+        key_y = ("circ", N, M, id(y))
+        yfft = cache.get(key_y)
+    else:
+        yfft = None
+    if yfft is None:
+        hpad = np.zeros(N, dtype=float)
+        hpad[:M] = y
+        # roll so that center element aligns with current index in convolution
+        hpad = np.roll(hpad, -(M // 2))
+        yfft = np.fft.rfft(hpad)
+        if cache is not None and 2 in cache_args:
+            cache[key_y] = yfft
+    if cache is not None and 1 in cache_args:
+        key_x = ("circ", N, id(x))
+        xfft = cache.get(key_x)
+    else:
+        xfft = None
+    if xfft is None:
+        xfft = np.fft.rfft(x_circ)
+        if cache is not None and 1 in cache_args:
+            cache[key_x] = xfft
+    res = np.fft.irfft(xfft * yfft, n=N)
+    return np.append(res, res[0])
 
 
 # noinspection PyUnboundLocalVariable
