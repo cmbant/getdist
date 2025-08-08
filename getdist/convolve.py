@@ -194,6 +194,8 @@ def nearestFFTnumber(x):
 
 
 def convolve1D(x, y, mode, largest_size=0, cache=None, cache_args=(1, 2)):
+    if mode == "periodic":
+        return convolve1D_periodic(x, y, cache, cache_args)
     if min(x.shape[0], y.shape[0]) > 1000:
         return convolveFFT(x, y, mode, largest_size=largest_size, cache=cache, cache_args=cache_args)
     else:
@@ -201,7 +203,168 @@ def convolve1D(x, y, mode, largest_size=0, cache=None, cache_args=(1, 2)):
 
 
 def convolve2D(x, y, mode, largest_size=0, cache=None, cache_args=(1, 2)):
+    if mode in ("periodic", "periodic_both"):
+        return convolve2D_periodic(x, y, cache, cache_args, periodic_x=True, periodic_y=True)
+    elif mode == "periodic_x":
+        return convolve2D_periodic(x, y, cache, cache_args, periodic_x=True, periodic_y=False)
+    elif mode == "periodic_y":
+        return convolve2D_periodic(x, y, cache, cache_args, periodic_x=False, periodic_y=True)
     return convolveFFTn(x, y, mode, largest_size, cache, cache_args=cache_args)
+
+
+def convolve2D_periodic(x, y, cache=None, cache_args=(1, 2), periodic_x=True, periodic_y=True):
+    """
+    2D convolution with periodic boundary conditions in specified dimensions.
+
+    This implements periodic convolution by extending the 1D approach to 2D.
+    For periodic dimensions, the input is made circular by averaging boundary values.
+
+    :param x: 2D input array (data)
+    :param y: 2D kernel array
+    :param cache: optional cache for FFTs
+    :param cache_args: which arrays to cache (1=x, 2=y)
+    :param periodic_x: whether to use periodic boundaries in x (second) dimension
+    :param periodic_y: whether to use periodic boundaries in y (first) dimension
+    :return: convolved array of same size as x
+    """
+    if x.ndim != 2 or y.ndim != 2:
+        raise ValueError("convolve2D_periodic requires 2D arrays")
+
+    ny, nx = x.shape
+    ky, kx = y.shape
+
+    # Create the circular version of x based on periodicity
+    if periodic_x and periodic_y:
+        # Both dimensions periodic
+        x_circ = x[:-1, :-1].copy()  # Remove last row and column
+        x_circ[0, :] += x[-1, :-1]  # Add last row to first row
+        x_circ[:, 0] += x[:-1, -1]  # Add last column to first column
+        x_circ[0, 0] += x[-1, -1]  # Add corner element
+        N_y, N_x = x_circ.shape
+
+    elif periodic_x and not periodic_y:
+        # Only x dimension periodic
+        x_circ = x[:, :-1].copy()  # Remove last column
+        x_circ[:, 0] += x[:, -1]  # Add last column to first column
+        N_y, N_x = x_circ.shape
+
+    elif periodic_y and not periodic_x:
+        # Only y dimension periodic
+        x_circ = x[:-1, :].copy()  # Remove last row
+        x_circ[0, :] += x[-1, :]  # Add last row to first row
+        N_y, N_x = x_circ.shape
+
+    else:
+        # Neither periodic (shouldn't happen, but handle gracefully)
+        return convolveFFTn(x, y, "same")
+
+    # Prepare kernel for circular convolution
+    hpad = np.zeros((N_y, N_x), dtype=float)
+    hpad[:ky, :kx] = y
+    # Roll kernel to center it properly for convolution
+    hpad = np.roll(hpad, -(ky // 2), axis=0)
+    hpad = np.roll(hpad, -(kx // 2), axis=1)
+
+    # Cache keys
+    if cache is not None:
+        if 1 in cache_args:
+            key_x = ("2D_circ", N_y, N_x, periodic_x, periodic_y, id(x))
+        if 2 in cache_args:
+            key_y = ("2D_kernel", N_y, N_x, id(y))
+
+    # Get or compute FFT of kernel
+    yfft = None
+    if cache is not None and 2 in cache_args:
+        yfft = cache.get(key_y)
+    if yfft is None:
+        yfft = np.fft.rfftn(hpad)
+        if cache is not None and 2 in cache_args:
+            cache[key_y] = yfft
+
+    # Get or compute FFT of data
+    xfft = None
+    if cache is not None and 1 in cache_args:
+        xfft = cache.get(key_x)
+    if xfft is None:
+        xfft = np.fft.rfftn(x_circ)
+        if cache is not None and 1 in cache_args:
+            cache[key_x] = xfft
+
+    # Perform convolution in frequency domain
+    result_fft = xfft * yfft
+    result = np.fft.irfftn(result_fft, (N_y, N_x), axes=(0, 1))
+
+    # Extend result back to original size for periodic dimensions
+    if periodic_x and periodic_y:
+        # Both periodic: append first row/column as last
+        final_result = np.empty((ny, nx))
+        final_result[:-1, :-1] = result
+        final_result[-1, :-1] = result[0, :]  # Last row = first row
+        final_result[:-1, -1] = result[:, 0]  # Last column = first column
+        final_result[-1, -1] = result[0, 0]  # Corner element
+        return final_result
+
+    elif periodic_x and not periodic_y:
+        # Only x periodic: append first column as last
+        final_result = np.empty((ny, nx))
+        final_result[:, :-1] = result
+        final_result[:, -1] = result[:, 0]  # Last column = first column
+        return final_result
+
+    elif periodic_y and not periodic_x:
+        # Only y periodic: append first row as last
+        final_result = np.empty((ny, nx))
+        final_result[:-1, :] = result
+        final_result[-1, :] = result[0, :]  # Last row = first row
+        return final_result
+
+    else:
+        # Neither periodic (fallback)
+        return result
+
+
+def convolve1D_periodic(x, y, cache=None, cache_args=(1, 2)):
+    """
+    Circular (periodic) 1D convolution of x with kernel y. Returns same-length result.
+    Input x is assumed to have equal boundaries with average half bin count, so
+    periodic bins formed by adding last bin to first.
+    Returns array of same size of x, with last bins equal.
+
+    Notes:
+    - Uses FFT of size N=len(x) for true circular convolution. Kernel y is centered
+      (rolled by -(len(y)//2)) before FFT so that the kernel's central element aligns
+      with the current bin, matching the usual "same" semantics used elsewhere.
+    - Basic caching supported via provided cache dict.
+    """
+    x_circ = x[:-1].copy()
+    x_circ[0] += x[-1]
+    N = x_circ.shape[0]
+    M = y.shape[0]
+    # Prepare padded, centered kernel for circular convolution
+    if cache is not None and 2 in cache_args:
+        key_y = ("circ", N, M, id(y))
+        yfft = cache.get(key_y)
+    else:
+        yfft = None
+    if yfft is None:
+        hpad = np.zeros(N, dtype=float)
+        hpad[:M] = y
+        # roll so that center element aligns with current index in convolution
+        hpad = np.roll(hpad, -(M // 2))
+        yfft = np.fft.rfft(hpad)
+        if cache is not None and 2 in cache_args:
+            cache[key_y] = yfft
+    if cache is not None and 1 in cache_args:
+        key_x = ("circ", N, id(x))
+        xfft = cache.get(key_x)
+    else:
+        xfft = None
+    if xfft is None:
+        xfft = np.fft.rfft(x_circ)
+        if cache is not None and 1 in cache_args:
+            cache[key_x] = xfft
+    res = np.fft.irfft(xfft * yfft, n=N)
+    return np.append(res, res[0])
 
 
 # noinspection PyUnboundLocalVariable
