@@ -217,20 +217,20 @@ and using CosmoMC parameter grids in the `Readme <https://cosmologist.info/cosmo
 
 Citation
 ===================
-You can refer to the notes::
+You can refer to the JCAP paper::
 
-     @article{Lewis:2019xzd,
-      author         = "Lewis, Antony",
-      title          = "{GetDist: a Python package for analysing Monte Carlo
-                        samples}",
-      year           = "2019",
-      eprint         = "1910.13970",
-      archivePrefix  = "arXiv",
-      primaryClass   = "astro-ph.IM",
-      SLACcitation   = "%%CITATION = ARXIV:1910.13970;%%",
-      url            = "https://getdist.readthedocs.io"
-     }
-
+      @article{Lewis:2019xzd,
+         author = "Lewis, Antony",
+         title = "{GetDist: a Python package for analysing Monte Carlo samples}",
+         eprint = "1910.13970",
+         archivePrefix = "arXiv",
+         primaryClass = "astro-ph.IM",
+         doi = "10.1088/1475-7516/2025/08/025",
+         journal = "JCAP",
+         volume = "08",
+         pages = "025",
+         year = "2025"
+      }
 
 and references therein as appropriate.
 
