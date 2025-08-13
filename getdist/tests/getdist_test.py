@@ -178,8 +178,8 @@ class GetDistTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(d2D.P, dND.P, atol=1e-5))
 
-    def testPeriodic2D(self):
-        # Test 2D density calculation with periodic parameters
+    def testPeriodic(self):
+        # Test density calculation with periodic parameters and 1D periodic behavior
         n_samples = 1000
         np.random.seed(42)
 
@@ -214,6 +214,15 @@ class GetDistTest(unittest.TestCase):
         radius_param = mcsamples.paramNames.parWithName("radius")
         self.assertTrue(angle_param.periodic)
         self.assertFalse(radius_param.periodic)
+
+        # Also test 1D density of the periodic angle variable
+        d1 = mcsamples.get1DDensity("angle", fine_bins=64)
+        # Basic checks
+        self.assertEqual(d1.P.shape, (64,))
+        self.assertGreater(np.max(d1.P), 0)
+        self.assertGreater(d1.norm_integral(), 0)
+        # Periodic edges should match for 1D as well
+        self.assertTrue(np.allclose(d1.P[0], d1.P[-1], atol=5e-3, rtol=5e-3))
 
     def testLoads(self):
         # test initiating from multiple chain arrays
