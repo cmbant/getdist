@@ -34,14 +34,11 @@ class ParamBounds:
                     if len(strings) in [3, 4]:
                         self.setRange(strings[0], strings[1:])
         elif extension in (".yaml", ".yml"):
-            from getdist.cobaya_interface import get_info_params, get_range, is_parameter_with_range
+            from getdist.cobaya_interface import get_info_params, get_range
 
             info_params = get_info_params(fileName)
             for p, info in info_params.items():
-                if is_parameter_with_range(info):
-                    self.setRange(p, get_range(info))
-                    if (info or {}).get("periodic"):
-                        self.periodic.add(p)
+                self.setRange(p, get_range(info))
         else:
             raise ValueError("ParamBounds must be loaded from .bounds, .ranges or .yaml/.yml file, not %s" % fileName)
 
@@ -82,18 +79,21 @@ class ParamBounds:
         self.setRange(name, (value, value))
 
     def setRange(self, name, strings):
+        if strings[0] is None and strings[1] is None:
+            return
         self._check_name(name)
         if strings[0] != "N" and strings[0] is not None and strings[0] != -np.inf:
             self.lower[name] = float(strings[0])
         if strings[1] != "N" and strings[1] is not None and strings[1] != np.inf:
             self.upper[name] = float(strings[1])
         if len(strings) > 2:
-            if strings[2] is True or strings[2].upper() in ["T", "TRUE", "PERIODIC"]:
+            periodic = strings[2]
+            if periodic is True or isinstance(periodic, str) and periodic.upper() in ["T", "TRUE", "PERIODIC"]:
                 if name not in self.upper or name not in self.lower:
                     raise ValueError(f"Periodic parameter must have lower and upper bound: {name}")
                 self.periodic.add(name)
-            elif strings[2] is not False and strings[2].upper() not in ["F", "FALSE"]:
-                raise ValueError(f"Unknown value for periodic range settings for param {name}: {strings[2]}")
+            elif periodic is not False and periodic.upper() not in ["F", "FALSE"]:
+                raise ValueError(f"Unknown value for periodic range settings for param {name}: {periodic}")
 
         if name not in self.names:
             self.names.append(name)
