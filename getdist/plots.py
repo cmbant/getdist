@@ -3535,17 +3535,20 @@ class GetDistPlotter(_BaseObject):
                 samples.append(samps[param.name][ix])
 
         x, y, z = samples[:3]
-        colors = fixed_color or samples[3]
+        color_values = fixed_color or samples[3]
 
         opts = dict({"marker": "o", "cmap": self.settings.colormap_scatter, "s": self.settings.scatter_size}, **kwargs)
 
         if fixed_color:
             del opts["cmap"]
-        ax.scatter(x, y, z, c=colors, depthshade=True, **opts)
+        ax.scatter(x, y, z, c=color_values, depthshade=True, **opts)
 
         if color_bar and not fixed_color:
-            mappable = cm.ScalarMappable(colors.Normalize(colors.min(), colors.max()), cmap=opts["cmap"])
-            mappable.set_array(colors)
+            # Use matplotlib.colors.Normalize; avoid shadowing by local variable name
+            mappable = cm.ScalarMappable(
+                matplotlib.colors.Normalize(color_values.min(), color_values.max()), cmap=opts["cmap"]
+            )
+            mappable.set_array(color_values)
             self.last_colorbar = self.add_colorbar(params[3], mappable=mappable, ax=ax, colorbar_args=colorbar_args)
 
         return x, y, z
