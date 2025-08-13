@@ -168,8 +168,9 @@ class MCSamples(Chains):
         :param jobItem: optional jobItem for parameter grid item. Should have jobItem.chainRoot and jobItem.batchPath
         :param ini: a .ini file to use for custom analysis settings
         :param settings: a dictionary of custom analysis settings
-        :param ranges: a dictionary giving any additional hard prior bounds for parameters,
+        :param ranges: a dictionary giving any additional hard prior bounds for parameters, or if periodic,
                        e.g. {'x':[0, 1], 'y':[None,2]}
+                       If a parameter is periodic, use a triplet, e.g. {'phi': [0, 2*np.pi, True]}
         :param samples: if not loading from file, array of parameter values for each sample, passed
                         to :meth:`setSamples`, or list of arrays if more than one chain
         :param weights: array of weights for samples, or list of arrays if more than one chain
@@ -326,7 +327,8 @@ class MCSamples(Chains):
         If a min or max value is None, then it is assumed to be unbounded.
 
         :param ranges: A list or a tuple of [min,max] values for each parameter,
-                       or a dictionary giving [min,max] values for specific parameter names
+                       or a dictionary giving [min,max] values for specific parameter names.
+                       For periodic parameters use dictionary with [min, max, True] entry.
         """
         if isinstance(ranges, np.ndarray):
             if len(ranges.shape) == 2 and ranges.shape[1] == 2:

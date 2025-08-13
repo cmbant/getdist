@@ -92,7 +92,7 @@ class ParamBounds:
                 if name not in self.upper or name not in self.lower:
                     raise ValueError(f"Periodic parameter must have lower and upper bound: {name}")
                 self.periodic.add(name)
-            elif periodic is not False and periodic.upper() not in ["F", "FALSE"]:
+            elif periodic is not False and (not isinstance(periodic, str) or periodic.upper() not in ["F", "FALSE"]):
                 raise ValueError(f"Unknown value for periodic range settings for param {name}: {periodic}")
 
         if name not in self.names:
