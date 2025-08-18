@@ -168,8 +168,9 @@ class MCSamples(Chains):
         :param jobItem: optional jobItem for parameter grid item. Should have jobItem.chainRoot and jobItem.batchPath
         :param ini: a .ini file to use for custom analysis settings
         :param settings: a dictionary of custom analysis settings
-        :param ranges: a dictionary giving any additional hard prior bounds for parameters,
+        :param ranges: a dictionary giving any additional hard prior bounds for parameters, or if periodic,
                        e.g. {'x':[0, 1], 'y':[None,2]}
+                       If a parameter is periodic, use a triplet, e.g. {'phi': [0, 2*np.pi, True]}
         :param samples: if not loading from file, array of parameter values for each sample, passed
                         to :meth:`setSamples`, or list of arrays if more than one chain
         :param weights: array of weights for samples, or list of arrays if more than one chain
@@ -326,7 +327,8 @@ class MCSamples(Chains):
         If a min or max value is None, then it is assumed to be unbounded.
 
         :param ranges: A list or a tuple of [min,max] values for each parameter,
-                       or a dictionary giving [min,max] values for specific parameter names
+                       or a dictionary giving [min,max] values for specific parameter names.
+                       For periodic parameters use dictionary with [min, max, True] entry.
         """
         if isinstance(ranges, np.ndarray):
             if len(ranges.shape) == 2 and ranges.shape[1] == 2:
@@ -460,6 +462,7 @@ class MCSamples(Chains):
             par.limmax = self.ranges.getUpper(par.name)
             par.has_limits_bot = par.limmin is not None
             par.has_limits_top = par.limmax is not None
+            par.periodic = par.name in self.ranges.periodic
 
             if ini and "marker[%s]" % par.name in ini.params:
                 line = ini.string("marker[%s]" % par.name)
@@ -1497,7 +1500,7 @@ class MCSamples(Chains):
         return par
 
     def _binSamples(self, paramVec, par, num_fine_bins, borderfrac=0.1):
-        # High resolution density (sampled many times per smoothing scale). First and last bins are half width
+        # High resolution density (sampled many times per smoothing scale). First and last bins are half width.
 
         border = (par.range_max - par.range_min) * borderfrac
         binmin = min(par.param_min, par.range_min)
@@ -1574,7 +1577,9 @@ class MCSamples(Chains):
             finebinlikes = np.bincount(bin_indices, weights=w, minlength=fine_bins)
 
         if smooth_scale_1D <= 0:
-            # Set automatically.
+            # Set smoothing bandwidth automatically.
+            # For the moment treat periodic and non-periodic the same, similar error to using DCT for distributions
+            # with non-zero gradient at boundary
             bandwidth = self.getAutoBandwidth1D(bins, par, j, mult_bias_correction_order, boundary_correction_order) * (
                 binmax - binmin
             )
@@ -1596,18 +1601,19 @@ class MCSamples(Chains):
             "%s 1D sigma_range, std: %s, %s; smooth_1D_bins: %s ", par.name, par.sigma_range, par.err, smooth_1D
         )
 
-        winw = min(int(round(2.5 * smooth_1D)), fine_bins // 2 - 2)
+        winw = min(int(round(2.5 * smooth_1D)), ((fine_bins - 1) if par.periodic else fine_bins) // 2 - 2)
         kernel = Kernel1D(winw, smooth_1D)
 
         cache = {}
-        conv = convolve1D(bins, kernel.Win, "same", cache=cache)
+        convolution_mode = "periodic" if par.periodic else "same"
+        conv = convolve1D(bins, kernel.Win, convolution_mode, cache=cache)
         fine_x = np.linspace(binmin, binmax, fine_bins)
         density1D = Density1D(fine_x, P=conv, view_ranges=[par.range_min, par.range_max])
 
         if meanlikes:
             rawbins = conv.copy()
 
-        if par.has_limits and boundary_correction_order >= 0:
+        if par.has_limits and not par.periodic and boundary_correction_order >= 0:
             # correct for cuts allowing for normalization over window
             prior_mask = np.ones(fine_bins + 2 * winw)
             if par.has_limits_bot:
@@ -1645,8 +1651,8 @@ class MCSamples(Chains):
                 density1D.P[ix] = normed * np.exp(np.minimum(corrected / normed, 4) - 1)
             else:
                 raise SettingError("Unknown boundary_correction_order (expected 0, 1, 2)")
-        elif boundary_correction_order == 2:
-            # higher order kernel
+        elif not par.periodic and boundary_correction_order == 2:
+            # higher order kernel, ignored for periodic
             # eg. see https://www.jstor.org/stable/2965571
             xWin2 = kernel.Win * kernel.x**2
             x2P = convolve1D(bins, xWin2, "same", cache=cache)
@@ -1657,21 +1663,23 @@ class MCSamples(Chains):
             density1D.P[ix] *= np.exp(np.minimum(corrected[ix] / density1D.P[ix], 2) - 1)
 
         if mult_bias_correction_order:
-            prior_mask = np.ones(fine_bins)
-            if par.has_limits_bot:
-                prior_mask[0] *= 0.5
-            if par.has_limits_top:
-                prior_mask[-1] *= 0.5
-            a0 = convolve1D(prior_mask, kernel.Win, "same", cache=cache, cache_args=[2])
+            if not par.periodic:
+                prior_mask = np.ones(fine_bins)
+                if par.has_limits_bot:
+                    prior_mask[0] *= 0.5
+                if par.has_limits_top:
+                    prior_mask[-1] *= 0.5
+                a0 = convolve1D(prior_mask, kernel.Win, "same", cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
                 # estimate using flattened samples to remove second order biases
                 # mostly good performance, see https://www.jstor.org/stable/2965571 method 3,1 for first order
                 prob1 = density1D.P.copy()
                 prob1[prob1 == 0] = 1
                 fine = bins / prob1
-                conv = convolve1D(fine, kernel.Win, "same", cache=cache, cache_args=[2])
+                conv = convolve1D(fine, kernel.Win, convolution_mode, cache=cache, cache_args=[2])
                 density1D.setP(density1D.P * conv)
-                density1D.P /= a0
+                if not par.periodic:
+                    density1D.P /= a0
 
         density1D.normalize("max", in_place=True)
         if not kwargs:
@@ -1680,7 +1688,7 @@ class MCSamples(Chains):
         if meanlikes:
             ix = density1D.P > 0
             finebinlikes[ix] /= density1D.P[ix]
-            binlikes = convolve1D(finebinlikes, kernel.Win, "same", cache=cache, cache_args=[2])
+            binlikes = convolve1D(finebinlikes, kernel.Win, convolution_mode, cache=cache, cache_args=[2])
             binlikes[ix] *= density1D.P[ix] / rawbins[ix]
             if self.shade_likes_is_mean_loglikes:
                 maxbin = np.min(binlikes)
@@ -1694,24 +1702,30 @@ class MCSamples(Chains):
         return density1D
 
     def _setEdgeMask2D(self, parx, pary, prior_mask, winw):
-        if parx.has_limits_bot:
-            prior_mask[:, winw] /= 2
-            prior_mask[:, :winw] = 0
-        if parx.has_limits_top:
-            prior_mask[:, -(winw + 1)] /= 2
-            prior_mask[:, -winw:] = 0
-        if pary.has_limits_bot:
-            prior_mask[winw, :] /= 2
-            prior_mask[:winw:] = 0
-        if pary.has_limits_top:
-            prior_mask[-(winw + 1), :] /= 2
-            prior_mask[-winw:, :] = 0
+        # Only apply edge masks on non-periodic axes; periodic axes have no boundaries
+        if not parx.periodic:
+            if parx.has_limits_bot:
+                prior_mask[:, winw] /= 2
+                prior_mask[:, :winw] = 0
+            if parx.has_limits_top:
+                prior_mask[:, -(winw + 1)] /= 2
+                prior_mask[:, -winw:] = 0
+        if not pary.periodic:
+            if pary.has_limits_bot:
+                prior_mask[winw, :] /= 2
+                prior_mask[:winw:] = 0
+            if pary.has_limits_top:
+                prior_mask[-(winw + 1), :] /= 2
+                prior_mask[-winw:, :] = 0
 
-    def _setAllEdgeMask2D(self, prior_mask, winw):
-        prior_mask[:, :winw] = 0
-        prior_mask[:, -winw:] = 0
-        prior_mask[:winw:] = 0
-        prior_mask[-winw:, :] = 0
+    def _setAllEdgeMask2D(self, prior_mask, winw, periodic_x=False, periodic_y=False):
+        # Zero out margins only along non-periodic axes
+        if not periodic_x:
+            prior_mask[:, :winw] = 0
+            prior_mask[:, -winw:] = 0
+        if not periodic_y:
+            prior_mask[:winw:] = 0
+            prior_mask[-winw:, :] = 0
 
     def _getScaleForParam(self, par):
         # Also ensures that the 1D limits are initialized
@@ -1872,14 +1886,29 @@ class MCSamples(Chains):
         start = time.time()
         cache = {}
         convolvesize = xsize + 2 * winw + Win.shape[0]  # larger than needed for selecting fft pixel count
-        bins2D = convolve2D(histbins, Win, "same", largest_size=convolvesize, cache=cache)
+
+        # Determine convolution mode based on parameter periodicity
+        if parx.periodic and pary.periodic:
+            convolution_mode = "periodic_both"
+        elif parx.periodic:
+            convolution_mode = "periodic_x"
+        elif pary.periodic:
+            convolution_mode = "periodic_y"
+        else:
+            convolution_mode = "same"
+
+        bins2D = convolve2D(histbins, Win, convolution_mode, largest_size=convolvesize, cache=cache)
 
         if meanlikes:
-            bin2Dlikes = convolve2D(finebinlikes, Win, "same", largest_size=convolvesize, cache=cache, cache_args=[2])
+            bin2Dlikes = convolve2D(
+                finebinlikes, Win, convolution_mode, largest_size=convolvesize, cache=cache, cache_args=[2]
+            )
             if mult_bias_correction_order:
                 ix = bin2Dlikes > 0
                 finebinlikes[ix] /= bin2Dlikes[ix]
-                likes2 = convolve2D(finebinlikes, Win, "same", largest_size=convolvesize, cache=cache, cache_args=[2])
+                likes2 = convolve2D(
+                    finebinlikes, Win, convolution_mode, largest_size=convolvesize, cache=cache, cache_args=[2]
+                )
                 likes2[ix] *= bin2Dlikes[ix]
                 bin2Dlikes = likes2
             del finebinlikes
@@ -1890,17 +1919,26 @@ class MCSamples(Chains):
             bin2Dlikes = None
 
         bool_mask = None
+
         if has_prior and boundary_correction_order >= 0 or mult_bias_correction_order or mask_function:
+            # Always pad by winw in both axes so that 'valid' convolution returns (ysize, xsize)
+            # Masks are only applied on non-periodic axes; periodic axes remain as ones.
             prior_mask = np.ones((ysize + 2 * winw, xsize + 2 * winw))
             if mask_function:
                 mask_function(
-                    xbinmin - winw * finewidthx, ybinmin - winw * finewidthy, finewidthx, finewidthy, prior_mask
+                    xbinmin - winw * finewidthx,
+                    ybinmin - winw * finewidthy,
+                    finewidthx,
+                    finewidthy,
+                    prior_mask,
                 )
                 bool_mask = prior_mask[winw:-winw, winw:-winw] < 1e-8
 
-        if has_prior and boundary_correction_order >= 0:
-            # Correct for edge effects
+        if has_prior and boundary_correction_order >= 0 and not (parx.periodic and pary.periodic):
+            # Correct for edge effects; if only one axis is periodic still correct on the other axis
             self._setEdgeMask2D(parx, pary, prior_mask, winw)
+            # Use 'valid' on the padded prior_mask so the result is (ysize, xsize)
+            # For periodic axes prior_mask is ones along that axis, so this is consistent
             a00 = convolve2D(prior_mask, Win, "valid", largest_size=convolvesize, cache=cache)
             ix = a00 * bins2D > np.max(bins2D) * 1e-8
             a00 = a00[ix]
@@ -1927,8 +1965,8 @@ class MCSamples(Chains):
                 a11 = convolve2D(
                     prior_mask, winy * indexes, "valid", largest_size=convolvesize, cache=cache, cache_args=[1]
                 )[ix]
-                xP = convolve2D(histbins, winx, "same", largest_size=convolvesize, cache=cache)[ix]
-                yP = convolve2D(histbins, winy, "same", largest_size=convolvesize, cache=cache)[ix]
+                xP = convolve2D(histbins, winx, convolution_mode, largest_size=convolvesize, cache=cache)[ix]
+                yP = convolve2D(histbins, winy, convolution_mode, largest_size=convolvesize, cache=cache)[ix]
                 denom = a20 * a01**2 + a10**2 * a02 - a00 * a02 * a20 + a11**2 * a00 - 2 * a01 * a10 * a11
                 A = a11**2 - a02 * a20
                 Ax = a10 * a02 - a01 * a11
@@ -1938,14 +1976,16 @@ class MCSamples(Chains):
             else:
                 raise SettingError("unknown boundary_correction_order (expected 0 or 1)")
 
-        if mult_bias_correction_order:
-            self._setAllEdgeMask2D(prior_mask, winw)
+        if mult_bias_correction_order and not (parx.periodic and pary.periodic):
+            # If only one axis is periodic still correct on the non-periodic edges
+            self._setAllEdgeMask2D(prior_mask, winw, periodic_x=parx.periodic, periodic_y=pary.periodic)
+            # Use 'valid' on the padded prior_mask so the result is (ysize, xsize)
             a00 = convolve2D(prior_mask, Win, "valid", largest_size=convolvesize, cache=cache, cache_args=[2])
             for _ in range(mult_bias_correction_order):
                 box = histbins.copy()
                 ix2 = bins2D > np.max(bins2D) * 1e-8
                 box[ix2] /= bins2D[ix2]
-                bins2D *= convolve2D(box, Win, "same", largest_size=convolvesize, cache=cache, cache_args=[2])
+                bins2D *= convolve2D(box, Win, convolution_mode, largest_size=convolvesize, cache=cache, cache_args=[2])
                 if mask_function:
                     bins2D[~bool_mask] /= a00[~bool_mask]
                 else:

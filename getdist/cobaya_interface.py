@@ -12,7 +12,6 @@ import numpy as np
 # Conventions
 _label = "label"
 _prior = "prior"
-_theory = "theory"
 _params = "params"
 _likelihood = "likelihood"
 _sampler = "sampler"
@@ -184,7 +183,8 @@ def get_info_params(info):
 
 # noinspection PyUnboundLocalVariable
 def get_range(param_info):
-    # Sampled
+    param_info = expand_info_param(param_info or {})
+    periodic = param_info.get("periodic", False)
     if is_sampled_param(param_info):
         prior = param_info[_prior]
         if isinstance(prior, Sequence) and len(prior) == 2:
@@ -194,6 +194,7 @@ def get_range(param_info):
                 "Format of prior not recognised: %r. " % prior
                 + "Use '[min, max]' or a dictionary following Cobaya's documentation."
             )
+        periodic = periodic or prior.pop("periodic", False)
         info_lims = {tag: prior.get(tag) for tag in ["min", "max", "loc", "scale"]}
         if info_lims["min"] is not None or info_lims["max"] is not None:
             lims = [prior.get("min"), prior.get("max")]
@@ -202,39 +203,11 @@ def get_range(param_info):
             dist = args.pop(_p_dist, "uniform")
             pdf_dist = getattr(import_module("scipy.stats", dist), dist)
             lims = pdf_dist.interval(1, **args)
-    # Derived
-    elif is_derived_param(param_info):
-        lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(param_info or {})
-    # Fixed
+        return lims[0] if lims[0] != -np.inf else None, lims[1] if lims[1] != np.inf else None, periodic
+    elif isinstance(value := param_info.get("value", None), Number):
+        return float(value), float(value), False
     else:
-        value = fixed_value(param_info)
-        try:
-            value = float(value)
-        except (ValueError, TypeError):
-            # e.g. lambda function values
-            lims = (lambda i: [i.get("min", -np.inf), i.get("max", np.inf)])(param_info or {})
-        else:
-            lims = (value, value)
-    return lims[0] if lims[0] != -np.inf else None, lims[1] if lims[1] != np.inf else None
-
-
-def fixed_value(info_param):
-    """
-    Returns True if the parameter has been fixed to a value or through a function.
-    """
-    return expand_info_param(info_param).get(_p_value, None)
-
-
-def is_fixed_param(info_param):
-    """
-    Returns True if the parameter has been fixed to a value or through a function.
-    """
-    return fixed_value(info_param) is not None
-
-
-def is_parameter_with_range(info_param):
-    value = fixed_value(info_param)
-    return value is None or isinstance(value, Number) or is_derived_param(info_param)
+        return param_info.get("min"), param_info.get("max"), periodic
 
 
 def is_sampled_param(info_param):

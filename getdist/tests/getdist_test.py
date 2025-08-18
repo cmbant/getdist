@@ -178,6 +178,52 @@ class GetDistTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(d2D.P, dND.P, atol=1e-5))
 
+    def testPeriodic(self):
+        # Test density calculation with periodic parameters and 1D periodic behavior
+        n_samples = 1000
+        np.random.seed(42)
+
+        # Create angle parameter (periodic) and radius parameter (non-periodic)
+        angle = np.random.normal(0, 1, n_samples) % (2 * np.pi)
+        radius = np.abs(np.random.normal(2, 0.5, n_samples))
+
+        samples = np.column_stack([angle, radius])
+        names = ["angle", "radius"]
+        labels = [r"\theta", "r"]
+
+        mcsamples = MCSamples(
+            samples=samples, names=names, labels=labels, ranges={"angle": [0, 2 * np.pi, "periodic"], "radius": [0, 5]}
+        )
+
+        # Test 2D density calculation
+        density = mcsamples.get2DDensity("angle", "radius", fine_bins_2D=32)
+
+        # Basic checks
+        self.assertEqual(density.P.shape, (32, 32))
+        self.assertGreater(np.max(density.P), 0)
+        self.assertGreater(density.norm_integral(), 0)
+
+        # Periodic edges equal checks (merge from former test)
+        d64x = mcsamples.get2DDensity("angle", "radius", fine_bins_2D=64)
+        self.assertTrue(np.allclose(d64x.P[:, 0], d64x.P[:, -1], atol=5e-3, rtol=5e-3))
+        d64y = mcsamples.get2DDensity("radius", "angle", fine_bins_2D=64)
+        self.assertTrue(np.allclose(d64y.P[0, :], d64y.P[-1, :], atol=5e-3, rtol=5e-3))
+
+        # Test that periodic parameter is properly detected
+        angle_param = mcsamples.paramNames.parWithName("angle")
+        radius_param = mcsamples.paramNames.parWithName("radius")
+        self.assertTrue(angle_param.periodic)
+        self.assertFalse(radius_param.periodic)
+
+        # Also test 1D density of the periodic angle variable
+        d1 = mcsamples.get1DDensity("angle", fine_bins=64)
+        # Basic checks
+        self.assertEqual(d1.P.shape, (64,))
+        self.assertGreater(np.max(d1.P), 0)
+        self.assertGreater(d1.norm_integral(), 0)
+        # Periodic edges should match for 1D as well
+        self.assertTrue(np.allclose(d1.P[0], d1.P[-1], atol=5e-3, rtol=5e-3))
+
     def testLoads(self):
         # test initiating from multiple chain arrays
         samps = []
