@@ -84,6 +84,7 @@ class ParamInfo:
         self.filenameLoadedFrom = ""
         self.number = number
         self.renames = makeList(renames or [])
+        self.periodic = False
         if line is not None:
             self.setFromString(line)
 
@@ -144,6 +145,12 @@ class ParamInfo:
 
     def __str__(self):
         return self.string()
+
+    def __setstate__(self, state):
+        # Ensure backward-compatible unpickling when newer attributes are missing
+        self.__dict__.update(state)
+        if "periodic" not in self.__dict__:
+            self.periodic = False
 
 
 class ParamList:
