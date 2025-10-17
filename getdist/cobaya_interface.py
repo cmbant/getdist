@@ -251,7 +251,10 @@ def get_sampler_key(filename_or_info, default_sampler_for_chain_type="mcmc"):
 
 def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):
     sampler = get_sampler_key(filename_or_info, default_sampler_for_chain_type)
-    return "nested" if sampler == "polychord" else sampler
+    sampler_type = yaml_file_or_dict(filename_or_info).get(_sampler, {}).get(sampler, {}).get("sampler_type", None)
+    if sampler_type is None:
+        return "nested" if sampler == "polychord" else sampler
+    return sampler_type
 
 
 def get_sampler_temperature(filename_or_info):
