@@ -5,6 +5,7 @@ from collections import namedtuple
 from collections.abc import Sequence
 from copy import deepcopy
 from typing import Any
+from warnings import warn
 
 import numpy as np
 
@@ -1147,7 +1148,8 @@ class Chains(WeightedSamples):
     def setSampler(self, sampler):
         sampler = sampler.lower()
         if sampler not in ["mcmc", "nested", "uncorrelated"]:
-            raise ValueError("Unknown sampler type %s" % sampler)
+            warn(f"Unknown sampler type {sampler}. Assuming MCMC.")
+            sampler = "mcmc"
         self.sampler = sampler
 
     def setParamNames(self, names=None):
