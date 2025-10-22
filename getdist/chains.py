@@ -1030,16 +1030,17 @@ class WeightedSamples:
 
     def deleteFixedParams(self):
         """
-        Removes parameters that do not vary (are the same in all samples)
+        Removes parameters that do not vary (are the same in all samples).
+        This includes parameters that are all NaN.
 
         :return: tuple (list of fixed parameter indices that were removed, fixed values)
         """
         fixed = []
         values = []
         for i in range(self.samples.shape[1]):
-            if np.isclose(self.samples[0, i], self.samples[-1, i]):
+            if np.isclose(self.samples[0, i], self.samples[-1, i], equal_nan=True):
                 mean = np.average(self.samples[:, i])
-                if np.allclose(self.samples[:, i], mean, rtol=1e-12, atol=0):
+                if np.allclose(self.samples[:, i], mean, rtol=1e-12, atol=0, equal_nan=True):
                     fixed.append(i)
                     values.append(mean)
         self.changeSamples(np.delete(self.samples, fixed, 1))
@@ -1544,7 +1545,8 @@ class Chains(WeightedSamples):
 
     def deleteFixedParams(self):
         """
-        Delete parameters that are fixed (the same value in all samples)
+        Delete parameters that are fixed (the same value in all samples).
+        This includes parameters that are all NaN.
         """
         if self.samples is not None:
             fixed, values = super().deleteFixedParams()
