@@ -1030,7 +1030,8 @@ class WeightedSamples:
 
     def deleteFixedParams(self):
         """
-        Removes parameters that do not vary (are the same in all samples)
+        Removes parameters that do not vary (are the same in all samples).
+        This includes parameters that are all NaN.
 
         :return: tuple (list of fixed parameter indices that were removed, fixed values)
         """
@@ -1546,7 +1547,8 @@ class Chains(WeightedSamples):
 
     def deleteFixedParams(self):
         """
-        Delete parameters that are fixed (the same value in all samples)
+        Delete parameters that are fixed (the same value in all samples).
+        This includes parameters that are all NaN.
         """
         if self.samples is not None:
             fixed, values = super().deleteFixedParams()
