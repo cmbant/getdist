@@ -1037,9 +1037,11 @@ class WeightedSamples:
         fixed = []
         values = []
         for i in range(self.samples.shape[1]):
-            if np.isclose(self.samples[0, i], self.samples[-1, i]):
+            if np.isclose(self.samples[0, i], self.samples[-1, i]) or (
+                np.isnan(self.samples[0, i]) and np.isnan(self.samples[-1, i])
+            ):
                 mean = np.average(self.samples[:, i])
-                if np.allclose(self.samples[:, i], mean, rtol=1e-12, atol=0):
+                if np.allclose(self.samples[:, i], mean, rtol=1e-12, atol=0) or np.isnan(self.samples[:, i]).all():
                     fixed.append(i)
                     values.append(mean)
         self.changeSamples(np.delete(self.samples, fixed, 1))
