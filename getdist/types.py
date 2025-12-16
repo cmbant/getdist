@@ -885,7 +885,7 @@ class MargeStats(ParamResults):
                             res += ", %+.1f \\sigma_i" % (delta / indep_sigma)
                         res += ")"
                     else:
-                        res += r"\quad(%+.1f \\sigma)" % (delta / refVal.err)
+                        res += r"\quad(%+.1f \sigma)" % (delta / refVal.err)
             if self.hasBestFit:  # add best fit too
                 rangew = (lim.upper - lim.lower) / 10
                 bestfit, _, _, exponent = formatter.numberFormatter.namesigFigs(
