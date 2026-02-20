@@ -12,7 +12,7 @@ defaultContours = (0.68, 0.95)
 
 
 class InterpGridCache:
-    __slots__ = "factor", "grid", "sortgrid", "bign", "norm", "softgrid", "cumsum"
+    __slots__ = "bign", "cumsum", "factor", "grid", "norm", "softgrid", "sortgrid"
 
 
 # noinspection PyTypeChecker

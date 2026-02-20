@@ -76,13 +76,13 @@ class CovMat:
         l2 = len(params2)
         length = len(C.paramNames)
 
-        map1 = dict(list(zip(params1, list(range(0, l1)))))
-        map2 = dict(list(zip(params2, list(range(0, l2)))))
-        covmap = dict(list(zip(list(range(0, length)), C.paramNames)))
+        map1 = dict(list(zip(params1, list(range(l1)))))
+        map2 = dict(list(zip(params2, list(range(l2)))))
+        covmap = dict(list(zip(list(range(length)), C.paramNames)))
 
         C.matrix = np.zeros((length, length))
-        for i in range(0, length):
-            for j in range(0, length):
+        for i in range(length):
+            for j in range(length):
                 if C.paramNames[i] in params1 and C.paramNames[j] in params1:
                     C.matrix[i, j] = self.matrix[map1[covmap[i]], map1[covmap[j]]]
                 elif C.paramNames[i] in params2 and C.paramNames[j] in params2:

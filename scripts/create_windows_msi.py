@@ -116,7 +116,7 @@ def create_wix_files(input_dir, output_dir, version):
         </Directory>
 
         <DirectoryRef Id="ApplicationProgramsFolder">
-            <Component Id="ApplicationShortcut" Guid="{str(uuid.uuid4())}">
+            <Component Id="ApplicationShortcut" Guid="{uuid.uuid4()!s}">
                 <Shortcut Id="ApplicationStartMenuShortcut"
                           Name="GetDist GUI"
                           Description="GetDist Graphical User Interface"

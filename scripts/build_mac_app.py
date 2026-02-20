@@ -21,7 +21,7 @@ def find_version():
     """Extract version from getdist/__init__.py"""
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     version_file = open(os.path.join(repo_root, "getdist", "__init__.py")).read()
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.MULTILINE)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")

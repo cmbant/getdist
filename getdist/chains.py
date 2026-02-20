@@ -174,8 +174,6 @@ class ParSamples:
     An object used as a container for named parameter sample arrays
     """
 
-    pass
-
 
 # noinspection PyAttributeOutsideInit
 class WeightedSamples:
@@ -1284,7 +1282,7 @@ class Chains(WeightedSamples):
                     ob = getattr(ob, p)
                 if second:
                     if isinstance(getattr(ob, path[-1], None), ParSamples):
-                        setattr(getattr(ob, path[-1]), "value", self.samples[:, i])
+                        getattr(ob, path[-1]).value = self.samples[:, i]
                     else:
                         setattr(ob, path[-1], self.samples[:, i])
 

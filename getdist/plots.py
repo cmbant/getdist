@@ -397,7 +397,7 @@ class RootInfo:
     Class to hold information about a set of samples loaded from file
     """
 
-    __slots__ = ["root", "batch", "path"]
+    __slots__ = ["batch", "path", "root"]
 
     def __init__(self, root: str, path: str, batch=None):
         """
@@ -606,7 +606,7 @@ class MCSampleAnalysis(_BaseObject):
             self.densities_1D[root] = rootdata
         if isinstance(param, ParamInfo):
             name = param.name
-        else:  #
+        else:
             name = param
         samples = self.samples_for_root(root)
         key = (name, likes)
@@ -2934,7 +2934,7 @@ class GetDistPlotter(_BaseObject):
                         ax.yaxis.set_label_position("right")
                         ax.yaxis.set_offset_position("right")
                         ax.yaxis.set_tick_params(which="both", labelright=True, labelleft=False)
-                        self.set_ylabel(params[i], ax=ax, rotation=-90, va="bottom")
+                        self.set_ylabel(param, ax=ax, rotation=-90, va="bottom")
 
                     ax.set_xlim(lims[i2])
                     ax.set_ylim(lims[i])
@@ -3728,7 +3728,7 @@ class GetDistPlotter(_BaseObject):
             self.fig.rot_animation = animation.FuncAnimation(
                 self.fig,
                 rotate,
-                frames=np.arange(0, anim_angle_degrees, anim_step_degrees),  # noqa
+                frames=np.arange(0, anim_angle_degrees, anim_step_degrees),
                 interval=1000 / anim_fps,
             )
             if mp4_filename:

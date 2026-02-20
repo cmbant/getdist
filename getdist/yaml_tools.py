@@ -31,7 +31,7 @@ def yaml_load(text_stream, Loader=yaml.Loader, file_name=None):
             |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*
             |[-+]?\\.(?:inf|Inf|INF)
             |\\.(?:nan|NaN|NAN))$""",
-            re.X,
+            re.VERBOSE,
         ),
         list("-+0123456789."),
     )

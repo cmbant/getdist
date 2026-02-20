@@ -256,7 +256,7 @@ def save_recent_directories():
                 json.dump(recent_dirs, f)
             logger.info(f"Saved {len(recent_dirs)} recent directories to {get_recent_dirs_file()}")
     except Exception as e:
-        logger.error(f"Error saving recent directories: {str(e)}")
+        logger.error(f"Error saving recent directories: {e!s}")
 
 
 def load_recent_directories():
@@ -274,7 +274,7 @@ def load_recent_directories():
                 st.session_state.recent_directories = recent_dirs
                 logger.info(f"Loaded {len(recent_dirs)} recent directories from {file_path}")
     except Exception as e:
-        logger.error(f"Error loading recent directories: {str(e)}")
+        logger.error(f"Error loading recent directories: {e!s}")
 
 
 # Load recent directories when the app starts
@@ -334,13 +334,13 @@ def open_directory(dir_path):
                 get_plotter(chain_dir=batch)
                 return True
         except Exception as e:
-            logging.warning(f"Not a ChainDirGrid: {str(e)}")
+            logging.warning(f"Not a ChainDirGrid: {e!s}")
 
         st.error(f"No chains found in {dir_path}")
         return False
 
     except Exception as e:
-        st.error(f"Error opening directory: {str(e)}")
+        st.error(f"Error opening directory: {e!s}")
         return False
 
 
@@ -399,7 +399,7 @@ def update_parameters():
                 else:
                     logging.warning(f"Could not get renames from {root}")
             except Exception as e:
-                logging.error(f"Error updating renames from {root}: {str(e)}")
+                logging.error(f"Error updating renames from {root}: {e!s}")
 
         # Store the updated parameter names in session state
         st.session_state.param_names = param_names
@@ -428,7 +428,7 @@ def update_parameters():
 
             logging.info(f"Updated parameter selections: X={new_x_params}, Y={new_y_params}")
     except Exception as e:
-        logging.error(f"Error updating parameters: {str(e)}")
+        logging.error(f"Error updating parameters: {e!s}")
 
 
 def add_root(root_name):
@@ -465,7 +465,7 @@ def add_root(root_name):
                     path = st.session_state.batch.resolveRoot(root_name).chainPath
                     logging.info(f"Using resolveRoot, path: {path}")
             except Exception as e:
-                logging.error(f"Error resolving root path: {str(e)}")
+                logging.error(f"Error resolving root path: {e!s}")
                 path = st.session_state.chain_dir
         else:
             path = st.session_state.chain_dir
@@ -489,11 +489,11 @@ def add_root(root_name):
         # This replaces the previous parameter update logic
         update_parameters()
     except Exception as e:
-        logging.error(f"Error adding root {root_name}: {str(e)}")
+        logging.error(f"Error adding root {root_name}: {e!s}")
         # Remove from selected roots if there was an error
         if root_name in st.session_state.selected_roots:
             st.session_state.selected_roots.remove(root_name)
-        st.error(f"Error adding chain {root_name}: {str(e)}")
+        st.error(f"Error adding chain {root_name}: {e!s}")
 
 
 def show_marge_stats(rootname=None):
@@ -527,7 +527,7 @@ def show_marge_stats(rootname=None):
 
         return rootname, stats
     except Exception as e:
-        st.error(f"Error getting marginalized statistics: {str(e)}")
+        st.error(f"Error getting marginalized statistics: {e!s}")
         return None
 
 
@@ -562,7 +562,7 @@ def show_like_stats(rootname=None):
 
         return rootname, stats
     except Exception as e:
-        st.error(f"Error getting likelihood statistics: {str(e)}")
+        st.error(f"Error getting likelihood statistics: {e!s}")
         return None
 
 
@@ -604,7 +604,7 @@ def show_converge_stats(rootname=None):
 
         return rootname, stats, summary
     except Exception as e:
-        st.error(f"Error getting convergence statistics: {str(e)}")
+        st.error(f"Error getting convergence statistics: {e!s}")
         return None
 
 
@@ -659,7 +659,7 @@ def show_pca(rootname=None):
 
         return rootname, (eigenvalues, eigenvectors, pca_text)
     except Exception as e:
-        st.error(f"Error performing PCA: {str(e)}")
+        st.error(f"Error performing PCA: {e!s}")
         return None
 
 
@@ -717,7 +717,7 @@ def apply_analysis_settings(settings):
 
         st.success("Analysis settings applied")
     except Exception as e:
-        st.error(f"Error applying settings: {str(e)}")
+        st.error(f"Error applying settings: {e!s}")
 
 
 def apply_plot_module(module_name):
@@ -745,7 +745,7 @@ def apply_plot_module(module_name):
         except ImportError:
             st.error(f"Could not import module: {module_name}")
     except Exception as e:
-        st.error(f"Error applying plot style module: {str(e)}")
+        st.error(f"Error applying plot style module: {e!s}")
 
 
 def reset_analysis_settings():
@@ -760,7 +760,7 @@ def reset_analysis_settings():
             )
             st.success("Analysis settings reset to defaults")
         except Exception as e:
-            st.error(f"Error resetting settings: {str(e)}")
+            st.error(f"Error resetting settings: {e!s}")
     else:
         st.success("Analysis settings reset to defaults")
 
@@ -862,7 +862,7 @@ def export_plot(format_type):
 
                 return file_data, mime_type
             except Exception as e:
-                logging.exception(f"Error using plotter.export: {str(e)}")
+                logging.exception(f"Error using plotter.export: {e!s}")
                 # Clean up the temporary file if it exists
                 if os.path.exists(tmp_name):
                     os.unlink(tmp_name)
@@ -879,7 +879,7 @@ def export_plot(format_type):
             return None, None
 
     except Exception as e:
-        logging.exception(f"Error exporting plot: {str(e)}")
+        logging.exception(f"Error exporting plot: {e!s}")
         return None, None
 
 
@@ -1007,7 +1007,7 @@ def generate_plot():
             logging.info("Successfully generated 1D plot")
         except Exception as e:
             logging.exception("Error generating 1D plot")
-            st.error(f"Error generating 1D plot: {str(e)}")
+            st.error(f"Error generating 1D plot: {e!s}")
 
     elif st.session_state.plot_type == "2D Contour":
         # Check if we have both X and Y parameters
@@ -1049,7 +1049,7 @@ def generate_plot():
                 params.append(color_by)
 
             # Format exactly like original mainwindow.py
-            script_lines.append(f"params = {str(params)}")
+            script_lines.append(f"params = {params!s}")
 
             # Add colors for multiple chains - match original format exactly
             if len(st.session_state.selected_roots) > 1:
@@ -1262,7 +1262,7 @@ def generate_plot():
             logging.info("Successfully generated 2D plot")
         except Exception as e:
             logging.exception("Error generating 2D plot")
-            st.error(f"Error generating 2D plot: {str(e)}")
+            st.error(f"Error generating 2D plot: {e!s}")
 
     elif st.session_state.plot_type == "Triangle" and st.session_state.x_params:
         # Check if we have enough parameters for a triangle plot
@@ -1326,7 +1326,7 @@ def generate_plot():
             logging.info("Successfully generated triangle plot")
         except Exception as e:
             logging.exception("Error generating triangle plot")
-            st.error(f"Error generating triangle plot: {str(e)}")
+            st.error(f"Error generating triangle plot: {e!s}")
 
     script = "\n".join(script_lines)
 
@@ -1347,7 +1347,7 @@ def generate_plot():
             return image_bytes, script
         except Exception as e:
             logging.exception("Error saving plot to memory")
-            st.error(f"Error saving plot: {str(e)}")
+            st.error(f"Error saving plot: {e!s}")
     else:
         logging.warning("No figure was generated")
 
@@ -2041,7 +2041,7 @@ def main():
                                                     # Display the table
                                                     st.dataframe(df, use_container_width=True)
                                                 except Exception as df_err:
-                                                    st.error(f"Error creating table view: {str(df_err)}")
+                                                    st.error(f"Error creating table view: {df_err!s}")
                                                     st.info("Falling back to LaTeX view")
                                                     view_type = "LaTeX"
 
@@ -2065,7 +2065,7 @@ def main():
                                                     st.session_state[f"clipboard_{i}"] = table_text
                                                     st.success("LaTeX copied to clipboard!")
                             except Exception as e:
-                                st.error(f"Error generating parameter tables: {str(e)}")
+                                st.error(f"Error generating parameter tables: {e!s}")
 
             if st.button("Close", key="close_param_table"):
                 toggle_dialog(None)  # Close all dialogs
@@ -2328,7 +2328,7 @@ def main():
 
                             st.success("Plot settings updated")
                         except Exception as e:
-                            st.error(f"Error updating plot settings: {str(e)}")
+                            st.error(f"Error updating plot settings: {e!s}")
                 else:
                     st.warning("No plotter available. Open a chain directory first.")
 
@@ -2406,7 +2406,7 @@ def main():
                     ):
                         pass
                 except Exception as e:
-                    st.error(f"Error reading log file: {str(e)}")
+                    st.error(f"Error reading log file: {e!s}")
             else:
                 st.warning(f"Log file not found at: {log_file_path}")
 
@@ -2580,7 +2580,7 @@ def main():
                                     )
                                 st.rerun()
                 except Exception as e:
-                    st.error(f"Error accessing directory: {str(e)}")
+                    st.error(f"Error accessing directory: {e!s}")
 
                 # Buttons to select or cancel
                 col1, col2 = st.columns(2)
@@ -2621,7 +2621,7 @@ def main():
                         if isinstance(st.session_state.batch, ChainDirGrid):
                             data_tags = st.session_state.batch.roots_for_dir(selected_param_tag)
                     except Exception as e:
-                        st.error(f"Error getting chains for {selected_param_tag}: {str(e)}")
+                        st.error(f"Error getting chains for {selected_param_tag}: {e!s}")
 
                     # Data tag selection (chains)
                     if data_tags:
@@ -2720,7 +2720,7 @@ def main():
                                         st.session_state.root_infos.pop(st.session_state.active_chain, None)
                                         logging.info(f"Removed chain {st.session_state.active_chain} from plotter")
                                     except Exception as e:
-                                        logging.error(f"Error removing chain from plotter: {str(e)}")
+                                        logging.error(f"Error removing chain from plotter: {e!s}")
 
                                 # Remove the active chain from selected roots
                                 st.session_state.selected_roots.remove(st.session_state.active_chain)
@@ -2833,7 +2833,7 @@ def main():
                                     elif hasattr(param_names, "names"):
                                         param_list = [p.name for p in param_names.names]
                 except Exception as e:
-                    st.error(f"Error getting parameter list: {str(e)}")
+                    st.error(f"Error getting parameter list: {e!s}")
                     logging.exception("Parameter list error")
 
                 # Parameter selection section

@@ -144,7 +144,9 @@ def arviz_to_mcsamples(
                             )
                             idx_str_parts_for_name.append(f"{coord_dim_name_for_internal_name}_{sanitized_coord_value}")
                         else:
-                            idx_str_parts_for_name.append(f"{core_dim_names[dim_idx]}_{multi_idx_tuple[dim_idx]}")
+                            idx_str_parts_for_name.append(
+                                f"{coord_dim_name_for_internal_name}_{multi_idx_tuple[dim_idx]}"
+                            )
                 else:
                     idx_str_parts_for_name = [str(idx_val) for idx_val in multi_idx_tuple]
 
@@ -186,9 +188,7 @@ def arviz_to_mcsamples(
                                 coord_str_representation = str(coord_actual_value)
                                 is_numeric = isinstance(coord_actual_value, (int, float, np.number))
 
-                                if coord_str_representation.startswith("\\"):
-                                    latex_subscript_components.append(coord_str_representation)
-                                elif is_numeric:
+                                if coord_str_representation.startswith("\\") or is_numeric:
                                     latex_subscript_components.append(coord_str_representation)
                                 elif isinstance(coord_actual_value, (str, bytes)):
                                     escaped_text = _escape_latex_text_for_subscript(coord_str_representation)

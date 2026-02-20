@@ -536,8 +536,6 @@ class ParamResults(ParamList):
     have attribute holding results for the different parameters.
     """
 
-    pass
-
 
 class LikelihoodChi2:
     name: str
@@ -953,14 +951,7 @@ class LikeStats(ParamResults):
                 if par.ND_limit_bot.size < 2:
                     raise Exception("Likestats output assumes at least two contour levels")
                 text += parForm % (self.name(j, True))
-                text += "{:15.7E}{:15.7E}{:15.7E}{:15.7E}{:15.7E}   {}\n".format(
-                    par.bestfit_sample,
-                    par.ND_limit_bot[0],
-                    par.ND_limit_top[0],
-                    par.ND_limit_bot[1],
-                    par.ND_limit_top[1],
-                    par.label,
-                )
+                text += f"{par.bestfit_sample:15.7E}{par.ND_limit_bot[0]:15.7E}{par.ND_limit_top[0]:15.7E}{par.ND_limit_bot[1]:15.7E}{par.ND_limit_top[1]:15.7E}   {par.label}\n"
         return text
 
 

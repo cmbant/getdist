@@ -600,8 +600,7 @@ class MCSamples(Chains):
                     if r <= self.weights[i] / self.max_mult / single_thin:
                         f.write("%16.7E" % 1.0)
                         f.write("%16.7E" % (self.loglikes[i]))
-                        for j in range(self.n):
-                            f.write("%16.7E" % (self.samples[i][j]))
+                        f.writelines("%16.7E" % (self.samples[i][j]) for j in range(self.n))
                         f.write("\n")
         else:
             return self.samples[rand <= self.weights / (self.max_mult * single_thin)]
@@ -627,13 +626,11 @@ class MCSamples(Chains):
                     newL = self.loglikes[thin] * cool
                     f.write("%16.7E" % (np.exp(-(newL - self.loglikes[thin]) - MaxL * (1 - cool))))
                     f.write("%16.7E" % newL)
-                    for j in range(nparams):
-                        f.write("%16.7E" % (self.samples[i][j]))
+                    f.writelines("%16.7E" % (self.samples[i][j]) for j in range(nparams))
                 else:
                     f.write("%f" % 1.0)
                     f.write("%f" % (self.loglikes[thin]))
-                    for j in range(nparams):
-                        f.write("%16.7E" % (self.samples[i][j]))
+                    f.writelines("%16.7E" % (self.samples[i][j]) for j in range(nparams))
                 i += 1
         print("Wrote ", len(thin_ix), " thinned samples")
 
@@ -894,12 +891,7 @@ class MCSamples(Chains):
 
         :return: The summary text as a string.
         """
-        lines = "using {} rows, {} parameters; mean weight {}, tot weight {}\n".format(
-            self.numrows,
-            self.paramNames.numParams(),
-            self.mean_mult,
-            self.norm,
-        )
+        lines = f"using {self.numrows} rows, {self.paramNames.numParams()} parameters; mean weight {self.mean_mult}, tot weight {self.norm}\n"
         if self.indep_thin != 0:
             lines += "Approx indep samples (N/corr length): %s\n" % (round(self.norm / self.indep_thin))
         lines += "Equiv number of single samples (sum w)/max(w): %s\n" % (round(self.norm / self.max_mult))
@@ -987,9 +979,8 @@ class MCSamples(Chains):
                     in_chain_var[j] += np.dot(chain.weights, chain.diffs[j] ** 2)
 
                 in_chain_var[j] /= self.norm
-                lines += parNames[j] + "{:10.4f}  {}\n".format(
-                    math.sqrt(between_chain_var[j] / in_chain_var[j]),
-                    self.parLabel(j),
+                lines += (
+                    parNames[j] + f"{math.sqrt(between_chain_var[j] / in_chain_var[j]):10.4f}  {self.parLabel(j)}\n"
                 )
             lines += "\n"
 
@@ -1269,12 +1260,7 @@ class MCSamples(Chains):
             if par.name not in self.no_warning_params and (
                 not self.no_warning_chi2_params or "chi2_" not in par.name and "minuslog" not in par.name
             ):
-                msg = "auto bandwidth for {} very small or failed (h={},N_eff={}). Using fallback (h={})".format(
-                    par.name,
-                    h,
-                    N_eff,
-                    hnew,
-                )
+                msg = f"auto bandwidth for {par.name} very small or failed (h={h},N_eff={N_eff}). Using fallback (h={hnew})"
                 if getattr(self, "raise_on_bandwidth_errors", False):
                     raise BandwidthError(msg)
                 else:
@@ -1348,10 +1334,8 @@ class MCSamples(Chains):
         do_correlated = not parx.has_limits or not pary.has_limits
 
         def fallback_widths(ex):
-            msg = "2D kernel density bandwidth optimizer failed for {}, {}. Using fallback width: {}".format(
-                parx.name,
-                pary.name,
-                ex,
+            msg = (
+                f"2D kernel density bandwidth optimizer failed for {parx.name}, {pary.name}. Using fallback width: {ex}"
             )
             if getattr(self, "raise_on_bandwidth_errors", False):
                 raise BandwidthError(msg)

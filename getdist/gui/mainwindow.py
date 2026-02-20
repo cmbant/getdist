@@ -98,7 +98,7 @@ class GuiSelectionError(Exception):
 class QStatusLogger(logging.Handler):
     def __init__(self, parent, level=logging.WARNING):
         super().__init__(level=level)
-        self.widget: "MainWindow" = parent
+        self.widget: MainWindow = parent
 
     def emit(self, record):
         msg = self.format(record)
@@ -731,7 +731,7 @@ class MainWindow(QMainWindow):
         msg.setWindowTitle(title)
 
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttonBox.accepted.connect(msg.accept)  # noqa
+        buttonBox.accepted.connect(msg.accept)
         layout = QVBoxLayout()
         message = QLabel(text)
         message.setWordWrap(False)
@@ -1703,9 +1703,7 @@ class MainWindow(QMainWindow):
             if override_setting:
                 script += f"g=plots.{plot_func}chain_dir={chain_dirs},analysis_settings=analysis_settings)\n"
             elif self.iniFile:
-                script += "g=plots.{}chain_dir={}, analysis_settings=r'{}')\n".format(
-                    plot_func, chain_dirs, self.iniFile
-                )
+                script += f"g=plots.{plot_func}chain_dir={chain_dirs}, analysis_settings=r'{self.iniFile}')\n"
             else:
                 script += f"g=plots.{plot_func}chain_dir={chain_dirs})\n"
 
@@ -1833,7 +1831,7 @@ class MainWindow(QMainWindow):
                     actionText = "Rectangle plot"
                     script += "xparams = %s\n" % str(items_x)
                     script += "yparams = %s\n" % str(items_y)
-                    logging.debug(f"Rectangle plot with xparams={str(items_x)} and yparams={str(items_y)}")
+                    logging.debug(f"Rectangle plot with xparams={items_x!s} and yparams={items_y!s}")
 
                     setSizeForN(len(items_x), len(items_y))
                     self.plotter.rectangle_plot(items_x, items_y, roots=roots, filled=filled)
@@ -1864,11 +1862,7 @@ class MainWindow(QMainWindow):
                         if single:
                             self.plotter.make_figure(1)
                             self.plotter.plot_2d(roots, pairs[0], filled=filled, shaded=shaded)
-                            script += "g.plot_2d(roots, {}, filled={}, shaded={})\n".format(
-                                pairs[0],
-                                str(filled),
-                                str(shaded),
-                            )
+                            script += f"g.plot_2d(roots, {pairs[0]}, filled={filled!s}, shaded={shaded!s})\n"
                             labels = self.plotter._default_legend_labels(None, roots)
                             self.plotter.add_legend(labels)
                             script += "g.add_legend(%s)\n" % labels
@@ -1876,10 +1870,7 @@ class MainWindow(QMainWindow):
                             script += "pairs = %s\n" % pairs
                             self.plotter.plots_2d(roots, param_pairs=pairs, filled=filled, shaded=shaded)
                             make_space_for_legend()
-                            script += "g.plots_2d(roots, param_pairs=pairs, filled={}, shaded={})\n".format(
-                                str(filled),
-                                str(shaded),
-                            )
+                            script += f"g.plots_2d(roots, param_pairs=pairs, filled={filled!s}, shaded={shaded!s})\n"
                         self.updatePlot()
                     elif color:
                         # 3D plot
@@ -1934,7 +1925,7 @@ class MainWindow(QMainWindow):
                 if item is None:
                     break
                 if hasattr(item, "widget"):
-                    child = item.widget()  # noqa
+                    child = item.widget()
                     del child
                 del item
             if hasattr(self, "canvas"):
@@ -2234,8 +2225,8 @@ class DialogConvergeStats(DialogTextOutput):
 
         self.setLayout(layout)
         self.setWindowTitle(self.tr("Convergence stats: " + root))
-        h = min(parent.getScreen().height() * 4 / 5, 1200 * parent.dpiScale())  # noqa
-        self.resize(700 * parent.dpiScale(), h)  # noqa
+        h = min(parent.getScreen().height() * 4 / 5, 1200 * parent.dpiScale())
+        self.resize(700 * parent.dpiScale(), h)
 
 
 # ==============================================================================
@@ -2250,7 +2241,7 @@ class DialogPCA(DialogTextOutput):
         self.setWindowTitle(self.tr("PCA constraints for: " + root))
         # noinspection PyArgumentList
         h = min(parent.getScreen().height() * 4 / 5, 800 * parent.dpiScale())
-        self.resize(500 * parent.dpiScale(), h)  # noqa
+        self.resize(500 * parent.dpiScale(), h)
 
 
 # ==============================================================================
@@ -2453,7 +2444,7 @@ def run_gui():
     logging.captureWarnings(True)
 
     sys.argv[0] = "GetDist GUI"
-    app = QApplication(sys.argv)  # noqa
+    app = QApplication(sys.argv)
     app.setApplicationName("GetDist GUI")
     mainWin = MainWindow(app, ini=args.ini, plot_scale=args.plot_scale)
 

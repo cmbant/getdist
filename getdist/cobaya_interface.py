@@ -149,7 +149,7 @@ def get_info_params(info):
     info_params = info.get(_params)
     info_params_full = dict()
     for p, pinfo in info_params.items():
-        info_params_full[p] = info_params[p]
+        info_params_full[p] = pinfo
     # Add prior and likelihoods
     priors = [_prior_1d_name] + list(info.get(_prior) or [])
     likes = list(info.get(_likelihood))

@@ -70,7 +70,7 @@ target-version = "py310"
 [tool.ruff.lint]
 ignore = ["E722", "E741"]
 extend-select = ["I"]
-preview = true
+preview = false
 
 [tool.ruff.format]
 quote-style = "double"

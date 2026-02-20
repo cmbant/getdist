@@ -119,7 +119,7 @@ def gaussian_kde_bandwidth_binned(data, Neff, a=None):
         n_scaling = Neff ** (-1.0 / 5)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            hfrac = 0.53 * n_scaling  #
+            hfrac = 0.53 * n_scaling
             hfrac = fsolve(_bandwidth_fixed_point, hfrac, (Neff, I, logI, a2), xtol=hfrac / 20, factor=1)[0]
         if hfrac < 0.019 * n_scaling:
             # may be finding second solution, check with brent
@@ -289,7 +289,6 @@ class KernelOptimizer2D:
 
             except:
                 logging.debug("AMISE fixed correlation optimization failed")
-                pass
         try:
             res = minimize(
                 self.AMISE,
@@ -304,7 +303,6 @@ class KernelOptimizer2D:
                     h_x, h_y, corr = res.x
         except:
             logging.debug("AMISE optimization failed")
-            pass
         return h_x, h_y, corr
 
     def get_hdiag(self):
