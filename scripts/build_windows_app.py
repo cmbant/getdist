@@ -8,6 +8,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -30,6 +31,141 @@ def find_version():
     return "0.0.0"
 
 
+def get_python_runtime_info(python_path):
+    """Get interpreter details needed to locate the matching Python DLL."""
+    output = subprocess.check_output(
+        [
+            python_path,
+            "-c",
+            (
+                "import json, sys;"
+                "print(json.dumps({"
+                "'base_exec_prefix': sys.base_exec_prefix,"
+                "'base_prefix': sys.base_prefix,"
+                "'executable': sys.executable,"
+                "'version_info': [sys.version_info.major, sys.version_info.minor],"
+                "}))"
+            ),
+        ],
+        text=True,
+    ).strip()
+    return json.loads(output)
+
+
+def get_python_dll_candidates(runtime_info):
+    """Return likely locations for the interpreter's Python DLL."""
+    major, minor = runtime_info["version_info"]
+    dll_name = f"python{major}{minor}.dll"
+    candidates = [
+        os.path.join(runtime_info["base_exec_prefix"], dll_name),
+        os.path.join(runtime_info["base_prefix"], dll_name),
+        os.path.join(os.path.dirname(runtime_info["executable"]), dll_name),
+    ]
+
+    unique_candidates = []
+    seen = set()
+    for candidate in candidates:
+        normalized = os.path.normcase(os.path.normpath(candidate))
+        if normalized not in seen:
+            seen.add(normalized)
+            unique_candidates.append(candidate)
+
+    return unique_candidates
+
+
+def find_existing_path(candidates):
+    """Return the first existing path from a list of candidates."""
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+
+    raise FileNotFoundError(f"Could not find Python DLL. Checked: {', '.join(candidates)}")
+
+
+def get_python_dll_path(python_path):
+    """Resolve the Python DLL that matches the interpreter used for the build."""
+    runtime_info = get_python_runtime_info(python_path)
+    return find_existing_path(get_python_dll_candidates(runtime_info))
+
+
+def get_build_python_selector():
+    """Return the interpreter selector used to create the build environment."""
+    return os.path.abspath(sys.executable)
+
+
+def build_pyinstaller_spec(main_script, data_entries_str, python_dll_path, runtime_hook_path, icon_path):
+    """Build the PyInstaller spec content."""
+    icon_line = "" if not icon_path else f"icon=r'{icon_path}',"
+    return f"""# -*- mode: python ; coding: utf-8 -*-
+
+from PyInstaller.utils.hooks import collect_submodules
+
+block_cipher = None
+
+hiddenimports = [
+    'getdist',
+    'getdist.plots',
+    'getdist.gui',
+    'getdist.styles',
+    'scipy.special.cython_special',
+    'matplotlib.backends.backend_qt5agg',
+    'matplotlib.backends.backend_qtagg',
+]
+hiddenimports += collect_submodules('multiprocessing')
+
+a = Analysis(
+    [r'{main_script}'],
+    pathex=[],
+    binaries=[
+        # Explicitly include the Python DLL used by the build interpreter
+        (r'{python_dll_path}', '.'),
+    ],
+    datas=[
+        {data_entries_str}
+    ],
+    hiddenimports=hiddenimports,
+    hookspath=[],
+    hooksconfig={{}},
+    runtime_hooks=[r'{runtime_hook_path}'],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='GetDistGUI',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    target_arch=None,
+    codesign_identity=None,
+    {icon_line}
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='GetDistGUI',
+)
+"""
+
+
 def setup_project_environment(project_dir):
     """Set up a virtual environment with all required dependencies"""
     print(f"Setting up project environment in {project_dir}...")
@@ -43,9 +179,10 @@ def setup_project_environment(project_dir):
             print(f"Removing existing environment at {project_dir}")
             shutil.rmtree(project_dir)
 
-        # Create virtual environment with uv, explicitly using Python 3.10
-        print("Creating new virtual environment with Python 3.10")
-        subprocess.check_call(["uv", "venv", "--python", "3.10", project_dir])
+        # Create virtual environment with uv using the invoking Python interpreter
+        build_python = get_build_python_selector()
+        print(f"Creating new virtual environment with Python from {build_python}")
+        subprocess.check_call(["uv", "venv", "--python", build_python, project_dir])
 
         # Install packages directly with uv pip
         print("Installing PyInstaller and PySide6")
@@ -133,83 +270,18 @@ def build_windows_app(output_dir, version, env_info):
     # Join all data entries
     data_entries_str = ",\n        ".join(data_entries)
 
-    spec_content = f"""# -*- mode: python ; coding: utf-8 -*-
+    python_path = env_info["python_path"]
+    python_dll_path = get_python_dll_path(python_path)
+    runtime_hook_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "multiprocessing_hook.py")
+    print(f"Using Python DLL from build interpreter: {python_dll_path}")
 
-block_cipher = None
-
-a = Analysis(
-    [r'{main_script}'],
-    pathex=[],
-    binaries=[
-        # Explicitly include Python DLLs to avoid version conflicts
-        (r'{os.path.join(os.path.dirname(sys.executable), "python310.dll")}', '.'),
-    ],
-    datas=[
-        {data_entries_str}
-    ],
-    hiddenimports=[
-        'getdist',
-        'getdist.plots',
-        'getdist.gui',
-        'getdist.styles',
-        'scipy.special.cython_special',
-        'matplotlib.backends.backend_qt5agg',
-        'matplotlib.backends.backend_qtagg',
-        # Add multiprocessing imports to fix the python313.dll conflict
-        'multiprocessing',
-        'multiprocessing.pool',
-        'multiprocessing.managers',
-        'multiprocessing.popen_spawn_win32',
-        'multiprocessing.popen_fork',
-        'multiprocessing.popen_forkserver',
-        'multiprocessing.popen_spawn_posix',
-        'multiprocessing.synchronize',
-        'multiprocessing.heap',
-        'multiprocessing.resource_tracker',
-        'multiprocessing.spawn',
-        'multiprocessing.util',
-        'multiprocessing.context',
-    ],
-    hookspath=[],
-    hooksconfig={{}},
-    runtime_hooks=[r'{os.path.join(os.path.dirname(os.path.abspath(__file__)), "multiprocessing_hook.py")}'],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-    noarchive=False,
-)
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name='GetDistGUI',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    console=False,
-    disable_windowed_traceback=False,
-    target_arch=None,
-    codesign_identity=None,
-    {"" if not icon_path else f"icon=r'{icon_path}'"},
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='GetDistGUI',
-)
-"""
+    spec_content = build_pyinstaller_spec(
+        main_script=main_script,
+        data_entries_str=data_entries_str,
+        python_dll_path=python_dll_path,
+        runtime_hook_path=runtime_hook_path,
+        icon_path=icon_path,
+    )
 
     # Write spec file
     spec_path = os.path.join(temp_dir, "GetDistGUI.spec")
@@ -218,7 +290,6 @@ coll = COLLECT(
 
     # Run PyInstaller using the Python from the virtual environment
     venv_dir = env_info["venv_dir"]
-    python_path = env_info["python_path"]
 
     # Check if pyinstaller is directly accessible in Scripts directory
     pyinstaller_path = os.path.join(venv_dir, "Scripts", "pyinstaller.exe")
