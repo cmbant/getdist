@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 """
-Script to sign Windows executables and DLLs using a code signing certificate.
-The certificate is provided as a base64-encoded string in the WINDOWS_CERTIFICATE environment variable.
-The certificate password is provided in the WINDOWS_CERTIFICATE_PASSWORD environment variable.
+Script to sign Windows executables and DLLs using signtool with Google Cloud KMS.
+
+Uses the Google Cloud KMS CNG provider with signtool.exe, matching the same
+approach used for local signing.
+
+Required environment variables:
+    GCP_KMS_KEY:           Full KMS key resource path, e.g.
+                           projects/PROJECT/locations/LOCATION/keyRings/KEYRING/
+                           cryptoKeys/KEY/cryptoKeyVersions/VERSION
+    GCP_CERTIFICATE_CHAIN: Base64-encoded certificate chain file (.crt)
 
 Usage:
     python scripts/sign_windows_app.py --dir DIRECTORY
@@ -16,94 +23,86 @@ import subprocess
 import sys
 import tempfile
 
+KMS_CNG_PROVIDER_URL = "https://storage.googleapis.com/cloud-kms-cng-provider/cloud-kms-cng-provider-setup.msi"
+
 
 def find_signtool():
-    """Find the signtool.exe executable"""
-    # Check common locations for signtool.exe
-    possible_locations = [
-        # GitHub Actions Windows runner
-        r"C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe",
-        r"C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\signtool.exe",
-        r"C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe",
-        r"C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe",
-        r"C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x64\signtool.exe",
-        r"C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe",
-        # Visual Studio locations
-        r"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\signtool.exe",
-        r"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7.2 Tools\signtool.exe",
-        r"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\signtool.exe",
-    ]
-
-    # Check if signtool is in PATH
+    """Find signtool.exe on the system."""
+    # Check PATH first
     try:
         subprocess.check_call(["where", "signtool"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return "signtool"
     except subprocess.CalledProcessError:
         pass
 
-    # Check each possible location
-    for location in possible_locations:
-        if os.path.exists(location):
-            print(f"Found signtool at: {location}")
-            return location
-
-    # Try to find signtool in Windows Kits directory
+    # Scan Windows Kits for the latest version
     windows_kits_dir = r"C:\Program Files (x86)\Windows Kits\10\bin"
     if os.path.exists(windows_kits_dir):
-        # Find the latest version
-        versions = []
-        for item in os.listdir(windows_kits_dir):
-            if os.path.isdir(os.path.join(windows_kits_dir, item)) and item.startswith("10."):
-                versions.append(item)
+        versions = sorted(
+            (
+                d
+                for d in os.listdir(windows_kits_dir)
+                if os.path.isdir(os.path.join(windows_kits_dir, d)) and d.startswith("10.")
+            ),
+            reverse=True,
+        )
+        for version in versions:
+            signtool_path = os.path.join(windows_kits_dir, version, "x64", "signtool.exe")
+            if os.path.exists(signtool_path):
+                print(f"Found signtool at: {signtool_path}")
+                return signtool_path
 
-        if versions:
-            # Sort versions in descending order
-            versions.sort(reverse=True)
-            for version in versions:
-                signtool_path = os.path.join(windows_kits_dir, version, "x64", "signtool.exe")
-                if os.path.exists(signtool_path):
-                    print(f"Found signtool at: {signtool_path}")
-                    return signtool_path
-
-    # If we get here, we couldn't find signtool
-    print("Error: Could not find signtool.exe. Please install the Windows SDK or add signtool to your PATH.")
+    print("Error: Could not find signtool.exe. Install the Windows SDK or add signtool to your PATH.")
     return None
 
 
-def sign_files(path, certificate_path, certificate_password):
-    """Sign all executable files in the directory or a single file"""
-    # Find signtool.exe
-    signtool_path = find_signtool()
-    if not signtool_path:
-        print("Skipping signing due to missing signtool.exe")
-        return False
+def install_kms_cng_provider():
+    """Download and install the Google Cloud KMS CNG provider."""
+    import urllib.request
 
-    # Check if path is a file or directory
+    tools_dir = os.path.join(tempfile.gettempdir(), "signing-tools")
+    os.makedirs(tools_dir, exist_ok=True)
+    msi_path = os.path.join(tools_dir, "cloud-kms-cng-provider-setup.msi")
+
+    if not os.path.exists(msi_path):
+        print("Downloading Google Cloud KMS CNG provider...")
+        urllib.request.urlretrieve(KMS_CNG_PROVIDER_URL, msi_path)
+        print(f"Downloaded to: {msi_path}")
+
+    print("Installing Google Cloud KMS CNG provider...")
+    subprocess.check_call(
+        ["msiexec", "/i", msi_path, "/quiet", "/norestart"],
+    )
+    print("CNG provider installed successfully")
+
+
+def collect_files_to_sign(path):
+    """Collect all signable files from a path (file or directory)."""
+    signable_extensions = ("*.exe", "*.dll", "*.pyd", "*.msi")
+
     if os.path.isfile(path):
         print(f"Signing single file: {path}")
-        files_to_sign = [path]
-    else:
-        print(f"Signing files in directory: {path}")
-        # Find all executable files
-        exe_files = glob.glob(os.path.join(path, "*.exe"))
-        dll_files = glob.glob(os.path.join(path, "*.dll"))
-        pyd_files = glob.glob(os.path.join(path, "*.pyd"))
-        msi_files = glob.glob(os.path.join(path, "*.msi"))
+        return [path]
 
-        # Combine all files to sign
-        files_to_sign = exe_files + dll_files + pyd_files + msi_files
+    print(f"Signing files in directory: {path}")
+    files_to_sign = set()
+    for root, _, _ in os.walk(path):
+        for ext in signable_extensions:
+            files_to_sign.update(glob.glob(os.path.join(root, ext)))
 
-        # Also find files in subdirectories
-        for root, _, _ in os.walk(path):
-            exe_files = glob.glob(os.path.join(root, "*.exe"))
-            dll_files = glob.glob(os.path.join(root, "*.dll"))
-            pyd_files = glob.glob(os.path.join(root, "*.pyd"))
-            msi_files = glob.glob(os.path.join(root, "*.msi"))
-            files_to_sign.extend(exe_files + dll_files + pyd_files + msi_files)
+    return sorted(files_to_sign)
 
+
+def sign_files(path, signtool_path, kms_key, certfile):
+    """Sign all executable files using signtool with Google Cloud KMS CNG provider."""
+    files_to_sign = collect_files_to_sign(path)
     print(f"Found {len(files_to_sign)} files to sign")
 
-    # Sign each file
+    if not files_to_sign:
+        print("No files to sign")
+        return True
+
+    failed = []
     for file_path in files_to_sign:
         print(f"Signing {file_path}...")
         try:
@@ -111,16 +110,19 @@ def sign_files(path, certificate_path, certificate_password):
                 [
                     signtool_path,
                     "sign",
-                    "/f",
-                    certificate_path,
-                    "/p",
-                    certificate_password,
-                    "/tr",
-                    "http://timestamp.digicert.com",
-                    "/td",
-                    "sha256",
+                    "/v",
                     "/fd",
                     "sha256",
+                    "/td",
+                    "sha256",
+                    "/tr",
+                    "http://timestamp.digicert.com",
+                    "/f",
+                    certfile,
+                    "/csp",
+                    "Google Cloud KMS Provider",
+                    "/kc",
+                    kms_key,
                     "/d",
                     "GetDist GUI",
                     file_path,
@@ -128,53 +130,67 @@ def sign_files(path, certificate_path, certificate_password):
             )
         except subprocess.CalledProcessError as e:
             print(f"Failed to sign {file_path}: {e}")
-            # Continue with other files even if one fails
+            failed.append(file_path)
 
-    print("Signing completed")
-    return True
+    if failed:
+        print(f"Warning: {len(failed)} file(s) failed to sign")
+    else:
+        print("All files signed successfully")
+    return len(failed) == 0
 
 
 def main():
-    """Main function to parse arguments and sign files"""
-    parser = argparse.ArgumentParser(description="Sign Windows executables and DLLs")
-    parser.add_argument("--dir", required=True, help="Directory containing files to sign")
+    """Main function to parse arguments and sign files."""
+    parser = argparse.ArgumentParser(description="Sign Windows executables and DLLs using Google Cloud KMS")
+    parser.add_argument("--dir", required=True, help="Directory or file to sign")
+    parser.add_argument(
+        "--install-cng",
+        action="store_true",
+        help="Install the Google Cloud KMS CNG provider (for CI)",
+    )
     args = parser.parse_args()
 
-    # Check if running on Windows
     if sys.platform != "win32":
         print("Error: This script must be run on Windows.")
         sys.exit(1)
 
-    # Get certificate from environment variable
-    certificate_base64 = os.environ.get("WINDOWS_CERTIFICATE")
-    certificate_password = os.environ.get("WINDOWS_CERTIFICATE_PASSWORD")
+    # Read configuration from environment
+    kms_key = os.environ.get("GCP_KMS_KEY")
+    cert_chain_b64 = os.environ.get("GCP_CERTIFICATE_CHAIN")
 
-    if not certificate_base64:
-        print("Error: WINDOWS_CERTIFICATE environment variable not set.")
+    missing = []
+    if not kms_key:
+        missing.append("GCP_KMS_KEY")
+    if not cert_chain_b64:
+        missing.append("GCP_CERTIFICATE_CHAIN")
+    if missing:
+        print(f"Error: Missing required environment variable(s): {', '.join(missing)}")
         sys.exit(1)
 
-    if not certificate_password:
-        print("Error: WINDOWS_CERTIFICATE_PASSWORD environment variable not set.")
+    # Optionally install the CNG provider (needed on CI runners)
+    if args.install_cng:
+        install_kms_cng_provider()
+
+    # Find signtool
+    signtool_path = find_signtool()
+    if not signtool_path:
         sys.exit(1)
 
-    # Decode certificate
-    certificate_data = base64.b64decode(certificate_base64)
-
-    # Create temporary file for certificate
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pfx") as temp_cert:
-        temp_cert.write(certificate_data)
-        certificate_path = temp_cert.name
+    # Write certificate chain to temp file
+    tools_dir = os.path.join(tempfile.gettempdir(), "signing-tools")
+    os.makedirs(tools_dir, exist_ok=True)
+    cert_file = os.path.join(tools_dir, "certificate-chain.crt")
+    cert_chain_data = base64.b64decode(cert_chain_b64)
+    with open(cert_file, "wb") as f:
+        f.write(cert_chain_data)
 
     try:
-        # Sign files
-        success = sign_files(args.dir, certificate_path, certificate_password)
+        success = sign_files(args.dir, signtool_path, kms_key, cert_file)
         if not success:
-            print("Warning: Signing was skipped due to missing signtool.exe")
-            # Exit with a non-zero code but not a failure (1) to indicate a warning
-            sys.exit(0)
+            sys.exit(1)
     finally:
-        # Clean up temporary file
-        os.unlink(certificate_path)
+        if os.path.exists(cert_file):
+            os.unlink(cert_file)
 
 
 if __name__ == "__main__":

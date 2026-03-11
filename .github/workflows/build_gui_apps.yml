@@ -105,6 +105,9 @@ jobs:
   build-windows:
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows' || github.event.inputs.platform == null
     runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -129,14 +132,24 @@ jobs:
           # Run the build script with verbose output
           ./scripts/build_windows_app.bat
 
+      - name: Authenticate to Google Cloud
+        if: github.event.inputs.skip_signing != 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        if: github.event.inputs.skip_signing != 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Sign Windows App
         if: github.event.inputs.skip_signing != 'true'
         env:
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          GCP_KMS_KEY: ${{ secrets.GCP_KMS_KEY }}
+          GCP_CERTIFICATE_CHAIN: ${{ secrets.GCP_CERTIFICATE_CHAIN }}
         run: |
-          # Run the signing script
-          python ./scripts/sign_windows_app.py --dir dist/GetDistGUI
+          python ./scripts/sign_windows_app.py --install-cng --dir dist/GetDistGUI
 
       - name: Install WiX Toolset
         run: |
@@ -155,8 +168,8 @@ jobs:
       - name: Sign MSI Installer
         if: github.event.inputs.skip_signing != 'true'
         env:
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          GCP_KMS_KEY: ${{ secrets.GCP_KMS_KEY }}
+          GCP_CERTIFICATE_CHAIN: ${{ secrets.GCP_CERTIFICATE_CHAIN }}
         run: |
           # Get the MSI file path
           $msiFile = Get-ChildItem -Path dist -Filter "GetDist-GUI-*.msi" | Select-Object -First 1 -ExpandProperty FullName
