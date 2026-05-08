@@ -328,7 +328,7 @@ class WeightedSamples:
                 return self.samples[:, par]
             elif par == -1:
                 if self.loglikes is None:
-                    raise WeightedSampleError("Samples do not have logLikes (par=-1)" % par)
+                    raise WeightedSampleError("Samples do not have logLikes (par=-1)")
                 return self.loglikes
             elif par == -2:
                 return self.weights

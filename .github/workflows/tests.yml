@@ -38,7 +38,7 @@ jobs:
 
       - name: Ruff Lint
         if: matrix.os == 'ubuntu-latest'
-        uses: astral-sh/ruff-action@v1
+        uses: astral-sh/ruff-action@v3
         with:
           src: "./getdist"
 
