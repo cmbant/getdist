@@ -38,13 +38,13 @@ jobs:
 
       - name: Ruff Lint
         if: matrix.os == 'ubuntu-latest'
-        uses: astral-sh/ruff-action@v4
+        uses: astral-sh/ruff-action@v4.0.0
         with:
           src: "./getdist"
 
       - name: Ruff Format Check
         if: matrix.os == 'ubuntu-latest'
-        uses: astral-sh/ruff-action@v4
+        uses: astral-sh/ruff-action@v4.0.0
         with:
           src: "./getdist"
           args: "format --check"

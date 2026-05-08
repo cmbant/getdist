@@ -23,9 +23,11 @@ on:
     tags:
       - "v*"
       - "*.*.*"
+# runner list at https://github.com/actions/runner-images
 jobs:
   build-mac:
-    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'mac' || github.event.inputs.platform == null
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform ==
+      'mac' || github.event.inputs.platform == null
     strategy:
       matrix:
         os: [macos-15-intel, macos-14]
@@ -103,7 +105,8 @@ jobs:
           path: dist/GetDist-GUI-${{ matrix.arch }}.dmg
 
   build-windows:
-    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows' || github.event.inputs.platform == null
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform ==
+      'windows' || github.event.inputs.platform == null
     runs-on: windows-latest
     permissions:
       contents: read
