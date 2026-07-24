@@ -55,7 +55,7 @@ def yaml_load(text_stream, Loader=yaml.Loader, file_name=None):
             context = 4
             lines = text_stream.split("\n")
             pre = (("\n" + " " * len(signal) + sep).join([""] + lines[max(line - 1 - context, 0) : line - 1])) + "\n"
-            errorline = signal + sep + lines[line - 1] + signal_right + "column %s" % column
+            errorline = signal + sep + lines[line - 1] + signal_right + f"column {column}"
             post = (
                 ("\n" + " " * len(signal) + sep).join(
                     [""] + lines[line + 1 - 1 : min(line + 1 + context - 1, len(lines))]

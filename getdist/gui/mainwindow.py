@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):
     def _icon(self, name, large=True):
         if large:
             name += "_large"
-        pm = QPixmap(self._image_file("%s.png" % name))
+        pm = QPixmap(self._image_file(f"{name}.png"))
         if hasattr(pm, "setDevicePixelRatio"):
             pm.setDevicePixelRatio(self.devicePixelRatio())
         return QIcon(pm)
@@ -838,7 +838,7 @@ class MainWindow(QMainWindow):
             stats = samples.getConvergeTests(samples.converge_test_limit)
             summary = samples.getNumSampleSummaryText()
             if getattr(samples, "GelmanRubin", None):
-                summary += "var(mean)/mean(var), remaining chains, worst e-value: R-1 = %13.5F" % samples.GelmanRubin
+                summary += f"var(mean)/mean(var), remaining chains, worst e-value: R-1 = {samples.GelmanRubin:13.5F}"
             dlg = DialogConvergeStats(self, stats, summary, rootname)
             dlg.show()
             dlg.activateWindow()
@@ -968,7 +968,7 @@ class MainWindow(QMainWindow):
             script = self.textWidget.toPlainText().split("\n")
             tag = "analysis_settings ="
             changed_settings = self.changed_settings()
-            newline = tag + (" %s" % changed_settings).replace(", ", ",\n" + " " * 21)
+            newline = tag + (f" {changed_settings}").replace(", ", ",\n" + " " * 21)
             last = 0
             for i, line in enumerate(script):
                 if line.startswith(tag):
@@ -1067,7 +1067,7 @@ class MainWindow(QMainWindow):
                 for key, value in self.custom_plot_settings.items():
                     if isinstance(value, str):
                         value = '"' + value + '"'
-                    script_set = "g.settings.%s =" % key
+                    script_set = f"g.settings.{key} ="
                     script_line = f"{script_set} {value}"
                     last = None
                     for i, line in enumerate(script):
@@ -1080,7 +1080,7 @@ class MainWindow(QMainWindow):
                     if script_line and last:
                         script.insert(last + 1, script_line)
             for key in deleted:
-                script_set = "g.settings.%s =" % key
+                script_set = f"g.settings.{key} ="
                 for i, line in enumerate(script):
                     if line.startswith(script_set):
                         del script[i]
@@ -1165,9 +1165,8 @@ class MainWindow(QMainWindow):
             + PySide.__version__
             + "\nQt (PySide): "
             + QtCore.__version__
-            + "\n\nPix ratio: %s; Logical dpi: %s, %s"
-            % (self.devicePixelRatio(), self.logicalDpiX(), self.logicalDpiY())
-            + "\nUsing getdist at: %s" % os.path.dirname(getdist.__file__),
+            + f"\n\nPix ratio: {self.devicePixelRatio()}; Logical dpi: {self.logicalDpiX()}, {self.logicalDpiY()}"
+            + f"\nUsing getdist at: {os.path.dirname(getdist.__file__)}",
         )
 
     def getDirectories(self):
@@ -1176,7 +1175,7 @@ class MainWindow(QMainWindow):
     def saveDirectories(self):
         dirs = self.getDirectories()
         if self.rootdirname:
-            dirs = [self.rootdirname] + [x for x in dirs if not x == self.rootdirname]
+            dirs = [self.rootdirname] + [x for x in dirs if x != self.rootdirname]
         if len(dirs) > 10:
             dirs = dirs[:10]
         settings = self.getSettings()
@@ -1200,7 +1199,7 @@ class MainWindow(QMainWindow):
         if dir_name is None or dir_name == "":
             return  # No directory selected
         dir_name = os.path.abspath(str(dir_name))
-        logging.debug("dirName: %s" % dir_name)
+        logging.debug(f"dirName: {dir_name}")
 
         if self.openDirectory(dir_name, save=False):
             items = self.getDirectories()
@@ -1265,9 +1264,8 @@ class MainWindow(QMainWindow):
                     chain_dirs.append(chain_dir)
                 for root in self.root_infos:
                     info = self.root_infos[root]
-                    if info.batch:
-                        if info.batch not in chain_dirs:
-                            chain_dirs.append(info.batch)
+                    if info.batch and info.batch not in chain_dirs:
+                        chain_dirs.append(info.batch)
 
                 self.plotter = plots.get_subplot_plotter(chain_dir=chain_dirs, analysis_settings=self.current_settings)
                 if samps:
@@ -1336,7 +1334,7 @@ class MainWindow(QMainWindow):
 
     def _readChainsSubdirectories(self, path):
         self.batch = None
-        for root, info in self.root_infos.items():
+        for info in self.root_infos.values():
             if info.batch and os.path.normpath(info.batch.batchPath) == os.path.normpath(path):
                 self.batch = info.batch
 
@@ -1364,9 +1362,9 @@ class MainWindow(QMainWindow):
         # Reset data
         self._resetPlotData()
         self._resetGridData()
-        logging.debug("Read grid chain in %s" % batch.batchPath)
+        logging.debug(f"Read grid chain in {batch.batchPath}")
         self.batch = batch
-        items = dict()
+        items = {}
         for jobItem in batch.items(True, True):
             if jobItem.chainExists():
                 if jobItem.paramtag not in items:
@@ -1466,7 +1464,7 @@ class MainWindow(QMainWindow):
                 item = self.listRoots.item(i)
                 if item and (count == 1 or item.isSelected()):
                     root = str(item.text())
-                    logging.debug("Remove root %s" % root)
+                    logging.debug(f"Remove root {root}")
                     self.plotter.sample_analyser.remove_root(root)
                     self.root_infos.pop(root, None)
                     self.listRoots.takeItem(i)
@@ -1479,7 +1477,7 @@ class MainWindow(QMainWindow):
         Slot function called on change of comboBoxParamTag.
         """
         self.paramTag = self.comboBoxParamTag.currentText()
-        logging.debug("Param: %s" % self.paramTag)
+        logging.debug(f"Param: {self.paramTag}")
 
         self.comboBoxDataTag.clear()
         if isinstance(self.batch, ChainDirGrid):
@@ -1498,7 +1496,7 @@ class MainWindow(QMainWindow):
         if isinstance(self.batch, ChainDirGrid):
             self.newRootItem(strDataTag)
         else:
-            logging.debug("Data: %s" % strDataTag)
+            logging.debug(f"Data: {strDataTag}")
             self.newRootItem(self.paramTag + "_" + strDataTag)
 
     def _updateListParameters(self, items, listParameters):
@@ -1667,11 +1665,11 @@ class MainWindow(QMainWindow):
 
             script = "from getdist import plots\n"
             if self.script_plot_module != "getdist.plots":
-                script += "from %s import style_name\nplots.set_active_style(style_name)\n" % self.script_plot_module
+                script += f"from {self.script_plot_module} import style_name\nplots.set_active_style(style_name)\n"
             script += "\n"
             override_setting = self.changed_settings()
             if override_setting:
-                script += ("analysis_settings = %s\n" % override_setting).replace(", ", ",\n" + " " * 21)
+                script += (f"analysis_settings = {override_setting}\n").replace(", ", ",\n" + " " * 21)
             if len(items_x) > 1 or len(items_y) > 1:
                 plot_func = "get_subplot_plotter("
                 if (
@@ -1698,7 +1696,7 @@ class MainWindow(QMainWindow):
                 if path not in chain_dirs:
                     chain_dirs.append(path)
             if len(chain_dirs) == 1:
-                chain_dirs = "r'%s'" % chain_dirs[0].rstrip("\\").rstrip("/")
+                chain_dirs = "r'{}'".format(chain_dirs[0].rstrip("\\").rstrip("/"))
 
             if override_setting:
                 script += f"g=plots.{plot_func}chain_dir={chain_dirs},analysis_settings=analysis_settings)\n"
@@ -1714,13 +1712,13 @@ class MainWindow(QMainWindow):
                     script += f"g.settings.{key} = {value}\n"
 
             if len(roots) < 3:
-                script += "roots = %s\n" % roots
+                script += f"roots = {roots}\n"
             else:
                 script += "roots = []\n"
                 for root in roots:
-                    script += "roots.append('%s')\n" % root
+                    script += f"roots.append('{root}')\n"
 
-            logging.debug("Plotting with roots = %s" % str(roots))
+            logging.debug(f"Plotting with roots = {roots!s}")
 
             # if devicePixelRatio>1, seem to have to render at the dpi-scaled small size, as then scaled up
             # or, for some reason scaling the figure dpi this way works...
@@ -1766,8 +1764,8 @@ class MainWindow(QMainWindow):
                 actionText = "Triangle plot"
                 if len(items_x) > 1:
                     params = items_x
-                    logging.debug("Triangle plot with params = %s" % str(params))
-                    script += "params = %s\n" % str(params)
+                    logging.debug(f"Triangle plot with params = {params!s}")
+                    script += f"params = {params!s}\n"
                     if color:
                         param_3d = color_param
                     else:
@@ -1775,11 +1773,11 @@ class MainWindow(QMainWindow):
                     setSizeForN(len(params), len(params))
                     self.plotter.triangle_plot(roots, params, plot_3d_with_param=param_3d, filled=filled, shaded=shaded)
                     self.updatePlot()
-                    script += "g.triangle_plot(roots, params, filled=%s" % filled
+                    script += f"g.triangle_plot(roots, params, filled={filled}"
                     if shaded:
                         script += ", shaded=True"
                     if param_3d:
-                        script += ", plot_3d_with_param='%s'" % color_param
+                        script += f", plot_3d_with_param='{color_param}'"
                     script += ")\n"
                 else:
                     raise GuiSelectionError("Select more than 1 x parameter for triangle plot")
@@ -1789,8 +1787,8 @@ class MainWindow(QMainWindow):
                     params = [items_x[0], items_y[0], z_param]
                     if color_param:
                         params.append(color_param)
-                    logging.debug("4d plot with params = %s" % str(params))
-                    script += "params = %s\n" % str(params)
+                    logging.debug(f"4d plot with params = {params!s}")
+                    script += f"params = {params!s}\n"
                     setSizeForN(1, 1)
                     colors = [c[-1] for c in self.plotter.settings.line_styles[: len(roots) - 1]]
                     self.plotter.plot_4d(
@@ -1801,7 +1799,7 @@ class MainWindow(QMainWindow):
                         shadow_color=self.checkShadow.isChecked(),
                     )
                     script += "g.plot_4d(roots, params, color_bar=True{}{})\n".format(
-                        "" if len(roots) == 1 else ", compare_colors=%r" % colors,
+                        "" if len(roots) == 1 else f", compare_colors={colors!r}",
                         ", shadow_color=True" if self.checkShadow.isChecked() else "",
                     )
                     self.updatePlot()
@@ -1813,8 +1811,8 @@ class MainWindow(QMainWindow):
                 # 1D plot
                 actionText = "1D plot"
                 params = items_x
-                logging.debug("1D plot with params = %s" % str(params))
-                script += "params=%s\n" % str(params)
+                logging.debug(f"1D plot with params = {params!s}")
+                script += f"params={params!s}\n"
                 setSizeForN(*self.plotter.default_col_row(len(params)))
                 if len(roots) > 3:
                     ncol = 2
@@ -1829,15 +1827,15 @@ class MainWindow(QMainWindow):
                 if len(items_x) > 1 and len(items_y) > 1:
                     # Rectangle plot
                     actionText = "Rectangle plot"
-                    script += "xparams = %s\n" % str(items_x)
-                    script += "yparams = %s\n" % str(items_y)
+                    script += f"xparams = {items_x!s}\n"
+                    script += f"yparams = {items_y!s}\n"
                     logging.debug(f"Rectangle plot with xparams={items_x!s} and yparams={items_y!s}")
 
                     setSizeForN(len(items_x), len(items_y))
                     self.plotter.rectangle_plot(items_x, items_y, roots=roots, filled=filled)
                     make_space_for_legend()
                     self.updatePlot()
-                    script += "g.rectangle_plot(xparams, yparams, roots=roots, filled=%s)\n" % filled
+                    script += f"g.rectangle_plot(xparams, yparams, roots=roots, filled={filled})\n"
 
                 else:
                     # 2D plot
@@ -1858,16 +1856,16 @@ class MainWindow(QMainWindow):
                         pairs = []
                     if filled or line:
                         actionText = "2D plot"
-                        logging.debug("2D plot with pairs = %s" % str(pairs))
+                        logging.debug(f"2D plot with pairs = {pairs!s}")
                         if single:
                             self.plotter.make_figure(1)
                             self.plotter.plot_2d(roots, pairs[0], filled=filled, shaded=shaded)
                             script += f"g.plot_2d(roots, {pairs[0]}, filled={filled!s}, shaded={shaded!s})\n"
                             labels = self.plotter._default_legend_labels(None, roots)
                             self.plotter.add_legend(labels)
-                            script += "g.add_legend(%s)\n" % labels
+                            script += f"g.add_legend({labels})\n"
                         else:
-                            script += "pairs = %s\n" % pairs
+                            script += f"pairs = {pairs}\n"
                             self.plotter.plots_2d(roots, param_pairs=pairs, filled=filled, shaded=shaded)
                             make_space_for_legend()
                             script += f"g.plots_2d(roots, param_pairs=pairs, filled={filled!s}, shaded={shaded!s})\n"
@@ -1875,11 +1873,11 @@ class MainWindow(QMainWindow):
                     elif color:
                         # 3D plot
                         sets = [list(pair) + [color_param] for pair in pairs]
-                        logging.debug("3D plot with sets = %s" % str(sets))
+                        logging.debug(f"3D plot with sets = {sets!s}")
                         actionText = "3D plot"
-                        triplets = ["['%s', '%s', '%s']" % tuple(trip) for trip in sets]
+                        triplets = ["['{}', '{}', '{}']".format(*tuple(trip)) for trip in sets]
                         if len(sets) == 1:
-                            script += "g.plot_3d(roots, %s)\n" % triplets[0]
+                            script += f"g.plot_3d(roots, {triplets[0]})\n"
                             self.plotter.settings.scatter_size = 6
                             self.plotter.make_figure()
                             self.plotter.plot_3d(roots, sets[0])
@@ -1977,7 +1975,7 @@ class MainWindow(QMainWindow):
         if not filename:
             return
         filename = str(filename)
-        logging.debug("Open file %s" % filename)
+        logging.debug(f"Open file {filename}")
         with open(filename, encoding="utf-8-sig") as f:
             self.script_edit = f.read()
         self.textWidget.setPlainText(self.script_edit)
@@ -2137,9 +2135,9 @@ class DialogLikeStats(DialogTextOutput):
             self.table.setSelectionMode(QAbstractItemView.SingleSelection)
             self.table.setRowCount(stats.numParams())
             for irow, par in enumerate(stats.names):
-                vals = [par.name, "%5g" % par.bestfit_sample]
+                vals = [par.name, f"{par.bestfit_sample:5g}"]
                 for lim in [0, 1]:
-                    vals += ["%5g" % par.ND_limit_bot[lim], "%5g" % par.ND_limit_top[lim]]
+                    vals += [f"{par.ND_limit_bot[lim]:5g}", f"{par.ND_limit_top[lim]:5g}"]
                 vals += [par.label]
                 for icol, value in enumerate(vals):
                     item = QTableWidgetItem(str(value))
@@ -2188,9 +2186,9 @@ class DialogMargeStats(QDialog):
             self.table.setSelectionMode(QAbstractItemView.SingleSelection)
             self.table.setRowCount(stats.numParams())
             for irow, par in enumerate(stats.names):
-                vals = [par.name, "%5g" % par.mean, "%5g" % par.err]
+                vals = [par.name, f"{par.mean:5g}", f"{par.err:5g}"]
                 for lim in par.limits:
-                    vals += ["%5g" % lim.lower, "%5g" % lim.upper, lim.limitTag()]
+                    vals += [f"{lim.lower:5g}", f"{lim.upper:5g}", lim.limitTag()]
                 vals += [par.label]
                 for icol, value in enumerate(vals):
                     item = QTableWidgetItem(str(value))

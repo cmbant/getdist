@@ -243,11 +243,10 @@ def arviz_to_mcsamples(
             pass
 
     final_samples_arg = list_of_chain_sample_arrays
-    if not final_samples_arg and final_param_names:
-        if n_chains > 0 and n_draws > 0:
-            raise ValueError(
-                "Samples array is empty, but parameter names were generated. Check input data and variable processing."
-            )
+    if not final_samples_arg and final_param_names and n_chains > 0 and n_draws > 0:
+        raise ValueError(
+            "Samples array is empty, but parameter names were generated. Check input data and variable processing."
+        )
 
     final_weights_arg = None
     if weights_var:

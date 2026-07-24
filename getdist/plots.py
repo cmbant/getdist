@@ -486,9 +486,9 @@ class MCSampleAnalysis(_BaseObject):
             self.ini = ini
         self.mcsamples = {}
         # Dicts. 1st key is root; 2nd key is param
-        self.densities_1D = dict()
-        self.densities_2D = dict()
-        self.single_samples = dict()
+        self.densities_1D = {}
+        self.densities_2D = {}
+        self.single_samples = {}
         self.chain_settings_have_priority = chain_settings_have_priority
 
     def samples_for_root(
@@ -768,9 +768,9 @@ class GetDistPlotter(_BaseObject):
             close_existing = self.auto_close
         self.extra_artists = []
         self.contours_added = []
-        self.lines_added = dict()
-        self.param_name_sets = dict()
-        self.param_bounds_sets = dict()
+        self.lines_added = {}
+        self.param_name_sets = {}
+        self.param_bounds_sets = {}
         if close_existing and self.fig:
             plt.close(self.fig)
         self.fig = None
@@ -813,7 +813,7 @@ class GetDistPlotter(_BaseObject):
         elif not self.settings.plot_args:
             args = {}
         else:
-            raise GetDistPlotError("plot_args must be list of dictionaries or dictionary: %s" % self.settings.plot_args)
+            raise GetDistPlotError(f"plot_args must be list of dictionaries or dictionary: {self.settings.plot_args}")
         args.update(kwargs)
         return args
 
@@ -846,7 +846,7 @@ class GetDistPlotter(_BaseObject):
                 # assume tuple of line style and color
                 return res[0], res[1]
             else:
-                raise ValueError("Unknown format for color [%s]" % res)
+                raise ValueError(f"Unknown format for color [{res}]")
         except IndexError:
             print("Error adding line " + str(plotno) + ": Add more default line stype entries to settings.line_styles")
             raise
@@ -894,14 +894,14 @@ class GetDistPlotter(_BaseObject):
         if isinstance(colors, str):
             colormap = getattr(cm, colors, None)
             if colormap is None:
-                raise GetDistPlotError("Unknown matplotlib colormap %s" % colors)
+                raise GetDistPlotError(f"Unknown matplotlib colormap {colors}")
         else:
             colormap = colors
         colors = getattr(colormap, "colors", None) or colormap
         if i is None:
             return colors
         if i >= len(colors):
-            raise IndexError("Color index out of range %s" % i)
+            raise IndexError(f"Color index out of range {i}")
         return colors[i]
 
     def _get_linestyle(self, plotno, **kwargs):
@@ -1074,7 +1074,7 @@ class GetDistPlotter(_BaseObject):
         density=None,
         alpha=None,
         ax=None,
-        mask_function: callable = None,
+        mask_function: callable | None = None,
         **kwargs,
     ):
         """
@@ -1796,7 +1796,7 @@ class GetDistPlotter(_BaseObject):
         line_offset=0,
         proxy_root_exclude=(),
         ax=None,
-        mask_function: callable = None,
+        mask_function: callable | None = None,
         **kwargs,
     ):
         """
@@ -1896,7 +1896,7 @@ class GetDistPlotter(_BaseObject):
         :param ny: optional specified number of rows
         :return: n_cols, n_rows
         """
-        plot_col = nx or int(round(np.sqrt(nplot / 1.4)))
+        plot_col = nx or round(np.sqrt(nplot / 1.4))
         plot_row = ny or (nplot + plot_col - 1) // plot_col
         return plot_col, plot_row
 
@@ -1948,7 +1948,7 @@ class GetDistPlotter(_BaseObject):
         self.subplots[:, :] = None
         return self.plot_col, self.plot_row
 
-    def get_param_array(self, roots, params: None | str | Sequence = None, renames: Mapping = None):
+    def get_param_array(self, roots, params: None | str | Sequence = None, renames: Mapping | None = None):
         """
         Gets an array of :class:`~.paramnames.ParamInfo` for named params
         in the given `root`.
@@ -2706,7 +2706,7 @@ class GetDistPlotter(_BaseObject):
             sharex=self.settings.no_triangle_axis_labels,
             sharey=self.settings.no_triangle_axis_labels,
         )
-        lims = dict()
+        lims = {}
         if kwargs.pop("filled_compare", False):
             filled = True
 
@@ -3056,7 +3056,7 @@ class GetDistPlotter(_BaseObject):
             raise GetDistPlotError("rectangle plot: must have one of roots, yroots, plot_roots")
         if roots:
             roots = makeList(roots)
-        limits = dict()
+        limits = {}
         for x, xparam in enumerate(xparams):
             sharex = None
             if plot_roots:
@@ -3706,9 +3706,12 @@ class GetDistPlotter(_BaseObject):
                 shadow_alpha = alpha
             for (x, y, z), shadow, alph, mark in extend_list_zip(pts, shadow_color, shadow_alpha, marker):
                 if shadow is not None:
-                    opts = dict(
-                        marker=mark or "o", zorder=-1, s=kwargs.get("s", self.settings.scatter_size), alpha=alph
-                    )
+                    opts = {
+                        "marker": mark or "o",
+                        "zorder": -1,
+                        "s": kwargs.get("s", self.settings.scatter_size),
+                        "alpha": alph,
+                    }
                     ax.scatter(x, y, zs=lim_z[0], c=shadow, **opts)
                     ax.scatter(y, z, zdir="x", zs=lim_x[0], c=shadow, **opts)
                     ax.scatter(x, z, zdir="y", zs=lim_y[0], c=shadow, **opts)
@@ -3859,7 +3862,7 @@ class StyleManager:
         old_style = self.active_style
         if name != self.active_style:
             if name not in self._plot_styles:
-                raise ValueError("Unknown style %s. Make sure you have imported the relevant style module." % name)
+                raise ValueError(f"Unknown style {name}. Make sure you have imported the relevant style module.")
             if self._orig_rc is None:
                 self._orig_rc = rcParams.copy()
             else:

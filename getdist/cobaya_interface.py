@@ -92,8 +92,7 @@ def MCSamplesFromCobaya(info, collections, name_tag=None, ignore_rows=0, ini=Non
     var_params = [k for k, v in info_params.items() if is_sampled_param(v) or is_derived_param(v)]
     assert set(columns[2:]) == set(var_params), (
         "Info and collection(s) are not compatible, because their parameters differ: "
-        "the collection(s) have %r and the info has %r. "
-        % (columns[2:], var_params)
+        f"the collection(s) have {columns[2:]!r} and the info has {var_params!r}. "
         + "Are you sure that you are using an *updated* info dictionary "
         "(i.e. the output of `cobaya.run`)?"
     )
@@ -147,7 +146,7 @@ def get_info_params(info):
     info = yaml_file_or_dict(info)
     # Prune fixed parameters
     info_params = info.get(_params)
-    info_params_full = dict()
+    info_params_full = {}
     for p, pinfo in info_params.items():
         info_params_full[p] = pinfo
     # Add prior and likelihoods
@@ -191,7 +190,7 @@ def get_range(param_info):
             prior = {lim: n for lim, n in zip(["min", "max"], prior)}
         elif not isinstance(prior, Mapping):
             raise ValueError(
-                "Format of prior not recognised: %r. " % prior
+                f"Format of prior not recognised: {prior!r}. "
                 + "Use '[min, max]' or a dictionary following Cobaya's documentation."
             )
         periodic = periodic or prior.pop("periodic", False)
@@ -246,7 +245,7 @@ def expand_info_param(info_param):
 
 
 def get_sampler_key(filename_or_info, default_sampler_for_chain_type="mcmc"):
-    return list(yaml_file_or_dict(filename_or_info).get(_sampler, [default_sampler_for_chain_type]))[0]
+    return next(iter(yaml_file_or_dict(filename_or_info).get(_sampler, [default_sampler_for_chain_type])))
 
 
 def get_sampler_type(filename_or_info, default_sampler_for_chain_type="mcmc"):

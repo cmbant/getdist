@@ -38,7 +38,7 @@ def mergeRenames(*dicts, **kwargs):
     """
     keep_names_1st = kwargs.pop("keep_names_1st", False)
     if kwargs:
-        raise ValueError("kwargs not recognized: %r" % kwargs)
+        raise ValueError(f"kwargs not recognized: {kwargs!r}")
     sets = list(chain(*[[set([k] + (makeList(v or []))) for k, v in dic.items()] for dic in dicts]))
     # If two sets have elements in common, join them.
     something_changed = True
@@ -251,7 +251,7 @@ class ParamList:
             if known_names.intersection(given_names):
                 return par
         if error:
-            raise Exception("parameter name not found: %s" % name)
+            raise Exception(f"parameter name not found: {name}")
         return None
 
     def numberOfName(self, name):
@@ -467,7 +467,7 @@ class ParamNames(ParamList):
                 if is_derived_param(info)
             ]
         else:
-            raise ValueError("ParanNames must be loaded from .paramnames or .yaml/.yml file, found %s" % fileName)
+            raise ValueError(f"ParanNames must be loaded from .paramnames or .yaml/.yml file, found {fileName}")
 
     def loadFromKeyWords(self, keywordProvider):
         num_params_used = keywordProvider.keyWord_int("num_params_used")

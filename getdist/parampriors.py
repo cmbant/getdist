@@ -40,19 +40,19 @@ class ParamBounds:
             for p, info in info_params.items():
                 self.setRange(p, get_range(info))
         else:
-            raise ValueError("ParamBounds must be loaded from .bounds, .ranges or .yaml/.yml file, not %s" % fileName)
+            raise ValueError(f"ParamBounds must be loaded from .bounds, .ranges or .yaml/.yml file, not {fileName}")
 
     def __str__(self):
         s = ""
         for name in self.names:
             valMin = self.getLower(name)
             if valMin is not None:
-                lim1 = "%15.7E" % valMin
+                lim1 = f"{valMin:15.7E}"
             else:
                 lim1 = "    N"
             valMax = self.getUpper(name)
             if valMax is not None:
-                lim2 = "%15.7E" % valMax
+                lim2 = f"{valMax:15.7E}"
             else:
                 lim2 = "    N"
             if name in self.periodic:
@@ -122,9 +122,8 @@ class ParamBounds:
         lower = self.lower.get(name, None)
         if lower is not None:
             higher = self.upper.get(name, None)
-            if higher is not None:
-                if higher == lower:
-                    return lower
+            if higher is not None and higher == lower:
+                return lower
         return None
 
     def fixedValueDict(self):

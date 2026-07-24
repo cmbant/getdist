@@ -10,11 +10,11 @@ class SciFuncFormatter(ticker.Formatter):
     # To put full sci notation into each axis label rather than split offsetText
 
     def __call__(self, x, pos=None):
-        return "${}$".format(self._format_sci_notation("%.10e" % x))
+        return "${}$".format(self._format_sci_notation(f"{x:.10e}"))
 
     def format_data(self, value):
         # e.g. for the navigation toolbar, no latex
-        return "%-8g" % value
+        return f"{value:<8g}"
 
     @staticmethod
     def _format_sci_notation(s):
@@ -196,7 +196,7 @@ class BoundedMaxNLocator(ticker.MaxNLocator):
                     min_n_ticks -= 1
                     locs = []
                 if len(locs) <= 1 and size_ratio * self._font_aspect < 0.9:
-                    scale, offset = ticker.scale_range(vmin, vmax, 1)
+                    scale, _offset = ticker.scale_range(vmin, vmax, 1)
                     # Try to get any two points that will fit
                     for sc in [scale, scale / 10.0]:
                         locs = [round((vmin * 3 + vmax) / (4 * sc)) * sc, round((vmin + 3 * vmax) / (4 * sc)) * sc]

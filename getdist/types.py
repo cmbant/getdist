@@ -371,7 +371,7 @@ class ResultTable:
 
     def addFullTableRow(self, row):
         txt = self.format.colSeparator.join(self.paramLabelColumn(param) + self.paramResultsTex(param) for param in row)
-        if not self.ncol == len(row):
+        if self.ncol != len(row):
             txt += self.format.colSeparator * ((1 + self.colsPerParam) * (self.ncol - len(row)))
         self.lines.append(txt + self.format.endofrow)
 
@@ -440,7 +440,7 @@ class ResultTable:
         if document:
             lines = [r"\documentclass{article}", r"\pagestyle{empty}"]
             for package in packages:
-                lines.append(r"\usepackage{%s}" % package)
+                lines.append(rf"\usepackage{{{package}}}")
             lines.append("\\renewcommand{\\arraystretch}{1.5}")
             if latex_preamble:
                 lines.append(latex_preamble)
@@ -619,7 +619,7 @@ class BestFit(ParamResults):
                 self.names.append(param)
 
     def sortedChiSquareds(self):
-        likes = dict()
+        likes = {}
         for kind, val in self.chiSquareds:
             if kind not in likes:
                 likes[kind] = []
@@ -640,7 +640,7 @@ class BestFit(ParamResults):
             return None
 
     def getParamDict(self, include_derived=True):
-        res = dict()
+        res = {}
         for i, name in enumerate(self.names):
             if include_derived or not name.isDerived:
                 res[name.name] = name.best_fit
@@ -785,7 +785,7 @@ class MargeStats(ParamResults):
         contours_str = "; ".join([str(c) for c in self.limits])
         header, parForm = self.headerLine()
         text = ""
-        text += "Marginalized limits: %s\n\n" % contours_str
+        text += f"Marginalized limits: {contours_str}\n\n"
         text += header
         text += "\n"
 
@@ -794,7 +794,7 @@ class MargeStats(ParamResults):
             text += f"{par.mean:15.7E}{par.err:15.7E}"
             for lim in par.limits:
                 text += "%15.7E%15.7E  %-5s" % (lim.lower, lim.upper, lim.limitTag())
-            text += "   %s\n" % par.label
+            text += f"   {par.label}\n"
         return text
 
     def addBestFit(self, bf):
@@ -854,7 +854,7 @@ class MargeStats(ParamResults):
                     )
                     res += "^{" + plus_str + "}_{" + minus_str + "}"
                 if exponent:
-                    res = r"\left(\,%s\,\right)" % res + times_ten_power(exponent)
+                    res = rf"\left(\,{res}\,\right)" + times_ten_power(exponent)
             elif lim.onetail_upper:
                 res, exponent = formatter.numberFormatter.formatNumber(lim.upper, sf, sci=True)
                 res = "< " + res
@@ -908,7 +908,7 @@ class LikeStats(ParamResults):
 
     def loadFromFile(self, filename):
         textFileLines = self.fileList(filename)
-        results = dict()
+        results = {}
         for line in textFileLines:
             if len(line.strip()) == 0:
                 break
@@ -928,11 +928,11 @@ class LikeStats(ParamResults):
         # TODO: load N-D limits
 
     def likeSummary(self):
-        text = "Best fit sample -log(Like) = %f\n" % self.logLike_sample
+        text = f"Best fit sample -log(Like) = {self.logLike_sample:f}\n"
         if self.logMeanInvLike:
-            text += "Ln(mean 1/like) = %f\n" % self.logMeanInvLike
-        text += "mean(-Ln(like)) = %f\n" % self.meanLogLike
-        text += "-Ln(mean like)  = %f\n" % self.logMeanLike
+            text += f"Ln(mean 1/like) = {self.logMeanInvLike:f}\n"
+        text += f"mean(-Ln(like)) = {self.meanLogLike:f}\n"
+        text += f"-Ln(mean like)  = {self.logMeanLike:f}\n"
         text += "2*Var(Ln(like)) = %f\n" % (self.varLogLike * 2.0)
         # text += "complexity = %f\n" % self.complexity
 

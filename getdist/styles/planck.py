@@ -16,8 +16,9 @@ class PlanckPlotter(plots.GetDistPlotter):
         "ytick.major.pad": 4,
         "xtick.major.pad": 4,
         "text.usetex": True,
-        "text.latex.preamble": r"\usepackage{%s}"
-        % (os.path.join(os.path.dirname(os.path.abspath(__file__)), "sfmath").replace(os.sep, "/")),
+        "text.latex.preamble": r"\usepackage{{{}}}".format(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "sfmath").replace(os.sep, "/")
+        ),
         "font.family": "sans-serif",
         "font.sans-serif": ["FreeSans", "Tahoma", "DejaVu Sans", "Verdana"],
     }

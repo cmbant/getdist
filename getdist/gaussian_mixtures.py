@@ -529,9 +529,9 @@ def randomTestMCSamples(ndim=4, ncomponent=1, nsamp=10009, nMCSamples=1, seed=10
     get a MCSamples instance, or list of MCSamples instances with random samples from random covariances and y
     """
     if names is None:
-        names = ["x%s" % i for i in range(ndim)]
+        names = [f"x{i}" for i in range(ndim)]
     if labels is None:
-        labels = ["x_{%s}" % i for i in range(ndim)]
+        labels = [f"x_{{{i}}}" for i in range(ndim)]
     seed = np.random.default_rng(seed)
     result = [
         RandomTestMixtureND(ndim, ncomponent, names, seed=seed).MCSamples(

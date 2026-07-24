@@ -65,7 +65,7 @@ def getdist_script(args, exit_on_error=True):
         }
     ):
         if ini.string(item) not in [0, "F"]:
-            logging.warning("%s is no longer supported by getdist, value ignored" % item)
+            logging.warning(f"{item} is no longer supported by getdist, value ignored")
 
     # File root
     if chain_root is not None:
@@ -161,7 +161,7 @@ def getdist_script(args, exit_on_error=True):
     mc.removeBurnFraction(ignorerows)
     if chains.print_load_details:
         if ignorerows:
-            doprint("Removed %s as burn in" % ignorerows)
+            doprint(f"Removed {ignorerows} as burn in")
         else:
             doprint("Removed no burn in")
 

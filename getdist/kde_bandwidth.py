@@ -131,7 +131,7 @@ def gaussian_kde_bandwidth_binned(data, Neff, a=None):
                 pass
         return hfrac
     except Exception as e:
-        logging.warning("1D auto bandwidth failed. Using fallback: %s" % e)
+        logging.warning(f"1D auto bandwidth failed. Using fallback: {e}")
         return None
 
 
@@ -169,7 +169,7 @@ class KernelOptimizer2D:
             if fallback_t is not None:
                 # Note the fallback result actually appears to be better in some cases,
                 # e.g. Gaussian with four cuts
-                logging.debug("2D kernel density optimizer using fallback plugin width %s" % (np.sqrt(fallback_t)))
+                logging.debug(f"2D kernel density optimizer using fallback plugin width {np.sqrt(fallback_t)}")
                 self.t_star = fallback_t
             else:
                 raise

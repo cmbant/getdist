@@ -77,7 +77,7 @@ def parse_command_line_args():
         args = sys.argv[separator_index + 1 :]
         # Look for --dir or --directory argument
         for i, arg in enumerate(args):
-            if arg.startswith("--dir=") or arg.startswith("--directory="):
+            if arg.startswith(("--dir=", "--directory=")):
                 # Extract the directory path
                 parts = arg.split("=", 1)
                 if len(parts) == 2 and parts[1]:
@@ -91,7 +91,7 @@ def parse_command_line_args():
         # -- not found or other parsing error
         args = sys.argv
         for i, arg in enumerate(args):
-            if arg.startswith("--dir=") or arg.startswith("--directory="):
+            if arg.startswith(("--dir=", "--directory=")):
                 # Extract the directory path
                 parts = arg.split("=", 1)
                 if len(parts) == 2 and parts[1]:
@@ -294,9 +294,8 @@ def get_plotter(chain_dir=None):
         chain_dirs.append(chain_dir)
     for root in st.session_state.root_infos:
         info = st.session_state.root_infos[root]
-        if info.batch:
-            if info.batch not in chain_dirs:
-                chain_dirs.append(info.batch)
+        if info.batch and info.batch not in chain_dirs:
+            chain_dirs.append(info.batch)
 
     st.session_state.plotter = plots.get_subplot_plotter(
         chain_dir=chain_dirs, analysis_settings=st.session_state.current_settings
@@ -600,7 +599,7 @@ def show_converge_stats(rootname=None):
 
         summary = samples.getNumSampleSummaryText()
         if hasattr(samples, "GelmanRubin"):
-            summary += "\nvar(mean)/mean(var), remaining chains, worst e-value: R-1 = %13.5F" % samples.GelmanRubin
+            summary += f"\nvar(mean)/mean(var), remaining chains, worst e-value: R-1 = {samples.GelmanRubin:13.5F}"
 
         return rootname, stats, summary
     except Exception as e:
@@ -920,12 +919,12 @@ def generate_plot():
 
     if st.session_state.script_plot_module != "getdist.plots":
         script_lines.append(
-            "from %s import style_name\nplots.set_active_style(style_name)" % st.session_state.script_plot_module
+            f"from {st.session_state.script_plot_module} import style_name\nplots.set_active_style(style_name)"
         )
         script_lines += []
 
     if override_setting := changed_settings():
-        script_lines.append(("analysis_settings = %s\n" % override_setting).replace(", ", ",\n" + " " * 21))
+        script_lines.append((f"analysis_settings = {override_setting}\n").replace(", ", ",\n" + " " * 21))
 
     # Create plotter - use raw string for path as in original mainwindow.py
     # Follow the exact same plot_func logic as in mainwindow.py
@@ -945,7 +944,7 @@ def generate_plot():
     # Format chain_dirs with r'' prefix for Windows paths, matching mainwindow.py
     chain_dirs = st.session_state.chain_dir
     if isinstance(chain_dirs, str):
-        chain_dirs = "r'%s'" % chain_dirs.rstrip("\\").rstrip("/")
+        chain_dirs = "r'{}'".format(chain_dirs.rstrip("\\").rstrip("/"))
 
     if override_setting:
         script_lines += [f"g=plots.{plot_func}chain_dir={chain_dirs},analysis_settings=analysis_settings)"]
@@ -2505,21 +2504,20 @@ def main():
                     st.rerun()
 
             # Open directory button
-            if st.button("Open Directory", key="open_dir_button", use_container_width=True):
-                if dir_path:
-                    # Show a loading spinner while opening the directory
-                    with st.spinner(f"Opening directory: {dir_path}..."):
-                        if open_directory(dir_path):
-                            # Add to recent directories if successful
-                            if dir_path not in st.session_state.recent_directories:
-                                st.session_state.recent_directories.insert(0, dir_path)
-                                # Keep only the 10 most recent
-                                if len(st.session_state.recent_directories) > 10:
-                                    st.session_state.recent_directories = st.session_state.recent_directories[:10]
-                                # Save the updated list to file
-                                save_recent_directories()
-                            # Force a rerun to update the UI
-                            st.rerun()
+            if st.button("Open Directory", key="open_dir_button", use_container_width=True) and dir_path:
+                # Show a loading spinner while opening the directory
+                with st.spinner(f"Opening directory: {dir_path}..."):
+                    if open_directory(dir_path):
+                        # Add to recent directories if successful
+                        if dir_path not in st.session_state.recent_directories:
+                            st.session_state.recent_directories.insert(0, dir_path)
+                            # Keep only the 10 most recent
+                            if len(st.session_state.recent_directories) > 10:
+                                st.session_state.recent_directories = st.session_state.recent_directories[:10]
+                            # Save the updated list to file
+                            save_recent_directories()
+                        # Force a rerun to update the UI
+                        st.rerun()
 
         # File browser dialog is initialized at the top of the script
         # Check if a directory was selected in the previous run

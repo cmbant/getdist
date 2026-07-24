@@ -142,7 +142,7 @@ class ChainDirGrid:
                 if len(items) == 1:
                     return items[0]
                 raise ValueError(
-                    "No exact march for %s and normalized name %s is ambiguous: %r"
-                    % (root, normed_name, [i.chainRoot for i in items])
+                    f"No exact march for {root} and normalized name {normed_name} "
+                    "is ambiguous: {[i.chainRoot for i in items]!r}"
                 )
         return item

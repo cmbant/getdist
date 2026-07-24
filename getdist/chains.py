@@ -124,7 +124,7 @@ def loadNumpyTxt(fname, skiprows=None):
     try:
         return np.atleast_2d(np.loadtxt(fname, skiprows=skiprows or 0))
     except ValueError:
-        print("Error reading %s" % fname)
+        print(f"Error reading {fname}")
         raise
 
 
@@ -229,7 +229,7 @@ class WeightedSamples:
         if filename:
             cols = loadNumpyTxt(filename, skiprows=ignore_rows)
             if not len(cols):
-                raise WeightedSampleError("Empty chain: %s" % filename)
+                raise WeightedSampleError(f"Empty chain: {filename}")
             self.setColData(cols, are_chains=files_are_chains)
             self.name_tag = name_tag or os.path.basename(filename)
         else:
@@ -239,9 +239,8 @@ class WeightedSamples:
                 slice_or_none(loglikes, ignore_rows),
             )
             self.name_tag = name_tag
-            if samples is not None and int(ignore_rows):
-                if print_load_details:
-                    print("Removed %s lines as burn in" % ignore_rows)
+            if samples is not None and int(ignore_rows) and print_load_details:
+                print(f"Removed {ignore_rows} lines as burn in")
         self.label = label
         self.needs_update = True
 
@@ -1053,7 +1052,7 @@ class WeightedSamples:
         if remove >= 1:
             ix = int(remove)
         else:
-            ix = int(round(self.numrows * remove))
+            ix = round(self.numrows * remove)
         if self.weights is not None:
             self.weights = self.weights[ix:]
         if self.loglikes is not None:
@@ -1223,10 +1222,10 @@ class Chains(WeightedSamples):
         """
         if self.samples is not None and len(self.paramNames.names) != self.n:
             raise WeightedSampleError(
-                "paramNames size (%s) does not match number of "
-                "parameters in samples (%s)" % (len(self.paramNames.names), self.n)
+                f"paramNames size ({len(self.paramNames.names)}) does not match number of "
+                f"parameters in samples ({self.n})"
             )
-        index = dict()
+        index = {}
         for i, name in enumerate(self.paramNames.names):
             index[name.name] = i
         self.index = index
@@ -1247,7 +1246,7 @@ class Chains(WeightedSamples):
                 return None, None
         if isinstance(name, _int_types):
             return name, self.paramNames.names[name]
-        raise ParamError("Unknown parameter type %s" % name)
+        raise ParamError(f"Unknown parameter type {name}")
 
     def getRenames(self):
         """
@@ -1308,7 +1307,7 @@ class Chains(WeightedSamples):
         :param want_derived: include derived parameters
         :return: dictionary of parameter values
         """
-        res = dict()
+        res = {}
         res["weight"] = self.weights[ix]
         res["loglike"] = self.loglikes[ix]
         for i, name in enumerate(self.paramNames.names):
@@ -1330,7 +1329,7 @@ class Chains(WeightedSamples):
             elif par == "loglike":
                 return self.loglikes
             else:
-                raise ParamError("Unknown parameter %s" % par)
+                raise ParamError(f"Unknown parameter {par}")
         return super()._makeParamvec(par)
 
     def updateChainBaseStatistics(self):
@@ -1361,7 +1360,7 @@ class Chains(WeightedSamples):
         :return: The added parameter's :class:`~.paramnames.ParamInfo` object
         """
         if self.paramNames.parWithName(name):
-            raise ValueError("Parameter with name %s already exists" % name)
+            raise ValueError(f"Parameter with name {name} already exists")
         self.changeSamples(np.c_[self.samples, paramVec])
         return self.paramNames.addDerived(name, **kwargs)
 
@@ -1397,7 +1396,7 @@ class Chains(WeightedSamples):
                 try:
                     self.chains.append(WeightedSamples(fname, **WSkwargs))
                 except WeightedSampleError:
-                    print_load_line("Ignored file %s (likely empty)" % fname)
+                    print_load_line(f"Ignored file {fname} (likely empty)")
             nchains = len(self.chains)
             if not nchains:
                 raise WeightedSampleError("loadChains - no chains found for " + root)

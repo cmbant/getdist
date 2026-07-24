@@ -145,7 +145,7 @@ class Test1DDistributions:
         self.all = self.shape_set + self.bimodal + self.trimodal + self.cut_gaussians
 
     def cutGaussians(self, sigma=1, cut_x=(-1.5, -1, -0.5, 0, 1, 1.5)):
-        return [Gaussian1D(0, sigma, xmin=cut, label=r"Gaussian [$x>%s$]" % cut) for cut in cut_x]
+        return [Gaussian1D(0, sigma, xmin=cut, label=rf"Gaussian [$x>{cut}$]") for cut in cut_x]
 
     def distributions(self):
         return self.all
@@ -251,7 +251,7 @@ class Test2DDistributions:
         self.all = self.shape_set + self.bimodal + self.trimodal + self.quadrimodal + self.cut_gaussians
 
     def cutGaussians(self, cov, cut_x=(-2, -1, -0.5, 0, 1, 1.5, 2)):
-        return [Gaussian2D([0, 0], cov, xmin=cut, label=r"Gaussian [$x>%s$]" % cut) for cut in cut_x]
+        return [Gaussian2D([0, 0], cov, xmin=cut, label=rf"Gaussian [$x>{cut}$]") for cut in cut_x]
 
     def distributions(self):
         return self.all
@@ -312,7 +312,7 @@ def compare_method(probs, nx=2, fname="", **kwargs):
             prob.label,
             transform=ax.transAxes,
             horizontalalignment="left",
-            bbox=dict(facecolor="floralwhite", alpha=0.9),
+            bbox={"facecolor": "floralwhite", "alpha": 0.9},
         )
         ax.axvline(1, color="gray", ls="--", alpha=0.5)
         if prob.dim == 2:
@@ -370,7 +370,7 @@ def run_test_program(plots=("dists_2D", "dists_1D"), sims=100, nsamp=default_nsa
             ],
             colors=colors,
             linestyles=["-", "-", ":", "-.", "--"],
-            fname="compare_method_1d_N%s.pdf" % nsamp,
+            fname=f"compare_method_1d_N{nsamp}.pdf",
             sims=sims,
             nsamp=nsamp,
         )
@@ -387,7 +387,7 @@ def run_test_program(plots=("dists_2D", "dists_1D"), sims=100, nsamp=default_nsa
             ],
             colors=colors,
             linestyles=["-", "-", ":", "-.", "--"],
-            fname="compare_method_2d_N%s.pdf" % nsamp,
+            fname=f"compare_method_2d_N{nsamp}.pdf",
             sims=sims,
             nsamp=nsamp,
         )

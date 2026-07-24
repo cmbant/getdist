@@ -394,7 +394,7 @@ class UtilTest(unittest.TestCase):
     def test_y(self):
         from getdist.matplotlib_ext import BoundedMaxNLocator
 
-        fig, ax = plt.subplots(1, 1, figsize=(3, 3))
+        _fig, ax = plt.subplots(1, 1, figsize=(3, 3))
         ax.plot([0, 1], [0, 1])
         ax.yaxis.set_major_locator(BoundedMaxNLocator(prune=True))
 
@@ -458,7 +458,7 @@ class UtilTest(unittest.TestCase):
         if not local:
             os.remove(temp)
 
-        self.assertFalse(len(fails), "Too few ticks for %s" % fails)
+        self.assertFalse(len(fails), f"Too few ticks for {fails}")
 
 
 class CobayaTest(unittest.TestCase):
