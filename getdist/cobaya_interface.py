@@ -48,7 +48,7 @@ def yaml_file_or_dict(file_or_dict) -> Mapping:
     elif isinstance(file_or_dict, Mapping):
         return file_or_dict
     else:
-        raise TypeError("Cobya parameter input must be a dictionary or filename")
+        raise TypeError("Cobaya parameter input must be a dictionary or filename")
 
 
 def MCSamplesFromCobaya(info, collections, name_tag=None, ignore_rows=0, ini=None, settings=None):
