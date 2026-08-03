@@ -1,4 +1,5 @@
 import os
+from typing import ClassVar
 
 from getdist import plots
 
@@ -7,7 +8,7 @@ from getdist import plots
 
 class PlanckPlotter(plots.GetDistPlotter):
     # common setup for matplotlib
-    _style_rc = {
+    _style_rc: ClassVar[dict] = {
         "axes.labelsize": 9,
         "font.size": 8,
         "legend.fontsize": 8,

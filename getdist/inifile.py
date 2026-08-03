@@ -370,7 +370,7 @@ class IniFile:
         :param index: index (in brackets)
         :param default: default value
         """
-        return self.int(name + "(%u)" % index, default)
+        return self.int(f"{name}({index})", default)
 
     def array_string(self, name, index=1, default=None):
         """
@@ -381,7 +381,7 @@ class IniFile:
         :param default: default value
         """
 
-        return self.string(name + "(%u)" % index, default)
+        return self.string(f"{name}({index})", default)
 
     def array_bool(self, name, index=1, default=None):
         """
@@ -392,7 +392,7 @@ class IniFile:
         :param default: default value
         """
 
-        return self.bool(name + "(%u)" % index, default)
+        return self.bool(f"{name}({index})", default)
 
     def array_float(self, name, index=1, default=None):
         """
@@ -403,7 +403,7 @@ class IniFile:
         :param default: default value
         """
 
-        return self.float(name + "(%u)" % index, default)
+        return self.float(f"{name}({index})", default)
 
     def relativeFileName(self, name, default=None):
         s = self.string(name, default)

@@ -341,7 +341,7 @@ class MCSamples(Chains):
         elif isinstance(ranges, ParamBounds):
             self.ranges = copy.deepcopy(ranges)
         else:
-            raise ValueError("MCSamples ranges parameter must be list or dict")
+            raise TypeError("MCSamples ranges parameter must be list or dict")
         self.needs_update = True
 
     def parName(self, i, starDerived=False):
@@ -619,8 +619,7 @@ class MCSamples(Chains):
             raise ValueError("writeThinData assumes you have likelihoods and weights")
         MaxL = np.max(self.loglikes)
         with open(fname, "w", encoding="utf-8") as f:
-            i = 0
-            for thin in thin_ix:
+            for i, thin in enumerate(thin_ix):
                 if cool != 1:
                     newL = self.loglikes[thin] * cool
                     f.write(f"{np.exp(-(newL - self.loglikes[thin]) - MaxL * (1 - cool)):16.7E}")
@@ -630,7 +629,6 @@ class MCSamples(Chains):
                     f.write(f"{1.0:f}")
                     f.write(f"{self.loglikes[thin]:f}")
                     f.writelines(f"{self.samples[i][j]:16.7E}" for j in range(nparams))
-                i += 1
         print("Wrote ", len(thin_ix), " thinned samples")
 
     def getCovMat(self):
@@ -757,7 +755,7 @@ class MCSamples(Chains):
                     PClabs.append("ln(-" + label + ")")
                 else:
                     PClabs.append(label)
-                PCAtext += "%10s :%s\n" % (str(parix + 1), str(PClabs[i]))
+                PCAtext += f"{parix + 1:10} :{PClabs[i]}\n"
 
             PCmean[i] = np.dot(self.weights, PCdata[:, i]) / self.norm
             PCdata[:, i] -= PCmean[i]
@@ -773,7 +771,7 @@ class MCSamples(Chains):
                 correlationMatrix[j][i] = np.dot(self.weights, PCdata[:, i] * PCdata[:, j]) / self.norm
                 correlationMatrix[i][j] = correlationMatrix[j][i]
         for i in range(nparams):
-            PCAtext += "%12s :" % params[i]
+            PCAtext += f"{params[i]:>12} :"
             for j in range(n):
                 PCAtext += f"{correlationMatrix[j][i]:8.4f}"
             PCAtext += "\n"
@@ -794,12 +792,12 @@ class MCSamples(Chains):
         PCAtext += "e-values of correlation matrix\n"
         for i in range(n):
             isort = isorted[i]
-            PCAtext += "PC%2i: %8.4f\n" % (i + 1, evals[isort])
+            PCAtext += f"PC{i + 1:2}: {evals[isort]:8.4f}\n"
 
         PCAtext += "\n"
         PCAtext += "e-vectors\n"
         for j in range(n):
-            PCAtext += "%3i:" % (indices[j] + 1)
+            PCAtext += f"{indices[j] + 1:3}:"
             for i in range(n):
                 isort = isorted[i]
                 PCAtext += f"{evects[j][isort]:8.4f}"
@@ -826,18 +824,18 @@ class MCSamples(Chains):
         PCAmodeTexts = []
         for i in range(n):
             isort = isorted[i]
-            summary = "PC%i (e-value: %f)\n" % (i + 1, evals[isort])
+            summary = f"PC{i + 1} (e-value: {evals[isort]:f})\n"
             for j in range(n):
                 label = self.parLabel(indices[j])
                 if param_map[j] in ["L", "M"]:
-                    expo = "%f" % (1.0 / sd[j] * u[i][j])
+                    expo = f"{1.0 / sd[j] * u[i][j]:f}"
                     if param_map[j] == "M":
-                        div = "%f" % (-np.exp(PCmean[j]))
+                        div = f"{-np.exp(PCmean[j]):f}"
                     else:
                         div = f"{np.exp(PCmean[j]):f}"
                     summary += f"[{u[i][j]:f}]  ({label}/{div})^{{{expo}}}\n"
                 else:
-                    expo = "%f" % (sd[j] / u[i][j])
+                    expo = f"{sd[j] / u[i][j]:f}"
                     if doexp:
                         summary += f"[{u[i][j]:f}]   exp(({label}-{PCmean[j]:f})/{expo})\n"
                     else:
@@ -851,20 +849,20 @@ class MCSamples(Chains):
 
         # Find out how correlated these components are with other parameters
         PCAtext += "Correlations of principal components\n"
-        comps = ["%8i" % i for i in range(1, n + 1)]
+        comps = [f"{i:8}" for i in range(1, n + 1)]
         PCAtext += "{}\n".format("".join(comps))
 
         for i in range(n):
             PCdata[:, i] = (PCdata[:, i] - newmean[i]) / newsd[i]
 
         for j in range(n):
-            PCAtext += "PC%2i" % (j + 1)
+            PCAtext += f"PC{j + 1:2}"
             for i in range(n):
                 PCAtext += f"{self.mean(PCdata[:, i] * PCdata[:, j]):8.3f}"
             PCAtext += "\n"
 
         for j in range(self.n):
-            PCAtext += "%4i" % (j + 1)
+            PCAtext += f"{j + 1:4}"
             for i in range(n):
                 PCAtext += "%8.3f" % (
                     np.sum(self.weights * PCdata[:, i] * (self.samples[:, j] - self.means[j]) / self.sddev[j])
@@ -940,7 +938,7 @@ class MCSamples(Chains):
                 "Parameter autocorrelation lengths (effective number of samples N_eff = tot weight/weight length)\n"
             )
             lines += "\n"
-            lines += parForm % "" + "%15s %15s %15s\n" % ("Weight Length", "Sample length", "N_eff")
+            lines += parForm % "" + f"{'Weight Length':>15} {'Sample length':>15} {'N_eff':>15}\n"
             maxoff = np.min([chain.weights.size // 10 for chain in chainlist])
             maxN = 0
             for j in range(nparam):
@@ -954,7 +952,7 @@ class MCSamples(Chains):
                 form = "%15.2E"
                 if self.mean_mult > 1:
                     form = "%15.2f"
-                lines += parNames[j] + form % N + " %15.2f %15i\n" % (N / self.mean_mult, self.norm / N)
+                lines += parNames[j] + form % N + f" {N / self.mean_mult:15.2f} {int(self.norm / N):15}\n"
             self.indep_thin = maxN
             lines += "\n"
 
@@ -988,7 +986,7 @@ class MCSamples(Chains):
                 self.GelmanRubin = np.max(D)
                 lines += "var(mean)/mean(var) for eigenvalues of covariance of y of orthonormalized parameters\n"
                 for jj, Di in enumerate(D):
-                    lines += "%3i%13.5f\n" % (jj + 1, Di)
+                    lines += f"{jj + 1:3}{Di:13.5f}\n"
                 # noinspection PyStringFormat
                 GRSummary = f" var(mean)/mean(var), remaining chains, worst e-value: R-1 = {self.GelmanRubin:13.5F}"
             else:
@@ -1156,9 +1154,9 @@ class MCSamples(Chains):
 
                 for ix in range(num_chains_used):
                     if thin_fac[ix] == 0:
-                        lines += "%4i      Failed/not enough samples\n" % ix
+                        lines += f"{ix:4}      Failed/not enough samples\n"
                     else:
-                        lines += "%4i%12i%12i%12i\n" % (ix, markov_thin[ix], thin_fac[ix], nburn[ix])
+                        lines += f"{ix:4}{markov_thin[ix]:12}{thin_fac[ix]:12}{nburn[ix]:12}\n"
 
                 self.RL_indep_thin = np.max(thin_fac)
 
@@ -1210,7 +1208,7 @@ class MCSamples(Chains):
 
                     lines += parForm % ""
                     for i in range(maxoff):
-                        lines += "%8i" % ((i + 1) * autocorr_thin)
+                        lines += f"{(i + 1) * autocorr_thin:8}"
                     lines += "\n"
                     for j in range(nparam):
                         label = self.parLabel(j)
@@ -2242,13 +2240,10 @@ class MCSamples(Chains):
         bestfit_ix = np.argmin(self.loglikes)
         maxlike = self.loglikes[bestfit_ix]
         m.logLike_sample = maxlike
-        try:
-            if np.max(self.loglikes) - maxlike < 30:
-                m.logMeanInvLike = np.log(self.mean(np.exp(self.loglikes - maxlike))) + maxlike
-            else:
-                m.logMeanInvLike = None
-        except:
-            raise
+        if np.max(self.loglikes) - maxlike < 30:
+            m.logMeanInvLike = np.log(self.mean(np.exp(self.loglikes - maxlike))) + maxlike
+        else:
+            m.logMeanInvLike = None
         m.meanLogLike = self.mean_loglike
         m.logMeanLike = -np.log(self.mean(np.exp(-(self.loglikes - maxlike)))) + maxlike
         # assuming maxlike is well determined
@@ -2503,14 +2498,15 @@ class MCSamples(Chains):
                 else:
                     tail_confid_top = self.confidence(paramConfid, limfrac / 2, upper=True)
 
-                if not marge_limits_bot and not marge_limits_top:
-                    # Two tail, check if limits are at very different density
-                    if (
-                        math.fabs(density1D.Prob(tail_confid_top) - density1D.Prob(tail_confid_bot))
-                        < self.credible_interval_threshold
-                    ):
-                        tail_limit_top = tail_confid_top
-                        tail_limit_bot = tail_confid_bot
+                # Two tail, check if limits are at very different density
+                if (
+                    not marge_limits_bot
+                    and not marge_limits_top
+                    and math.fabs(density1D.Prob(tail_confid_top) - density1D.Prob(tail_confid_bot))
+                    < self.credible_interval_threshold
+                ):
+                    tail_limit_top = tail_confid_top
+                    tail_limit_bot = tail_confid_bot
 
                 lim = [tail_limit_bot, tail_limit_top]
             else:

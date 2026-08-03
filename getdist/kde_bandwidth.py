@@ -5,6 +5,13 @@ import numpy as np
 from scipy import fftpack
 from scipy.optimize import brentq, fsolve, minimize
 
+from getdist.types import GetDistError
+
+
+class KDEError(GetDistError):
+    """Error while estimating a KDE bandwidth."""
+
+
 from getdist.convolve import dct2d
 
 """
@@ -69,7 +76,7 @@ def _bandwidth_fixed_point(h, N, I, logI, a2):
             raise
         f = 2 * np.pi ** (2 * j) * np.dot(a2, np.exp(j * logI - I * (pisquared * t_j)))
         if not f:
-            raise Exception("zero f in _bandwidth_fixed_point (non-convergence)")
+            raise KDEError("zero f in _bandwidth_fixed_point (non-convergence)")
     return h - (2 * N * rootpi * f) ** (-1.0 / 5)
 
 
@@ -228,7 +235,7 @@ class KernelOptimizer2D:
             + 4 * c * hx * hy * (hx**2 * self.p[3, 1] + hy**2 * self.p[1, 3])
         )
         if bias < 0:
-            raise Exception("bias not positive definite")
+            raise KDEError("bias not positive definite")
         return var + bias
 
     def get_h(self, do_correlation=None):

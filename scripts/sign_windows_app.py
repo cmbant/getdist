@@ -152,7 +152,7 @@ def find_installer_msi(search_root):
     if not matches:
         raise RuntimeError(f"Could not find an MSI installer under: {search_root}")
 
-    return sorted(matches)[0]
+    return min(matches)
 
 
 def install_kms_cng_provider():

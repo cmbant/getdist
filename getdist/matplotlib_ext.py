@@ -200,9 +200,8 @@ class BoundedMaxNLocator(ticker.MaxNLocator):
                     # Try to get any two points that will fit
                     for sc in [scale, scale / 10.0]:
                         locs = [round((vmin * 3 + vmax) / (4 * sc)) * sc, round((vmin + 3 * vmax) / (4 * sc)) * sc]
-                        if locs[0] != locs[1] and locs[0] >= vmin and locs[1] <= vmax:
-                            if self._valid(locs):
-                                return locs
+                        if locs[0] != locs[1] and locs[0] >= vmin and locs[1] <= vmax and self._valid(locs):
+                            return locs
                     # if no ticks, check for short integer number location in the range that may have been missed
                     # because adding any other values would make label length much longer
                     loc = round((vmin + vmax) / (2 * scale)) * scale
@@ -281,17 +280,16 @@ class BoundedMaxNLocator(ticker.MaxNLocator):
                     if min_ticks <= high - low + 1 <= nbins:
                         ticks = np.arange(low, high + 1) * step + (best_vmin + offset)
 
-                        if off and round_center and changing_lengths:
+                        if off and round_center and changing_lengths and step > 2 * sc:
                             # If no nice number, see if we can shift points to get one
-                            if step > 2 * sc:
-                                for shift in [0, -1, 1, -2, 2]:
-                                    if abs(shift * sc) >= step / 2:
-                                        break
-                                    shifted = ticks + shift * sc
-                                    if any(np.round(shifted / sc / 10) * 10 == np.round(shifted / sc)) and self._valid(
-                                        shifted
-                                    ):
-                                        ticks = shifted
+                            for shift in [0, -1, 1, -2, 2]:
+                                if abs(shift * sc) >= step / 2:
+                                    break
+                                shifted = ticks + shift * sc
+                                if any(np.round(shifted / sc / 10) * 10 == np.round(shifted / sc)) and self._valid(
+                                    shifted
+                                ):
+                                    ticks = shifted
 
                         big_step = step > raw_step1 and step > label_len * 1.5
                         no_more_ticks = min(3, len(ticks)) <= len(best)

@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 from PySide6.QtWidgets import QApplication
@@ -54,7 +56,7 @@ class PythonHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for the Python language."""
 
     # Python keywords
-    keywords = [
+    keywords: ClassVar[list[str]] = [
         "and",
         "assert",
         "break",

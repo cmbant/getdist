@@ -63,7 +63,7 @@ def yaml_load(text_stream, Loader=yaml.Loader, file_name=None):
             ) + "\n"
             raise InputSyntaxError(
                 errstr
-                + " at line %d, column %d." % (line, column)
+                + f" at line {line}, column {column}."
                 + pre
                 + errorline
                 + post

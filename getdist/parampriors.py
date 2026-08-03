@@ -56,9 +56,9 @@ class ParamBounds:
             else:
                 lim2 = "    N"
             if name in self.periodic:
-                s += "%22s%17s%17s%10s\n" % (name, lim1, lim2, "periodic")
+                s += f"{name:>22}{lim1:>17}{lim2:>17}{'periodic':>10}\n"
             else:
-                s += "%22s%17s%17s\n" % (name, lim1, lim2)
+                s += f"{name:>22}{lim1:>17}{lim2:>17}\n"
 
         return s
 
@@ -73,7 +73,7 @@ class ParamBounds:
 
     def _check_name(self, name):
         if not isinstance(name, str):
-            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
+            raise TypeError(f'"name" must be a parameter name string not {type(name)}: {name}')
 
     def setFixed(self, name, value):
         self.setRange(name, (value, value))

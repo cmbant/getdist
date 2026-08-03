@@ -4,7 +4,7 @@ import os
 import sys
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any
+from typing import Any, ClassVar
 
 import matplotlib
 
@@ -35,7 +35,7 @@ from getdist.densities import Density2D
 from getdist.gaussian_mixtures import MixtureND
 from getdist.matplotlib_ext import BoundedMaxNLocator, SciFuncFormatter
 from getdist.paramnames import escapeLatex, makeList, mergeRenames
-from getdist.types import empty_dict
+from getdist.types import TypesError, empty_dict
 
 """Plotting scripts for GetDist outputs"""
 
@@ -132,7 +132,7 @@ class GetDistPlotSettings(_BaseObject):
     :ivar title_limit_fontsize: font size to use for limits in plot titles (defaults to axes_labelsize)
     """
 
-    _deprecated = {
+    _deprecated: ClassVar[dict[str, str | None]] = {
         "lab_fontsize": "axes_labelsize",
         "colorbar_rotation": "colorbar_tick_rotation",
         "font_size ": "fontsize",
@@ -724,7 +724,7 @@ class GetDistPlotter(_BaseObject):
     def set_default_settings(self):
         self.settings = copy.deepcopy(default_settings)
 
-    _style_rc = {}
+    _style_rc: ClassVar[dict] = {}
 
     @classmethod
     def get_single_plotter(cls, scaling=None, rc_sizes=False, **kwargs):
@@ -846,7 +846,7 @@ class GetDistPlotter(_BaseObject):
                 # assume tuple of line style and color
                 return res[0], res[1]
             else:
-                raise ValueError(f"Unknown format for color [{res}]")
+                raise TypesError(f"Unknown format for color [{res}]")
         except IndexError:
             print("Error adding line " + str(plotno) + ": Add more default line stype entries to settings.line_styles")
             raise
@@ -2517,7 +2517,7 @@ class GetDistPlotter(_BaseObject):
         if isinstance(ax, int):
             ax = self._subplot_number(ax)
         elif isinstance(ax, (list, tuple)):
-            if isinstance(ax[0], str) or isinstance(ax[0], ParamInfo):
+            if isinstance(ax[0], (str, ParamInfo)):
                 ax = self.get_axes_for_params(*ax)
             else:
                 ax = self._subplot(ax[1], ax[0])

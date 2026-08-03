@@ -2,6 +2,12 @@ import fnmatch
 import os
 from itertools import chain
 
+from getdist.types import GetDistError
+
+
+class ParamNamesError(GetDistError):
+    """Error looking up or parsing parameter names."""
+
 
 def makeList(roots):
     """
@@ -90,9 +96,9 @@ class ParamInfo:
 
     def nameEquals(self, name):
         if isinstance(name, ParamInfo):
-            return name.name == name
+            return name.name == self.name
         else:
-            return name == name
+            return self.name == name
 
     def setFromString(self, line):
         items = line.split(None, 1)
@@ -112,7 +118,7 @@ class ParamInfo:
 
     def setName(self, name):
         if not isinstance(name, str):
-            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
+            raise TypeError(f'"name" must be a parameter name string not {type(name)}: {name}')
         if "*" in name or "?" in name or " " in name or "\t" in name:
             raise ValueError("Parameter names must not contain spaces, * or ?")
         self.name = name
@@ -227,7 +233,7 @@ class ParamList:
 
     def _check_name_str(self, name):
         if not isinstance(name, str):
-            raise ValueError(f'"name" must be a parameter name string not {type(name)}: {name}')
+            raise TypeError(f'"name" must be a parameter name string not {type(name)}: {name}')
 
     def parWithName(self, name, error=False, renames=None):
         """
@@ -251,7 +257,7 @@ class ParamList:
             if known_names.intersection(given_names):
                 return par
         if error:
-            raise Exception(f"parameter name not found: {name}")
+            raise ParamNamesError(f"parameter name not found: {name}")
         return None
 
     def numberOfName(self, name):
@@ -286,14 +292,14 @@ class ParamList:
         errors = makeList(error)
         if len(errors) < len(names):
             errors = len(names) * errors
-        for name, error in zip(names, errors):
+        for name, error_flag in zip(names, errors):
             if isinstance(name, ParamInfo):
                 res.append(name)
             else:
                 if "?" in name or "*" in name:
                     res += self.getMatches(name)
                 else:
-                    res.append(self.parWithName(name, error, renames))
+                    res.append(self.parWithName(name, error_flag, renames))
         return res
 
     def getMatches(self, pattern, strings=False):

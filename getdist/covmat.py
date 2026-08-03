@@ -1,6 +1,10 @@
 import numpy as np
 
 
+class CovMatError(Exception):
+    """Error reading or manipulating a covariance matrix."""
+
+
 class CovMat:
     """
     Class holding a covariance matrix for some named parameters
@@ -34,7 +38,7 @@ class CovMat:
                 self.paramNames = first[1:].split()
                 self.size = len(self.paramNames)
             else:
-                raise Exception(".covmat must now have parameter names header")
+                raise CovMatError(".covmat must now have parameter names header")
             # noinspection PyTypeChecker
             self.matrix = np.loadtxt(f)
 

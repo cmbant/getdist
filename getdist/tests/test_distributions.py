@@ -83,8 +83,10 @@ def compare2D(g, probs, nsamp=default_nsamp, settings=None):
     plt.subplots_adjust()
 
 
-# noinspection PyUnboundLocalVariable
-def get2DMises(prob, nsamp=default_nsamp, nsim=20, scales=np.arange(0.6, 1.5, 0.1), settings=None):
+_default_scales = np.arange(0.6, 1.5, 0.1)
+
+
+def get2DMises(prob, nsamp=default_nsamp, nsim=20, scales=_default_scales, settings=None):
     # Get 2D MISE (mean integrated square error) as function of bandwidth scaling
     Mises = np.zeros(np.asarray(scales).size)
     for _ in range(nsim):
@@ -287,7 +289,10 @@ def plot_compare_method(
     ax.set_xlim([scalings[0], scalings[-1]])
 
 
-def plot_compare_probs_methods(ax, probs, colors=plt.rcParams["axes.prop_cycle"].by_key()["color"], **kwargs):
+_default_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
+
+def plot_compare_probs_methods(ax, probs, colors=_default_colors, **kwargs):
     for prob, col in zip(probs, colors):
         plot_compare_method(ax, prob, col, **kwargs)
 

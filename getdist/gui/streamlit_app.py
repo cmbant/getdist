@@ -699,20 +699,19 @@ def apply_analysis_settings(settings):
         )
 
         # Update the current plot if one exists
-        if st.session_state.current_plot:
+        if st.session_state.current_plot and hasattr(st.session_state, "plot_type"):
             # Regenerate the plot with the new settings
             # This matches the original mainwindow.py settingsChanged method
             # which calls plotData() to regenerate the plot
 
             # Store the current plot type and parameters to regenerate the plot
-            if hasattr(st.session_state, "plot_type"):
-                st.session_state.force_replot = True
+            st.session_state.force_replot = True
 
-                # Don't clear the figure here - we'll regenerate it completely
-                # in the main function when force_replot is True
+            # Don't clear the figure here - we'll regenerate it completely
+            # in the main function when force_replot is True
 
-                # Apply the settings and trigger a rerun
-                st.rerun()
+            # Apply the settings and trigger a rerun
+            st.rerun()
 
         st.success("Analysis settings applied")
     except Exception as e:
@@ -860,8 +859,8 @@ def export_plot(format_type):
                 os.unlink(tmp_name)
 
                 return file_data, mime_type
-            except Exception as e:
-                logging.exception(f"Error using plotter.export: {e!s}")
+            except Exception:
+                logging.exception("Error using plotter.export")
                 # Clean up the temporary file if it exists
                 if os.path.exists(tmp_name):
                     os.unlink(tmp_name)
@@ -877,8 +876,8 @@ def export_plot(format_type):
             logging.error(f"Unsupported export format: {format_type}")
             return None, None
 
-    except Exception as e:
-        logging.exception(f"Error exporting plot: {e!s}")
+    except Exception:
+        logging.exception("Error exporting plot")
         return None, None
 
 
@@ -2315,7 +2314,7 @@ def main():
                                                 if current is None or re.match(r"^[\w]+$", value):
                                                     st.session_state.custom_plot_settings[key] = value
                                                 else:
-                                                    raise Exception(f"Invalid value for {key}: {value}")
+                                                    raise ValueError(f"Invalid value for {key}: {value}")
                                     else:
                                         deleted.append(key)
                                         st.session_state.custom_plot_settings.pop(key, None)
@@ -2449,21 +2448,25 @@ def main():
                     st.rerun()
 
             # Change directory button
-            if dir_path and dir_path != st.session_state.chain_dir:
-                if st.button("Change Directory", key="change_dir_button", use_container_width=True):
-                    # Show a loading spinner while opening the directory
-                    with st.spinner(f"Opening directory: {dir_path}..."):
-                        if open_directory(dir_path):
-                            # Add to recent directories if successful
-                            if dir_path not in st.session_state.recent_directories:
-                                st.session_state.recent_directories.insert(0, dir_path)
-                                # Keep only the 10 most recent
-                                if len(st.session_state.recent_directories) > 10:
-                                    st.session_state.recent_directories = st.session_state.recent_directories[:10]
-                                # Save the updated list to file
-                                save_recent_directories()
-                            # Force a rerun to update the UI
-                            st.rerun()
+            if (
+                dir_path
+                and dir_path != st.session_state.chain_dir
+                and st.button("Change Directory", key="change_dir_button", use_container_width=True)
+            ):
+                # Show a loading spinner while opening the directory
+                with st.spinner(f"Opening directory: {dir_path}..."):
+                    directory_opened = open_directory(dir_path)
+                    # Add to recent directories if successful
+                    if directory_opened and dir_path not in st.session_state.recent_directories:
+                        st.session_state.recent_directories.insert(0, dir_path)
+                        # Keep only the 10 most recent
+                        if len(st.session_state.recent_directories) > 10:
+                            st.session_state.recent_directories = st.session_state.recent_directories[:10]
+                        # Save the updated list to file
+                        save_recent_directories()
+                    if directory_opened:
+                        # Force a rerun to update the UI
+                        st.rerun()
         else:
             # When no directory is open, show both dropdown and text input
             with dir_col1:
@@ -2700,25 +2703,27 @@ def main():
 
                     # Add a Remove button at the top
                     with chain_cols[2]:
-                        if st.button(
-                            "✕",
-                            key="remove_selected",
-                            help="Remove selected chain",
-                            disabled=not st.session_state.selected_roots,
+                        if (
+                            st.button(
+                                "✕",
+                                key="remove_selected",
+                                help="Remove selected chain",
+                                disabled=not st.session_state.selected_roots,
+                            )
+                            and st.session_state.active_chain in st.session_state.selected_roots
                         ):
                             # Get the currently selected chain
-                            if st.session_state.active_chain in st.session_state.selected_roots:
-                                # Get the plotter to remove the chain from the sample analyzer
-                                plotter = get_plotter()
-                                if plotter:
-                                    try:
-                                        # Remove the chain from the plotter's sample analyzer
-                                        plotter.sample_analyser.remove_root(st.session_state.active_chain)
-                                        # Remove from root_infos
-                                        st.session_state.root_infos.pop(st.session_state.active_chain, None)
-                                        logging.info(f"Removed chain {st.session_state.active_chain} from plotter")
-                                    except Exception as e:
-                                        logging.error(f"Error removing chain from plotter: {e!s}")
+                            # Get the plotter to remove the chain from the sample analyzer
+                            plotter = get_plotter()
+                            if plotter:
+                                try:
+                                    # Remove the chain from the plotter's sample analyzer
+                                    plotter.sample_analyser.remove_root(st.session_state.active_chain)
+                                    # Remove from root_infos
+                                    st.session_state.root_infos.pop(st.session_state.active_chain, None)
+                                    logging.info(f"Removed chain {st.session_state.active_chain} from plotter")
+                                except Exception as e:
+                                    logging.error(f"Error removing chain from plotter: {e!s}")
 
                                 # Remove the active chain from selected roots
                                 st.session_state.selected_roots.remove(st.session_state.active_chain)

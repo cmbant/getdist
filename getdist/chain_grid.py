@@ -82,12 +82,12 @@ class ChainDirGrid:
             self.getdist_options = IniFile(option_file).params
         else:
             self.getdist_options = {}
-        for base, dirs, files in os.walk(base):
+        for walk_base, dirs, files in os.walk(base):
             for _dir in dirs:
-                files = get_chain_root_files(os.path.join(base, _dir))
+                files = get_chain_root_files(os.path.join(walk_base, _dir))
                 if files:
-                    self._add(_dir, os.path.join(base, _dir), files)
-                for base_rel, dirs_rel, files_rel in os.walk(os.path.join(base, _dir)):
+                    self._add(_dir, os.path.join(walk_base, _dir), files)
+                for base_rel, dirs_rel, files_rel in os.walk(os.path.join(walk_base, _dir)):
                     for _subdir in dirs_rel:
                         files = get_chain_root_files(os.path.join(base_rel, _subdir))
                         if files:

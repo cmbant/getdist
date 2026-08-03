@@ -179,7 +179,7 @@ def getdist_script(args, exit_on_error=True):
                 elif mc.paramNames.parWithName(name):
                     _pars.append(name)
         if num is not None and len(_pars) != num:
-            doprint("%iD plot has missing parameter or wrong number of parameters: %s" % (num, _pars))
+            doprint(f"{num}D plot has missing parameter or wrong number of parameters: {_pars}")
             _pars = None
         return _pars
 

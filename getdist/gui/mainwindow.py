@@ -72,7 +72,7 @@ from PySide6.QtWidgets import (
 import getdist
 from getdist import IniFile, chains, plots
 from getdist.chain_grid import ChainDirGrid, file_root_to_root, get_chain_root_files, load_supported_grid
-from getdist.gui.SyntaxHighlight import PythonHighlighter
+from getdist.gui.syntax_highlight import PythonHighlighter
 from getdist.mcsamples import ParamError, SettingError
 
 # works with or without this:
@@ -1290,7 +1290,8 @@ class MainWindow(QMainWindow):
                 break
             old_selection[x_] = [[name] + list(self.paramNames.getRenames().get(name, [])) for name in getter()]
         # Copy paramNames (we don't want to change the original info)
-        self.paramNames = (lambda x: x.filteredCopy(x))(self.getSamples(roots[0]).paramNames)
+        param_names = self.getSamples(roots[0]).paramNames
+        self.paramNames = param_names.filteredCopy(param_names)
         # Add renames from all roots
         for r in roots[1:]:
             self.paramNames.updateRenames(self.getSamples(r).getRenames())
@@ -1303,8 +1304,8 @@ class MainWindow(QMainWindow):
                     return new_name.name
             return None
 
-        for x_ in old_selection:
-            old_selection[x_] = [find_new_name(p) for p in old_selection[x_]]
+        for x_, selected_names in old_selection.items():
+            old_selection[x_] = [find_new_name(p) for p in selected_names]
         # Create tags for list widget
         renames = self.paramNames.getRenames(keep_empty=True)
 
@@ -1370,7 +1371,7 @@ class MainWindow(QMainWindow):
                 if jobItem.paramtag not in items:
                     items[jobItem.paramtag] = []
                 items[jobItem.paramtag].append(jobItem)
-        logging.debug("Found %i names for grid" % len(list(items.keys())))
+        logging.debug(f"Found {len(items)} names for grid")
         self.grid_paramtag_jobItems = items
 
         self.getPlotter(chain_dir=batch)
@@ -1625,7 +1626,7 @@ class MainWindow(QMainWindow):
             del msg
 
             if not capture:
-                raise
+                raise e
 
     def closePlots(self):
         if self.plotter.fig is not None:

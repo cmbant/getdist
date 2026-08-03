@@ -332,7 +332,7 @@ class WeightedSamples:
             elif par == -2:
                 return self.weights
             else:
-                raise WeightedSampleError("Parameter %i does not exist" % par)
+                raise WeightedSampleError(f"Parameter {par} does not exist")
         return par
 
     def getCov(self, nparam=None, pars=None):

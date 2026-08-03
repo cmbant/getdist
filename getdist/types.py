@@ -10,6 +10,15 @@ from getdist.paramnames import ParamInfo, ParamList, makeList
 
 empty_dict = MappingProxyType({})
 
+
+class GetDistError(Exception):
+    """Base class for errors raised by getdist."""
+
+
+class TypesError(GetDistError):
+    """Error reading or formatting getdist output types."""
+
+
 _sci_tolerance = 4
 
 
@@ -29,7 +38,7 @@ def texEscapeText(string):
 
 
 def times_ten_power(exponent):
-    return r"\cdot 10^{%d}" % exponent
+    return rf"\cdot 10^{{{exponent:d}}}"
 
 
 def float_to_decimal(f):
@@ -109,15 +118,12 @@ class NumberFormatter:
         err_sf = self.err_sf
         if value >= 20 and frac > 0.1 and limplus >= 2:
             err_sf = 1
-        if sci:
-            # First, call without knowing sig figs, to get the exponent
-            if exponent := self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]:
-                value, limplus, limminus = (
-                    (lambda x: decimal.getcontext().multiply(float_to_decimal(x), float_to_decimal(10.0**-exponent)))(
-                        lim
-                    )
-                    for lim in [value, limplus, limminus]
-                )
+        # First, call without knowing sig figs, to get the exponent
+        if sci and (exponent := self.formatNumber(max(abs(value - limminus), abs(value + limplus)), sci=True)[1]):
+            value, limplus, limminus = (
+                decimal.getcontext().multiply(float_to_decimal(lim), float_to_decimal(10.0**-exponent))
+                for lim in [value, limplus, limminus]
+            )
         plus_str = self.formatNumber(limplus, err_sf, wantSign)
         minus_str = self.formatNumber(limminus, err_sf, wantSign)
         res = self.formatNumber(value, sf)
@@ -575,7 +581,7 @@ class BestFit(ParamResults):
             del textFileLines[0]
             first = textFileLines[0].strip().split("=")
         if first[0].strip() != "-log(Like)":
-            raise Exception("Error in format of parameter (best fit) file")
+            raise TypesError("Error in format of parameter (best fit) file")
         self.logLike = float(first[1].strip())
         isFixed = False
         isDerived = False
@@ -767,8 +773,8 @@ class MargeStats(ParamResults):
         parForm = self.parFormat()
         text = ""
         text += parForm % "parameter" + "  "
-        text += "%-15s" % "mean"
-        text += "%-15s" % "sddev"
+        text += f"{'mean':<15}"
+        text += f"{'sddev':<15}"
         for j, limit in enumerate(self.limits):
             if inc_limits:
                 tag = "_%.0f%%" % (limit * 100)
@@ -776,9 +782,9 @@ class MargeStats(ParamResults):
             else:
                 tag = str(j + 1)
                 limtxt = "limit" + tag
-            text += "%-15s" % ("lower" + tag)
-            text += "%-15s" % ("upper" + tag)
-            text += "%-7s" % limtxt
+            text += f"{'lower' + tag:<15}"
+            text += f"{'upper' + tag:<15}"
+            text += f"{limtxt:<7}"
         return text, parForm
 
     def __str__(self):
@@ -793,7 +799,7 @@ class MargeStats(ParamResults):
             text += parForm % (self.name(j, True))
             text += f"{par.mean:15.7E}{par.err:15.7E}"
             for lim in par.limits:
-                text += "%15.7E%15.7E  %-5s" % (lim.lower, lim.upper, lim.limitTag())
+                text += f"{lim.lower:15.7E}{lim.upper:15.7E}  {lim.limitTag():<5}"
             text += f"   {par.label}\n"
         return text
 
@@ -949,7 +955,7 @@ class LikeStats(ParamResults):
             text += self.headerLine()
             for j, par in enumerate(self.names):
                 if par.ND_limit_bot.size < 2:
-                    raise Exception("Likestats output assumes at least two contour levels")
+                    raise TypesError("Likestats output assumes at least two contour levels")
                 text += parForm % (self.name(j, True))
                 text += f"{par.bestfit_sample:15.7E}{par.ND_limit_bot[0]:15.7E}{par.ND_limit_top[0]:15.7E}{par.ND_limit_bot[1]:15.7E}{par.ND_limit_top[1]:15.7E}   {par.label}\n"
         return text

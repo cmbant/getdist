@@ -5,6 +5,11 @@ import numpy as np
 from getdist.densities import Density1D, Density2D
 from getdist.mcsamples import MCSamples
 from getdist.paramnames import ParamNames
+from getdist.types import GetDistError
+
+
+class MixtureError(GetDistError):
+    """Error in a Gaussian mixture operation."""
 
 
 def make_2D_Cov(sigmax, sigmay, corr):
@@ -213,7 +218,7 @@ class MixtureND:
         if self.dim > 2 or params is not None or not isinstance(self, Mixture2D):
             mixture = self.marginalizedMixture(params=params)
         elif self.dim != 2:
-            raise Exception("density2D requires at least two dimensions")
+            raise MixtureError("density2D requires at least two dimensions")
         else:
             mixture = self
 
@@ -323,7 +328,7 @@ class MixtureND:
             return
         for i, lim in enumerate(self.lims):
             if i not in keep_params and (lim[0] is not None or lim[1] is not None):
-                raise Exception(
+                raise MixtureError(
                     "In general can only marginalize analytically if no hard boundary limits: " + self.label
                 )
 
