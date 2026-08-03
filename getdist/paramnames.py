@@ -2,10 +2,8 @@ import fnmatch
 import os
 from itertools import chain
 
-from getdist.types import GetDistError
 
-
-class ParamNamesError(GetDistError):
+class ParamNamesError(Exception):
     """Error looking up or parsing parameter names."""
 
 
