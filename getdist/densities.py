@@ -18,11 +18,11 @@ class InterpGridCache:
 # noinspection PyTypeChecker
 def getContourLevels(inbins, contours=defaultContours, missing_norm=0, half_edge=True):
     """
-    Get contour levels enclosing "contours" fraction of the probability, for any dimension bins array
+    Get contour levels enclosing "contours" fraction of the probability, for an array of bins of any dimension
 
     :param inbins: binned density.
     :param contours: list or tuple of confidence contours to calculate, default [0.68, 0.95]
-    :param missing_norm: accounts of any points not included in inbins
+    :param missing_norm: accounts for any points not included in inbins
                         (e.g. points in far tails that are not in inbins)
     :param half_edge: If True, edge bins are only half integrated over in each direction.
     :return: list of density levels
@@ -132,7 +132,7 @@ class GridDensity:
 class Density1D(GridDensity):
     """
     Class for 1D marginalized densities, inheriting from :class:`GridDensity`.
-    You can call it like a InterpolatedUnivariateSpline obect to get interpolated values, or call Prob.
+    You can call it like an ``InterpolatedUnivariateSpline`` object to get interpolated values, or call ``Prob``.
 
     """
 
@@ -211,8 +211,8 @@ class Density1D(GridDensity):
         :param p: limit to calculate, or list of limits to calculate, e.g. [0.68, 0.95]
         :param interpGrid: optional pre-computed cache
         :param accuracy_factor: parameter to boost default accuracy for fine sampling
-        :return: list of (min, max, has_min, has_top) values, or tuple fo single limit,
-                where has_min and has_top are True or False depending on whether lower and upper limit exists
+        :return: list of (min, max, has_min, has_top) values, or tuple for a single limit,
+            where has_min and has_top are True or False depending on whether lower and upper limits exist
         """
         g = interpGrid or self.initLimitGrids(accuracy_factor)
         parr = np.atleast_1d(p)
@@ -306,7 +306,7 @@ class DensityND(GridDensity):
     Class for ND marginalized densities, inheriting from :class:`GridDensity`
     and :class:`~scipy:scipy.interpolate.LinearNDInterpolator`.
 
-    This is not well tested recently.
+    This has not been well tested recently.
     """
 
     def __init__(self, xs, P=None, view_ranges=None):
@@ -317,7 +317,7 @@ class DensityND(GridDensity):
         """
         self.dim = len(xs)
 
-        # for compatability and tests
+        # for compatibility and tests
         self.x = xs[0]
         if self.dim >= 2:
             self.y = xs[1]

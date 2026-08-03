@@ -309,9 +309,9 @@ class MCSamples(Chains):
         """
         Create a copy of this sample object
 
-        :param label: optional lable for the new copy
+        :param label: optional label for the new copy
         :param settings: optional modified settings for the new copy
-        :return: copyied :class:`MCSamples` instance
+        :return: copied :class:`MCSamples` instance
         """
         new = copy.deepcopy(self)
         if label:
@@ -1762,7 +1762,7 @@ class MCSamples(Chains):
         :param meanlikes: calculate mean likelihoods as well as marginalized density
                           (returned as array in density.likes)
         :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
-                which which sets mask to zero for values of parameters that are excluded by prior. Note this is not
+                which sets mask to zero for values of parameters that are excluded by prior. Note this is not
                 needed for standard min, max bounds aligned with axes, as they are handled by default.
         :param kwargs: optional settings to override instance settings of the same name (see `analysis_settings`):
 
@@ -2077,7 +2077,7 @@ class MCSamples(Chains):
 
     def getRawNDDensity(self, xs, normalized=False, **kwargs):
         """
-        Returns a :class:`~.densties.DensityND` instance with marginalized ND density.
+        Returns a :class:`~.densities.DensityND` instance with marginalized ND density.
 
         :param xs: indices or names of x_i parameters
         :param kwargs: keyword arguments for the :func:`getNDDensityGridData` function
@@ -2575,8 +2575,8 @@ class MCSamples(Chains):
     def getParamBestFitDict(self, best_sample=False, want_derived=True, want_fixed=True, max_posterior=True):
         """
         Gets a dictionary of parameter values for the best fit point,
-        assuming calculated results from mimimization runs in .minimum (max posterior) .bestfit (max likelihood)
-        files exists.
+        assuming calculated results from minimization runs in .minimum (max posterior) .bestfit (max likelihood)
+        files exist.
 
         Can also get the best-fit (max posterior) sample, which typically has a likelihood that differs significantly
         from the true best fit in high dimensions.
@@ -2617,8 +2617,8 @@ class MCSamples(Chains):
     def getCombinedSamplesWithSamples(self, samps2, sample_weights=(1, 1)):
         """
         Make a new  :class:`MCSamples` instance by appending samples from samps2 for parameters which are in common.
-        By defaultm they are weighted so that the probability mass of each set of samples is the same,
-        independent of tha actual sample sizes. The sample_weights parameter can be adjusted to change the
+        By default, they are weighted so that the probability mass of each set of samples is the same,
+        independent of the actual sample sizes. The sample_weights parameter can be adjusted to change the
         relative weighting.
 
         :param samps2:  :class:`MCSamples` instance to merge

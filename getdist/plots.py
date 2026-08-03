@@ -99,7 +99,7 @@ class GetDistPlotSettings(_BaseObject):
     :ivar linewidth_contour: linewidth for lines in filled contours
     :ivar linewidth_meanlikes: linewidth for mean likelihood lines
     :ivar no_triangle_axis_labels: whether subplots in triangle plots should show axis labels if not at the edge
-    :ivar norm_1d_density: whether to normolize 1D densities (otherwise normalized to unit peak value)
+    :ivar norm_1d_density: whether to normalize 1D densities (otherwise normalized to unit peak value)
     :ivar norm_prob_label: label for the y axis in normalized 1D density plots
     :ivar num_plot_contours: number of contours to plot in 2D plots (up to number of contours in analysis settings)
     :ivar num_shades: number of distinct colors to use for shading shaded 2D plots
@@ -1096,7 +1096,7 @@ class GetDistPlotter(_BaseObject):
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
         :param mask_function: optional function, mask_function(minx, miny,  stepx, stepy, mask),
-                which which sets mask to zero for values of parameter name that are excluded by prior.
+                which sets mask to zero for values of parameter name that are excluded by prior.
                 This is used to correctly estimate densities near the boundary.
                 See the example in the plot gallery.
         :param kwargs: optional keyword arguments:
@@ -2637,7 +2637,7 @@ class GetDistPlotter(_BaseObject):
         **kwargs,
     ):
         """
-        Make a trianglular array of 1D and 2D plots. Also known as corner plot.
+        Make a triangular array of 1D and 2D plots. Also known as corner plot.
 
         A triangle plot is an array of subplots with 1D plots along the diagonal, and 2D plots in the lower corner.
         The upper triangle can also be used by setting upper_roots.
@@ -3007,7 +3007,7 @@ class GetDistPlotter(_BaseObject):
         """
         Make a grid of 2D plots.
 
-        A rectangle plot shows all x parameters plotted againts all y parameters in a grid of subplots with no spacing.
+        A rectangle plot shows all x parameters plotted against all y parameters in a grid of subplots with no spacing.
 
         Set roots to use the same set of roots for every plot in the rectangle, or set
         yroots (list of list of roots) to use different set of roots for each row of the plot; alternatively
@@ -3897,7 +3897,7 @@ def set_active_style(name=None):
     then you can also just pass a style name parameter when you make a plot instance.
 
     The supplied example styles are 'default', 'tab10' (default matplotlib color scheme) and 'planck' (more
-    compilcated example using latex and various customized settings). Use :func:`add_plotter_style` to add
+    complicated example using latex and various customized settings). Use :func:`add_plotter_style` to add
     your own style class.
 
     :param name: name of the style, or none to revert to default

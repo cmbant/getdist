@@ -663,7 +663,7 @@ class ParamLimit:
     def __init__(self, minmax, tag="two"):
         """
         :param minmax: a [min,max] tuple with lower and upper limits. Entries be None if no limit.
-        :param tag: a text tag descibing the limit, one of ['two' | '>' | '<' | 'none']
+        :param tag: a text tag describing the limit, one of ['two' | '>' | '<' | 'none']
         """
 
         self.lower = minmax[0]

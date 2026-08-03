@@ -6,7 +6,7 @@ from itertools import chain
 def makeList(roots):
     """
     Checks if the given parameter is a list.
-    If not, Creates a list with the parameter as an item in it.
+    If not, creates a list with the parameter as an item in it.
 
     :param roots: The parameter to check
     :return: A list containing the parameter.
@@ -155,7 +155,7 @@ class ParamInfo:
 
 class ParamList:
     """
-    Holds an orders list of :class:`ParamInfo` objects describing a set of parameters.
+    Holds an ordered list of :class:`ParamInfo` objects describing a set of parameters.
 
     :ivar names: list of :class:`ParamInfo` objects
     """
@@ -418,10 +418,10 @@ class ParamList:
 
 class ParamNames(ParamList):
     """
-    Holds an orders list of :class:`ParamInfo` objects describing a set of parameters,
+    Holds an ordered list of :class:`ParamInfo` objects describing a set of parameters,
     inheriting from :class:`ParamList`.
 
-    Can be constructed programmatically, and also loaded and saved to a .paramnames files, which is a plain text file
+    Can be constructed programmatically, and also loaded and saved to a .paramnames file, which is a plain text file
     giving the names and optional label and comment for each parameter, in order.
 
     :ivar names: list of :class:`ParamInfo` objects describing each parameter

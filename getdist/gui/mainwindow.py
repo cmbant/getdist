@@ -131,7 +131,7 @@ class RootListWidget(QListWidget):
 class MainWindow(QMainWindow):
     def __init__(self, app, ini=None, base_dir=None, plot_scale=1):
         """
-        Initialize of GUI components.
+        Initialize GUI components.
         """
 
         super().__init__()

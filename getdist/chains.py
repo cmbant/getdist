@@ -54,7 +54,7 @@ def slice_or_none(x, start=None, end=None):
 def findChainFileRoot(chain_dir, root, search_subdirectories=True):
     """
     Finds chain files with name root somewhere under chain_dir directory tree.
-    root can also be a relative path relaqtive to chain_dir, or have leading directories as needed to make unique
+    root can also be a relative path relative to chain_dir, or have leading directories as needed to make unique
 
     :param chain_dir: root directory of hierarchy of directories to look in
     :param root: root name for the chain
@@ -79,7 +79,7 @@ def chainFiles(root, chain_indices=None, ext=".txt", separator="_", first_chain=
     Creates a list of file names for samples given a root name and optional filters
 
     :param root: Root name for files (no extension)
-    :param chain_indices: If True, only indexes inside the list included, If False, includes all indexes.
+    :param chain_indices: If True, include only the indexes in the list; if False, include all indexes.
     :param ext: extension for files
     :param separator: separator character used to indicate chain number (usually _ or .)
     :param first_chain: The first index to include.
