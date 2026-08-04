@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Script to create an MSI installer for the GetDist GUI Windows application.
 Uses the WiX Toolset to create the installer.

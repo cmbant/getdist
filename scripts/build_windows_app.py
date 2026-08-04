@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Script to build a Windows executable for GetDist GUI using PyInstaller.
 Assumes uv is installed and available in the PATH.
@@ -263,7 +262,7 @@ def build_windows_app(output_dir, version, env_info):
     # Add style files individually
     if os.path.exists(styles_dir):
         for file in os.listdir(styles_dir):
-            if file.endswith(".paramnames") or file.endswith(".sty"):
+            if file.endswith((".paramnames", ".sty")):
                 src = os.path.join(styles_dir, file)
                 data_entries.append(f"(r'{src}', 'getdist/styles')")
 

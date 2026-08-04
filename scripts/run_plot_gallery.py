@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Script to run the plot gallery notebook and export it to HTML.
 

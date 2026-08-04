@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Script to sign Windows executables and DLLs using signtool with Google Cloud KMS.
 

@@ -69,7 +69,7 @@ target-version = "py310"
 exclude = ["testfile.py"]
 
 [tool.ruff.lint]
-ignore = ["E722", "E741", "EXE002", "LOG015", "S102", "BLE001", "S110"]
+ignore = ["E722", "E741", "EXE002", "LOG015", "S102", "BLE001", "S110", "SIM115"]
 extend-select = ["I"]
 preview = false
 
