@@ -6,7 +6,7 @@ import math
 import os
 import pickle
 import time
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 import numpy as np
@@ -1747,7 +1747,7 @@ class MCSamples(Chains):
         num_plot_contours=None,
         get_density=False,
         meanlikes=False,
-        mask_function: callable | None = None,
+        mask_function: Callable | None = None,
         **kwargs,
     ):
         """

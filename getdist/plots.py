@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any, ClassVar
 
 import matplotlib
@@ -1074,7 +1074,7 @@ class GetDistPlotter(_BaseObject):
         density=None,
         alpha=None,
         ax=None,
-        mask_function: callable | None = None,
+        mask_function: Callable | None = None,
         **kwargs,
     ):
         """
@@ -1796,7 +1796,7 @@ class GetDistPlotter(_BaseObject):
         line_offset=0,
         proxy_root_exclude=(),
         ax=None,
-        mask_function: callable | None = None,
+        mask_function: Callable | None = None,
         **kwargs,
     ):
         """
