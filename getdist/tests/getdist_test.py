@@ -24,7 +24,7 @@ class GetDistFileTest(unittest.TestCase):
         random_state = np.random.default_rng(10)
         # Simulate some chain files
         prob = Test2DDistributions().bimodal[0]
-        self.tempdir = os.path.join(tempfile.gettempdir(), "gettdist_tests")
+        self.tempdir = os.path.join(tempfile.gettempdir(), "getdist_tests")
         if not os.path.exists(self.tempdir):
             os.mkdir(self.tempdir)
         self.root = os.path.join(self.tempdir, "testchain")
@@ -463,7 +463,7 @@ class UtilTest(unittest.TestCase):
 
 class CobayaTest(unittest.TestCase):
     def setUp(self):
-        self.tempdir = os.path.join(tempfile.gettempdir(), "gettdist_tests")
+        self.tempdir = os.path.join(tempfile.gettempdir(), "getdist_tests")
         if not os.path.exists(self.tempdir):
             os.mkdir(self.tempdir)
         os.chdir(self.tempdir)

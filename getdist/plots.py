@@ -990,7 +990,7 @@ class GetDistPlotter(_BaseObject):
                            Default from settings.norm_1d_density.
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
-        :param title_limit: if not None, a maginalized limit (1,2..) to print as the title of the plot
+        :param title_limit: if not None, a marginalized limit (1,2..) to print as the title of the plot
         :param kwargs: arguments for :func:`~matplotlib:matplotlib.pyplot.plot`
         :return: min, max for the plotted density
         """
@@ -1686,7 +1686,7 @@ class GetDistPlotter(_BaseObject):
         :param marker: If set, places a marker at given coordinate (or list of coordinates).
         :param marker_color: If set, sets the marker color.
         :param label_right: If True, label the y-axis on the right rather than the left
-        :param title_limit: If not None, a maginalized limit (1,2..) of the first root to print as the title of the plot
+        :param title_limit: If not None, a marginalized limit (1,2..) of the first root to print as the title of the plot
         :param no_ylabel: If True excludes the label on the y-axis
         :param no_ytick: If True show no y ticks
         :param no_zero: If true does not show tick label at zero on y-axis
@@ -2331,7 +2331,7 @@ class GetDistPlotter(_BaseObject):
         :param share_y: True for subplots to share a common y-axis with no horizontal space between subplots
         :param markers: optional dict giving vertical marker values indexed by parameter, or a list of marker values
                         for each parameter plotted
-        :param title_limit: if not None, a maginalized limit (1,2..) of the first root to print as the title
+        :param title_limit: if not None, a marginalized limit (1,2..) of the first root to print as the title
                             of each of the plots
         :param xlims: list of [min,max] limits for the range of each parameter plot
         :param param_renames: optional dictionary holding mapping between input names and equivalent names used in
@@ -2662,7 +2662,7 @@ class GetDistPlotter(_BaseObject):
                             specific order of line indices
         :param legend_ncol: The number of columns for the legend
         :param legend_loc: The location for the legend (e.g. 'upper center', etc.)
-        :param title_limit: if not None, a maginalized limit (1,2..) to print as the title of the first root on the
+        :param title_limit: if not None, a marginalized limit (1,2..) to print as the title of the first root on the
                             diagonal 1D plots
         :param upper_roots: set to fill the upper triangle with subplots using this list of sample root names
         :param upper_kwargs: dict for same-named arguments for use when making upper-triangle 2D plots
@@ -3382,7 +3382,7 @@ class GetDistPlotter(_BaseObject):
         :param color_bar: True to include a color bar
         :param line_offset: The line index offset for added contours
         :param add_legend_proxy: True to add a legend proxy
-        :param alpha_samples: if True, use alternative scatter style where all samples are plotted alphaed by
+        :param alpha_samples: if True, use alternative scatter style where all samples are shown with alpha applied by
                               their weights
         :param ax: optional :class:`~matplotlib:matplotlib.axes.Axes` instance (or y,x subplot coordinate)
                    to add to (defaults to current plot or the first/main plot if none)
@@ -3908,7 +3908,7 @@ def set_active_style(name=None):
 
 def add_plotter_style(name, cls, activate=False):
     """
-    Add a plotting style, consistenting of style name and a class type to use when making plotter instances.
+    Add a plotting style, consisting of a style name and a class type to use when making plotter instances.
 
     :param name: name for the style
     :param cls: a class inherited from :class:`~getdist.plots.GetDistPlotter`

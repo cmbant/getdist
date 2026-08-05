@@ -1573,7 +1573,7 @@ class Chains(WeightedSamples):
 
     def saveTextMetadata(self, root):
         """
-        Saves metadata about the sames to text files with given file root
+        Saves metadata about the samples to text files with given file root
 
         :param root: root file name
         """

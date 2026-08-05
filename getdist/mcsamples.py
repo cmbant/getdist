@@ -176,7 +176,7 @@ class MCSamples(Chains):
         :param weights: array of weights for samples, or list of arrays if more than one chain
         :param loglikes: array of -log(posterior) for samples, or list of arrays if more than one chain.
                          Note: this is the negative log posterior (likelihood × prior), not just the likelihood.
-        :param temperatute: temperature of the sample. If not specified will be read from the
+        :param temperature: temperature of the sample. If not specified will be read from the
                             root.properties.ini file if it exists and otherwise default to 1.
         :param kwargs: keyword arguments passed to inherited classes, e.g. to manually make a samples object from
                        sample arrays in memory:
@@ -646,7 +646,7 @@ class MCSamples(Chains):
 
     def writeCovMatrix(self, filename=None):
         """
-        Writes the covrariance matrix of non-derived parameters to a file.
+        Writes the covariance matrix of non-derived parameters to a file.
 
         :param filename: The filename to write to; default is file_root.covmat
         """
@@ -2654,10 +2654,10 @@ class MCSamples(Chains):
 
     def saveTextMetadata(self, root, properties=None):
         """
-        Saves metadata about the sames to text files with given file root
+        Saves metadata about the samples to text files with given file root
 
         :param root: root file name
-        :param properties: optional dictiory of values to save in root.properties.ini
+        :param properties: optional dictionary of values to save in root.properties.ini
         """
         super().saveTextMetadata(root)
         self.ranges.saveToFile(root + ".ranges")
