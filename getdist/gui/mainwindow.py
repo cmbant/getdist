@@ -30,7 +30,7 @@ except ImportError as _e:
     print("then after activating pyside environment 'pip install PySide6'.")
     print("There are also pre-built GUI apps on the GitHub Releases page")
 
-    sys.exit(-1)
+    sys.exit(1)
 
 import matplotlib.pyplot as plt
 import PySide6 as PySide
