@@ -28,6 +28,7 @@ except ImportError as _e:
     print("E.g. make and use a new environment")
     print("conda create -n pyside python=3.12 scipy matplotlib")
     print("then after activating pyside environment 'pip install PySide6'.")
+    print("or in the global environment install pyside6 by 'pip install PySide6 --break-system-packages'")
     print("There are also pre-built GUI apps on the GitHub Releases page")
 
     sys.exit(1)
