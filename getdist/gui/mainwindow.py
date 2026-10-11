@@ -28,9 +28,10 @@ except ImportError as _e:
     print("E.g. make and use a new environment")
     print("conda create -n pyside python=3.12 scipy matplotlib")
     print("then after activating pyside environment 'pip install PySide6'.")
+    print("or in the global environment install pyside6 by 'pip install PySide6 --break-system-packages'")
     print("There are also pre-built GUI apps on the GitHub Releases page")
 
-    sys.exit(-1)
+    sys.exit(1)
 
 import matplotlib.pyplot as plt
 import PySide6 as PySide
@@ -1433,6 +1434,7 @@ class MainWindow(QMainWindow):
             self.root_infos[root] = info
             item.setCheckState(Qt.Checked)
             item.setText(root)
+            self.listRoots.setCurrentItem(item)
             self._updateParameters()
         except Exception as e:
             self.errorReport(e, capture=True)
@@ -1468,6 +1470,8 @@ class MainWindow(QMainWindow):
                     self.plotter.sample_analyser.remove_root(root)
                     self.root_infos.pop(root, None)
                     self.listRoots.takeItem(i)
+            if self.listRoots.currentItem() is None and self.listRoots.count():
+                self.listRoots.setCurrentRow(self.listRoots.count() - 1)
         finally:
             self._updateParameters()
             self.updating = False
