@@ -1470,6 +1470,8 @@ class MainWindow(QMainWindow):
                     self.plotter.sample_analyser.remove_root(root)
                     self.root_infos.pop(root, None)
                     self.listRoots.takeItem(i)
+            if self.listRoots.currentItem() is None and self.listRoots.count():
+                self.listRoots.setCurrentRow(self.listRoots.count() - 1)
         finally:
             self._updateParameters()
             self.updating = False
