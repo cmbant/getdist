@@ -1434,6 +1434,7 @@ class MainWindow(QMainWindow):
             self.root_infos[root] = info
             item.setCheckState(Qt.Checked)
             item.setText(root)
+            item.listRoots.setCurrentItem(item)
             self._updateParameters()
         except Exception as e:
             self.errorReport(e, capture=True)
